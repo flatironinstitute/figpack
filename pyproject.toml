@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "figpack"
+version = "0.1.0"
+description = "A Python package for creating shareable, interactive visualizations"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Jeremy Magland", email = "jmagland@flatironinstitute.org"}
+]
+keywords = ["visualization", "plotting", "timeseries", "interactive"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "numpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/magland/figpack"
+Repository = "https://github.com/magland/figpack"
+Documentation = "https://github.com/magland/figpack#readme"
+"Bug Tracker" = "https://github.com/magland/figpack/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["figpack*"]
