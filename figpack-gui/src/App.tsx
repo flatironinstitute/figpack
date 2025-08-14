@@ -51,7 +51,6 @@ function App() {
     );
   }
 
-  console.log(zarrData);
   return (
     <>
       <ProvideTimeseriesSelection>

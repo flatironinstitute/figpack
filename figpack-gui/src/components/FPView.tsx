@@ -1,5 +1,6 @@
 import { RemoteH5Group } from "../remote-h5-file";
 import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
+import { FPBox } from "./FPBox";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -10,6 +11,8 @@ export const FPView: React.FC<{
     return (
       <FPTimeseriesGraph zarrGroup={zarrGroup} width={width} height={height} />
     );
+  } else if (zarrGroup.attrs["view_type"] === "Box") {
+    return <FPBox zarrGroup={zarrGroup} width={width} height={height} />;
   } else {
     return (
       <div>
