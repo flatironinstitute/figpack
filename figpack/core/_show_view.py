@@ -1,7 +1,6 @@
 import os
 
 from typing import Union
-import zarr
 import tempfile
 
 import webbrowser
@@ -12,6 +11,7 @@ import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from .figpack_view import FigpackView
+from ._bundle_utils import prepare_figure_bundle
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
@@ -24,30 +24,7 @@ def _show_view(
     allow_origin: Union[str, None] = None,
 ):
     with tempfile.TemporaryDirectory(prefix="figpack_") as tmpdir:
-        html_dir = thisdir / "figpack-gui-dist"
-        if not os.path.exists(html_dir):
-            raise SystemExit(f"Error: directory not found: {html_dir}")
-        # copy all files in html_dir recursively to tmpdir
-        for item in html_dir.iterdir():
-            if item.is_file():
-                target = pathlib.Path(tmpdir) / item.name
-                target.write_bytes(item.read_bytes())
-            elif item.is_dir():
-                target = pathlib.Path(tmpdir) / item.name
-                target.mkdir(exist_ok=True)
-                for subitem in item.iterdir():
-                    target_sub = target / subitem.name
-                    target_sub.write_bytes(subitem.read_bytes())
-
-        # Write the graph data to the Zarr group
-        zarr_group = zarr.open_group(
-            pathlib.Path(tmpdir) / "data.zarr",
-            mode="w",
-            synchronizer=zarr.ThreadSynchronizer(),
-        )
-        view._write_to_zarr_group(zarr_group)
-
-        zarr.consolidate_metadata(zarr_group.store)
+        prepare_figure_bundle(view, tmpdir)
 
         serve_files(
             tmpdir,
