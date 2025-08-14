@@ -29,6 +29,8 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
+    "zarr",
+    "requests",
 ]
 
 [project.urls]

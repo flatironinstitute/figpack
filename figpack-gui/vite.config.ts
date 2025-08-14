@@ -5,6 +5,11 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: './',
+  build: {
+    outDir: '../figpack/figpack-gui-dist',
+    emptyOutDir: true
+  },
   resolve: {
     alias: {
       '@components': path.resolve(__dirname, './src/components'),

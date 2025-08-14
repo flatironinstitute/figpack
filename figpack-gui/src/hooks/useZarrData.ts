@@ -8,7 +8,9 @@ export const useZarrData = () => {
   useEffect(() => {
     let canceled = false;
     const load = async () => {
-      const a = await RemoteH5FileLindi.createFromZarr("http://localhost:3004");
+      const queryParams = new URLSearchParams(window.location.search);
+      const dataUrl = queryParams.get("data") || "data.zarr";
+      const a = await RemoteH5FileLindi.createFromZarr(dataUrl);
       const g = await a.getGroup("/");
       if (canceled) return;
       setZarrData(g);

@@ -1,5 +1,10 @@
+import os
+
+from typing import Union
 import zarr
 import tempfile
+
+import webbrowser
 
 import pathlib
 
@@ -8,56 +13,114 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from .views import TimeseriesGraph
 
+thisdir = pathlib.Path(__file__).parent.resolve()
 
-def _show_view(view: TimeseriesGraph):
+
+def _show_view(
+    view: TimeseriesGraph,
+    *,
+    open_in_browser: bool = False,
+    port: Union[int, None] = None,
+    allow_origin: Union[str, None] = None,
+):
     with tempfile.TemporaryDirectory(prefix="figpack_") as tmpdir:
-        zarr_group = zarr.open_group(
-            pathlib.Path(tmpdir),
-            mode="w",
-            synchronizer=zarr.ThreadSynchronizer()
-        )
-        
+        html_dir = thisdir / "figpack-gui-dist"
+        if not os.path.exists(html_dir):
+            raise SystemExit(f"Error: directory not found: {html_dir}")
+        # copy all files in html_dir recursively to tmpdir
+        for item in html_dir.iterdir():
+            if item.is_file():
+                target = pathlib.Path(tmpdir) / item.name
+                target.write_bytes(item.read_bytes())
+            elif item.is_dir():
+                target = pathlib.Path(tmpdir) / item.name
+                target.mkdir(exist_ok=True)
+                for subitem in item.iterdir():
+                    target_sub = target / subitem.name
+                    target_sub.write_bytes(subitem.read_bytes())
+
         # Write the graph data to the Zarr group
+        zarr_group = zarr.open_group(
+            pathlib.Path(tmpdir) / "data.zarr",
+            mode="w",
+            synchronizer=zarr.ThreadSynchronizer(),
+        )
         view._write_to_zarr_group(zarr_group)
 
         zarr.consolidate_metadata(zarr_group.store)
 
-        serve_files(tmpdir, 3004)
+        serve_files(
+            tmpdir,
+            port=port,
+            open_in_browser=open_in_browser,
+            allow_origin=allow_origin,
+        )
 
-ALLOW_ORIGIN = "http://localhost:5173"
 
 class CORSRequestHandler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, allow_origin=None, **kwargs):
+        self.allow_origin = allow_origin
+        super().__init__(*args, **kwargs)
+
     # Serve only GET/HEAD/OPTIONS; add CORS headers on every response
     def end_headers(self):
-        self.send_header("Access-Control-Allow-Origin", ALLOW_ORIGIN)
-        self.send_header("Vary", "Origin")
-        self.send_header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Range")
-        self.send_header("Access-Control-Expose-Headers",
-                         "Accept-Ranges, Content-Encoding, Content-Length, Content-Range")
+        if self.allow_origin is not None:
+            self.send_header("Access-Control-Allow-Origin", self.allow_origin)
+            self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, Range")
+            self.send_header(
+                "Access-Control-Expose-Headers",
+                "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+            )
         super().end_headers()
 
     def do_OPTIONS(self):
         self.send_response(204, "No Content")
         self.end_headers()
 
-    # (Optional) quieter logging
-    # def log_message(self, fmt, *args): pass
+    def log_message(self, fmt, *args):
+        pass
 
-def serve_files(tmpdir: str, port: int):
+
+def serve_files(
+    tmpdir: str,
+    *,
+    port: Union[int, None],
+    open_in_browser: bool = False,
+    allow_origin: Union[str, None] = None,
+):
+    # if port is None, find a free port
+    if port is None:
+        import socket
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("", 0))
+            port = s.getsockname()[1]
+
     tmpdir = pathlib.Path(tmpdir)
     tmpdir = tmpdir.resolve()
     if not tmpdir.exists() or not tmpdir.is_dir():
         raise SystemExit(f"Directory not found: {tmpdir}")
 
-    # Bind handler to the desired directory
+    # Configure handler with directory and allow_origin
     def handler_factory(*args, **kwargs):
-        return CORSRequestHandler(*args, directory=str(tmpdir), **kwargs)
+        return CORSRequestHandler(
+            *args, directory=str(tmpdir), allow_origin=allow_origin, **kwargs
+        )
 
     httpd = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)
-    print(f"Serving {tmpdir} at http://localhost:{port} (CORS → {ALLOW_ORIGIN})")
+    print(f"Serving {tmpdir} at http://localhost:{port} (CORS → {allow_origin})")
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
+
+    if open_in_browser:
+        webbrowser.open(f"http://localhost:{port}")
+        print(f"Opening http://localhost:{port} in your browser.")
+    else:
+        print(
+            f"Open http://localhost:{port} in your browser to view the visualization."
+        )
 
     try:
         input("Press Enter to stop...\n")
