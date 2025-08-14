@@ -57,7 +57,7 @@ export const FPTimeseriesGraph: React.FC<{
         margins.left,
         margins.top,
         canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom
+        canvasHeight - margins.top - margins.bottom,
       );
       context.clip();
       const timeToPixel = (t: number) => {
@@ -152,7 +152,7 @@ const paintLine = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  }
+  },
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel } =
     options;
@@ -205,7 +205,7 @@ const paintMarker = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  }
+  },
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel } =
     options;
@@ -224,7 +224,7 @@ const paintMarker = (
         x - series.radius,
         y - series.radius,
         series.radius * 2,
-        series.radius * 2
+        series.radius * 2,
       );
     }
     context.fill();
@@ -238,7 +238,7 @@ const paintInterval = (
     visibleStartTimeSec: number;
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
-  }
+  },
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel } = options;
   context.fillStyle = series.color;
@@ -253,7 +253,7 @@ const paintInterval = (
       xStart,
       0,
       xEnd - xStart,
-      context.canvas.height // Fill the full height of the canvas
+      context.canvas.height, // Fill the full height of the canvas
     );
   }
   context.globalAlpha = 1; // Reset alpha to default
@@ -306,14 +306,14 @@ class TimeseriesGraphClient {
   constructor(
     public series: (LineSeries | MarkerSeries | IntervalSeries)[],
     public limits: { tMin: number; tMax: number; yMin: number; yMax: number },
-    public yLabel: string
+    public yLabel: string,
   ) {}
   static async create(zarrGroup: RemoteH5Group) {
     const seriesNames = zarrGroup.attrs["series_names"] || [];
     const series: (LineSeries | MarkerSeries | IntervalSeries)[] = [];
     for (const name of seriesNames) {
       const seriesGroup = await zarrGroup.file.getGroup(
-        join(zarrGroup.path, name)
+        join(zarrGroup.path, name),
       );
       if (!seriesGroup) {
         console.warn(`Series group not found: ${name}`);
@@ -323,7 +323,7 @@ class TimeseriesGraphClient {
       if (attrs["series_type"] === "line") {
         const t = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t",
-          {}
+          {},
         );
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
@@ -331,7 +331,7 @@ class TimeseriesGraphClient {
         }
         const y = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/y",
-          {}
+          {},
         );
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
@@ -348,7 +348,7 @@ class TimeseriesGraphClient {
       } else if (attrs["series_type"] === "marker") {
         const t = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t",
-          {}
+          {},
         );
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
@@ -356,7 +356,7 @@ class TimeseriesGraphClient {
         }
         const y = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/y",
-          {}
+          {},
         );
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
@@ -373,7 +373,7 @@ class TimeseriesGraphClient {
       } else if (attrs["series_type"] === "interval") {
         const t_start = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t_start",
-          {}
+          {},
         );
         if (!t_start) {
           console.warn(`Dataset t_start not found for series: ${name}`);
@@ -381,7 +381,7 @@ class TimeseriesGraphClient {
         }
         const t_end = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t_end",
-          {}
+          {},
         );
         if (!t_end) {
           console.warn(`Dataset t_end not found for series: ${name}`);
@@ -396,7 +396,7 @@ class TimeseriesGraphClient {
         });
       } else {
         console.warn(
-          `Unknown series type for ${name}: ${attrs["series_type"]}`
+          `Unknown series type for ${name}: ${attrs["series_type"]}`,
         );
         continue;
       }

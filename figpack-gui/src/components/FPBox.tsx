@@ -31,7 +31,7 @@ export const FPBox: React.FC<{
   const showTitles = zarrGroup.attrs["show_titles"] || false;
   const itemsMetadata: LayoutItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
-    [zarrGroup]
+    [zarrGroup],
   );
 
   // Track collapsed state for collapsible items
@@ -56,7 +56,7 @@ export const FPBox: React.FC<{
       direction as "horizontal" | "vertical",
       itemsMetadata,
       showTitles,
-      collapsedItems
+      collapsedItems,
     );
   }, [width, height, direction, itemsMetadata, showTitles, collapsedItems]);
 
@@ -148,7 +148,7 @@ const BoxItem: React.FC<{
     const loadGroup = async () => {
       try {
         const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName)
+          join(zarrGroup.path, itemName),
         );
         if (canceled) return;
         setChildGroup(group || null);
@@ -190,7 +190,7 @@ function calculateLayout(
   direction: "horizontal" | "vertical",
   items: LayoutItemData[],
   showTitles: boolean,
-  collapsedItems: Set<string>
+  collapsedItems: Set<string>,
 ): LayoutResult[] {
   const results: LayoutResult[] = [];
 
@@ -205,6 +205,7 @@ function calculateLayout(
     // Calculate widths for horizontal layout
     const availableWidth = containerWidth - (items.length - 1) * MARGIN;
     const widths = calculateSizes(availableWidth, items, collapsedItems);
+    console.log("--- calculated widths", availableWidth, items, widths);
 
     let currentX = 0;
     for (let i = 0; i < items.length; i++) {
@@ -255,11 +256,9 @@ function calculateLayout(
 function calculateSizes(
   availableSpace: number,
   items: LayoutItemData[],
-  collapsedItems: Set<string>
+  collapsedItems: Set<string>,
 ): number[] {
   const sizes: number[] = [];
-  let remainingSpace = availableSpace;
-
   // First pass: handle fixed sizes and calculate total stretch
   for (const item of items) {
     if (collapsedItems.has(item.name)) {
@@ -274,14 +273,12 @@ function calculateSizes(
       // Fixed size (min == max)
       const size = Math.min(
         item.max_size,
-        Math.max(item.min_size, item.min_size)
+        Math.max(item.min_size, item.min_size),
       );
       sizes.push(size);
-      remainingSpace -= size;
     } else if (item.min_size) {
       // Use min_size as default
       sizes.push(item.min_size);
-      remainingSpace -= item.min_size;
     } else {
       // Start with 0
       sizes.push(0);
@@ -307,25 +304,40 @@ function calculateSizes(
       totalStretch += 1;
     }
   }
+  console.log("--- total stretch", totalStretch, stretches);
 
   // Second pass: distribute remaining space among stretch items
-  if (remainingSpace > 0) {
+  let numIterations = 0;
+  while (true) {
+    let remainingSpace = availableSpace;
+    for (let i = 0; i < sizes.length; i++) {
+      remainingSpace -= sizes[i];
+    }
+    if (remainingSpace <= 5) {
+      // If remaining space is very small, stop distributing
+      break;
+    }
+    if (numIterations > 10) {
+      console.warn("Too many iterations in size calculation, breaking loop");
+      break;
+    }
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (stretches[i] && !collapsedItems.has(item.name)) {
-        let stretchSize = (remainingSpace * stretches[i]) / totalStretch;
-
+        const stretchSize = (remainingSpace * stretches[i]) / totalStretch;
+        let newSize = sizes[i] + stretchSize;
         // Apply min/max constraints
         if (item.min_size) {
-          stretchSize = Math.max(stretchSize, item.min_size);
+          newSize = Math.max(newSize, item.min_size);
         }
         if (item.max_size) {
-          stretchSize = Math.min(stretchSize, item.max_size);
+          newSize = Math.min(newSize, item.max_size);
         }
 
-        sizes[i] = stretchSize;
+        sizes[i] = newSize;
       }
     }
+    numIterations++;
   }
 
   // Ensure no negative sizes

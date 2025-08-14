@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface FigpackStatus {
   status: string;
@@ -24,7 +24,9 @@ export const useFigpackStatus = (): FigpackStatusResult => {
   const [status, setStatus] = useState<FigpackStatus | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   const [expirationTime, setExpirationTime] = useState<Date | null>(null);
-  const [timeUntilExpiration, setTimeUntilExpiration] = useState<string | null>(null);
+  const [timeUntilExpiration, setTimeUntilExpiration] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const loadFigpackStatus = async () => {
@@ -32,7 +34,8 @@ export const useFigpackStatus = (): FigpackStatusResult => {
         let figpackJsonUrl = "./figpack.json";
         const dataUrl = new URLSearchParams(window.location.search).get("data");
         if (dataUrl) {
-          figpackJsonUrl = dataUrl.split("/").slice(0, -1).join("/") + "/figpack.json";
+          figpackJsonUrl =
+            dataUrl.split("/").slice(0, -1).join("/") + "/figpack.json";
         }
         const response = await fetch(figpackJsonUrl);
         if (!response.ok) {
@@ -40,14 +43,14 @@ export const useFigpackStatus = (): FigpackStatusResult => {
           setIsLoading(false);
           return;
         }
-        
+
         const data: FigpackStatus = await response.json();
         setStatus(data);
-        
-        if (data.status === 'completed' && data.expiration) {
+
+        if (data.status === "completed" && data.expiration) {
           const et = new Date(data.expiration);
           setExpirationTime(et);
-          
+
           const now = new Date();
           setIsExpired(now > et);
         }
@@ -66,7 +69,7 @@ export const useFigpackStatus = (): FigpackStatusResult => {
 
     const now = new Date();
     const timeDiff = expirationTime.getTime() - now.getTime();
-    
+
     if (timeDiff <= 0) {
       setIsExpired(true);
       setTimeUntilExpiration(null);
@@ -91,6 +94,6 @@ export const useFigpackStatus = (): FigpackStatusResult => {
     status,
     isExpired,
     expirationTime,
-    timeUntilExpiration
+    timeUntilExpiration,
   };
 };

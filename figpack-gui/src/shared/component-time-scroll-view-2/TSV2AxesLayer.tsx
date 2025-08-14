@@ -24,7 +24,7 @@ const TSV2AxesLayer: FunctionComponent<TSV2AxesLayerProps> = (props) => {
     (context: CanvasRenderingContext2D) => {
       paintAxes(context, props);
     },
-    [props]
+    [props],
   );
 
   return (
