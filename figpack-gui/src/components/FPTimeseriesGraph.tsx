@@ -125,9 +125,9 @@ export const FPTimeseriesGraph: React.FC<{
       showTicks: true,
       yMin: yRange ? yRange.yMin : 0,
       yMax: yRange ? yRange.yMax : 10,
-      yLabel: "Y label",
+      yLabel: client ? client.yLabel : "",
     };
-  }, [yRange]);
+  }, [yRange, client]);
 
   return (
     <TimeScrollView3
@@ -305,7 +305,8 @@ const useTimeseriesGraphClient = (zarrGroup: RemoteH5Group) => {
 class TimeseriesGraphClient {
   constructor(
     public series: (LineSeries | MarkerSeries | IntervalSeries)[],
-    public limits: { tMin: number; tMax: number; yMin: number; yMax: number }
+    public limits: { tMin: number; tMax: number; yMin: number; yMax: number },
+    public yLabel: string
   ) {}
   static async create(zarrGroup: RemoteH5Group) {
     const seriesNames = zarrGroup.attrs["series_names"] || [];
@@ -433,7 +434,8 @@ class TimeseriesGraphClient {
       yMin,
       yMax,
     };
-    return new TimeseriesGraphClient(series, limits);
+    const yLabel = zarrGroup.attrs["y_label"] || "";
+    return new TimeseriesGraphClient(series, limits, yLabel);
   }
 }
 

@@ -21,6 +21,7 @@ class TimeseriesGraph(FigpackView):
         y_range: Optional[List[float]] = None,
         hide_x_gridlines: bool = False,
         hide_y_gridlines: bool = False,
+        y_label: str = "",
     ):
         """
         Initialize a TimeseriesGraph
@@ -30,11 +31,13 @@ class TimeseriesGraph(FigpackView):
             y_range: Y-axis range as [min, max]
             hide_x_gridlines: Whether to hide x-axis gridlines
             hide_y_gridlines: Whether to hide y-axis gridlines
+            y_label: Label for the y-axis
         """
         self.legend_opts = legend_opts or {}
         self.y_range = y_range
         self.hide_x_gridlines = hide_x_gridlines
         self.hide_y_gridlines = hide_y_gridlines
+        self.y_label = y_label
 
         # Internal storage for series data
         self._series = []
@@ -138,6 +141,7 @@ class TimeseriesGraph(FigpackView):
         group.attrs["y_range"] = self.y_range
         group.attrs["hide_x_gridlines"] = self.hide_x_gridlines
         group.attrs["hide_y_gridlines"] = self.hide_y_gridlines
+        group.attrs["y_label"] = self.y_label
 
         # series names
         group.attrs["series_names"] = [series.name for series in self._series]

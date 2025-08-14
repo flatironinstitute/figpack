@@ -15,6 +15,7 @@ def example_timeseries_graph(*, height=500):
         y_range=[-15, 15],
         hide_x_gridlines=False,
         hide_y_gridlines=True,
+        y_label="Amplitude (mV)",
     )
 
     # this is for testing the time offset feature
