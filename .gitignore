@@ -6,4 +6,6 @@ __pycache__/
 # Build
 build/
 dist/
-figpack-gui-dist
+
+# GUI build output (should be rebuilt during packaging)
+figpack/figpack-gui-dist/

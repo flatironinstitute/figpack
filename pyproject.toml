@@ -2,6 +2,9 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.cmdclass]
+build_py = "build_gui:BuildPyWithGUI"
+
 [project]
 name = "figpack"
 version = "0.1.0"
