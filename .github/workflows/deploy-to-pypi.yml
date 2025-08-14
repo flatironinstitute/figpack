@@ -32,6 +32,7 @@ jobs:
         run: |
           cd figpack-gui
           npm ci
+          npm run build
 
       - name: Build package
         run: |
