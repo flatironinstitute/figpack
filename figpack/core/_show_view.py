@@ -11,13 +11,13 @@ import pathlib
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-from .views import TimeseriesGraph
+from .figpack_view import FigpackView
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
 
 def _show_view(
-    view: TimeseriesGraph,
+    view: FigpackView,
     *,
     open_in_browser: bool = False,
     port: Union[int, None] = None,

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 import zarr
 
-from .views import TimeseriesGraph
+from .figpack_view import FigpackView
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
@@ -17,7 +17,7 @@ FIGPACK_API_BASE_URL = "https://figpack-api.vercel.app"
 TEMPORY_BASE_URL = "https://tempory.net/figpack/figures"
 
 
-def _upload_view(view: TimeseriesGraph) -> str:
+def _upload_view(view: FigpackView) -> str:
     """
     Upload a figpack view to the cloud
 
@@ -58,12 +58,12 @@ def _upload_view(view: TimeseriesGraph) -> str:
         return figure_url
 
 
-def _prepare_figure_bundle(view: TimeseriesGraph, tmpdir: str) -> None:
+def _prepare_figure_bundle(view: FigpackView, tmpdir: str) -> None:
     """
     Prepare the figure bundle in the temporary directory
     This reuses the same logic as _show_view
     """
-    html_dir = thisdir / "figpack-gui-dist"
+    html_dir = thisdir / "../figpack-gui-dist"
     if not os.path.exists(html_dir):
         raise SystemExit(f"Error: directory not found: {html_dir}")
 

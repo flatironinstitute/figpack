@@ -6,7 +6,7 @@ import numpy as np
 from typing import Optional, List, Dict, Any
 
 import zarr
-from .figpack_view import FigpackView
+from ..core.figpack_view import FigpackView
 
 
 class TimeseriesGraph(FigpackView):

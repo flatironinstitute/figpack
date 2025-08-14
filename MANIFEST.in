@@ -1,8 +1,8 @@
 include README.md
 include LICENSE
 include pyproject.toml
-include build_gui.py
 recursive-include figpack *.py
 recursive-include figpack/figpack-gui-dist *
 global-exclude __pycache__
 global-exclude *.py[co]
+
