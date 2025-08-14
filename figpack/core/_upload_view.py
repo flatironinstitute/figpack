@@ -5,6 +5,8 @@ import uuid
 import tempfile
 import pathlib
 import requests
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
 from .figpack_view import FigpackView
@@ -57,9 +59,33 @@ def _upload_view(view: FigpackView) -> str:
         return figure_url
 
 
+def _upload_single_file(
+    figure_id: str, relative_path: str, file_path: pathlib.Path, passcode: str
+) -> str:
+    """
+    Worker function to upload a single file
+
+    Returns:
+        str: The relative path of the uploaded file
+    """
+    file_type = _determine_file_type(relative_path)
+
+    if file_type == "small":
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        _upload_small_file(figure_id, relative_path, content, passcode)
+    else:  # large file
+        _upload_large_file(figure_id, relative_path, file_path, passcode)
+
+    return relative_path
+
+
+MAX_WORKERS_FOR_UPLOAD = 16
+
+
 def _upload_bundle(tmpdir: str, figure_id: str, passcode: str) -> None:
     """
-    Upload the prepared bundle to the cloud
+    Upload the prepared bundle to the cloud using parallel uploads
     """
     tmpdir_path = pathlib.Path(tmpdir)
 
@@ -84,42 +110,74 @@ def _upload_bundle(tmpdir: str, figure_id: str, passcode: str) -> None:
 
     print(f"Found {len(all_files)} files to upload")
 
-    # Upload files
-    uploaded_count = 0
-    timer = time.time()
-    for relative_path, file_path in all_files:
-        # Skip the figpack.json since we already uploaded the initial version
-        if relative_path == "figpack.json":
-            continue
-        file_type = _determine_file_type(relative_path)
+    # Filter out figpack.json since we already uploaded the initial version
+    files_to_upload = [
+        (rel_path, file_path)
+        for rel_path, file_path in all_files
+        if rel_path != "figpack.json"
+    ]
+    total_files_to_upload = len(files_to_upload)
 
-        if file_type == "small":
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-            _upload_small_file(figure_id, relative_path, content, passcode)
-        else:  # large file
-            _upload_large_file(figure_id, relative_path, file_path, passcode)
+    if total_files_to_upload == 0:
+        print("No additional files to upload")
+    else:
+        print(
+            f"Uploading {total_files_to_upload} files with up to 8 concurrent uploads..."
+        )
 
-        uploaded_count += 1
-        print(f"Uploaded {uploaded_count}/{len(all_files)-1}: {relative_path}")
-        elapsed_time = time.time() - timer
-        if elapsed_time > 60:
-            figpack_json = {
-                **figpack_json,
-                "status": "uploading",
-                "upload_progress": f"{uploaded_count}/{len(all_files)-1}",
-                "upload_updated": datetime.now(timezone.utc).isoformat(),
+        # Thread-safe progress tracking
+        uploaded_count = 0
+        count_lock = threading.Lock()
+        timer = time.time()
+
+        # Upload files in parallel with concurrent uploads
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS_FOR_UPLOAD) as executor:
+            # Submit all upload tasks
+            future_to_file = {
+                executor.submit(
+                    _upload_single_file, figure_id, rel_path, file_path, passcode
+                ): rel_path
+                for rel_path, file_path in files_to_upload
             }
-            _upload_small_file(
-                figure_id,
-                "figpack.json",
-                json.dumps(figpack_json, indent=2),
-                passcode,
-            )
-            print(
-                f"Updated figpack.json with progress: {uploaded_count}/{len(all_files)-1}"
-            )
-            timer = time.time()
+
+            # Process completed uploads
+            for future in as_completed(future_to_file):
+                relative_path = future_to_file[future]
+                try:
+                    future.result()  # This will raise any exception that occurred during upload
+
+                    # Thread-safe progress update
+                    with count_lock:
+                        uploaded_count += 1
+                        print(
+                            f"Uploaded {uploaded_count}/{total_files_to_upload}: {relative_path}"
+                        )
+
+                        # Update progress every 60 seconds
+                        elapsed_time = time.time() - timer
+                        if elapsed_time > 60:
+                            figpack_json = {
+                                **figpack_json,
+                                "status": "uploading",
+                                "upload_progress": f"{uploaded_count}/{total_files_to_upload}",
+                                "upload_updated": datetime.now(
+                                    timezone.utc
+                                ).isoformat(),
+                            }
+                            _upload_small_file(
+                                figure_id,
+                                "figpack.json",
+                                json.dumps(figpack_json, indent=2),
+                                passcode,
+                            )
+                            print(
+                                f"Updated figpack.json with progress: {uploaded_count}/{total_files_to_upload}"
+                            )
+                            timer = time.time()
+
+                except Exception as e:
+                    print(f"Failed to upload {relative_path}: {e}")
+                    raise  # Re-raise the exception to stop the upload process
 
     # Finally, upload completion status
     print("Uploading completion status...")

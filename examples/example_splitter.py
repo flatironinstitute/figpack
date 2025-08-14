@@ -5,7 +5,8 @@ import figpack.views as vv
 def main():
     view = example_splitter_layout()
     # view.show(open_in_browser=True)
-    view.dev()
+    # view.dev()
+    view.upload()
 
 
 def example_splitter_layout():
