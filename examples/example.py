@@ -6,6 +6,7 @@ def main():
     view = example_timeseries_graph()
     view.show(open_in_browser=True)
     # view.dev()
+    # view.upload()
 
 
 def example_timeseries_graph(*, height=500):

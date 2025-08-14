@@ -2,6 +2,7 @@ import { RemoteH5Group } from "../remote-h5-file";
 import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
 import { FPBox } from "./FPBox";
 import { FPSplitter } from "./FPSplitter";
+import { FPTabLayout } from "./FPTabLayout";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -16,6 +17,8 @@ export const FPView: React.FC<{
     return <FPBox zarrGroup={zarrGroup} width={width} height={height} />;
   } else if (zarrGroup.attrs["view_type"] === "Splitter") {
     return <FPSplitter zarrGroup={zarrGroup} width={width} height={height} />;
+  } else if (zarrGroup.attrs["view_type"] === "TabLayout") {
+    return <FPTabLayout zarrGroup={zarrGroup} width={width} height={height} />;
   } else {
     return (
       <div>

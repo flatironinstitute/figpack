@@ -4,8 +4,9 @@ import figpack.views as vv
 
 def main():
     view = example_box_layout()
-    # view.show(open_in_browser=True)
-    view.dev()
+    view.show(open_in_browser=True)
+    # view.dev()
+    # view.upload()
 
 
 def example_box_layout():
