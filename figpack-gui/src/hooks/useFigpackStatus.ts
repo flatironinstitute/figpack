@@ -37,7 +37,7 @@ export const useFigpackStatus = (): FigpackStatusResult => {
           figpackJsonUrl =
             dataUrl.split("/").slice(0, -1).join("/") + "/figpack.json";
         }
-        const response = await fetch(figpackJsonUrl);
+        const response = await fetch(figpackJsonUrl + `?cb=${Date.now()}`);
         if (!response.ok) {
           // File doesn't exist, no expiration
           setIsLoading(false);

@@ -29,3 +29,13 @@ export class ValidationError extends Error {
     this.name = 'ValidationError';
   }
 }
+
+export interface RenewRequest {
+  figureUrl: string;
+}
+
+export interface RenewResponse {
+  success: boolean;
+  message?: string;
+  newExpiration?: string;
+}

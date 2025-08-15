@@ -29,8 +29,6 @@ class FigpackView:
         if _dev:
             if port is None:
                 port = 3004
-            if open_in_browser:
-                raise ValueError("Cannot open in browser when _dev is True.")
             if allow_origin is not None:
                 raise ValueError("Cannot set allow_origin when _dev is True.")
             allow_origin = "http://localhost:5173"
@@ -38,7 +36,7 @@ class FigpackView:
                 raise ValueError("Cannot upload when _dev is True.")
 
             print(
-                "For development, run figpack-gui in dev mode and use http://localhost:5173?data=http://localhost:{port}/data.zarr"
+                f"For development, run figpack-gui in dev mode and use http://localhost:5173?data=http://localhost:{port}/data.zarr"
             )
 
         _show_view(

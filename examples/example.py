@@ -6,7 +6,8 @@ import figpack.views as vv
 def main():
     view = example_timeseries_graph()
     upload = os.environ.get("FIGPACK_UPLOAD") == "1"
-    view.show(open_in_browser=True, upload=upload)
+    _dev = os.environ.get("FIGPACK_DEV") == "1"
+    view.show(open_in_browser=True, upload=upload, _dev=_dev)
 
 
 def example_timeseries_graph(*, height=500):

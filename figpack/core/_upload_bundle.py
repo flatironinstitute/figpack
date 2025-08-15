@@ -3,6 +3,7 @@ import json
 import pathlib
 import requests
 import threading
+from .. import __version__
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
@@ -49,6 +50,7 @@ def _upload_bundle(tmpdir: str, figure_id: str, passcode: str) -> None:
         "upload_started": datetime.now(timezone.utc).isoformat(),
         "upload_updated": datetime.now(timezone.utc).isoformat(),
         "figure_id": figure_id,
+        "figpack_version": __version__,
     }
     _upload_small_file(
         figure_id, "figpack.json", json.dumps(figpack_json, indent=2), passcode
@@ -132,8 +134,27 @@ def _upload_bundle(tmpdir: str, figure_id: str, passcode: str) -> None:
                     print(f"Failed to upload {relative_path}: {e}")
                     raise  # Re-raise the exception to stop the upload process
 
+    # Create and upload manifest.json
+    print("Creating manifest.json...")
+    manifest = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "files": [],
+        "total_size": 0,
+        "total_files": len(files_to_upload),
+    }
+
+    for rel_path, file_path in files_to_upload:
+        file_size = file_path.stat().st_size
+        manifest["files"].append({"path": rel_path, "size": file_size})
+        manifest["total_size"] += file_size
+
+    _upload_small_file(
+        figure_id, "manifest.json", json.dumps(manifest, indent=2), passcode
+    )
+    print("Uploaded manifest.json")
+    print(f"Total size: {manifest['total_size'] / (1024 * 1024):.2f} MB")
+
     # Finally, upload completion status
-    print("Uploading completion status...")
     figpack_json = {
         **figpack_json,
         "status": "completed",
@@ -141,10 +162,13 @@ def _upload_bundle(tmpdir: str, figure_id: str, passcode: str) -> None:
         "expiration": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
         "figure_id": figure_id,
         "total_files": len(all_files),
+        "total_size": manifest["total_size"],
+        "figpack_version": __version__,
     }
     _upload_small_file(
         figure_id, "figpack.json", json.dumps(figpack_json, indent=2), passcode
     )
+    print("Upload completed successfully")
 
     figure_url = f"{TEMPORY_BASE_URL}/{figure_id}/index.html"
     return figure_url

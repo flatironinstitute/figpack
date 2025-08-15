@@ -47,7 +47,7 @@ function isZarrChunk(fileName: string): boolean {
 
 function validateFilePath(path: string): FileValidationResult {
   // Check exact matches first
-  if (path === 'figpack.json' || path === 'index.html') {
+  if (path === 'figpack.json' || path === 'index.html' || path === "manifest.json") {
     return { valid: true, type: 'small' };
   }
   
@@ -174,6 +174,16 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<UploadResponse>
 ) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', 'https://figpack.neurosift.app');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({

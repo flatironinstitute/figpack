@@ -78,6 +78,23 @@ button:focus-visible {
   color: #ffffff;
 }
 
+.manage-button {
+  background-color: #444;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  height: 22px;
+  margin-left: 12px;
+  transition: background-color 0.2s;
+}
+
+.manage-button:hover {
+  background-color: #666;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -112,5 +129,15 @@ button:focus-visible {
     background-color: #f8d7da;
     color: #721c24;
     border-top: 1px solid #f5c6cb;
+  }
+
+  .manage-button {
+    background-color: #e0e0e0;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+
+  .manage-button:hover {
+    background-color: #d0d0d0;
   }
 }
