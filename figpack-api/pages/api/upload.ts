@@ -50,6 +50,10 @@ function validateFilePath(path: string): FileValidationResult {
   if (path === 'figpack.json' || path === 'index.html' || path === "manifest.json") {
     return { valid: true, type: 'small' };
   }
+
+  if (path.endsWith('.png') && path.startsWith('assets/neurosift-logo')) {
+    return { valid: true, type: 'large' };
+  }
   
   // Check HTML files
   if (path.endsWith('.html')) {

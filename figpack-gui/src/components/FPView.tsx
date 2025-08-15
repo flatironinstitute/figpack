@@ -6,6 +6,7 @@ import { FPTabLayout } from "./FPTabLayout";
 import { FPAutocorrelograms } from "./FPAutocorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
 import { FPMarkdown } from "./FPMarkdown";
+import { FPPlotlyFigure } from "./FPPlotlyFigure";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -30,6 +31,10 @@ export const FPView: React.FC<{
     return <FPUnitsTable zarrGroup={zarrGroup} width={width} height={height} />;
   } else if (zarrGroup.attrs["view_type"] === "Markdown") {
     return <FPMarkdown zarrGroup={zarrGroup} width={width} height={height} />;
+  } else if (zarrGroup.attrs["view_type"] === "PlotlyFigure") {
+    return (
+      <FPPlotlyFigure zarrGroup={zarrGroup} width={width} height={height} />
+    );
   } else {
     return (
       <div>
