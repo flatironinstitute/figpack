@@ -1,12 +1,12 @@
 import React, { useMemo, useState, useCallback, useRef } from "react";
-import { RemoteH5Group } from "../remote-h5-file";
+import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 import { FPView } from "./FPView";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar
 const MIN_PANE_SIZE = 50; // Minimum size for each pane
 
 export const FPSplitter: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
@@ -87,7 +87,7 @@ export const FPSplitter: React.FC<{
       newSplitPos = Math.max(minPos, Math.min(maxPos, newSplitPos));
       setSplitPos(newSplitPos);
     },
-    [isDragging, direction, width, height, item1Metadata, item2Metadata],
+    [isDragging, direction, width, height, item1Metadata, item2Metadata]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -215,19 +215,19 @@ export const FPSplitter: React.FC<{
 };
 
 const SplitterItem: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   itemName: string;
   width: number;
   height: number;
 }> = ({ zarrGroup, itemName, width, height }) => {
-  const [childGroup, setChildGroup] = useState<RemoteH5Group | null>(null);
+  const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
     let canceled = false;
     const loadGroup = async () => {
       try {
         const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName),
+          join(zarrGroup.path, itemName)
         );
         if (canceled) return;
         setChildGroup(group || null);

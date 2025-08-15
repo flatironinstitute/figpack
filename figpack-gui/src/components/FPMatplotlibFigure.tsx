@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { RemoteH5Group } from "../remote-h5-file";
+import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 
 export const FPMatplotlibFigure: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
@@ -44,7 +44,7 @@ export const FPMatplotlibFigure: React.FC<{
           const heightValue = parseFloat(originalHeight.replace(/[^\d.]/g, ""));
           svgElement.setAttribute(
             "viewBox",
-            `0 0 ${widthValue} ${heightValue}`,
+            `0 0 ${widthValue} ${heightValue}`
           );
         }
 

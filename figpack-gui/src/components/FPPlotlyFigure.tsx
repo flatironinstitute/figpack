@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { RemoteH5Group } from "../remote-h5-file";
+import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 
 // Declare global Plotly type
 declare global {
@@ -9,7 +9,7 @@ declare global {
         div: HTMLElement,
         data: unknown[],
         layout: Record<string, unknown>,
-        config: Record<string, unknown>,
+        config: Record<string, unknown>
       ) => void;
       Plots: {
         resize: (div: HTMLElement) => void;
@@ -19,7 +19,7 @@ declare global {
 }
 
 export const FPPlotlyFigure: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
@@ -80,7 +80,7 @@ export const FPPlotlyFigure: React.FC<{
           responsive: true,
           displayModeBar: true,
           displaylogo: false,
-        },
+        }
       );
     } catch (plotError) {
       console.error("Failed to create plot:", plotError);

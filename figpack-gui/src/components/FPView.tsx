@@ -1,4 +1,4 @@
-import { RemoteH5Group } from "../remote-h5-file";
+import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
 import { FPBox } from "./FPBox";
 import { FPSplitter } from "./FPSplitter";
@@ -12,7 +12,7 @@ import { FPMatplotlibFigure } from "./FPMatplotlibFigure";
 import { FPImage } from "./FPImage";
 
 export const FPView: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {

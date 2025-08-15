@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { RemoteH5FileLindi, RemoteH5Group } from "../remote-h5-file";
+import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
+import { ZarrGroup } from "src/remote-zarr/RemoteZarr";
 
 export const useZarrData = () => {
-  const [zarrData, setZarrData] = useState<RemoteH5Group | null | undefined>(
+  const [zarrData, setZarrData] = useState<ZarrGroup | null | undefined>(
     null,
   );
   useEffect(() => {
@@ -10,7 +11,7 @@ export const useZarrData = () => {
     const load = async () => {
       const queryParams = new URLSearchParams(window.location.search);
       const dataUrl = queryParams.get("data") || "data.zarr";
-      const a = await RemoteH5FileLindi.createFromZarr(dataUrl);
+      const a = await RemoteZarr.createFromZarr(dataUrl);
       const g = await a.getGroup("/");
       if (canceled) return;
       setZarrData(g);

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { RemoteH5Group } from "../remote-h5-file";
+import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 import { FPView } from "./FPView";
 
 interface TabItemData {
@@ -10,14 +10,14 @@ interface TabItemData {
 const TAB_HEIGHT = 40;
 
 export const FPTabLayout: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
   const initialTabIndex = zarrGroup.attrs["initial_tab_index"] || 0;
   const itemsMetadata: TabItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
-    [zarrGroup],
+    [zarrGroup]
   );
 
   const [activeTabIndex, setActiveTabIndex] = useState(initialTabIndex);
@@ -25,7 +25,7 @@ export const FPTabLayout: React.FC<{
   // Ensure active tab index is valid
   const validActiveTabIndex = Math.max(
     0,
-    Math.min(activeTabIndex, itemsMetadata.length - 1),
+    Math.min(activeTabIndex, itemsMetadata.length - 1)
   );
 
   const contentHeight = height - TAB_HEIGHT;
@@ -117,19 +117,19 @@ export const FPTabLayout: React.FC<{
 };
 
 const TabContent: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   itemName: string;
   width: number;
   height: number;
 }> = ({ zarrGroup, itemName, width, height }) => {
-  const [childGroup, setChildGroup] = useState<RemoteH5Group | null>(null);
+  const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
     let canceled = false;
     const loadGroup = async () => {
       try {
         const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName),
+          join(zarrGroup.path, itemName)
         );
         if (canceled) return;
         setChildGroup(group || null);

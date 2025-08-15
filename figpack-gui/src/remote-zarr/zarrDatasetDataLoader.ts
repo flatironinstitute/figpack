@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import ReferenceFileSystemClient from "./ReferenceFileSystemClient";
-import { ZarrFileSystemClient, ZMetaDataZArray } from "./RemoteH5FileLindi";
+import { ZarrFileSystemClient, ZMetaDataZArray } from "./RemoteZarrImpl";
 
-const lindiDatasetDataLoader = async (o: {
-  client: ReferenceFileSystemClient | ZarrFileSystemClient;
+const zarrDatasetDataLoader = async (o: {
+  client: ZarrFileSystemClient;
   path: string;
   zarray: ZMetaDataZArray;
   slice: [number, number][];
@@ -31,7 +30,7 @@ const lindiDatasetDataLoader = async (o: {
     const sN3 = o.slice[2][1] - o.slice[2][0];
     const sNother = shape.slice(3).reduce((a, b) => a * b, 1);
     const N3 = shape[2];
-    const xx = await lindiDatasetDataLoader({
+    const xx = await zarrDatasetDataLoader({
       client,
       path,
       zarray,
@@ -378,7 +377,7 @@ const lindiDatasetDataLoader = async (o: {
   }) => {
     const { slice1, slice2 } = o2;
     const sliceA = [slice1, slice2];
-    const xx = await lindiDatasetDataLoader({
+    const xx = await zarrDatasetDataLoader({
       client,
       path,
       zarray,
@@ -497,4 +496,4 @@ const getDtypeByteSize = (dtype: string) => {
   throw Error(`Unsupported dtype: ${dtype}`);
 };
 
-export default lindiDatasetDataLoader;
+export default zarrDatasetDataLoader;

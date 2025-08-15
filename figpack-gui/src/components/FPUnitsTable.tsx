@@ -1,10 +1,10 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { RemoteH5Group } from "../remote-h5-file";
+import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 import UnitsTableView from "../spike_sorting/view-units-table/UnitsTableView";
 import { UnitsTableViewData } from "../spike_sorting/view-units-table/UnitsTableViewData";
 
 type Props = {
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 };

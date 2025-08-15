@@ -1,10 +1,10 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { RemoteH5Group } from "../remote-h5-file";
+import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 import CrossCorrelogramsView from "../spike_sorting/view-cross-correlograms/CrossCorrelogramsView";
 import { CrossCorrelogramsViewData } from "../spike_sorting/view-cross-correlograms/CrossCorrelogramsViewData";
 
 type Props = {
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 };
@@ -35,11 +35,11 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
 
         const binEdgesSecData = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, `${crossCorrName}/bin_edges_sec`),
-          {},
+          {}
         );
         const binCountsData = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, `${crossCorrName}/bin_counts`),
-          {},
+          {}
         );
 
         if (binEdgesSecData && binCountsData) {
@@ -48,7 +48,7 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
 
           // Get unit_ids from metadata
           const metadata = crossCorrelogramMetadata.find(
-            (m) => m.name === crossCorrName,
+            (m) => m.name === crossCorrName
           );
           const unitId1 = metadata?.unit_id1 || i;
           const unitId2 = metadata?.unit_id2 || i;

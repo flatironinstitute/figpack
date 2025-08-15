@@ -1,25 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   DatasetDataType,
-  RemoteH5Dataset,
-  RemoteH5Group,
-  RemoteH5Subdataset,
-  RemoteH5Subgroup,
-  // getRemoteH5File,
-  globalRemoteH5FileStats,
-} from "../RemoteH5File";
+  ZarrDataset,
+  ZarrGroup,
+  ZarrSubdataset,
+  ZarrSubgroup,
+} from "./RemoteZarr";
 // import { Canceler } from "../helpers";
 
 type Canceler = {
   onCancel: (() => void)[];
 };
 
-import ReferenceFileSystemClient, {
-  ReferenceFileSystemObject,
-  RemoteTarInterface,
-  isReferenceFileSystemObject,
-} from "./ReferenceFileSystemClient";
-import lindiDatasetDataLoader from "./lindiDatasetDataLoader";
+const globalZarrStats = {
+  getGroupCount: 0,
+  getDatasetCount: 0,
+  getDatasetDataCount: 0,
+  numPendingRequests: 0,
+};
+
+import zarrDatasetDataLoader from "./zarrDatasetDataLoader";
 import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
 
 type ZMetaDataZAttrs = { [key: string]: any };
@@ -171,46 +171,15 @@ export class ZarrFileSystemClient {
   }
 }
 
-class RemoteH5FileLindi {
+class RemoteZarr {
   #cacheDisabled = false; // just for benchmarking
   #sourceUrls: string[] | undefined = undefined;
   constructor(
     public url: string,
-    private lindiFileSystemClient:
-      | ReferenceFileSystemClient
+    private zarrFileSystemClient:
       | ZarrFileSystemClient,
     private pathsByParentPath: { [key: string]: string[] },
   ) {}
-  static async create(url: string) {
-    const { rfs: obj, remoteTar } = await fetchRfsFromRemoteLindi(url);
-    // console.info(`reference file system for ${url}`, obj);
-    // console.info(`Meta only`, metaOnly(obj));
-    const pathsByParentPath: { [key: string]: string[] } = {};
-    for (const path in obj.refs) {
-      if (path === ".zattrs" || path === ".zgroup") continue;
-      const parts = path.split("/");
-      if (parts.length <= 1) continue;
-      const lastPart = parts[parts.length - 1];
-      if (
-        lastPart === ".zattrs" ||
-        lastPart === ".zgroup" ||
-        lastPart === ".zarray"
-      ) {
-        const thePath = parts.slice(0, parts.length - 1).join("/");
-        const theParentPath = parts.slice(0, parts.length - 2).join("/");
-        if (!pathsByParentPath[theParentPath])
-          pathsByParentPath[theParentPath] = [];
-        if (!pathsByParentPath[theParentPath].includes(thePath)) {
-          pathsByParentPath[theParentPath].push(thePath);
-        }
-      }
-    }
-    return new RemoteH5FileLindi(
-      url,
-      new ReferenceFileSystemClient(obj, remoteTar),
-      pathsByParentPath,
-    );
-  }
   static async createFromZarr(url: string) {
     const zmetadataUrl = `${url}/.zmetadata`;
     const zmetadataResponse = await fetch(zmetadataUrl);
@@ -239,47 +208,47 @@ class RemoteH5FileLindi {
         }
       }
     }
-    return new RemoteH5FileLindi(url, zarrFileSystemClient, pathsByParentPath);
+    return new RemoteZarr(url, zarrFileSystemClient, pathsByParentPath);
   }
   get dataIsRemote() {
     return !this.url.startsWith("http://localhost");
   }
-  async getGroup(path: string): Promise<RemoteH5Group | undefined> {
+  async getGroup(path: string): Promise<ZarrGroup | undefined> {
     if (path === "") path = "/";
-    let group: RemoteH5Group | undefined;
+    let group: ZarrGroup | undefined;
     const pathWithoutBeginningSlash = path.startsWith("/")
       ? path.slice(1)
       : path;
     let zgroup: ZMetaDataZGroup | undefined;
     let zattrs: ZMetaDataZAttrs | undefined;
     if (path === "/") {
-      zgroup = (await this.lindiFileSystemClient.readJson(".zgroup")) as
+      zgroup = (await this.zarrFileSystemClient.readJson(".zgroup")) as
         | ZMetaDataZGroup
         | undefined;
-      zattrs = (await this.lindiFileSystemClient.readJson(".zattrs")) as
+      zattrs = (await this.zarrFileSystemClient.readJson(".zattrs")) as
         | ZMetaDataZAttrs
         | undefined;
     } else {
-      zgroup = (await this.lindiFileSystemClient.readJson(
+      zgroup = (await this.zarrFileSystemClient.readJson(
         pathWithoutBeginningSlash + "/.zgroup",
       )) as ZMetaDataZGroup | undefined;
-      zattrs = (await this.lindiFileSystemClient.readJson(
+      zattrs = (await this.zarrFileSystemClient.readJson(
         pathWithoutBeginningSlash + "/.zattrs",
       )) as ZMetaDataZAttrs | undefined;
     }
     if (zgroup) {
-      const subgroups: RemoteH5Subgroup[] = [];
-      const subdatasets: RemoteH5Subdataset[] = [];
+      const subgroups: ZarrSubgroup[] = [];
+      const subdatasets: ZarrSubdataset[] = [];
       const childPaths: string[] =
         this.pathsByParentPath[pathWithoutBeginningSlash] || [];
       for (const childPath of childPaths) {
-        const childZgroup = await this.lindiFileSystemClient.readJson(
+        const childZgroup = await this.zarrFileSystemClient.readJson(
           childPath + "/.zgroup",
         );
-        const childZarray = await this.lindiFileSystemClient.readJson(
+        const childZarray = await this.zarrFileSystemClient.readJson(
           childPath + "/.zarray",
         );
-        const childZattrs = await this.lindiFileSystemClient.readJson(
+        const childZattrs = await this.zarrFileSystemClient.readJson(
           childPath + "/.zattrs",
         );
         if (childZgroup) {
@@ -312,20 +281,20 @@ class RemoteH5FileLindi {
         attrs: zattrs || {},
       };
     }
-    globalRemoteH5FileStats.getGroupCount++;
+    globalZarrStats.getGroupCount++;
     return group;
   }
-  async getDataset(path: string): Promise<RemoteH5Dataset | undefined> {
+  async getDataset(path: string): Promise<ZarrDataset | undefined> {
     const pathWithoutBeginningSlash = path.startsWith("/")
       ? path.slice(1)
       : path;
-    const zarray = (await this.lindiFileSystemClient.readJson(
+    const zarray = (await this.zarrFileSystemClient.readJson(
       pathWithoutBeginningSlash + "/.zarray",
     )) as ZMetaDataZArray;
-    const zattrs = (await this.lindiFileSystemClient.readJson(
+    const zattrs = (await this.zarrFileSystemClient.readJson(
       pathWithoutBeginningSlash + "/.zattrs",
     )) as ZMetaDataZAttrs;
-    let dataset: RemoteH5Dataset | undefined;
+    let dataset: ZarrDataset | undefined;
     if (zarray) {
       dataset = {
         file: this,
@@ -338,7 +307,7 @@ class RemoteH5FileLindi {
     } else {
       dataset = undefined;
     }
-    globalRemoteH5FileStats.getDatasetCount++;
+    globalZarrStats.getDatasetCount++;
     return dataset;
   }
   async getDatasetData(
@@ -372,7 +341,7 @@ class RemoteH5FileLindi {
     const pathWithoutBeginningSlash = path.startsWith("/")
       ? path.slice(1)
       : path;
-    const zarray = (await this.lindiFileSystemClient.readJson(
+    const zarray = (await this.zarrFileSystemClient.readJson(
       pathWithoutBeginningSlash + "/.zarray",
     )) as ZMetaDataZArray | undefined;
     if (!zarray) {
@@ -382,34 +351,14 @@ class RemoteH5FileLindi {
 
     // const { slice, allowBigInt, canceler } = o;
 
-    globalRemoteH5FileStats.getDatasetDataCount++;
+    globalZarrStats.getDatasetDataCount++;
 
-    // old system (not used by lindi)
-    const externalHdf5 = await this.lindiFileSystemClient.readJson(
-      pathWithoutBeginningSlash + "/.external_hdf5",
-    );
-    if (externalHdf5) {
-      throw Error("External hdf5 not supported on server side");
-      // const a = await getRemoteH5File(externalHdf5.url);
-      // return a.getDatasetData(externalHdf5.name, o);
-    }
+    // const zattrs = (await this.zarrFileSystemClient.readJson(
+    //   pathWithoutBeginningSlash + "/.zattrs",
+    // )) as ZMetaDataZAttrs;
 
-    const zattrs = (await this.lindiFileSystemClient.readJson(
-      pathWithoutBeginningSlash + "/.zattrs",
-    )) as ZMetaDataZAttrs;
-    if (zattrs && zattrs["_EXTERNAL_ARRAY_LINK"]) {
-      throw Error("External array link not supported on server side");
-      // const externalArrayLink = zattrs["_EXTERNAL_ARRAY_LINK"];
-      // let url0 = externalArrayLink.url;
-      // if (this.#cacheDisabled) {
-      //   url0 += `?cacheBust=${Date.now()}`;
-      // }
-      // const a = await getRemoteH5File(url0);
-      // return a.getDatasetData(externalArrayLink.name, o);
-    }
-
-    const ret = await lindiDatasetDataLoader({
-      client: this.lindiFileSystemClient,
+    const ret = await zarrDatasetDataLoader({
+      client: this.zarrFileSystemClient,
       path: pathWithoutBeginningSlash,
       zarray,
       slice: o.slice || [],
@@ -424,14 +373,14 @@ class RemoteH5FileLindi {
     }
     return ret;
   }
-  get _lindiFileSystemClient() {
-    return this.lindiFileSystemClient;
+  get _zarrFileSystemClient() {
+    return this.zarrFileSystemClient;
   }
-  async getLindiZarray(path: string): Promise<ZMetaDataZArray | undefined> {
+  async getZarrZarray(path: string): Promise<ZMetaDataZArray | undefined> {
     const pathWithoutBeginningSlash = path.startsWith("/")
       ? path.slice(1)
       : path;
-    return (await this.lindiFileSystemClient.readJson(
+    return (await this.zarrFileSystemClient.readJson(
       pathWithoutBeginningSlash + "/.zarray",
     )) as ZMetaDataZArray | undefined;
   }
@@ -449,72 +398,6 @@ class RemoteH5FileLindi {
   }
 }
 
-const fetchRfsFromRemoteLindi = async (
-  url: string,
-): Promise<{
-  rfs: ReferenceFileSystemObject;
-  remoteTar: RemoteTarInterface | undefined;
-}> => {
-  const buf: ArrayBuffer = await fetchByteRange(url, 0, 512 * 3);
-  if (isTarHeader(buf.slice(0, 512))) {
-    const tarEntryBuf = buf.slice(512, 512 + 1024);
-    const tarEntryJson = new TextDecoder().decode(tarEntryBuf);
-    const tarEntry = JSON.parse(tarEntryJson);
-    const indexInfo = tarEntry["index"];
-    const entryDataStartByte = indexInfo["d"];
-    const entryDataSize = indexInfo["s"];
-
-    const indexBuf = await fetchByteRange(
-      url,
-      entryDataStartByte,
-      entryDataSize,
-    );
-    const indexStr = new TextDecoder().decode(indexBuf);
-    const index = JSON.parse(indexStr);
-    const remoteTar: RemoteTarInterface = {
-      url: url,
-      getByteRangeForFile: async (fileName: string) => {
-        const f = index.files.find((ff: any) => ff.n === fileName);
-        if (!f) {
-          throw Error(`File ${fileName} not found in tar`);
-        }
-        return {
-          startByte: f.d as number,
-          endByte: (f.d + f.s) as number,
-        };
-      },
-    };
-    const { startByte: rfsStartByte, endByte: rfsEndByte } =
-      await remoteTar.getByteRangeForFile("lindi.json");
-    const rfsBuf = await fetchByteRange(
-      url,
-      rfsStartByte,
-      rfsEndByte - rfsStartByte,
-    );
-    const rfs = JSON.parse(new TextDecoder().decode(rfsBuf));
-    if (!isReferenceFileSystemObject(rfs)) {
-      console.warn(rfs);
-      throw Error("Invalid rfs from tar");
-    }
-    return {
-      rfs,
-      remoteTar,
-    };
-  } else {
-    const r = await fetch(url);
-    if (!r.ok) throw Error("Failed to fetch LINDI file" + url);
-    const rfs = await r.json();
-    if (!isReferenceFileSystemObject(rfs)) {
-      console.warn(rfs);
-      throw Error("Invalid rfs");
-    }
-    return {
-      rfs,
-      remoteTar: undefined,
-    };
-  }
-};
-
 const fetchByteRange = async (url: string, startByte: number, size: number) => {
   const r = await fetch(url, {
     headers: {
@@ -528,71 +411,10 @@ const fetchByteRange = async (url: string, startByte: number, size: number) => {
   return await r.arrayBuffer();
 };
 
-const isTarHeader = (buf: ArrayBuffer) => {
-  if (buf.byteLength < 512) {
-    return false;
-  }
-
-  // We're only going to support ustar format
-  // get the ustar indicator at bytes 257-262
-  const ustarIndicator = buf.slice(257, 262);
-  const ustarIndicatorStr = new TextDecoder().decode(
-    ustarIndicator.slice(0, 5),
-  );
-  const bb = new Uint8Array(buf);
-  if (ustarIndicatorStr === "ustar" && bb[257 + 5] == 0) {
-    return true;
-  }
-
-  // Check for any 0 bytes in the header
-  const bb2 = new Uint8Array(buf);
-  if (bb2.includes(0)) {
-    console.warn(ustarIndicatorStr);
-    throw Error(
-      "Problem with lindi file: 0 byte found in header, but not ustar tar format",
-    );
-  }
-
-  return false;
-};
-
 const getNameFromPath = (path: string) => {
   const parts = path.split("/");
   if (parts.length === 0) return "";
   return parts[parts.length - 1];
 };
 
-const lock1: { locked: boolean } = { locked: false };
-const globalLindiRemoteH5Files: { [url: string]: RemoteH5FileLindi } = {};
-export const getRemoteH5FileLindi = async (url: string) => {
-  while (lock1.locked) await new Promise((resolve) => setTimeout(resolve, 100));
-  try {
-    lock1.locked = true;
-    const kk = url;
-    if (!globalLindiRemoteH5Files[kk]) {
-      globalLindiRemoteH5Files[kk] = await RemoteH5FileLindi.create(url);
-    }
-    return globalLindiRemoteH5Files[kk];
-  } finally {
-    lock1.locked = false;
-  }
-};
-
-// const metaOnly = (obj: ReferenceFileSystemObject) => {
-//   const ret = {
-//     refs: {} as any,
-//     version: obj.version,
-//   };
-//   for (const k in obj.refs) {
-//     if (
-//       k.endsWith(".zattrs") ||
-//       k.endsWith(".zgroup") ||
-//       k.endsWith(".zarray")
-//     ) {
-//       ret.refs[k] = obj.refs[k];
-//     }
-//   }
-//   return ret;
-// };
-
-export default RemoteH5FileLindi;
+export default RemoteZarr;

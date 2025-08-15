@@ -2,10 +2,10 @@ import TimeScrollView3 from "@shared/component-time-scroll-view-3/TimeScrollView
 import { useTimeScrollView3 } from "@shared/component-time-scroll-view-3/useTimeScrollView3";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2/TimeseriesSelectionContext";
 import { useEffect, useMemo, useState } from "react";
-import { DatasetDataType, RemoteH5Group } from "../remote-h5-file";
+import { DatasetDataType, ZarrGroup } from "../remote-zarr/RemoteZarr";
 
 export const FPTimeseriesGraph: React.FC<{
-  zarrGroup: RemoteH5Group;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
@@ -420,7 +420,7 @@ type IntervalSeries = {
   t_end: DatasetDataType;
 };
 
-const useTimeseriesGraphClient = (zarrGroup: RemoteH5Group) => {
+const useTimeseriesGraphClient = (zarrGroup: ZarrGroup) => {
   const [client, setClient] = useState<TimeseriesGraphClient | null>(null);
   useEffect(() => {
     let canceled = false;
@@ -445,7 +445,7 @@ class TimeseriesGraphClient {
     public legendOpts: { location?: string; hideLegend?: boolean } = {},
     public seriesNames: string[] = []
   ) {}
-  static async create(zarrGroup: RemoteH5Group) {
+  static async create(zarrGroup: ZarrGroup) {
     const seriesNames = zarrGroup.attrs["series_names"] || [];
     const series: (LineSeries | MarkerSeries | IntervalSeries)[] = [];
     for (const name of seriesNames) {
