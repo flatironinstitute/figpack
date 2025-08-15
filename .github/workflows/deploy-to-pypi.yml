@@ -2,6 +2,11 @@ name: Deploy to PyPI
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "figpack/__init__.py"
+    branches:
+      - main
 
 jobs:
   deploy:
