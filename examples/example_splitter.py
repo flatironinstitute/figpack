@@ -1,12 +1,12 @@
+import os
 import numpy as np
 import figpack.views as vv
 
 
 def main():
     view = example_splitter_layout()
-    view.show(open_in_browser=True)
-    # view.dev()
-    # view.upload()
+    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
+    view.show(open_in_browser=True, upload=upload)
 
 
 def example_splitter_layout():
@@ -14,14 +14,12 @@ def example_splitter_layout():
     Create an example Splitter layout with nested views
     """
     # Create some sample timeseries graphs
-    v_units_table = create_sample_graph("Units Table", color="blue")
-    v_raster_plot = create_sample_graph("Raster Plot", color="red")
-    v_unit_similarity_matrix = create_sample_graph(
-        "Unit Similarity Matrix", color="green"
-    )
-    v_autocorrelograms = create_sample_graph("Autocorrelograms", color="purple")
-    v_average_waveforms = create_sample_graph("Average Waveforms", color="orange")
-    v_cross_correlograms = create_sample_graph("Cross Correlograms", color="brown")
+    v_signal_a = create_sample_graph("Signal A", color="blue")
+    v_signal_b = create_sample_graph("Signal B", color="red")
+    v_signal_c = create_sample_graph("Signal C", color="green")
+    v_signal_d = create_sample_graph("Signal D", color="purple")
+    v_signal_e = create_sample_graph("Signal E", color="orange")
+    v_signal_f = create_sample_graph("Signal F", color="brown")
 
     # Create the complex nested layout as shown in the task description
     view = vv.Splitter(
@@ -31,13 +29,13 @@ def example_splitter_layout():
                 vv.Box(
                     direction="horizontal",
                     items=[
-                        vv.LayoutItem(v_units_table, stretch=1, title="Units Table"),
-                        vv.LayoutItem(v_raster_plot, stretch=2, title="Raster Plot"),
+                        vv.LayoutItem(v_signal_a, stretch=1, title="Signal A"),
+                        vv.LayoutItem(v_signal_b, stretch=2, title="Signal B"),
                         vv.LayoutItem(
-                            v_unit_similarity_matrix,
+                            v_signal_c,
                             min_size=100,
                             max_size=200,
-                            title="Unit Similarity Matrix",
+                            title="Signal C",
                         ),
                     ],
                 ),
@@ -54,22 +52,18 @@ def example_splitter_layout():
                                 direction="horizontal",
                                 items=[
                                     vv.LayoutItem(
-                                        v_autocorrelograms,
+                                        v_signal_d,
                                         min_size=300,
                                         max_size=350,
-                                        title="Autocorrelograms",
+                                        title="Signal D",
                                     ),
-                                    vv.LayoutItem(
-                                        v_average_waveforms, title="Average Waveforms"
-                                    ),
+                                    vv.LayoutItem(v_signal_e, title="Signal E"),
                                 ],
                             ),
                             title="Left Bottom",
                         )
                     ),
-                    item2=(
-                        vv.LayoutItem(v_cross_correlograms, title="Cross Correlograms")
-                    ),
+                    item2=(vv.LayoutItem(v_signal_f, title="Signal F")),
                 ),
                 title="Bottom Section",
             )
@@ -96,16 +90,16 @@ def create_sample_graph(name: str, color: str = "blue"):
     n = 1000
     t = np.arange(0, n) / n * 10
 
-    # Create different waveforms based on the name
-    if "Units" in name:
+    # Create different signal patterns based on the name
+    if "Signal A" in name:
         y = 5 * np.sin(2 * np.pi * t) + 2 * np.cos(4 * np.pi * t)
-    elif "Raster" in name:
+    elif "Signal B" in name:
         y = 3 * np.sin(3 * np.pi * t) * np.exp(-t / 5)
-    elif "Similarity" in name:
+    elif "Signal C" in name:
         y = 2 * np.sin(np.pi * t) + 3 * np.sin(2 * np.pi * t)
-    elif "Autocorr" in name:
+    elif "Signal D" in name:
         y = 4 * np.cos(2 * np.pi * t) + np.sin(8 * np.pi * t)
-    elif "Waveforms" in name:
+    elif "Signal E" in name:
         y = np.sin(2 * np.pi * t) + 0.5 * np.random.randn(len(t))
     else:
         y = 2 * np.cos(3 * np.pi * t) + np.sin(5 * np.pi * t)

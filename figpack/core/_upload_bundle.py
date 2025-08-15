@@ -1,62 +1,15 @@
-import os
 import time
 import json
-import uuid
-import tempfile
 import pathlib
 import requests
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
-from .figpack_view import FigpackView
-from ._bundle_utils import prepare_figure_bundle
-
 thisdir = pathlib.Path(__file__).parent.resolve()
 
 FIGPACK_API_BASE_URL = "https://figpack-api.vercel.app"
-TEMPORY_BASE_URL = "https://tempory.net/figpack/figures"
-
-
-def _upload_view(view: FigpackView) -> str:
-    """
-    Upload a figpack view to the cloud
-
-    Args:
-        view: The figpack view to upload
-
-    Returns:
-        str: URL where the uploaded figure can be viewed
-
-    Raises:
-        EnvironmentError: If FIGPACK_UPLOAD_PASSCODE is not set
-        Exception: If upload fails
-    """
-    # Check for required environment variable
-    passcode = os.environ.get("FIGPACK_UPLOAD_PASSCODE")
-    if not passcode:
-        raise EnvironmentError(
-            "FIGPACK_UPLOAD_PASSCODE environment variable must be set"
-        )
-
-    # Generate random figure ID
-    figure_id = str(uuid.uuid4())
-    print(f"Generated figure ID: {figure_id}")
-
-    with tempfile.TemporaryDirectory(prefix="figpack_upload_") as tmpdir:
-        # Prepare the figure bundle (reuse logic from _show_view)
-        print("Preparing figure bundle...")
-        prepare_figure_bundle(view, tmpdir)
-
-        # Upload the bundle
-        print("Starting upload...")
-        _upload_bundle(tmpdir, figure_id, passcode)
-
-        # Return the final URL
-        figure_url = f"{TEMPORY_BASE_URL}/{figure_id}/index.html"
-        print(f"Upload completed successfully!")
-        print(f"Figure available at: {figure_url}")
-        return figure_url
+TEMPORY_BASE_URL = "https://tempory.net/figpack/default/figures"
 
 
 def _upload_single_file(
@@ -192,6 +145,9 @@ def _upload_bundle(tmpdir: str, figure_id: str, passcode: str) -> None:
     _upload_small_file(
         figure_id, "figpack.json", json.dumps(figpack_json, indent=2), passcode
     )
+
+    figure_url = f"{TEMPORY_BASE_URL}/{figure_id}/index.html"
+    return figure_url
 
 
 def _determine_file_type(file_path: str) -> str:

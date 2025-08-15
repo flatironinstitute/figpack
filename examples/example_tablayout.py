@@ -1,12 +1,12 @@
+import os
 import numpy as np
 import figpack.views as vv
 
 
 def main():
     view = example_tab_layout()
-    view.show(open_in_browser=True)
-    # view.dev()
-    # view.upload()
+    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
+    view.show(open_in_browser=True, upload=upload)
 
 
 def example_tab_layout():
@@ -14,22 +14,22 @@ def example_tab_layout():
     Create an example TabLayout with multiple TimeseriesGraph views
     """
     # Create sample timeseries graphs for different tabs
-    units_table = create_sample_graph("Units Table", color="blue")
-    raster_plot = create_sample_graph("Raster Plot", color="red")
-    autocorrelograms = create_sample_graph("Autocorrelograms", color="green")
-    avg_waveforms = create_sample_graph("Average Waveforms", color="purple")
-    cross_correlograms = create_sample_graph("Cross Correlograms", color="orange")
-    similarity_matrix = create_sample_graph("Unit Similarity Matrix", color="brown")
+    signal_a = create_sample_graph("Signal A", color="blue")
+    signal_b = create_sample_graph("Signal B", color="red")
+    signal_c = create_sample_graph("Signal C", color="green")
+    signal_d = create_sample_graph("Signal D", color="purple")
+    signal_e = create_sample_graph("Signal E", color="orange")
+    signal_f = create_sample_graph("Signal F", color="brown")
 
     # Create the TabLayout as specified in the task
     view = vv.TabLayout(
         items=[
-            vv.TabLayoutItem(label="Units table", view=units_table),
-            vv.TabLayoutItem(label="Raster plot", view=raster_plot),
-            vv.TabLayoutItem(label="Autocorrelograms", view=autocorrelograms),
-            vv.TabLayoutItem(label="Avg waveforms", view=avg_waveforms),
-            vv.TabLayoutItem(label="Cross correlograms", view=cross_correlograms),
-            vv.TabLayoutItem(label="Unit similarity matrix", view=similarity_matrix),
+            vv.TabLayoutItem(label="Signal A", view=signal_a),
+            vv.TabLayoutItem(label="Signal B", view=signal_b),
+            vv.TabLayoutItem(label="Signal C", view=signal_c),
+            vv.TabLayoutItem(label="Signal D", view=signal_d),
+            vv.TabLayoutItem(label="Signal E", view=signal_e),
+            vv.TabLayoutItem(label="Signal F", view=signal_f),
         ]
     )
 
@@ -52,16 +52,16 @@ def create_sample_graph(name: str, color: str = "blue"):
     n = 1000
     t = np.arange(0, n) / n * 10
 
-    # Create different waveforms based on the name
-    if "Units" in name:
+    # Create different signal patterns based on the name
+    if "Signal A" in name:
         y = 5 * np.sin(2 * np.pi * t) + 2 * np.cos(4 * np.pi * t)
-    elif "Raster" in name:
+    elif "Signal B" in name:
         y = 3 * np.sin(3 * np.pi * t) * np.exp(-t / 5)
-    elif "Autocorrelograms" in name:
+    elif "Signal C" in name:
         y = 2 * np.sin(np.pi * t) + 3 * np.sin(2 * np.pi * t)
-    elif "Waveforms" in name:
+    elif "Signal D" in name:
         y = 4 * np.cos(2 * np.pi * t) + np.sin(8 * np.pi * t)
-    elif "Cross" in name:
+    elif "Signal E" in name:
         y = np.sin(4 * np.pi * t) + 2 * np.cos(6 * np.pi * t)
     else:
         y = np.sin(2 * np.pi * t) + 0.5 * np.random.randn(len(t))

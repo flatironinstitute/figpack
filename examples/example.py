@@ -1,12 +1,12 @@
+import os
 import numpy as np
 import figpack.views as vv
 
 
 def main():
     view = example_timeseries_graph()
-    view.show(open_in_browser=True)
-    # view.dev()
-    # view.upload()
+    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
+    view.show(open_in_browser=True, upload=upload)
 
 
 def example_timeseries_graph(*, height=500):
@@ -16,7 +16,7 @@ def example_timeseries_graph(*, height=500):
         y_range=[-15, 15],
         hide_x_gridlines=False,
         hide_y_gridlines=True,
-        y_label="Amplitude (mV)",
+        y_label="Value",
     )
 
     # this is for testing the time offset feature

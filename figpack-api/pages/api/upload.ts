@@ -14,7 +14,7 @@ const bucket: Bucket = {
 
 // Validation functions using only string methods
 function validateDestinationUrl(url: string): ValidationResult {
-  const expectedPrefix = 'https://tempory.net/figpack/figures/';
+  const expectedPrefix = 'https://tempory.net/figpack/default/figures/';
   
   if (!url.startsWith(expectedPrefix)) {
     return { valid: false };
@@ -216,11 +216,11 @@ export default async function handler(
     if (!urlValidation.valid) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid destination URL. Must start with https://tempory.net/figpack/figures/<figure-id>/'
+        message: 'Invalid destination URL. Must start with https://tempory.net/figpack/default/figures/<figure-id>/'
       });
     }
 
-    const filePath = destinationUrl.split('/').slice(6).join('/'); // Remove base URL part
+    const filePath = destinationUrl.split('/').slice(7).join('/'); // Remove base URL part
 
     // Validate file path
     const fileValidation = validateFilePath(filePath);

@@ -1,12 +1,12 @@
+import os
 import numpy as np
 import figpack.views as vv
 
 
 def main():
     view = example_box_layout()
-    view.show(open_in_browser=True)
-    # view.dev()
-    # view.upload()
+    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
+    view.show(open_in_browser=True, upload=upload)
 
 
 def example_box_layout():
@@ -83,7 +83,7 @@ def create_sample_graph(name: str, color: str = "blue"):
     n = 1000
     t = np.arange(0, n) / n * 10
 
-    # Create different waveforms based on the name
+    # Create different signal patterns based on the name
     if "1" in name:
         y = 5 * np.sin(2 * np.pi * t) + 2 * np.cos(4 * np.pi * t)
     elif "2" in name:

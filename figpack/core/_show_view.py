@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from typing import Union
 import tempfile
@@ -12,6 +13,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from .figpack_view import FigpackView
 from ._bundle_utils import prepare_figure_bundle
+from ._upload_bundle import _upload_bundle
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
@@ -22,16 +24,43 @@ def _show_view(
     open_in_browser: bool = False,
     port: Union[int, None] = None,
     allow_origin: Union[str, None] = None,
+    upload: bool = False,
 ):
     with tempfile.TemporaryDirectory(prefix="figpack_") as tmpdir:
         prepare_figure_bundle(view, tmpdir)
 
-        serve_files(
-            tmpdir,
-            port=port,
-            open_in_browser=open_in_browser,
-            allow_origin=allow_origin,
-        )
+        if upload:
+            # Check for required environment variable
+            passcode = os.environ.get("FIGPACK_UPLOAD_PASSCODE")
+            if not passcode:
+                raise EnvironmentError(
+                    "FIGPACK_UPLOAD_PASSCODE environment variable must be set to upload views."
+                )
+
+            # Generate random figure ID
+            figure_id = str(uuid.uuid4())
+
+            # Upload the bundle
+            print("Starting upload...")
+            figure_url = _upload_bundle(tmpdir, figure_id, passcode)
+
+            # Return the final URL
+            print(f"Upload completed successfully!")
+
+            if open_in_browser:
+                webbrowser.open(figure_url)
+                print(f"Opening {figure_url} in browser.")
+            else:
+                print(f"View the figure at: {figure_url}")
+
+            return figure_url
+        else:
+            serve_files(
+                tmpdir,
+                port=port,
+                open_in_browser=open_in_browser,
+                allow_origin=allow_origin,
+            )
 
 
 class CORSRequestHandler(SimpleHTTPRequestHandler):

@@ -18,38 +18,35 @@ class FigpackView:
         port: Union[int, None] = None,
         open_in_browser: bool = False,
         allow_origin: Union[str, None] = None,
+        upload: bool = False,
+        _dev: bool = False,
     ):
         """
         Display the visualization component
         """
         from ._show_view import _show_view
 
+        if _dev:
+            if port is None:
+                port = 3004
+            if open_in_browser:
+                raise ValueError("Cannot open in browser when _dev is True.")
+            if allow_origin is not None:
+                raise ValueError("Cannot set allow_origin when _dev is True.")
+            allow_origin = "http://localhost:5173"
+            if upload:
+                raise ValueError("Cannot upload when _dev is True.")
+
+            print(
+                "For development, run figpack-gui in dev mode and use http://localhost:5173?data=http://localhost:{port}/data.zarr"
+            )
+
         _show_view(
-            self, port=port, open_in_browser=open_in_browser, allow_origin=allow_origin
-        )
-
-    def upload(self) -> str:
-        """
-        Upload the visualization to the cloud
-
-        Returns:
-            str: URL where the uploaded figure can be viewed
-
-        Raises:
-            EnvironmentError: If FIGPACK_UPLOAD_PASSCODE is not set
-            Exception: If upload fails
-        """
-        from ._upload_view import _upload_view
-
-        return _upload_view(self)
-
-    def dev(self):
-        port = 3004
-        print(
-            f"For development, run figpack-gui in dev mode and use http://localhost:5173?data=http://localhost:{port}/data.zarr"
-        )
-        self.show(
-            port=port, open_in_browser=False, allow_origin="http://localhost:5173"
+            self,
+            port=port,
+            open_in_browser=open_in_browser,
+            allow_origin=allow_origin,
+            upload=upload,
         )
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:
