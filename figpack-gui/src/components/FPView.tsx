@@ -4,6 +4,7 @@ import { FPBox } from "./FPBox";
 import { FPSplitter } from "./FPSplitter";
 import { FPTabLayout } from "./FPTabLayout";
 import { FPAutocorrelograms } from "./FPAutocorrelograms";
+import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
 import { FPMarkdown } from "./FPMarkdown";
 import { FPPlotlyFigure } from "./FPPlotlyFigure";
@@ -28,6 +29,14 @@ export const FPView: React.FC<{
   } else if (zarrGroup.attrs["view_type"] === "Autocorrelograms") {
     return (
       <FPAutocorrelograms zarrGroup={zarrGroup} width={width} height={height} />
+    );
+  } else if (zarrGroup.attrs["view_type"] === "CrossCorrelograms") {
+    return (
+      <FPCrossCorrelograms
+        zarrGroup={zarrGroup}
+        width={width}
+        height={height}
+      />
     );
   } else if (zarrGroup.attrs["view_type"] === "UnitsTable") {
     return <FPUnitsTable zarrGroup={zarrGroup} width={width} height={height} />;

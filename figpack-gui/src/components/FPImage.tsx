@@ -29,7 +29,7 @@ export const FPImage: React.FC<{
         // Get the image data from the zarr array
         const data = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, "image_data"),
-          {}
+          {},
         );
         if (!data || data.length === 0) {
           throw new Error("Empty image data");
@@ -52,7 +52,7 @@ export const FPImage: React.FC<{
       } catch (err) {
         console.error("Failed to load image:", err);
         setError(
-          `Failed to load image: ${err instanceof Error ? err.message : String(err)}`
+          `Failed to load image: ${err instanceof Error ? err.message : String(err)}`,
         );
       } finally {
         setLoading(false);
