@@ -4,6 +4,7 @@ import { FPBox } from "./FPBox";
 import { FPSplitter } from "./FPSplitter";
 import { FPTabLayout } from "./FPTabLayout";
 import { FPAutocorrelograms } from "./FPAutocorrelograms";
+import { FPUnitsTable } from "./FPUnitsTable";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -24,6 +25,8 @@ export const FPView: React.FC<{
     return (
       <FPAutocorrelograms zarrGroup={zarrGroup} width={width} height={height} />
     );
+  } else if (zarrGroup.attrs["view_type"] === "UnitsTable") {
+    return <FPUnitsTable zarrGroup={zarrGroup} width={width} height={height} />;
   } else {
     return (
       <div>

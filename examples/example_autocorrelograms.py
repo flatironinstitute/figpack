@@ -5,13 +5,16 @@ import spikeinterface as si
 import spikeinterface.extractors as se
 
 import figpack.spike_sorting.views as ssv
+import figpack.views as vv
 
 from helpers.compute_correlogram_data import compute_correlogram_data
 
 
 def main():
-    _, sorting = se.toy_example(num_units=18, duration=300, seed=0, num_segments=1)
-    view = example_autocorrelograms(sorting=sorting)
+    recording, sorting = se.toy_example(
+        num_units=18, duration=300, seed=0, num_segments=1
+    )
+    view = example_autocorrelograms(recording=recording, sorting=sorting)
     title = "Example Autocorrelograms"
     description_md = """
 # Example Autocorrelograms
@@ -31,8 +34,30 @@ This is an example of autocorrelograms created using figpack.
 
 
 def example_autocorrelograms(
-    *, sorting: si.BaseSorting, height=400
-) -> ssv.Autocorrelograms:
+    *, recording: si.BaseRecording, sorting: si.BaseSorting, height=400
+) -> vv.Splitter:
+    # Create a simple units table for the left side
+    columns: List[ssv.UnitsTableColumn] = [
+        ssv.UnitsTableColumn(key="unitId", label="Unit", dtype="int"),
+    ]
+    rows: List[ssv.UnitsTableRow] = []
+    for unit_id in sorting.get_unit_ids():
+        rows.append(
+            ssv.UnitsTableRow(
+                unit_id=unit_id,
+                values={
+                    "unitId": unit_id,
+                },
+            )
+        )
+
+    units_table = ssv.UnitsTable(
+        columns=columns,
+        rows=rows,
+        height=height,
+    )
+
+    # Create autocorrelograms for the right side
     autocorrelogram_items: List[ssv.AutocorrelogramItem] = []
     for unit_id in sorting.get_unit_ids():
         a = compute_correlogram_data(
@@ -49,8 +74,19 @@ def example_autocorrelograms(
                 unit_id=unit_id, bin_edges_sec=bin_edges_sec, bin_counts=bin_counts
             )
         )
-    view = ssv.Autocorrelograms(autocorrelograms=autocorrelogram_items, height=height)
-    return view
+    autocorrelograms = ssv.Autocorrelograms(
+        autocorrelograms=autocorrelogram_items, height=height
+    )
+
+    # Create splitter with units table on left (max width 300px) and autocorrelograms on right
+    splitter = vv.Splitter(
+        direction="horizontal",
+        item1=vv.LayoutItem(view=units_table, max_size=300, title="Units"),
+        item2=vv.LayoutItem(view=autocorrelograms, title="Autocorrelograms"),
+        split_pos=0.25,  # 25% for the units table, 75% for autocorrelograms
+    )
+
+    return splitter
 
 
 if __name__ == "__main__":

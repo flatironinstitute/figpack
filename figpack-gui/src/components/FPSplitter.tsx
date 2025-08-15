@@ -12,10 +12,39 @@ export const FPSplitter: React.FC<{
 }> = ({ zarrGroup, width, height }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const initialSplitPos = zarrGroup.attrs["split_pos"] || 0.5;
+  const item1Metadata = zarrGroup.attrs["item1_metadata"] || {};
+  const item2Metadata = zarrGroup.attrs["item2_metadata"] || {};
 
-  const [splitPos, setSplitPos] = useState(initialSplitPos);
+  // Apply constraints to initial split position
+  const constrainedInitialSplitPos = useMemo(() => {
+    const containerSize = direction === "horizontal" ? width : height;
+    let minPos = MIN_PANE_SIZE / containerSize;
+    let maxPos =
+      (containerSize - MIN_PANE_SIZE - SPLITTER_SIZE) / containerSize;
+
+    // Apply max_size constraints from metadata
+    if (item1Metadata.max_size) {
+      const maxItem1Pos = item1Metadata.max_size / containerSize;
+      maxPos = Math.min(maxPos, maxItem1Pos);
+    }
+    if (item2Metadata.max_size) {
+      const maxItem2Size = item2Metadata.max_size;
+      const minItem1Pos =
+        (containerSize - maxItem2Size - SPLITTER_SIZE) / containerSize;
+      minPos = Math.max(minPos, minItem1Pos);
+    }
+
+    return Math.max(minPos, Math.min(maxPos, initialSplitPos));
+  }, [direction, width, height, item1Metadata, item2Metadata, initialSplitPos]);
+
+  const [splitPos, setSplitPos] = useState(constrainedInitialSplitPos);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Update splitPos when constraints change (e.g., container resize)
+  React.useEffect(() => {
+    setSplitPos(constrainedInitialSplitPos);
+  }, [constrainedInitialSplitPos]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -39,14 +68,26 @@ export const FPSplitter: React.FC<{
 
       // Apply constraints
       const containerSize = direction === "horizontal" ? width : height;
-      const minPos = MIN_PANE_SIZE / containerSize;
-      const maxPos =
+      let minPos = MIN_PANE_SIZE / containerSize;
+      let maxPos =
         (containerSize - MIN_PANE_SIZE - SPLITTER_SIZE) / containerSize;
+
+      // Apply max_size constraints from metadata
+      if (item1Metadata.max_size) {
+        const maxItem1Pos = item1Metadata.max_size / containerSize;
+        maxPos = Math.min(maxPos, maxItem1Pos);
+      }
+      if (item2Metadata.max_size) {
+        const maxItem2Size = item2Metadata.max_size;
+        const minItem1Pos =
+          (containerSize - maxItem2Size - SPLITTER_SIZE) / containerSize;
+        minPos = Math.max(minPos, minItem1Pos);
+      }
 
       newSplitPos = Math.max(minPos, Math.min(maxPos, newSplitPos));
       setSplitPos(newSplitPos);
     },
-    [isDragging, direction, width, height],
+    [isDragging, direction, width, height, item1Metadata, item2Metadata],
   );
 
   const handleMouseUp = useCallback(() => {
