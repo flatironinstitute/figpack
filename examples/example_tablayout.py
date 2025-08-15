@@ -5,8 +5,17 @@ import figpack.views as vv
 
 def main():
     view = example_tab_layout()
+    title = "Example Tab Layout"
+    description_md = """
+# Example Tab Layout
+
+This is an example of a TabLayout created using figpack, demonstrating multiple TimeseriesGraph views in separate tabs.
+"""
+
     upload = os.environ.get("FIGPACK_UPLOAD") == "1"
-    view.show(open_in_browser=True, upload=upload)
+    view.show(
+        open_in_browser=True, upload=upload, title=title, description=description_md
+    )
 
 
 def example_tab_layout():

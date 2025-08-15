@@ -5,8 +5,17 @@ import figpack.views as vv
 
 def main():
     view = example_box_layout()
+    title = "Example Box Layout"
+    description_md = """
+# Example Box Layout
+
+This is an example of a Box layout created using figpack, demonstrating nested TimeseriesGraph views.
+"""
+
     upload = os.environ.get("FIGPACK_UPLOAD") == "1"
-    view.show(open_in_browser=True, upload=upload)
+    view.show(
+        open_in_browser=True, upload=upload, title=title, description=description_md
+    )
 
 
 def example_box_layout():
