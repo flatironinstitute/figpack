@@ -1,7 +1,7 @@
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "@shared/context-timeseries-selection-2";
+} from "@shared/context-timeseries-selection";
 import React, {
   FunctionComponent,
   useCallback,
@@ -41,14 +41,14 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
     () => (frac: number) => {
       return frac * width;
     },
-    [width],
+    [width]
   );
 
   const pixelToFrac = useMemo(
     () => (pix: number) => {
       return pix / width;
     },
-    [width],
+    [width]
   );
 
   const { x0, x1, x2, y1, y2 } = useMemo(() => {
@@ -131,7 +131,7 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
       visibleStartTimeSec,
       visibleEndTimeSec,
       setVisibleTimeRange,
-    ],
+    ]
   );
 
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
@@ -181,7 +181,7 @@ const TimeseriesSelectionBar: FunctionComponent<Props> = ({
       visibleEndTimeSec,
       setVisibleTimeRange,
       currentTimeSec,
-    ],
+    ]
   );
 
   if (

@@ -1,4 +1,4 @@
-import { useTimeRange } from "@shared/context-timeseries-selection-2";
+import { useTimeRange } from "@shared/context-timeseries-selection";
 import { FunctionComponent, useCallback } from "react";
 
 export type InteractionMode = "pan" | "select-zoom";
@@ -61,7 +61,7 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
     (mode: InteractionMode) => {
       onInteractionModeChange(mode);
     },
-    [onInteractionModeChange],
+    [onInteractionModeChange]
   );
 
   return (

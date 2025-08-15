@@ -1,6 +1,6 @@
 import TimeScrollView3 from "@shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeScrollView3 } from "@shared/component-time-scroll-view-3/useTimeScrollView3";
-import { useTimeseriesSelection } from "@shared/context-timeseries-selection-2/TimeseriesSelectionContext";
+import { useTimeseriesSelection } from "@shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { useEffect, useMemo, useState } from "react";
 import { DatasetDataType, ZarrGroup } from "../remote-zarr/RemoteZarr";
 

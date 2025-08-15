@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { useTimeRange } from "@shared/context-timeseries-selection-2";
+import { useTimeRange } from "@shared/context-timeseries-selection";
 import { InteractionMode } from "./TimeScrollToolbar";
 
 type MouseData = {

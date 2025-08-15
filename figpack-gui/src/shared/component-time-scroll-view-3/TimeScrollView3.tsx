@@ -1,7 +1,7 @@
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "@shared/context-timeseries-selection-2";
+} from "@shared/context-timeseries-selection";
 import React, {
   FunctionComponent,
   useCallback,

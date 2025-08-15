@@ -1,4 +1,4 @@
-import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection-2";
+import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
@@ -31,7 +31,7 @@ function App() {
 
   const [unitSelection, unitSelectionDispatch] = useReducer(
     unitSelectionReducer,
-    defaultUnitSelection,
+    defaultUnitSelection
   );
 
   // Adjust height to account for status bar (30px height)
