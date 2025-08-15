@@ -7,6 +7,7 @@ import { FPAutocorrelograms } from "./FPAutocorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
 import { FPMarkdown } from "./FPMarkdown";
 import { FPPlotlyFigure } from "./FPPlotlyFigure";
+import { FPMatplotlibFigure } from "./FPMatplotlibFigure";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -34,6 +35,10 @@ export const FPView: React.FC<{
   } else if (zarrGroup.attrs["view_type"] === "PlotlyFigure") {
     return (
       <FPPlotlyFigure zarrGroup={zarrGroup} width={width} height={height} />
+    );
+  } else if (zarrGroup.attrs["view_type"] === "MatplotlibFigure") {
+    return (
+      <FPMatplotlibFigure zarrGroup={zarrGroup} width={width} height={height} />
     );
   } else {
     return (

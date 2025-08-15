@@ -6,3 +6,4 @@ from .LayoutItem import LayoutItem
 from .TabLayoutItem import TabLayoutItem
 from .Markdown import Markdown
 from .PlotlyFigure import PlotlyFigure
+from .MatplotlibFigure import MatplotlibFigure
