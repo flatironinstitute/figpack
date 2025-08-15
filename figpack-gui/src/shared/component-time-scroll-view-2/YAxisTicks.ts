@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Matrix } from "mathjs";
 import { useMemo } from "react";
-import { convert2dDataSeries } from "./pointProjection";
 
 type YAxisProps = {
   datamin?: number;
@@ -148,30 +146,6 @@ const useYAxisTicks = (props: YAxisProps) => {
     );
     return { ticks: steps, datamin: _dataMin, datamax: _dataMax };
   }, [datamax, datamin, yZoom, pixelHeight]);
-};
-
-/**
- * Returns a set of labeled y-axis ticks/grid line locations, projected into the pixel drawing space.
- * @param ticks The set of vertical/data-axis tick marks to draw.
- * @param transform Output of pointProjection.use2dScalingMatrix(); a transform matrix mapping the native
- * unit space into the two-dimensional pixel space. (The x portion will be ignored, though.)
- * @returns Structured set of y-axis ticks ready for painting on the canvas.
- */
-export const useProjectedYAxisTicks = (ticks: TickSet, transform: Matrix) => {
-  return useMemo(() => {
-    const _ticks = ticks.ticks;
-    const pixelPoints = convert2dDataSeries(transform, [
-      new Array(_ticks.length).fill(0),
-      _ticks.map((t) => t.dataValue),
-    ]);
-    const pixelYValues = pixelPoints[1];
-    return {
-      ...ticks,
-      ticks: _ticks.map((t, ii) => {
-        return { ...t, pixelValue: pixelYValues[ii] };
-      }),
-    };
-  }, [ticks, transform]);
 };
 
 export default useYAxisTicks;
