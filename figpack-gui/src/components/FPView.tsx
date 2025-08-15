@@ -8,6 +8,7 @@ import { FPUnitsTable } from "./FPUnitsTable";
 import { FPMarkdown } from "./FPMarkdown";
 import { FPPlotlyFigure } from "./FPPlotlyFigure";
 import { FPMatplotlibFigure } from "./FPMatplotlibFigure";
+import { FPImage } from "./FPImage";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -40,6 +41,8 @@ export const FPView: React.FC<{
     return (
       <FPMatplotlibFigure zarrGroup={zarrGroup} width={width} height={height} />
     );
+  } else if (zarrGroup.attrs["view_type"] === "Image") {
+    return <FPImage zarrGroup={zarrGroup} width={width} height={height} />;
   } else {
     return (
       <div>
