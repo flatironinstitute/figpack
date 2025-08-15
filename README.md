@@ -71,7 +71,7 @@ figpack includes a command-line interface for working with figures:
 ### Download a Figure
 
 ```bash
-figpack download <figurl> <dest.tar.gz>
+figpack download <figure-url> <dest.tar.gz>
 ```
 
 Download a figure from any figpack URL and save it as a local archive.

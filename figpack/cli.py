@@ -23,24 +23,24 @@ from .core._show_view import serve_files
 MAX_WORKERS_FOR_DOWNLOAD = 16
 
 
-def get_figure_base_url(figurl: str) -> str:
+def get_figure_base_url(figure_url: str) -> str:
     """
     Get the base URL from any figpack URL
 
     Args:
-        figurl: Any figpack URL (may or may not end with /index.html)
+        figure_url: Any figpack URL (may or may not end with /index.html)
 
     Returns:
         str: The base URL for the figure directory
     """
     # Handle URLs that end with /index.html
-    if figurl.endswith("/index.html"):
-        base_url = figurl[:-11]  # Remove "/index.html"
-    elif figurl.endswith("/"):
-        base_url = figurl[:-1]  # Remove trailing slash
+    if figure_url.endswith("/index.html"):
+        base_url = figure_url[:-11]  # Remove "/index.html"
+    elif figure_url.endswith("/"):
+        base_url = figure_url[:-1]  # Remove trailing slash
     else:
         # Assume it's already a directory URL
-        base_url = figurl
+        base_url = figure_url
 
     # Ensure it ends with a slash for urljoin to work properly
     if not base_url.endswith("/"):
@@ -100,18 +100,18 @@ def download_file(
         return file_path, False
 
 
-def download_figure(figurl: str, dest_path: str) -> None:
+def download_figure(figure_url: str, dest_path: str) -> None:
     """
     Download a figure from a figpack URL and save as tar.gz
 
     Args:
-        figurl: The figpack URL
+        figure_url: The figpack URL
         dest_path: Destination path for the tar.gz file
     """
-    print(f"Downloading figure from: {figurl}")
+    print(f"Downloading figure from: {figure_url}")
 
     # Get base URL
-    base_url = get_figure_base_url(figurl)
+    base_url = get_figure_base_url(figure_url)
     print(f"Base URL: {base_url}")
 
     # Check if manifest.json exists
@@ -286,7 +286,7 @@ def main():
     download_parser = subparsers.add_parser(
         "download", help="Download a figure from a figpack URL"
     )
-    download_parser.add_argument("figurl", help="The figpack URL to download")
+    download_parser.add_argument("figure_url", help="The figpack URL to download")
     download_parser.add_argument("dest", help="Destination path for the tar.gz file")
 
     # View command
@@ -301,7 +301,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "download":
-        download_figure(args.figurl, args.dest)
+        download_figure(args.figure_url, args.dest)
     elif args.command == "view":
         view_figure(args.archive, port=args.port)
     else:

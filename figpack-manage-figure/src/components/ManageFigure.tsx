@@ -437,20 +437,6 @@ const ManageFigure: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Actions Card */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Actions
-          </Typography>
-          <Box display="flex" gap={2} flexWrap="wrap">
-            <Button variant="outlined" startIcon={<Download />} disabled>
-              Download as .tar.gz (Coming Soon)
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
       {/* Download Instructions Card */}
       <Card>
         <CardContent>
@@ -461,19 +447,45 @@ const ManageFigure: React.FC = () => {
             To download this figure as a .tar.gz file, use the figpack
             command-line tool:
           </Typography>
+          <Paper sx={{ p: 2, bgcolor: "grey.100", mb: 2 }}>
+            <Typography
+              variant="body2"
+              component="pre"
+              sx={{ fontFamily: "monospace" }}
+            >
+              figpack download {figureUrl} figure.tar.gz
+            </Typography>
+          </Paper>
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            Viewing Downloaded Figures
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            After downloading, you can view the figure archive locally in your
+            browser:
+          </Typography>
+          <Paper sx={{ p: 2, bgcolor: "grey.100", mb: 1 }}>
+            <Typography
+              variant="body2"
+              component="pre"
+              sx={{ fontFamily: "monospace" }}
+            >
+              figpack view figure.tar.gz
+            </Typography>
+          </Paper>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            The server will run locally until you press Enter. You can specify a
+            custom port using:
+          </Typography>
           <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
             <Typography
               variant="body2"
               component="pre"
               sx={{ fontFamily: "monospace" }}
             >
-              figpack download {figureUrl}
+              figpack view figure.tar.gz --port 8080
             </Typography>
           </Paper>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Note: This feature will be implemented in a future version of
-            figpack.
-          </Typography>
         </CardContent>
       </Card>
 
