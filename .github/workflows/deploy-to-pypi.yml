@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      contents: write
 
     steps:
       - name: Checkout code
@@ -40,5 +41,22 @@ jobs:
         run: |
           python -m build
 
+      - name: Install package locally
+        run: |
+          pip install .
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Extract version from installed package
+        id: get_version
+        run: |
+          VERSION=$(python -c "import figpack; print(figpack.__version__)")
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create and push git tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a ${{ steps.get_version.outputs.version }} -m "Release ${{ steps.get_version.outputs.version }}"
+          git push origin ${{ steps.get_version.outputs.version }}
