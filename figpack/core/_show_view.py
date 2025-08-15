@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from typing import Union
 import tempfile
@@ -37,19 +36,15 @@ def _show_view(
                     "FIGPACK_UPLOAD_PASSCODE environment variable must be set to upload views."
                 )
 
-            # Generate random figure ID
-            figure_id = str(uuid.uuid4())
-
             # Upload the bundle
             print("Starting upload...")
-            figure_url = _upload_bundle(tmpdir, figure_id, passcode)
-
-            # Return the final URL
-            print(f"Upload completed successfully!")
+            figure_url = _upload_bundle(tmpdir, passcode)
 
             if open_in_browser:
                 webbrowser.open(figure_url)
                 print(f"Opening {figure_url} in browser.")
+                # wait until user presses Enter
+                input("Press Enter to continue...")
             else:
                 print(f"View the figure at: {figure_url}")
 

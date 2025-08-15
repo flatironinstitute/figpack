@@ -1,8 +1,10 @@
 import time
 import json
+import uuid
 import pathlib
 import requests
 import threading
+import hashlib
 from .. import __version__
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -37,11 +39,120 @@ def _upload_single_file(
 MAX_WORKERS_FOR_UPLOAD = 16
 
 
-def _upload_bundle(tmpdir: str, figure_id: str, passcode: str) -> None:
+def _compute_deterministic_figure_id(tmpdir_path: pathlib.Path) -> str:
+    """
+    Compute a deterministic figure ID based on SHA1 hashes of all files
+
+    Returns:
+        str: 40-character SHA1 hash representing the content of all files
+    """
+    file_hashes = []
+
+    # Collect all files and their hashes
+    for file_path in sorted(tmpdir_path.rglob("*")):
+        if file_path.is_file():
+            relative_path = file_path.relative_to(tmpdir_path)
+
+            # Compute SHA1 hash of file content
+            sha1_hash = hashlib.sha1()
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    sha1_hash.update(chunk)
+
+            # Include both the relative path and content hash to ensure uniqueness
+            file_info = f"{relative_path}:{sha1_hash.hexdigest()}"
+            file_hashes.append(file_info)
+
+    # Create final hash from all file hashes
+    combined_hash = hashlib.sha1()
+    for file_hash in file_hashes:
+        combined_hash.update(file_hash.encode("utf-8"))
+
+    return combined_hash.hexdigest()
+
+
+def _check_existing_figure(figure_id: str) -> dict:
+    """
+    Check if a figure already exists and return its status
+
+    Returns:
+        dict: Contains 'exists' (bool) and 'status' (str) if exists
+    """
+    figpack_url = f"{TEMPORY_BASE_URL}/{figure_id}/figpack.json"
+
+    try:
+        response = requests.get(figpack_url, timeout=10)
+        if response.ok:
+            figpack_data = response.json()
+            return {"exists": True, "status": figpack_data.get("status", "unknown")}
+        else:
+            return {"exists": False}
+    except Exception:
+        return {"exists": False}
+
+
+def _find_available_figure_id(base_figure_id: str) -> tuple:
+    """
+    Find an available figure ID by checking base_figure_id, then base_figure_id-1, base_figure_id-2, etc.
+
+    Returns:
+        tuple: (figure_id_to_use, completed_figure_id) where:
+               - figure_id_to_use is None if upload should be skipped
+               - completed_figure_id is the ID of the completed figure if one exists
+    """
+    # First check the base figure ID
+    result = _check_existing_figure(base_figure_id)
+    if not result["exists"]:
+        return (base_figure_id, None)
+    elif result["status"] == "completed":
+        print(
+            f"Figure {base_figure_id} already exists and is completed. Skipping upload."
+        )
+        return (None, base_figure_id)  # Signal to skip upload, return completed ID
+
+    # If exists but not completed, try with suffixes
+    suffix = 1
+    while True:
+        candidate_id = f"{base_figure_id}-{suffix}"
+        result = _check_existing_figure(candidate_id)
+
+        if not result["exists"]:
+            print(f"Using figure ID: {candidate_id}")
+            return (candidate_id, None)
+        elif result["status"] == "completed":
+            print(
+                f"Figure {candidate_id} already exists and is completed. Skipping upload."
+            )
+            return (None, candidate_id)  # Signal to skip upload, return completed ID
+
+        suffix += 1
+        if suffix > 100:  # Safety limit
+            raise Exception(
+                "Too many existing figure variants, unable to find available ID"
+            )
+
+
+def _upload_bundle(tmpdir: str, passcode: str) -> None:
     """
     Upload the prepared bundle to the cloud using parallel uploads
     """
     tmpdir_path = pathlib.Path(tmpdir)
+
+    # Compute deterministic figure ID based on file contents
+    print("Computing deterministic figure ID...")
+    base_figure_id = _compute_deterministic_figure_id(tmpdir_path)
+    print(f"Base figure ID: {base_figure_id}")
+
+    # Find available figure ID (check for existing uploads)
+    figure_id, completed_figure_id = _find_available_figure_id(base_figure_id)
+
+    # If figure_id is None, it means we found a completed upload and should skip
+    if figure_id is None:
+        figure_url = f"{TEMPORY_BASE_URL}/{completed_figure_id}/index.html"
+        print(f"Figure already exists at: {figure_url}")
+        return figure_url
+
+    print(f"Using figure ID: {figure_id}")
 
     # First, upload initial figpack.json with "uploading" status
     print("Uploading initial status...")
