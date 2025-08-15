@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 let offset = 0; // so that we change which is the 0th unit
 let stride = 1;
 let num: number | undefined = undefined; // so that we change the periodicity
@@ -15,7 +16,6 @@ export const redistributeUnitColors = () => {
   if (num < colors.length - 6) {
     num = colors.length; // but don't let it get too low
   }
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     stride += 1;
     if (isRelativelyPrime(stride, num)) {

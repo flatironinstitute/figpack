@@ -12,9 +12,14 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@fi-sci/misc": "^0.0.10",
     "@fi-sci/splitter": "^0.0.3",
+    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@fortawesome/react-fontawesome": "^0.2.3",
     "@mui/material": "^7.3.1",
+    "chroma-js": "^3.1.2",
     "mathjs": "^14.6.0",
     "numcodecs": "^0.3.2",
     "pako": "^2.1.0",
@@ -25,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@types/chroma-js": "^3.1.1",
     "@types/node": "^24.2.1",
     "@types/pako": "^2.0.3",
     "@types/react": "^19.1.10",

@@ -4,7 +4,13 @@ import { StatusBar } from "./components/StatusBar";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
 import { useFigpackStatus } from "./hooks/useFigpackStatus";
-import { useEffect } from "react";
+import { useEffect, useReducer } from "react";
+import {
+  defaultUnitSelection,
+  UnitSelectionContext,
+  unitSelectionReducer,
+} from "@shared/context-unit-selection";
+import "./localStyles.css";
 
 function App() {
   const zarrData = useZarrData();
@@ -22,6 +28,11 @@ function App() {
       }
     }
   }, [zarrData]);
+
+  const [unitSelection, unitSelectionDispatch] = useReducer(
+    unitSelectionReducer,
+    defaultUnitSelection,
+  );
 
   // Adjust height to account for status bar (30px height)
   const adjustedHeight = height - 30;
@@ -67,7 +78,11 @@ function App() {
   return (
     <>
       <ProvideTimeseriesSelection>
-        <FPView zarrGroup={zarrData} width={width} height={adjustedHeight} />
+        <UnitSelectionContext.Provider
+          value={{ unitSelection, unitSelectionDispatch }}
+        >
+          <FPView zarrGroup={zarrData} width={width} height={adjustedHeight} />
+        </UnitSelectionContext.Provider>
       </ProvideTimeseriesSelection>
       <StatusBar />
     </>

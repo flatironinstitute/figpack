@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from "react";
-import { redistributeUnitColors } from "./unitColors";
+import { redistributeUnitColors } from "../../spike_sorting/view-units-table/unitColors";
 import { sortIds } from "./sortIds";
 import {
   getCheckboxClickHandlerGenerator,
@@ -106,10 +106,9 @@ export const unitSelectionReducer = (
 ): UnitSelection => {
   const { type } = a;
   switch (type) {
-    case INITIALIZE_UNITS:
+    case INITIALIZE_UNITS: {
       // jfm change on 3/17/23 - use the union of a.newUnitOrder and s.orderedUnitIds
       // if (s.orderedUnitIds.length > 0) return s
-      // eslint-disable-next-line no-case-declarations
       const orderedUnitIdsSet = new Set(s.orderedUnitIds);
       if (
         (a.newUnitOrder || []).filter((x) => !orderedUnitIdsSet.has(x))
@@ -119,7 +118,7 @@ export const unitSelectionReducer = (
       if (a.newUnitOrder && a.newUnitOrder.length >= 1) {
         return {
           ...s,
-          // selectedUnitIds: new Set<number | string>(), // don't initialize here, to support case of selection initialized via state
+          // selectedUnitIds: new Set<number | string>(), // don't initialze here, to support case of selection initialized via state
           orderedUnitIds: sortIds([
             ...new Set([...a.newUnitOrder, ...s.orderedUnitIds]),
           ]),
@@ -128,18 +127,19 @@ export const unitSelectionReducer = (
       throw Error(
         "Attempt to initialize table ordering with no actual units passed.",
       );
+    }
     case SET_SELECTION:
       return setSelectionExplicit(s, a);
     case UNIQUE_SELECT:
       return selectUnique(s, a);
     case UNIQUE_SELECT_NEXT:
-      return selectUniqueNext(s, a);
+      return selectUniqueNext(s);
     case UNIQUE_SELECT_PREVIOUS:
-      return selectUniquePrevious(s, a);
+      return selectUniquePrevious(s);
     case UNIQUE_SELECT_FIRST:
-      return selectUniqueFirst(s, a);
+      return selectUniqueFirst(s);
     case UNIQUE_SELECT_LAST:
-      return selectUniqueLast(s, a);
+      return selectUniqueLast(s);
     case TOGGLE_UNIT:
       return toggleSelectedUnit(s, a);
     case TOGGLE_RANGE:
@@ -197,7 +197,7 @@ const UnitSelectionContext = React.createContext<{
   unitSelectionDispatch: (action: UnitSelectionAction) => void;
 }>({
   unitSelection: defaultUnitSelection,
-  unitSelectionDispatch: (_action: UnitSelectionAction) => {},
+  unitSelectionDispatch: () => {},
   // this empty sortingSelectionDispatch function gets replaced by the xxContext.Provider element in App.tsx.
 });
 

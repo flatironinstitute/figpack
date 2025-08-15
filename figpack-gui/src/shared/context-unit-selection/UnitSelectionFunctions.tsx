@@ -30,10 +30,7 @@ export const selectUnique = (
   };
 };
 
-export const selectUniqueNext = (
-  s: UnitSelection,
-  _a: UnitSelectionAction,
-): UnitSelection => {
+export const selectUniqueNext = (s: UnitSelection): UnitSelection => {
   if (s.lastClickedId === undefined) {
     if (s.orderedUnitIds.length === 0) return s;
     return selectUnique(s, {
@@ -48,10 +45,7 @@ export const selectUniqueNext = (
   return selectUnique(s, { type: UNIQUE_SELECT, targetUnit: id });
 };
 
-export const selectUniquePrevious = (
-  s: UnitSelection,
-  _a: UnitSelectionAction,
-): UnitSelection => {
+export const selectUniquePrevious = (s: UnitSelection): UnitSelection => {
   if (s.lastClickedId === undefined) {
     return s;
   }
@@ -63,10 +57,7 @@ export const selectUniquePrevious = (
   return selectUnique(s, { type: UNIQUE_SELECT, targetUnit: id });
 };
 
-export const selectUniqueFirst = (
-  s: UnitSelection,
-  _a: UnitSelectionAction,
-): UnitSelection => {
+export const selectUniqueFirst = (s: UnitSelection): UnitSelection => {
   if (s.orderedUnitIds.length === 0) return s;
   return selectUnique(s, {
     type: UNIQUE_SELECT,
@@ -74,10 +65,7 @@ export const selectUniqueFirst = (
   });
 };
 
-export const selectUniqueLast = (
-  s: UnitSelection,
-  _a: UnitSelectionAction,
-): UnitSelection => {
+export const selectUniqueLast = (s: UnitSelection): UnitSelection => {
   if (s.orderedUnitIds.length === 0) return s;
   return selectUnique(s, {
     type: UNIQUE_SELECT,
@@ -126,9 +114,11 @@ export const toggleSelectedUnit = (
   if (a.targetUnit === undefined)
     throw new Error(`Attempt to toggle unit with unset unitid.`);
   const newSelectedUnitIds = new Set([...s.selectedUnitIds]);
-  newSelectedUnitIds.has(a.targetUnit)
-    ? newSelectedUnitIds.delete(a.targetUnit)
-    : newSelectedUnitIds.add(a.targetUnit);
+  if (newSelectedUnitIds.has(a.targetUnit)) {
+    newSelectedUnitIds.delete(a.targetUnit);
+  } else {
+    newSelectedUnitIds.add(a.targetUnit);
+  }
   let newCurrentUnitId = s.currentUnitId;
   if (a.targetUnit === s.currentUnitId) {
     newCurrentUnitId = [...newSelectedUnitIds][0];
@@ -172,9 +162,11 @@ export const toggleSelectedRange = (
     Math.min(lastClickedIndex, targetIndex),
     Math.max(lastClickedIndex, targetIndex) + 1,
   );
-  selectedUnitIds.has(targetUnit)
-    ? toggledIds.forEach((id) => selectedUnitIds.delete(id))
-    : toggledIds.forEach((id) => selectedUnitIds.add(id));
+  if (selectedUnitIds.has(targetUnit)) {
+    toggledIds.forEach((id) => selectedUnitIds.delete(id));
+  } else {
+    toggledIds.forEach((id) => selectedUnitIds.add(id));
+  }
 
   if (s.currentUnitId) {
     if (!selectedUnitIds.has(s.currentUnitId)) {
@@ -258,4 +250,4 @@ export const plotElementClick = (
   reducer(action);
 };
 
-export const voidClickHandler = (_evt: React.MouseEvent) => {};
+export const voidClickHandler = () => {};

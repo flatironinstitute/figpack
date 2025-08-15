@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const idToNum = (a: any): number => {
   if (typeof a === "number") return a;
   else if (typeof a === "string") {

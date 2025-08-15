@@ -3,6 +3,7 @@ import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
 import { FPBox } from "./FPBox";
 import { FPSplitter } from "./FPSplitter";
 import { FPTabLayout } from "./FPTabLayout";
+import { FPAutocorrelograms } from "./FPAutocorrelograms";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -19,6 +20,10 @@ export const FPView: React.FC<{
     return <FPSplitter zarrGroup={zarrGroup} width={width} height={height} />;
   } else if (zarrGroup.attrs["view_type"] === "TabLayout") {
     return <FPTabLayout zarrGroup={zarrGroup} width={width} height={height} />;
+  } else if (zarrGroup.attrs["view_type"] === "Autocorrelograms") {
+    return (
+      <FPAutocorrelograms zarrGroup={zarrGroup} width={width} height={height} />
+    );
   } else {
     return (
       <div>
