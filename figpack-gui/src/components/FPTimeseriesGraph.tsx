@@ -57,7 +57,7 @@ export const FPTimeseriesGraph: React.FC<{
         margins.left,
         margins.top,
         canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom,
+        canvasHeight - margins.top - margins.bottom
       );
       context.clip();
       const timeToPixel = (t: number) => {
@@ -104,6 +104,9 @@ export const FPTimeseriesGraph: React.FC<{
 
       // Restore canvas state (removes clipping)
       context.restore();
+
+      // Paint legend after restoring canvas state (so it's not clipped)
+      paintLegend(context, client, { margins, canvasWidth });
     };
     draw();
     return () => {
@@ -152,7 +155,7 @@ const paintLine = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  },
+  }
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel } =
     options;
@@ -205,7 +208,7 @@ const paintMarker = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  },
+  }
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel } =
     options;
@@ -224,7 +227,7 @@ const paintMarker = (
         x - series.radius,
         y - series.radius,
         series.radius * 2,
-        series.radius * 2,
+        series.radius * 2
       );
     }
     context.fill();
@@ -238,7 +241,7 @@ const paintInterval = (
     visibleStartTimeSec: number;
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
-  },
+  }
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel } = options;
   context.fillStyle = series.color;
@@ -253,10 +256,142 @@ const paintInterval = (
       xStart,
       0,
       xEnd - xStart,
-      context.canvas.height, // Fill the full height of the canvas
+      context.canvas.height // Fill the full height of the canvas
     );
   }
   context.globalAlpha = 1; // Reset alpha to default
+};
+
+const paintLegend = (
+  context: CanvasRenderingContext2D,
+  client: TimeseriesGraphClient,
+  options: {
+    margins: { left: number; top: number; right: number; bottom: number };
+    canvasWidth: number;
+  }
+) => {
+  if (!client) return;
+  if (client.legendOpts.hideLegend) return;
+
+  // Filter series to include only those with names and exclude interval series
+  const seriesToInclude = client.series.filter(
+    (s) => s.seriesType !== "interval"
+  );
+
+  if (seriesToInclude.length === 0) return;
+
+  const { location } = client.legendOpts;
+  const entryHeight = 18;
+  const entryFontSize = 12;
+  const symbolWidth = 50;
+  const legendWidth = 200;
+  const margin = 10;
+  const legendHeight = 20 + seriesToInclude.length * entryHeight;
+
+  const R =
+    location === "northwest"
+      ? {
+          x: options.margins.left + 20,
+          y: options.margins.top + 20,
+          w: legendWidth,
+          h: legendHeight,
+        }
+      : location === "northeast"
+        ? {
+            x: options.canvasWidth - options.margins.right - legendWidth - 20,
+            y: options.margins.top + 20,
+            w: legendWidth,
+            h: legendHeight,
+          }
+        : undefined;
+
+  if (!R) return; // unexpected
+
+  context.fillStyle = "white";
+  context.strokeStyle = "gray";
+  context.lineWidth = 1.5;
+  context.fillRect(R.x, R.y, R.w, R.h);
+  context.strokeRect(R.x, R.y, R.w, R.h);
+
+  seriesToInclude.forEach((s, i) => {
+    const y0 = R.y + margin + i * entryHeight;
+    const symbolRect = {
+      x: R.x + margin,
+      y: y0,
+      w: symbolWidth,
+      h: entryHeight,
+    };
+    const titleRect = {
+      x: R.x + margin + symbolWidth + margin,
+      y: y0,
+      w: legendWidth - margin - margin - symbolWidth - margin,
+      h: entryHeight,
+    };
+
+    // Get the series name from the series names stored in the client
+    const seriesIndex = client.series.indexOf(s);
+    const title = client.seriesNames?.[seriesIndex] || "untitled";
+
+    context.fillStyle = "black";
+    context.font = `${entryFontSize}px Arial`;
+    context.fillText(
+      title,
+      titleRect.x,
+      titleRect.y + titleRect.h / 2 + entryFontSize / 2
+    );
+
+    if (s.seriesType === "line") {
+      applyLineAttributes(context, s);
+      context.beginPath();
+      context.moveTo(symbolRect.x, symbolRect.y + symbolRect.h / 2);
+      context.lineTo(
+        symbolRect.x + symbolRect.w,
+        symbolRect.y + symbolRect.h / 2
+      );
+      context.stroke();
+      context.setLineDash([]);
+    } else if (s.seriesType === "marker") {
+      applyMarkerAttributes(context, s);
+      const radius = entryHeight * 0.3;
+      const shape = s.shape ?? "circle";
+      const center = {
+        x: symbolRect.x + symbolRect.w / 2,
+        y: symbolRect.y + symbolRect.h / 2,
+      };
+      if (shape === "circle") {
+        context.beginPath();
+        context.ellipse(center.x, center.y, radius, radius, 0, 0, 2 * Math.PI);
+        context.fill();
+      } else if (shape === "square") {
+        context.fillRect(
+          center.x - radius,
+          center.y - radius,
+          radius * 2,
+          radius * 2
+        );
+      }
+    }
+  });
+};
+
+const applyLineAttributes = (
+  context: CanvasRenderingContext2D,
+  series: LineSeries
+) => {
+  context.strokeStyle = series.color;
+  context.lineWidth = series.width;
+  if (series.dash) {
+    context.setLineDash(series.dash);
+  } else {
+    context.setLineDash([]);
+  }
+};
+
+const applyMarkerAttributes = (
+  context: CanvasRenderingContext2D,
+  series: MarkerSeries
+) => {
+  context.fillStyle = series.color;
 };
 
 type LineSeries = {
@@ -307,13 +442,15 @@ class TimeseriesGraphClient {
     public series: (LineSeries | MarkerSeries | IntervalSeries)[],
     public limits: { tMin: number; tMax: number; yMin: number; yMax: number },
     public yLabel: string,
+    public legendOpts: { location?: string; hideLegend?: boolean } = {},
+    public seriesNames: string[] = []
   ) {}
   static async create(zarrGroup: RemoteH5Group) {
     const seriesNames = zarrGroup.attrs["series_names"] || [];
     const series: (LineSeries | MarkerSeries | IntervalSeries)[] = [];
     for (const name of seriesNames) {
       const seriesGroup = await zarrGroup.file.getGroup(
-        join(zarrGroup.path, name),
+        join(zarrGroup.path, name)
       );
       if (!seriesGroup) {
         console.warn(`Series group not found: ${name}`);
@@ -323,7 +460,7 @@ class TimeseriesGraphClient {
       if (attrs["series_type"] === "line") {
         const t = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t",
-          {},
+          {}
         );
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
@@ -331,7 +468,7 @@ class TimeseriesGraphClient {
         }
         const y = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/y",
-          {},
+          {}
         );
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
@@ -348,7 +485,7 @@ class TimeseriesGraphClient {
       } else if (attrs["series_type"] === "marker") {
         const t = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t",
-          {},
+          {}
         );
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
@@ -356,7 +493,7 @@ class TimeseriesGraphClient {
         }
         const y = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/y",
-          {},
+          {}
         );
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
@@ -373,7 +510,7 @@ class TimeseriesGraphClient {
       } else if (attrs["series_type"] === "interval") {
         const t_start = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t_start",
-          {},
+          {}
         );
         if (!t_start) {
           console.warn(`Dataset t_start not found for series: ${name}`);
@@ -381,7 +518,7 @@ class TimeseriesGraphClient {
         }
         const t_end = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t_end",
-          {},
+          {}
         );
         if (!t_end) {
           console.warn(`Dataset t_end not found for series: ${name}`);
@@ -396,7 +533,7 @@ class TimeseriesGraphClient {
         });
       } else {
         console.warn(
-          `Unknown series type for ${name}: ${attrs["series_type"]}`,
+          `Unknown series type for ${name}: ${attrs["series_type"]}`
         );
         continue;
       }
@@ -435,7 +572,14 @@ class TimeseriesGraphClient {
       yMax,
     };
     const yLabel = zarrGroup.attrs["y_label"] || "";
-    return new TimeseriesGraphClient(series, limits, yLabel);
+    const legendOpts = zarrGroup.attrs["legend_opts"] || {};
+    return new TimeseriesGraphClient(
+      series,
+      limits,
+      yLabel,
+      legendOpts,
+      seriesNames
+    );
   }
 }
 
