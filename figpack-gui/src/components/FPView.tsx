@@ -5,6 +5,7 @@ import { FPSplitter } from "./FPSplitter";
 import { FPTabLayout } from "./FPTabLayout";
 import { FPAutocorrelograms } from "./FPAutocorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
+import { FPMarkdown } from "./FPMarkdown";
 
 export const FPView: React.FC<{
   zarrGroup: RemoteH5Group;
@@ -27,6 +28,8 @@ export const FPView: React.FC<{
     );
   } else if (zarrGroup.attrs["view_type"] === "UnitsTable") {
     return <FPUnitsTable zarrGroup={zarrGroup} width={width} height={height} />;
+  } else if (zarrGroup.attrs["view_type"] === "Markdown") {
+    return <FPMarkdown zarrGroup={zarrGroup} width={width} height={height} />;
   } else {
     return (
       <div>

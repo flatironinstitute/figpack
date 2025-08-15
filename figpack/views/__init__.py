@@ -4,3 +4,4 @@ from .Splitter import Splitter
 from .TabLayout import TabLayout
 from .LayoutItem import LayoutItem
 from .TabLayoutItem import TabLayoutItem
+from .Markdown import Markdown
