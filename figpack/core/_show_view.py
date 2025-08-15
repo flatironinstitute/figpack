@@ -24,9 +24,11 @@ def _show_view(
     port: Union[int, None] = None,
     allow_origin: Union[str, None] = None,
     upload: bool = False,
+    title: Union[str, None] = None,
+    description: Union[str, None] = None,
 ):
     with tempfile.TemporaryDirectory(prefix="figpack_") as tmpdir:
-        prepare_figure_bundle(view, tmpdir)
+        prepare_figure_bundle(view, tmpdir, title=title, description=description)
 
         if upload:
             # Check for required environment variable

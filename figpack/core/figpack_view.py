@@ -20,9 +20,20 @@ class FigpackView:
         allow_origin: Union[str, None] = None,
         upload: bool = False,
         _dev: bool = False,
+        title: Union[str, None] = None,
+        description: Union[str, None] = None,
     ):
         """
         Display the visualization component
+
+        Args:
+            port: Port number for local server
+            open_in_browser: Whether to open in browser automatically
+            allow_origin: CORS allow origin header
+            upload: Whether to upload the figure
+            _dev: Development mode flag
+            title: Title for the browser tab and figure
+            description: Description text (markdown supported) for the figure
         """
         from ._show_view import _show_view
 
@@ -45,6 +56,8 @@ class FigpackView:
             open_in_browser=open_in_browser,
             allow_origin=allow_origin,
             upload=upload,
+            title=title,
+            description=description,
         )
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:

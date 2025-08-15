@@ -4,11 +4,24 @@ import { StatusBar } from "./components/StatusBar";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
 import { useFigpackStatus } from "./hooks/useFigpackStatus";
+import { useEffect } from "react";
 
 function App() {
   const zarrData = useZarrData();
   const { width, height } = useWindowDimensions();
   const { isExpired } = useFigpackStatus();
+
+  // Set document title from zarr data
+  useEffect(() => {
+    if (zarrData && zarrData.attrs) {
+      const title = zarrData.attrs.title;
+      if (title) {
+        document.title = title;
+      } else {
+        document.title = "figpack figure";
+      }
+    }
+  }, [zarrData]);
 
   // Adjust height to account for status bar (30px height)
   const adjustedHeight = height - 30;

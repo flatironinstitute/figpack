@@ -5,9 +5,30 @@ import figpack.views as vv
 
 def main():
     view = example_timeseries_graph()
+    title = "Example Timeseries Graph"
+    description_md = """
+# Example Timeseries Graph
+
+This is an example of a timeseries graph created using figpack.
+
+- Blue line: A smooth curve defined by the function \(y = t \cos((2t)^2)\).
+- Red markers: Discrete points along the same curve.
+- Green dashed line: The function \(y = t + 1\).
+- Black square markers: Discrete points along the function \(y = -t - 1\).
+- Light blue intervals: Highlighted time intervals.
+
+You can zoom and pan the graph to explore the data in more detail.
+"""
+
     upload = os.environ.get("FIGPACK_UPLOAD") == "1"
     _dev = os.environ.get("FIGPACK_DEV") == "1"
-    view.show(open_in_browser=True, upload=upload, _dev=_dev)
+    view.show(
+        open_in_browser=True,
+        upload=upload,
+        _dev=_dev,
+        title=title,
+        description=description_md,
+    )
 
 
 def example_timeseries_graph(*, height=500):
