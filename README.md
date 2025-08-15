@@ -64,6 +64,28 @@ view.show(upload=True, open_in_browser=True)
 
 Set `_dev=True` in the call to show() to enable development mode, which allows for live updates and debugging with figpack-gui.
 
+## Command Line Interface
+
+figpack includes a command-line interface for working with figures:
+
+### Download a Figure
+
+```bash
+figpack download <figurl> <dest.tar.gz>
+```
+
+Download a figure from any figpack URL and save it as a local archive.
+
+### View a Figure Archive
+
+```bash
+figpack view <figure.tar.gz>
+```
+
+Extract and view a figure archive in your browser. The server will run locally until you press Enter.
+
+Use `--port <number>` to specify a custom port.
+
 ## License
 
 Apache-2.0

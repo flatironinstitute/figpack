@@ -39,6 +39,10 @@ Repository = "https://github.com/magland/figpack"
 Documentation = "https://github.com/magland/figpack#readme"
 "Bug Tracker" = "https://github.com/magland/figpack/issues"
 
+[project.scripts]
+figpack = "figpack.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["figpack*"]
+exclude = ["figpack-gui*", "figpack-api*", "figpack-manage-figure*"]

@@ -7,5 +7,10 @@ __pycache__/
 build/
 dist/
 
+# Node.js
+node_modules/
+*.log
+npm-debug.log*
+
 # GUI build output (should be rebuilt during packaging)
 figpack/figpack-gui-dist/
