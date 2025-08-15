@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
-import CrossCorrelogramsView from "../spike_sorting/view-cross-correlograms/CrossCorrelogramsView";
-import { CrossCorrelogramsViewData } from "../spike_sorting/view-cross-correlograms/CrossCorrelogramsViewData";
+import { ZarrGroup } from "../../remote-zarr/RemoteZarr";
+import CrossCorrelogramsView from "../../spike_sorting/view-cross-correlograms/CrossCorrelogramsView";
+import { CrossCorrelogramsViewData } from "../../spike_sorting/view-cross-correlograms/CrossCorrelogramsViewData";
 
 type Props = {
   zarrGroup: ZarrGroup;

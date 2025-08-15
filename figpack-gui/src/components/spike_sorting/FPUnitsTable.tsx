@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
-import UnitsTableView from "../spike_sorting/view-units-table/UnitsTableView";
-import { UnitsTableViewData } from "../spike_sorting/view-units-table/UnitsTableViewData";
+import { ZarrGroup } from "../../remote-zarr/RemoteZarr";
+import UnitsTableView from "../../spike_sorting/view-units-table/UnitsTableView";
+import { UnitsTableViewData } from "../../spike_sorting/view-units-table/UnitsTableViewData";
 
 type Props = {
   zarrGroup: ZarrGroup;

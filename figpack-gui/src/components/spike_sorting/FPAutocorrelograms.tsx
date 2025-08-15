@@ -1,7 +1,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
-import AutocorrelogramsView from "../spike_sorting/view-autocorrelograms/AutocorrelogramsView";
-import { AutocorrelogramsViewData } from "../spike_sorting/view-autocorrelograms/AutocorrelogramsViewData";
+import { ZarrGroup } from "../../remote-zarr/RemoteZarr";
+import AutocorrelogramsView from "../../spike_sorting/view-autocorrelograms/AutocorrelogramsView";
+import { AutocorrelogramsViewData } from "../../spike_sorting/view-autocorrelograms/AutocorrelogramsViewData";
 
 type Props = {
   zarrGroup: ZarrGroup;
