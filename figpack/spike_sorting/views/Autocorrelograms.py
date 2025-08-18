@@ -18,17 +18,48 @@ class Autocorrelograms(FigpackView):
         self,
         *,
         autocorrelograms: List[AutocorrelogramItem],
-        height: Optional[int] = 400,
     ):
         """
         Initialize an Autocorrelograms view
 
         Args:
             autocorrelograms: List of AutocorrelogramItem objects
-            height: Height of the view in pixels
         """
         self.autocorrelograms = autocorrelograms
-        self.height = height
+
+    def from_sorting(sorting):
+        import spikeinterface as si
+        import spikeinterface.widgets as sw
+
+        assert isinstance(sorting, si.BaseSorting), "Input must be a BaseSorting object"
+        W = sw.plot_autocorrelograms(sorting)
+        return Autocorrelograms.from_spikeinterface_widget(W)
+
+    def from_spikeinterface_widget(W):
+        from spikeinterface.widgets.base import to_attr
+        from spikeinterface.widgets.utils_sortingview import make_serializable
+        from .AutocorrelogramItem import AutocorrelogramItem
+
+        data_plot = W.data_plot
+
+        dp = to_attr(data_plot)
+
+        unit_ids = make_serializable(dp.unit_ids)
+
+        ac_items = []
+        for i in range(len(unit_ids)):
+            for j in range(i, len(unit_ids)):
+                if i == j:
+                    ac_items.append(
+                        AutocorrelogramItem(
+                            unit_id=unit_ids[i],
+                            bin_edges_sec=(dp.bins / 1000.0).astype("float32"),
+                            bin_counts=dp.correlograms[i, j].astype("int32"),
+                        )
+                    )
+
+        view = Autocorrelograms(autocorrelograms=ac_items)
+        return view
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:
         """
@@ -39,10 +70,6 @@ class Autocorrelograms(FigpackView):
         """
         # Set the view type
         group.attrs["view_type"] = "Autocorrelograms"
-
-        # Set view properties
-        if self.height is not None:
-            group.attrs["height"] = self.height
 
         # Store the number of autocorrelograms
         group.attrs["num_autocorrelograms"] = len(self.autocorrelograms)
