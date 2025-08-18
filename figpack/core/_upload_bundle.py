@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 thisdir = pathlib.Path(__file__).parent.resolve()
 
 FIGPACK_API_BASE_URL = "https://figpack-api.vercel.app"
-TEMPORY_BASE_URL = "https://tempory.net/figpack/default/figures"
+FIGPACK_FIGURES_BASE_URL = "https://figures.figpack.org/figures/default"
 
 
 def _upload_single_file(
@@ -78,7 +78,7 @@ def _check_existing_figure(figure_id: str) -> dict:
     Returns:
         dict: Contains 'exists' (bool) and 'status' (str) if exists
     """
-    figpack_url = f"{TEMPORY_BASE_URL}/{figure_id}/figpack.json"
+    figpack_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/figpack.json"
 
     try:
         response = requests.get(figpack_url, timeout=10)
@@ -148,7 +148,7 @@ def _upload_bundle(tmpdir: str, passcode: str) -> None:
 
     # If figure_id is None, it means we found a completed upload and should skip
     if figure_id is None:
-        figure_url = f"{TEMPORY_BASE_URL}/{completed_figure_id}/index.html"
+        figure_url = f"{FIGPACK_FIGURES_BASE_URL}/{completed_figure_id}/index.html"
         print(f"Figure already exists at: {figure_url}")
         return figure_url
 
@@ -281,7 +281,7 @@ def _upload_bundle(tmpdir: str, passcode: str) -> None:
     )
     print("Upload completed successfully")
 
-    figure_url = f"{TEMPORY_BASE_URL}/{figure_id}/index.html"
+    figure_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/index.html"
     return figure_url
 
 
@@ -352,7 +352,7 @@ def _upload_small_file(
     """
     Upload a small file by sending content directly
     """
-    destination_url = f"{TEMPORY_BASE_URL}/{figure_id}/{file_path}"
+    destination_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/{file_path}"
 
     try:
         content.encode("utf-8")
@@ -386,7 +386,7 @@ def _upload_large_file(
     """
     Upload a large file using signed URL
     """
-    destination_url = f"{TEMPORY_BASE_URL}/{figure_id}/{file_path}"
+    destination_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/{file_path}"
     file_size = local_file_path.stat().st_size
 
     # Get signed URL

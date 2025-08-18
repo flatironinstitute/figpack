@@ -2,7 +2,7 @@
 """
 Figpack Cleanup Script
 
-This script iterates through all figures in the tempory.net bucket,
+This script iterates through all figures in the figures.figpack.org bucket,
 reads their figpack.json files, reports on their status and timestamps,
 and selectively deletes figures based on expiration or stale upload status.
 
@@ -62,8 +62,8 @@ def list_all_figures(s3_client) -> List[str]:
     """
     List all figure IDs in the bucket by looking for figpack/ prefix
     """
-    bucket_name = "tempory"
-    prefix = "figpack/default/figures/"
+    bucket_name = "figpack-figures"
+    prefix = "figures/default/"
 
     figure_ids = []
     paginator = s3_client.get_paginator("list_objects_v2")
@@ -75,7 +75,7 @@ def list_all_figures(s3_client) -> List[str]:
             # Get figure IDs from common prefixes (directories)
             for common_prefix in page.get("CommonPrefixes", []):
                 prefix_path = common_prefix["Prefix"]
-                # Extract figure ID from path like 'figpack/default/figures/uuid/'
+                # Extract figure ID from path like 'figures/default/uuid/'
                 figure_id = prefix_path.replace(prefix, "").rstrip("/")
                 if figure_id:  # Skip empty strings
                     figure_ids.append(figure_id)
@@ -90,8 +90,8 @@ def get_figpack_json(s3_client, figure_id: str) -> Optional[Dict[str, Any]]:
     """
     Retrieve and parse the figpack.json file for a given figure ID
     """
-    bucket_name = "tempory"
-    key = f"figpack/default/figures/{figure_id}/figpack.json"
+    bucket_name = "figpack-figures"
+    key = f"figures/default/{figure_id}/figpack.json"
 
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=key)
@@ -194,8 +194,8 @@ def delete_figure(s3_client, figure_id: str) -> bool:
     """
     Delete all files for a given figure ID
     """
-    bucket_name = "tempory"
-    prefix = f"figpack/default/figures/{figure_id}/"
+    bucket_name = "figpack-figures"
+    prefix = f"figures/default/{figure_id}/"
 
     try:
         # List all objects with this prefix
@@ -240,7 +240,7 @@ def report_figure_status(figure_id: str, figpack_data: Optional[Dict[str, Any]])
     """
     print(f"\n{'='*80}")
     print(f"Figure ID: {figure_id}")
-    print(f"URL: https://tempory.net/figpack/default/figures/{figure_id}/index.html")
+    print(f"URL: https://figures.figpack.org/figures/default/{figure_id}/index.html")
 
     if not figpack_data:
         print("Status: ERROR - No figpack.json found")

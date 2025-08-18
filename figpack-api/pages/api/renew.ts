@@ -17,12 +17,12 @@ if (!bucketCredentials) {
 }
 
 const bucket: Bucket = {
-    uri: 'r2://tempory',
+    uri: 'r2://figpack-figures',
     credentials: bucketCredentials
 }
 
 function validateFigureUrl(url: string): { valid: boolean; figureId?: string; baseUrl?: string } {
-  const expectedPrefix = 'https://tempory.net/figpack/default/figures/';
+  const expectedPrefix = 'https://figures.figpack.org/figures/default/';
   
   if (!url.startsWith(expectedPrefix)) {
     return { valid: false };
@@ -57,11 +57,11 @@ async function fetchFigpackJson(baseUrl: string): Promise<any> {
 }
 
 async function uploadUpdatedFigpackJson(figureId: string, figpackData: any): Promise<void> {
-  const destinationUrl = `https://tempory.net/figpack/default/figures/${figureId}/figpack.json`;
+  const destinationUrl = `https://figures.figpack.org/figures/default/${figureId}/figpack.json`;
   const content = JSON.stringify(figpackData, null, 2);
   
   // Get signed URL for upload
-  const fileKey = destinationUrl.slice("https://tempory.net/".length);
+  const fileKey = destinationUrl.slice("https://figures.figpack.org/".length);
   const signedUrl = await getSignedUploadUrl(bucket, fileKey);
   
   // Upload the updated content
@@ -116,7 +116,7 @@ export default async function handler(
     if (!urlValidation.valid || !urlValidation.figureId || !urlValidation.baseUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid figure URL. Must be a valid tempory.net figpack URL.'
+        message: 'Invalid figure URL. Must be a valid figures.figpack.org figpack URL.'
       });
     }
 

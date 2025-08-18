@@ -460,7 +460,7 @@ class TestUploadBundle:
         result = _upload_bundle(str(temp_dir), "test_passcode")
 
         expected_url = (
-            "https://tempory.net/figpack/default/figures/completed_figure_id/index.html"
+            "https://figures.figpack.org/figures/default/completed_figure_id/index.html"
         )
         assert result == expected_url
 
@@ -503,7 +503,7 @@ class TestUploadBundle:
         result = _upload_bundle(str(temp_dir), "test_passcode")
 
         expected_url = (
-            "https://tempory.net/figpack/default/figures/new_figure_id/index.html"
+            "https://figures.figpack.org/figures/default/new_figure_id/index.html"
         )
         assert result == expected_url
 
@@ -563,7 +563,7 @@ class TestUploadBundle:
         result = _upload_bundle(str(temp_dir), "test_passcode")
 
         expected_url = (
-            "https://tempory.net/figpack/default/figures/new_figure_id/index.html"
+            "https://figures.figpack.org/figures/default/new_figure_id/index.html"
         )
         assert result == expected_url
 
@@ -616,7 +616,7 @@ class TestUploadBundle:
         result = _upload_bundle(str(temp_dir), "test_passcode")
 
         expected_url = (
-            "https://tempory.net/figpack/default/figures/new_figure_id/index.html"
+            "https://figures.figpack.org/figures/default/new_figure_id/index.html"
         )
         assert result == expected_url
 

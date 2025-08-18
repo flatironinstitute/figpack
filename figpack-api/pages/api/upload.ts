@@ -8,13 +8,13 @@ if (!bucketCredentials) {
 }
 
 const bucket: Bucket = {
-    uri: 'r2://tempory',
+    uri: 'r2://figpack-figures',
     credentials: bucketCredentials
 }
 
 // Validation functions using only string methods
 function validateDestinationUrl(url: string): ValidationResult {
-  const expectedPrefix = 'https://tempory.net/figpack/default/figures/';
+  const expectedPrefix = 'https://figures.figpack.org/figures/default/';
   
   if (!url.startsWith(expectedPrefix)) {
     return { valid: false };
@@ -169,7 +169,7 @@ async function generateSignedUploadUrl(destinationUrl: string, size: number, fig
   console.log(`File size: ${size}`);
   console.log(`Figure ID: ${figureId}`);
   
-  const fileKey = destinationUrl.slice("https://tempory.net/".length)
+  const fileKey = destinationUrl.slice("https://figures.figpack.org/".length)
   const signedUrl = await getSignedUploadUrl(bucket, fileKey);
   return signedUrl;
 }
@@ -230,11 +230,11 @@ export default async function handler(
     if (!urlValidation.valid) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid destination URL. Must start with https://tempory.net/figpack/default/figures/<figure-id>/'
+        message: 'Invalid destination URL. Must start with https://figures.figpack.org/figures/default/<figure-id>/'
       });
     }
 
-    const filePath = destinationUrl.split('/').slice(7).join('/'); // Remove base URL part
+    const filePath = destinationUrl.split('/').slice(6).join('/'); // Remove base URL part
 
     // Validate file path
     const fileValidation = validateFilePath(filePath);
