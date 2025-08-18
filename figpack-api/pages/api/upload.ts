@@ -179,7 +179,7 @@ export default async function handler(
   res: NextApiResponse<UploadResponse>
 ) {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', 'https://figpack.neurosift.app');
+  res.setHeader('Access-Control-Allow-Origin', 'https://manage.figpack.org');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

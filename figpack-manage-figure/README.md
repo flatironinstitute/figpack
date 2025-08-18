@@ -1,6 +1,6 @@
 # Figpack Figure Manager
 
-A React/TypeScript/Material-UI web application for managing figpack figures deployed at https://figpack.neurosift.app.
+A React/TypeScript/Material-UI web application for managing figpack figures deployed at https://manage.figpack.org.
 
 ## Features
 
@@ -23,7 +23,7 @@ A React/TypeScript/Material-UI web application for managing figpack figures depl
 The application is accessed via URL parameters:
 
 ```
-https://figpack.neurosift.app/manage?figure_url=<encoded_figure_url>
+https://manage.figpack.org/manage?figure_url=<encoded_figure_url>
 ```
 
 When users click the "Manage Figure" button in the figpack GUI status bar, it opens this application with the appropriate figure URL.
@@ -50,4 +50,4 @@ npm run build
 
 ## Deployment
 
-The application is configured to be deployed at https://figpack.neurosift.app with proper routing for the `/manage` path.
+The application is configured to be deployed at https://manage.figpack.org with proper routing for the `/manage` path.
