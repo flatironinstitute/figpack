@@ -18,6 +18,7 @@ import {
   CrossCorrelogramData,
   CrossCorrelogramsViewData,
 } from "./CrossCorrelogramsViewData";
+import { UnitsTableView, UnitsTableViewData } from "../view-units-table";
 
 type Props = {
   data: CrossCorrelogramsViewData;
@@ -42,11 +43,13 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
     return sortIds([...selectedUnitIds]);
   }, [selectedUnitIds]);
 
+  const hideUnitSelector = data.hideUnitSelector;
+
   const crossCorrelogramsSorted = useMemo(() => {
     const C = data.crossCorrelograms.filter(
       (a) =>
         selectedUnitIdsArray.includes(a.unitId1) &&
-        selectedUnitIdsArray.includes(a.unitId2),
+        selectedUnitIdsArray.includes(a.unitId2)
     );
     const ret: (CrossCorrelogramData | undefined)[] = [];
     for (const i1 of selectedUnitIdsArray) {
@@ -62,15 +65,17 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
     return ret;
   }, [data.crossCorrelograms, selectedUnitIdsArray]);
 
+  const unitSelectorWidth = !hideUnitSelector ? 100 : 0;
+
   const TOOLBAR_WIDTH = viewToolbarWidth;
-  const W = width - TOOLBAR_WIDTH;
+  const W = width - unitSelectorWidth - TOOLBAR_WIDTH;
   const H = height;
   const plots: PGPlot[] = useMemo(() => {
     const nn = selectedUnitIdsArray.length;
     const { plotWidth, plotHeight } = determinePlotSizeForSquareMatrixGrid(
       W,
       H,
-      nn,
+      nn
     );
     return crossCorrelogramsSorted.map((cc, ii) => ({
       key: `${ii}`,
@@ -107,9 +112,23 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
     return [showXAxisAction];
   }, [showXAxis]);
 
-  return (
+  const unitsTableData: UnitsTableViewData = useMemo(() => {
+    const allUnitIdsSet = new Set<number | string>();
+    data.crossCorrelograms.forEach((cc) => {
+      allUnitIdsSet.add(cc.unitId1);
+      allUnitIdsSet.add(cc.unitId2);
+    });
+    const allUnitIds = sortIds(Array.from(allUnitIdsSet));
+    return {
+      type: "UnitsTable",
+      columns: [],
+      rows: allUnitIds.map((id) => ({ unitId: id, values: {} })),
+    };
+  }, [data.crossCorrelograms]);
+
+  const content = (
     <Splitter
-      width={width}
+      width={width - unitSelectorWidth}
       height={height}
       initialPosition={TOOLBAR_WIDTH}
       adjustable={false}
@@ -138,17 +157,56 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
       </VerticalScrollView>
     </Splitter>
   );
+
+  if (!hideUnitSelector) {
+    return (
+      <div style={{ position: "relative", width, height }}>
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: unitSelectorWidth,
+            height,
+            borderRight: "1px solid #ccc",
+            boxSizing: "border-box",
+            padding: 10,
+            backgroundColor: "#f9f9f9",
+          }}
+        >
+          <UnitsTableView
+            data={unitsTableData}
+            width={unitSelectorWidth}
+            height={height}
+          />
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            left: unitSelectorWidth,
+            top: 0,
+            width: width - unitSelectorWidth,
+            height,
+          }}
+        >
+          {content}
+        </div>
+      </div>
+    );
+  } else {
+    return content;
+  }
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const determinePlotSizeForSquareMatrixGrid = (
   W: number,
   H: number,
-  nn: number,
+  nn: number
 ) => {
   const plotHeight = Math.min(
     (W - 30 - (nn - 1) * 7) / nn,
-    (H - 30 - (nn - 1) * 7) / nn,
+    (H - 30 - (nn - 1) * 7) / nn
   );
   const plotWidth = plotHeight;
   return { plotWidth, plotHeight };
