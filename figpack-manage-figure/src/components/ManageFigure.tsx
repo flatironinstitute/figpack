@@ -15,13 +15,7 @@ import {
   Paper,
   Stack,
 } from "@mui/material";
-import {
-  Download,
-  Refresh,
-  Warning,
-  CheckCircle,
-  Error,
-} from "@mui/icons-material";
+import { Refresh, Warning, CheckCircle, Error } from "@mui/icons-material";
 
 interface FigpackStatus {
   status: string;
