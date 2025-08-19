@@ -160,7 +160,7 @@ const PinDialog: React.FC<PinDialogProps> = ({
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <TextField
-            label="Name"
+            label="Your name"
             value={pinInfo.name}
             onChange={handleInputChange("name")}
             fullWidth

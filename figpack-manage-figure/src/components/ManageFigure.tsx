@@ -334,7 +334,8 @@ const ManageFigure: React.FC = () => {
               {figpackStatus.pinned && figpackStatus.pin_info && (
                 <Alert severity="success" sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    This figure is pinned and will not expire.
+                    This figure is pinned and will not automatically expire,
+                    though admins may remove pins if needed.
                   </Typography>
                   <Box sx={{ mt: 1 }}>
                     <Typography variant="body2">
