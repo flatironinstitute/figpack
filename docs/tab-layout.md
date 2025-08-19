@@ -86,13 +86,6 @@ tabs.show(open_in_browser=True)
 - `view`: The view to display in the tab
 - `label` (str): Text label for the tab header
 
-## Features
-
-- **Multiple Views**: Organize many views in limited space
-- **Tab Navigation**: Click tab headers to switch views
-- **Custom Labels**: Descriptive names for each tab
-- **Nested Layouts**: Tabs can contain other layout views
-
 ## Nested with Other Layouts
 
 ```python

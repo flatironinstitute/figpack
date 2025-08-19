@@ -46,7 +46,7 @@ figpack provides a comprehensive set of view components for creating interactive
 
 ### Core Views
 
-- **[TimeseriesGraph](docs/timeseries-graph.md)** - Interactive line plots, markers, and intervals ([example](examples/example.py))
+- **[TimeseriesGraph](docs/timeseries-graph.md)** - Interactive line plots, markers, and intervals ([example](examples/example_timeseries_graph.py))
 - **[MultiChannelTimeseries](docs/multichannel-timeseries.md)** - Multi-channel timeseries visualization ([example](examples/example_multichannel_timeseries.py))
 - **[Image](docs/image.md)** - Display images with optional annotations ([example](examples/example_image.py))
 - **[Markdown](docs/markdown.md)** - Render markdown content ([example](examples/example_markdown.py))
