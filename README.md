@@ -70,11 +70,11 @@ figpack provides a comprehensive set of view components for creating interactive
 
 ## Examples
 
-See the `examples/` directory for complete working examples of each view type.
+See the `examples/` directory for working examples of each view type.
 
 ## Usage Modes
 
-### Local Development
+### Local-only Mode
 
 ```python
 view.show(open_in_browser=True)
@@ -90,7 +90,7 @@ view.show(upload=True, open_in_browser=True)
 
 ### Development Mode
 
-Set `_dev=True` in the call to show() to enable development mode, which allows for live updates and debugging with figpack-gui.
+Set `_dev=True` in the call to show() to enable development mode, which allows for live updates and development of figpack-gui.
 
 ## Command Line Interface
 

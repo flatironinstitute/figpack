@@ -15,7 +15,20 @@ import {
   Paper,
   Stack,
 } from "@mui/material";
-import { Refresh, Warning, CheckCircle, Error } from "@mui/icons-material";
+import {
+  Refresh,
+  Warning,
+  CheckCircle,
+  Error,
+  PushPin,
+} from "@mui/icons-material";
+import PinDialog from "./PinDialog";
+
+interface PinInfo {
+  name: string;
+  figure_description: string;
+  pinned_timestamp: string;
+}
 
 interface FigpackStatus {
   status: string;
@@ -26,6 +39,8 @@ interface FigpackStatus {
   total_files?: number;
   total_size?: number;
   figpack_version?: string;
+  pinned?: boolean;
+  pin_info?: PinInfo;
 }
 
 interface ManifestFile {
@@ -49,6 +64,9 @@ const ManageFigure: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [figureUrl, setFigureUrl] = useState<string>("");
   const [renewLoading, setRenewLoading] = useState(false);
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
 
   useEffect(() => {
     // Get figure URL from query parameters
@@ -207,6 +225,54 @@ const ManageFigure: React.FC = () => {
     }
   };
 
+  const handlePin = async (pinInfo: {
+    name: string;
+    figure_description: string;
+  }) => {
+    if (!figureUrl) return;
+
+    setPinLoading(true);
+    setPinError(null);
+    try {
+      const response = await fetch("https://figpack-api.vercel.app/api/pin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          figureUrl: figureUrl,
+          pinInfo: pinInfo,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh the figure data to show updated pin status
+        await loadFigureData(figureUrl);
+        setPinDialogOpen(false);
+      } else {
+        setPinError(`Failed to pin figure: ${result.message}`);
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      setPinError(`Error pinning figure: ${err}`);
+      throw err; // Re-throw to let PinDialog handle it
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const handleOpenPinDialog = () => {
+    setPinError(null);
+    setPinDialogOpen(true);
+  };
+
+  const handleClosePinDialog = () => {
+    setPinError(null);
+    setPinDialogOpen(false);
+  };
+
   if (loading) {
     return (
       <Box
@@ -253,13 +319,40 @@ const ManageFigure: React.FC = () => {
 
           {figpackStatus && (
             <Box>
-              <Chip
-                label={figpackStatus.status}
-                color={getStatusColor()}
-                sx={{ mb: 2 }}
-              />
+              <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                <Chip label={figpackStatus.status} color={getStatusColor()} />
+                {figpackStatus.pinned && (
+                  <Chip
+                    icon={<PushPin />}
+                    label="Pinned"
+                    color="success"
+                    variant="outlined"
+                  />
+                )}
+              </Box>
 
-              {isExpired() && (
+              {figpackStatus.pinned && figpackStatus.pin_info && (
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    This figure is pinned and will not expire.
+                  </Typography>
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="body2">
+                      <strong>Pinned by:</strong> {figpackStatus.pin_info.name}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Figure:</strong>{" "}
+                      {figpackStatus.pin_info.figure_description}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Pinned on:</strong>{" "}
+                      {formatDate(figpackStatus.pin_info.pinned_timestamp)}
+                    </Typography>
+                  </Box>
+                </Alert>
+              )}
+
+              {!figpackStatus.pinned && isExpired() && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                   This figure has expired.
                   <Button
@@ -274,23 +367,55 @@ const ManageFigure: React.FC = () => {
                 </Alert>
               )}
 
-              {!isExpired() && getTimeUntilExpiration() && (
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  This figure will expire in {getTimeUntilExpiration()}.
-                  <Button
-                    variant="contained"
-                    color="warning"
-                    sx={{ ml: 2 }}
-                    onClick={handleRenew}
-                    disabled={renewLoading}
-                    startIcon={
-                      renewLoading ? <CircularProgress size={16} /> : undefined
-                    }
-                  >
-                    {renewLoading ? "Renewing..." : "Renew"}
-                  </Button>
-                </Alert>
-              )}
+              {!figpackStatus.pinned &&
+                !isExpired() &&
+                getTimeUntilExpiration() && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    This figure will expire in {getTimeUntilExpiration()}.
+                    <Box
+                      sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}
+                    >
+                      <Button
+                        variant="contained"
+                        color="warning"
+                        onClick={handleRenew}
+                        disabled={renewLoading}
+                        startIcon={
+                          renewLoading ? (
+                            <CircularProgress size={16} />
+                          ) : undefined
+                        }
+                      >
+                        {renewLoading ? "Renewing..." : "Renew"}
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        startIcon={<PushPin />}
+                        onClick={handleOpenPinDialog}
+                      >
+                        Pin Figure
+                      </Button>
+                    </Box>
+                  </Alert>
+                )}
+
+              {!figpackStatus.pinned &&
+                !isExpired() &&
+                !getTimeUntilExpiration() && (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    This figure does not have an expiration date.
+                    <Button
+                      variant="contained"
+                      color="success"
+                      sx={{ ml: 2 }}
+                      startIcon={<PushPin />}
+                      onClick={handleOpenPinDialog}
+                    >
+                      Pin Figure
+                    </Button>
+                  </Alert>
+                )}
 
               <Box
                 display="flex"
@@ -538,6 +663,15 @@ const ManageFigure: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Pin Dialog */}
+      <PinDialog
+        open={pinDialogOpen}
+        onClose={handleClosePinDialog}
+        onPin={handlePin}
+        loading={pinLoading}
+        error={pinError}
+      />
     </Stack>
   );
 };

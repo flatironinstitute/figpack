@@ -155,6 +155,10 @@ def should_delete_figure(figpack_data: Optional[Dict[str, Any]]) -> tuple[bool, 
     if not figpack_data:
         return False, "No figpack.json found"
 
+    # Check if figure is pinned - pinned figures are never deleted
+    if figpack_data.get("pinned", False):
+        return False, "Figure is pinned"
+
     now = datetime.now(timezone.utc)
 
     # Check if expired
@@ -254,15 +258,31 @@ def report_figure_status(figure_id: str, figpack_data: Optional[Dict[str, Any]])
     expiration = figpack_data.get("expiration")
     total_files = figpack_data.get("total_files")
     upload_progress = figpack_data.get("upload_progress")
+    pinned = figpack_data.get("pinned", False)
+    pin_info = figpack_data.get("pin_info")
 
     print(f"Status: {status.upper()}")
+
+    # Show pinned status prominently
+    if pinned:
+        print("PINNED: YES - This figure will not expire")
+        if pin_info:
+            print(f"\nPin Information:")
+            print(f"  Pinned by:     {pin_info.get('name', 'N/A')}")
+            print(f"  Figure:        {pin_info.get('figure_description', 'N/A')}")
+            print(
+                f"  Pinned on:     {format_timestamp(pin_info.get('pinned_timestamp'))}"
+            )
+    else:
+        print("PINNED: NO")
 
     # Timestamps
     print(f"\nTimestamps:")
     print(f"  Upload Started:   {format_timestamp(upload_started)}")
     print(f"  Upload Updated:   {format_timestamp(upload_updated)}")
     print(f"  Upload Completed: {format_timestamp(upload_completed)}")
-    print(f"  Expiration:       {format_timestamp(expiration)}")
+    if not pinned:  # Only show expiration for non-pinned figures
+        print(f"  Expiration:       {format_timestamp(expiration)}")
 
     # Additional info
     if total_files is not None:
@@ -271,8 +291,8 @@ def report_figure_status(figure_id: str, figpack_data: Optional[Dict[str, Any]])
     if upload_progress:
         print(f"Progress: {upload_progress}")
 
-    # Time remaining
-    if expiration:
+    # Time remaining (only for non-pinned figures)
+    if not pinned and expiration:
         time_remaining = calculate_time_remaining(expiration)
         print(f"Time Remaining: {time_remaining}")
 
@@ -303,12 +323,17 @@ def main():
         deleted_count = 0
         failed_count = 0
         skipped_count = 0
+        pinned_count = 0
 
         for i, figure_id in enumerate(figure_ids, 1):
             print(f"\nProcessing figure {i}/{len(figure_ids)}: {figure_id}")
 
             figpack_data = get_figpack_json(s3_client, figure_id)
             report_figure_status(figure_id, figpack_data)
+
+            # Track pinned figures
+            if figpack_data and figpack_data.get("pinned", False):
+                pinned_count += 1
 
             # Check if figure should be deleted
             should_delete, reason = should_delete_figure(figpack_data)
@@ -330,6 +355,8 @@ def main():
         print(f"Successfully deleted: {deleted_count}")
         print(f"Failed to delete: {failed_count}")
         print(f"Skipped (kept): {skipped_count}")
+        print(f"  - Pinned figures: {pinned_count}")
+        print(f"  - Other figures: {skipped_count - pinned_count}")
 
     except EnvironmentError as e:
         print(f"Environment Error: {e}")
