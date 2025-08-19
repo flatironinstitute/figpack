@@ -39,11 +39,15 @@ test = [
     "pytest-cov>=4.0",
     "pytest-mock>=3.10",
     "spikeinterface",
+    "matplotlib",
+    "plotly"
 ]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "pytest-mock>=3.10",
+    "black>=24.0",
+    "pre-commit>=3.0",
 ]
 
 [project.urls]
@@ -101,3 +105,26 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | figpack-gui
+  | figpack-api
+  | figpack-manage-figure
+)/
+'''

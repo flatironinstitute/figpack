@@ -2,26 +2,27 @@
 Tests for figpack upload bundle functionality
 """
 
-import pytest
-import tempfile
-import pathlib
-import json
 import hashlib
-from unittest.mock import Mock, patch, MagicMock, call
-from datetime import datetime, timezone, timedelta
+import json
+import pathlib
+import tempfile
 from concurrent.futures import Future
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, Mock, call, patch
+
+import pytest
 
 from figpack.core._upload_bundle import (
-    _upload_bundle,
-    _compute_deterministic_figure_id,
     _check_existing_figure,
+    _compute_deterministic_figure_id,
+    _determine_content_type,
+    _determine_file_type,
     _find_available_figure_id,
+    _is_zarr_chunk,
+    _upload_bundle,
+    _upload_large_file,
     _upload_single_file,
     _upload_small_file,
-    _upload_large_file,
-    _determine_file_type,
-    _determine_content_type,
-    _is_zarr_chunk,
 )
 
 

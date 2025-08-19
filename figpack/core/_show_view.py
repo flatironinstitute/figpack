@@ -1,18 +1,14 @@
 import os
-
-from typing import Union
-import tempfile
-
-import webbrowser
-
 import pathlib
-
+import tempfile
 import threading
+import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from typing import Union
 
-from .figpack_view import FigpackView
 from ._bundle_utils import prepare_figure_bundle
 from ._upload_bundle import _upload_bundle
+from .figpack_view import FigpackView
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 

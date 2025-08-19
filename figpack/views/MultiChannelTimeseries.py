@@ -2,11 +2,12 @@
 Multi-channel timeseries visualization component
 """
 
-import numpy as np
-from typing import Optional, List, Union
 import math
+from typing import List, Optional, Union
 
+import numpy as np
 import zarr
+
 from ..core.figpack_view import FigpackView
 
 

@@ -2,9 +2,11 @@
 Image view for figpack - displays PNG and JPG images
 """
 
-import zarr
-import numpy as np
 from typing import Union
+
+import numpy as np
+import zarr
+
 from ..core.figpack_view import FigpackView
 
 

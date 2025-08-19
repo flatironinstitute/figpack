@@ -34,7 +34,7 @@ This is an example of autocorrelograms created using figpack.
 
 
 def example_autocorrelograms(
-    *, recording: si.BaseRecording, sorting: si.BaseSorting, height=400
+    *, recording: si.BaseRecording, sorting: si.BaseSorting
 ) -> vv.Splitter:
     # Create a simple units table for the left side
     columns: List[ssv.UnitsTableColumn] = [
@@ -54,7 +54,6 @@ def example_autocorrelograms(
     units_table = ssv.UnitsTable(
         columns=columns,
         rows=rows,
-        height=height,
     )
 
     # Create autocorrelograms for the right side
@@ -74,9 +73,7 @@ def example_autocorrelograms(
                 unit_id=unit_id, bin_edges_sec=bin_edges_sec, bin_counts=bin_counts
             )
         )
-    autocorrelograms = ssv.Autocorrelograms(
-        autocorrelograms=autocorrelogram_items, height=height
-    )
+    autocorrelograms = ssv.Autocorrelograms(autocorrelograms=autocorrelogram_items)
 
     # Create splitter with units table on left (max width 300px) and autocorrelograms on right
     splitter = vv.Splitter(

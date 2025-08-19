@@ -2,10 +2,11 @@
 Views module for figpack - contains visualization components
 """
 
-import numpy as np
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
+import numpy as np
 import zarr
+
 from ..core.figpack_view import FigpackView
 
 

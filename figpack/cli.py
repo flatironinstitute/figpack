@@ -3,19 +3,20 @@ Command-line interface for figpack
 """
 
 import argparse
-import sys
-import pathlib
-import tempfile
-import tarfile
 import json
-import requests
+import pathlib
+import socket
+import sys
+import tarfile
+import tempfile
 import threading
 import webbrowser
-import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urlparse, urljoin
-from typing import Dict, List, Tuple, Optional, Union
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from typing import Dict, List, Optional, Tuple, Union
+from urllib.parse import urljoin, urlparse
+
+import requests
 
 from . import __version__
 from .core._show_view import serve_files

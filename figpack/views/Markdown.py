@@ -3,6 +3,7 @@ Markdown view for figpack - displays markdown content
 """
 
 import zarr
+
 from ..core.figpack_view import FigpackView
 
 

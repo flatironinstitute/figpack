@@ -2,9 +2,11 @@
 CrossCorrelograms view for figpack - displays multiple cross-correlograms
 """
 
-import zarr
-import numpy as np
 from typing import List, Optional
+
+import numpy as np
+import zarr
+
 from ...core.figpack_view import FigpackView
 from .CrossCorrelogramItem import CrossCorrelogramItem
 
@@ -41,6 +43,7 @@ class CrossCorrelograms(FigpackView):
     def from_spikeinterface_widget(W):
         from spikeinterface.widgets.base import to_attr
         from spikeinterface.widgets.utils_sortingview import make_serializable
+
         from .CrossCorrelogramItem import CrossCorrelogramItem
 
         data_plot = W.data_plot

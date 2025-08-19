@@ -3,12 +3,50 @@
 ## Development Setup
 
 1. Clone the repository
-2. Install in development mode: `pip install -e .`
+2. Install in development mode: `pip install -e ".[dev]"`
 3. Install GUI dependencies: `cd figpack-gui && npm install`
+4. Set up pre-commit hooks: `pre-commit install`
+
+## Code Formatting
+
+This project uses [black](https://black.readthedocs.io/) for code formatting. The formatting is automatically enforced through pre-commit hooks.
+
+### Automatic Formatting (Recommended)
+
+Once you've run `pre-commit install`, black will automatically format your code before each commit:
+
+1. Make your changes
+2. `git add` your files
+3. `git commit` - black will run automatically and format your code
+4. If formatting changes were made, add the formatted files and commit again
+
+### Manual Formatting
+
+You can also run black manually:
+
+```bash
+# Format all Python files
+black figpack tests
+
+# Check formatting without making changes
+black --check figpack tests
+
+# Run all pre-commit hooks manually
+pre-commit run --all-files
+```
+
+### Configuration
+
+Black is configured in `pyproject.toml` with:
+
+- Line length: 88 characters
+- Target Python version: 3.8+
+- Excludes: figpack-gui, figpack-api, figpack-manage-figure directories
 
 ## Making Changes
 
 - Follow existing code style and conventions
+- Code must pass black formatting (enforced by pre-commit hooks)
 - Add tests for new functionality
 - Update documentation as needed
 

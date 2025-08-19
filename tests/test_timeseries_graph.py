@@ -2,16 +2,17 @@
 Tests for TimeseriesGraph view
 """
 
-import pytest
-import numpy as np
-import zarr
 import tempfile
 
+import numpy as np
+import pytest
+import zarr
+
 from figpack.views.TimeseriesGraph import (
-    TimeseriesGraph,
+    TGIntervalSeries,
     TGLineSeries,
     TGMarkerSeries,
-    TGIntervalSeries,
+    TimeseriesGraph,
 )
 
 

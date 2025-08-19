@@ -2,15 +2,16 @@
 Tests for PlotlyFigure view
 """
 
-import pytest
-import numpy as np
-import zarr
-import tempfile
 import json
-from datetime import datetime, date
+import tempfile
+from datetime import date, datetime
 from unittest.mock import Mock
 
-from figpack.views.PlotlyFigure import PlotlyFigure, CustomJSONEncoder
+import numpy as np
+import pytest
+import zarr
+
+from figpack.views.PlotlyFigure import CustomJSONEncoder, PlotlyFigure
 
 
 class TestCustomJSONEncoder:

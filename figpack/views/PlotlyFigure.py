@@ -2,11 +2,13 @@
 PlotlyFigure view for figpack - displays plotly figures
 """
 
-import zarr
 import json
+from datetime import date, datetime
+from typing import Any, Dict, Union
+
 import numpy as np
-from typing import Union, Any, Dict
-from datetime import datetime, date
+import zarr
+
 from ..core.figpack_view import FigpackView
 
 

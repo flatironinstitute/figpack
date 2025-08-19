@@ -1,6 +1,8 @@
 import os
 import pathlib
+
 import zarr
+
 from .figpack_view import FigpackView
 
 thisdir = pathlib.Path(__file__).parent.resolve()

@@ -2,9 +2,11 @@
 MatplotlibFigure view for figpack - displays matplotlib figures
 """
 
-import zarr
 import io
-from typing import Union, Any
+from typing import Any, Union
+
+import zarr
+
 from ..core.figpack_view import FigpackView
 
 

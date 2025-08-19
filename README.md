@@ -40,9 +40,37 @@ graph.add_line_series(name="sine wave", t=t, y=y, color="blue")
 graph.show(open_in_browser=True)
 ```
 
+## Available Views
+
+figpack provides a comprehensive set of view components for creating interactive visualizations:
+
+### Core Views
+
+- **[TimeseriesGraph](docs/timeseries-graph.md)** - Interactive line plots, markers, and intervals ([example](examples/example.py))
+- **[MultiChannelTimeseries](docs/multichannel-timeseries.md)** - Multi-channel timeseries visualization ([example](examples/example_multichannel_timeseries.py))
+- **[Image](docs/image.md)** - Display images with optional annotations ([example](examples/example_image.py))
+- **[Markdown](docs/markdown.md)** - Render markdown content ([example](examples/example_markdown.py))
+
+### Layout Views
+
+- **[Box](docs/box.md)** - Flexible container with horizontal/vertical layouts ([example](examples/example_box.py))
+- **[Splitter](docs/splitter.md)** - Resizable split panes ([example](examples/example_splitter.py))
+- **[TabLayout](docs/tab-layout.md)** - Tabbed interface for multiple views ([example](examples/example_tablayout.py))
+
+### External Figure Support
+
+- **[MatplotlibFigure](docs/matplotlib-figure.md)** - Embed matplotlib plots ([example](examples/example_matplotlib.py))
+- **[PlotlyFigure](docs/plotly-figure.md)** - Embed plotly visualizations ([example](examples/example_plotly.py))
+
+### Spike Sorting Views
+
+- **[Autocorrelograms](docs/autocorrelograms.md)** - Auto-correlation analysis ([example](examples/example_autocorrelograms.py))
+- **[CrossCorrelograms](docs/cross-correlograms.md)** - Cross-correlation analysis ([example](examples/example_cross_correlograms.py))
+- **[UnitsTable](docs/units-table.md)** - Sortable table for spike sorting units ([example](examples/example_units_table.py))
+
 ## Examples
 
-See the `examples/` directory.
+See the `examples/` directory for complete working examples of each view type.
 
 ## Usage Modes
 

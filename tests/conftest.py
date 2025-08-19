@@ -2,12 +2,13 @@
 Pytest configuration and fixtures for figpack tests
 """
 
-import pytest
-import tempfile
 import pathlib
-import numpy as np
-import zarr
+import tempfile
 from unittest.mock import Mock
+
+import numpy as np
+import pytest
+import zarr
 
 
 @pytest.fixture

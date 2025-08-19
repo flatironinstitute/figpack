@@ -4,6 +4,7 @@ Test based on si_cross_correlograms.py example but with only 3 units
 
 import pytest
 import spikeinterface.extractors as se
+
 import figpack.spike_sorting.views as ssv
 
 

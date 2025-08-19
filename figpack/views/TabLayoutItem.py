@@ -3,6 +3,7 @@ TabLayoutItem class for figpack TabLayout view - represents a tab in a tab layou
 """
 
 from typing import Optional
+
 from ..core.figpack_view import FigpackView
 
 

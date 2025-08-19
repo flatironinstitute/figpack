@@ -2,10 +2,11 @@
 Tests for MultiChannelTimeseries view
 """
 
-import pytest
-import numpy as np
-import zarr
 import tempfile
+
+import numpy as np
+import pytest
+import zarr
 
 from figpack.views.MultiChannelTimeseries import MultiChannelTimeseries
 

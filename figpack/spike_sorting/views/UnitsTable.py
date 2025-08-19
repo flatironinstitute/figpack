@@ -2,13 +2,15 @@
 UnitsTable view for figpack - displays a table of units with their properties
 """
 
-import zarr
-import numpy as np
 from typing import List, Optional
+
+import numpy as np
+import zarr
+
 from ...core.figpack_view import FigpackView
+from .UnitSimilarityScore import UnitSimilarityScore
 from .UnitsTableColumn import UnitsTableColumn
 from .UnitsTableRow import UnitsTableRow
-from .UnitSimilarityScore import UnitSimilarityScore
 
 
 class UnitsTable(FigpackView):

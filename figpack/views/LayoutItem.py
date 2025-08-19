@@ -3,6 +3,7 @@ LayoutItem class for figpack Box view - represents an item in a layout container
 """
 
 from typing import Optional, Union
+
 from ..core.figpack_view import FigpackView
 
 

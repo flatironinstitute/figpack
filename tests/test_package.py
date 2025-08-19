@@ -3,6 +3,7 @@ Basic package tests for figpack
 """
 
 import pytest
+
 import figpack
 
 

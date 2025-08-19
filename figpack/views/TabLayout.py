@@ -2,8 +2,10 @@
 TabLayout view for figpack - a tabbed layout container that handles other views
 """
 
+from typing import Any, Dict, List, Optional
+
 import zarr
-from typing import List, Optional, Dict, Any
+
 from ..core.figpack_view import FigpackView
 from .TabLayoutItem import TabLayoutItem
 

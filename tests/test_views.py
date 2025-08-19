@@ -2,15 +2,16 @@
 Tests for figpack views module
 """
 
-import pytest
-import numpy as np
-import zarr
-import tempfile
 import pathlib
+import tempfile
 from unittest.mock import Mock, patch
 
-from figpack.views import Box, LayoutItem, Markdown, Image
+import numpy as np
+import pytest
+import zarr
+
 from figpack.core.figpack_view import FigpackView
+from figpack.views import Box, Image, LayoutItem, Markdown
 
 
 class TestBox:

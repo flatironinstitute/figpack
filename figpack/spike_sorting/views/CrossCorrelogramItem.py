@@ -3,6 +3,7 @@ CrossCorrelogramItem for spike sorting views
 """
 
 from typing import Union
+
 import numpy as np
 
 

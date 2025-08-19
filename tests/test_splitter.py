@@ -2,14 +2,15 @@
 Tests for figpack Splitter view
 """
 
-import pytest
-import numpy as np
-import zarr
 import tempfile
 from unittest.mock import Mock, patch
 
-from figpack.views import Splitter, LayoutItem, Markdown, Box
+import numpy as np
+import pytest
+import zarr
+
 from figpack.core.figpack_view import FigpackView
+from figpack.views import Box, LayoutItem, Markdown, Splitter
 
 
 class TestSplitter:

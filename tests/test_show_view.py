@@ -2,18 +2,19 @@
 Tests for figpack._show_view module
 """
 
-import pytest
-import tempfile
-import pathlib
 import os
+import pathlib
 import socket
+import tempfile
 import threading
 import time
-import requests
-from unittest.mock import Mock, patch, MagicMock, call
 from http.server import SimpleHTTPRequestHandler
+from unittest.mock import MagicMock, Mock, call, patch
 
-from figpack.core._show_view import _show_view, serve_files, CORSRequestHandler
+import pytest
+import requests
+
+from figpack.core._show_view import CORSRequestHandler, _show_view, serve_files
 from figpack.core.figpack_view import FigpackView
 from figpack.views import Markdown
 

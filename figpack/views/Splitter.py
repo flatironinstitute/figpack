@@ -2,8 +2,10 @@
 Splitter view for figpack - a resizable split layout container
 """
 
-import zarr
 from typing import Literal
+
+import zarr
+
 from ..core.figpack_view import FigpackView
 from .LayoutItem import LayoutItem
 

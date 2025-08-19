@@ -2,7 +2,7 @@
 UnitsTableRow for spike sorting views
 """
 
-from typing import Union, Dict, Any
+from typing import Any, Dict, Union
 
 
 class UnitsTableRow:

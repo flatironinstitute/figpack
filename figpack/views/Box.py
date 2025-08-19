@@ -2,8 +2,10 @@
 Box view for figpack - a layout container that handles other views
 """
 
+from typing import Any, Dict, List, Literal, Optional
+
 import zarr
-from typing import List, Literal, Optional, Dict, Any
+
 from ..core.figpack_view import FigpackView
 from .LayoutItem import LayoutItem
 

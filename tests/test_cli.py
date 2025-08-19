@@ -2,21 +2,22 @@
 Tests for figpack CLI module
 """
 
-import pytest
-import tempfile
-import pathlib
 import json
-import tarfile
-from unittest.mock import Mock, patch, MagicMock
-from io import StringIO
+import pathlib
 import sys
+import tarfile
+import tempfile
+from io import StringIO
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from figpack.cli import (
-    get_figure_base_url,
-    download_file,
     download_figure,
-    view_figure,
+    download_file,
+    get_figure_base_url,
     main,
+    view_figure,
 )
 
 
