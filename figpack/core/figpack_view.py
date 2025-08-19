@@ -49,6 +49,7 @@ class FigpackView:
             print(
                 f"For development, run figpack-gui in dev mode and use http://localhost:5173?data=http://localhost:{port}/data.zarr"
             )
+            open_in_browser = False
 
         _show_view(
             self,

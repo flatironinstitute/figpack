@@ -1,4 +1,5 @@
 from .TimeseriesGraph import TimeseriesGraph
+from .MultiChannelTimeseries import MultiChannelTimeseries
 from .Box import Box
 from .Splitter import Splitter
 from .TabLayout import TabLayout

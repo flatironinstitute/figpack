@@ -1,5 +1,6 @@
 import { ZarrGroup } from "../remote-zarr/RemoteZarr";
 import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
+import { FPMultiChannelTimeseries } from "./FPMultiChannelTimeseries";
 import { FPBox } from "./FPBox";
 import { FPSplitter } from "./FPSplitter";
 import { FPTabLayout } from "./FPTabLayout";
@@ -19,6 +20,14 @@ export const FPView: React.FC<{
   if (zarrGroup.attrs["view_type"] === "TimeseriesGraph") {
     return (
       <FPTimeseriesGraph zarrGroup={zarrGroup} width={width} height={height} />
+    );
+  } else if (zarrGroup.attrs["view_type"] === "MultiChannelTimeseries") {
+    return (
+      <FPMultiChannelTimeseries
+        zarrGroup={zarrGroup}
+        width={width}
+        height={height}
+      />
     );
   } else if (zarrGroup.attrs["view_type"] === "Box") {
     return <FPBox zarrGroup={zarrGroup} width={width} height={height} />;
