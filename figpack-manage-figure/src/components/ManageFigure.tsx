@@ -253,7 +253,7 @@ const ManageFigure: React.FC = () => {
         setPinDialogOpen(false);
       } else {
         setPinError(`Failed to pin figure: ${result.message}`);
-        throw new Error(result.message);
+        throw Error(result.message);
       }
     } catch (err) {
       setPinError(`Error pinning figure: ${err}`);
