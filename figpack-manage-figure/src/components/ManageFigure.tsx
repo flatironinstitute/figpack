@@ -14,6 +14,15 @@ import {
   ListItemText,
   Paper,
   Stack,
+  IconButton,
+  Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  useTheme,
+  useMediaQuery,
+  CardHeader,
+  Avatar,
 } from "@mui/material";
 import {
   Refresh,
@@ -21,6 +30,13 @@ import {
   CheckCircle,
   Error,
   PushPin,
+  Launch,
+  ExpandMore,
+  Info,
+  Schedule,
+  Link as LinkIcon,
+  CloudDownload,
+  Folder,
 } from "@mui/icons-material";
 import PinDialog from "./PinDialog";
 
@@ -56,6 +72,9 @@ interface Manifest {
 }
 
 const ManageFigure: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [figpackStatus, setFigpackStatus] = useState<FigpackStatus | null>(
     null
   );
@@ -69,7 +88,6 @@ const ManageFigure: React.FC = () => {
   const [pinError, setPinError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get figure URL from query parameters
     const urlParams = new URLSearchParams(window.location.search);
     const url = urlParams.get("figure_url");
     if (url) {
@@ -86,10 +104,8 @@ const ManageFigure: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Extract base URL for fetching figpack.json and manifest.json
       const baseUrl = url.replace(/\/[^/]*$/, "");
 
-      // Load figpack.json
       try {
         const figpackResponse = await fetch(
           `${baseUrl}/figpack.json?cb=${Date.now()}`
@@ -102,7 +118,6 @@ const ManageFigure: React.FC = () => {
         console.warn("Could not load figpack.json:", err);
       }
 
-      // Load manifest.json
       try {
         const manifestResponse = await fetch(`${baseUrl}/manifest.json`);
         if (manifestResponse.ok) {
@@ -202,18 +217,13 @@ const ManageFigure: React.FC = () => {
     try {
       const response = await fetch("https://figpack-api.vercel.app/api/renew", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          figureUrl: figureUrl,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ figureUrl: figureUrl }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        // Refresh the figure data to show updated expiration
         await loadFigureData(figureUrl);
       } else {
         setError(`Failed to renew figure: ${result.message}`);
@@ -236,19 +246,13 @@ const ManageFigure: React.FC = () => {
     try {
       const response = await fetch("https://figpack-api.vercel.app/api/pin", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          figureUrl: figureUrl,
-          pinInfo: pinInfo,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ figureUrl: figureUrl, pinInfo: pinInfo }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        // Refresh the figure data to show updated pin status
         await loadFigureData(figureUrl);
         setPinDialogOpen(false);
       } else {
@@ -257,7 +261,7 @@ const ManageFigure: React.FC = () => {
       }
     } catch (err) {
       setPinError(`Error pinning figure: ${err}`);
-      throw err; // Re-throw to let PinDialog handle it
+      throw err;
     } finally {
       setPinLoading(false);
     }
@@ -273,16 +277,22 @@ const ManageFigure: React.FC = () => {
     setPinDialogOpen(false);
   };
 
+  const truncateUrl = (url: string, maxLength: number = 50) => {
+    if (url.length <= maxLength) return url;
+    return `${url.substring(0, maxLength)}...`;
+  };
+
   if (loading) {
     return (
       <Box
         display="flex"
         justifyContent="center"
         alignItems="center"
-        minHeight="200px"
+        minHeight="300px"
+        flexDirection="column"
       >
-        <CircularProgress />
-        <Typography variant="body1" sx={{ ml: 2 }}>
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ mt: 2 }}>
           Loading figure data...
         </Typography>
       </Box>
@@ -298,382 +308,431 @@ const ManageFigure: React.FC = () => {
   }
 
   return (
-    <Stack spacing={3}>
-      {/* Status Card */}
-      <Card>
-        <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
-            {getStatusIcon()}
-            <Typography variant="h5" sx={{ ml: 1, flexGrow: 1 }}>
-              Figure Status
-            </Typography>
-            <Button
-              variant="outlined"
-              startIcon={<Refresh />}
-              onClick={handleRefresh}
-              size="small"
-            >
-              Refresh
-            </Button>
-          </Box>
-
-          {figpackStatus && (
-            <Box>
-              <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-                <Chip label={figpackStatus.status} color={getStatusColor()} />
-                {figpackStatus.pinned && (
+    <Box sx={{ maxWidth: "100%", mx: "auto" }}>
+      <Stack spacing={3}>
+        {/* Header Section with Quick Actions */}
+        <Card elevation={2}>
+          <CardHeader
+            avatar={
+              <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                {getStatusIcon()}
+              </Avatar>
+            }
+            title={
+              <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                <Typography variant="h5" component="div">
+                  Figure Manager
+                </Typography>
+                {figpackStatus && (
+                  <Chip
+                    label={figpackStatus.status}
+                    color={getStatusColor()}
+                    size="small"
+                  />
+                )}
+                {figpackStatus?.pinned && (
                   <Chip
                     icon={<PushPin />}
                     label="Pinned"
                     color="success"
                     variant="outlined"
+                    size="small"
                   />
                 )}
               </Box>
-
-              {figpackStatus.pinned && figpackStatus.pin_info && (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    This figure is pinned and will not automatically expire,
-                    though admins may remove pins if needed.
-                  </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="body2">
-                      <strong>Pinned by:</strong> {figpackStatus.pin_info.name}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Figure:</strong>{" "}
-                      {figpackStatus.pin_info.figure_description}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Pinned on:</strong>{" "}
-                      {formatDate(figpackStatus.pin_info.pinned_timestamp)}
-                    </Typography>
-                  </Box>
-                </Alert>
-              )}
-
-              {!figpackStatus.pinned && isExpired() && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  This figure has expired.
-                  <Button
-                    variant="contained"
-                    color="error"
-                    sx={{ ml: 2 }}
-                    onClick={handleRenew}
-                    disabled
-                  >
-                    Restore
-                  </Button>
-                </Alert>
-              )}
-
-              {!figpackStatus.pinned &&
-                !isExpired() &&
-                getTimeUntilExpiration() && (
-                  <Alert severity="warning" sx={{ mb: 2 }}>
-                    This figure will expire in {getTimeUntilExpiration()}.
-                    <Box
-                      sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}
-                    >
-                      <Button
-                        variant="contained"
-                        color="warning"
-                        onClick={handleRenew}
-                        disabled={renewLoading}
-                        startIcon={
-                          renewLoading ? (
-                            <CircularProgress size={16} />
-                          ) : undefined
-                        }
-                      >
-                        {renewLoading ? "Renewing..." : "Renew"}
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        startIcon={<PushPin />}
-                        onClick={handleOpenPinDialog}
-                      >
-                        Pin Figure
-                      </Button>
-                    </Box>
-                  </Alert>
-                )}
-
-              {!figpackStatus.pinned &&
-                !isExpired() &&
-                !getTimeUntilExpiration() && (
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    This figure does not have an expiration date.
-                    <Button
-                      variant="contained"
-                      color="success"
-                      sx={{ ml: 2 }}
-                      startIcon={<PushPin />}
-                      onClick={handleOpenPinDialog}
-                    >
-                      Pin Figure
-                    </Button>
-                  </Alert>
-                )}
-
-              <Box
-                display="flex"
-                flexWrap="wrap"
-                gap={3}
-                sx={{ "& > div": { minWidth: "200px", flex: "1 1 auto" } }}
-              >
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Figure URL
-                  </Typography>
-                  {figureUrl ? (
-                    <Typography
+            }
+            action={
+              <Box display="flex" gap={1}>
+                {figureUrl && (
+                  <Tooltip title="Open Figure">
+                    <IconButton
                       component="a"
                       href={figureUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      variant="body1"
-                      sx={{
-                        wordBreak: "break-all",
-                        fontSize: "0.875rem",
-                        color: "primary.main",
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                        "&:hover": {
-                          textDecoration: "none",
-                        },
-                      }}
+                      color="primary"
                     >
-                      {figureUrl}
-                    </Typography>
-                  ) : (
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        wordBreak: "break-all",
-                        fontSize: "0.875rem",
-                      }}
-                    >
-                      N/A
-                    </Typography>
-                  )}
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Figure ID
-                  </Typography>
-                  <Typography variant="body1">
-                    {figpackStatus.figure_id || "N/A"}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Figpack Version
-                  </Typography>
-                  <Typography variant="body1">
-                    {figpackStatus.figpack_version || "N/A"}
-                  </Typography>
-                </Box>
-                {figpackStatus.upload_started && (
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Upload Started
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatDate(figpackStatus.upload_started)}
-                    </Typography>
-                  </Box>
+                      <Launch />
+                    </IconButton>
+                  </Tooltip>
                 )}
-                {figpackStatus.upload_completed && (
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Upload Completed
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatDate(figpackStatus.upload_completed)}
-                    </Typography>
-                  </Box>
-                )}
-                {figpackStatus.expiration && (
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Expiration
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatDate(figpackStatus.expiration)}
-                    </Typography>
-                  </Box>
-                )}
-                {figpackStatus.total_size && (
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Size
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatBytes(figpackStatus.total_size)}
-                    </Typography>
-                  </Box>
-                )}
+                <Tooltip title="Refresh Data">
+                  <IconButton onClick={handleRefresh} color="primary">
+                    <Refresh />
+                  </IconButton>
+                </Tooltip>
               </Box>
-            </Box>
-          )}
-
-          {!figpackStatus && (
-            <Box>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                No figpack.json found. This figure may not have been uploaded
-                via figpack.
-              </Alert>
-              {figureUrl && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Figure URL
-                  </Typography>
+            }
+          />
+          <CardContent sx={{ pt: 0 }}>
+            {/* Figure URL Section */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Figure URL
+              </Typography>
+              <Box display="flex" alignItems="center" gap={1}>
+                <LinkIcon color="action" fontSize="small" />
+                {figureUrl ? (
                   <Typography
                     component="a"
                     href={figureUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    variant="body1"
+                    variant="body2"
                     sx={{
-                      wordBreak: "break-all",
-                      fontSize: "0.875rem",
                       color: "primary.main",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      "&:hover": {
-                        textDecoration: "none",
-                      },
+                      textDecoration: "none",
+                      wordBreak: "break-all",
+                      "&:hover": { textDecoration: "underline" },
                     }}
                   >
-                    {figureUrl}
+                    {isMobile ? truncateUrl(figureUrl, 40) : figureUrl}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    N/A
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            {/* Status Alerts */}
+            {figpackStatus?.pinned && figpackStatus.pin_info && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  This figure is pinned and will not automatically expire,
+                  though admins may remove pins if needed.
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="body2">
+                    <strong>Pinned by:</strong> {figpackStatus.pin_info.name}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Figure:</strong>{" "}
+                    {figpackStatus.pin_info.figure_description}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Pinned on:</strong>{" "}
+                    {formatDate(figpackStatus.pin_info.pinned_timestamp)}
                   </Typography>
                 </Box>
+              </Alert>
+            )}
+
+            {!figpackStatus?.pinned && isExpired() && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                ⚠️ This figure has expired and is no longer accessible.
+              </Alert>
+            )}
+
+            {!figpackStatus?.pinned &&
+              !isExpired() &&
+              getTimeUntilExpiration() && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  <Typography variant="body2" gutterBottom>
+                    ⏰ This figure will expire in{" "}
+                    <strong>{getTimeUntilExpiration()}</strong>
+                  </Typography>
+                  <Box
+                    sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="warning"
+                      size="small"
+                      onClick={handleRenew}
+                      disabled={renewLoading}
+                      startIcon={
+                        renewLoading ? (
+                          <CircularProgress size={16} />
+                        ) : (
+                          <Schedule />
+                        )
+                      }
+                    >
+                      {renewLoading ? "Renewing..." : "Extend"}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      startIcon={<PushPin />}
+                      onClick={handleOpenPinDialog}
+                    >
+                      Pin Forever
+                    </Button>
+                  </Box>
+                </Alert>
               )}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Download Instructions Card */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Download Instructions
-          </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            To download this figure as a .tar.gz file, use the figpack
-            command-line tool:
-          </Typography>
-          <Paper sx={{ p: 2, bgcolor: "grey.100", mb: 2 }}>
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{ fontFamily: "monospace" }}
-            >
-              figpack download {figureUrl} figure.tar.gz
-            </Typography>
-          </Paper>
+            {!figpackStatus?.pinned &&
+              !isExpired() &&
+              !getTimeUntilExpiration() && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="body2" gutterBottom>
+                    ℹ️ This figure has no expiration date.
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    startIcon={<PushPin />}
+                    onClick={handleOpenPinDialog}
+                  >
+                    Pin Figure
+                  </Button>
+                </Alert>
+              )}
 
-          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-            Viewing Downloaded Figures
-          </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            After downloading, you can view the figure archive locally in your
-            browser:
-          </Typography>
-          <Paper sx={{ p: 2, bgcolor: "grey.100", mb: 1 }}>
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{ fontFamily: "monospace" }}
-            >
-              figpack view figure.tar.gz
-            </Typography>
-          </Paper>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            The server will run locally until you press Enter. You can specify a
-            custom port using:
-          </Typography>
-          <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{ fontFamily: "monospace" }}
-            >
-              figpack view figure.tar.gz --port 8080
-            </Typography>
-          </Paper>
-        </CardContent>
-      </Card>
-
-      {/* File Manifest Card */}
-      {manifest && (
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              File Manifest
-            </Typography>
-            <Box
-              display="flex"
-              flexWrap="wrap"
-              gap={3}
-              sx={{ mb: 2, "& > div": { minWidth: "150px", flex: "1 1 auto" } }}
-            >
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Total Files
-                </Typography>
-                <Typography variant="body1">{manifest.total_files}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Total Size
-                </Typography>
-                <Typography variant="body1">
-                  {formatBytes(manifest.total_size)}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Created
-                </Typography>
-                <Typography variant="body1">
-                  {formatDate(manifest.timestamp)}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="subtitle1" gutterBottom>
-              Files ({manifest.files.length})
-            </Typography>
-            <List dense sx={{ maxHeight: 300, overflow: "auto" }}>
-              {manifest.files.map((file, index) => (
-                <ListItem key={index}>
-                  <ListItemText
-                    primary={file.path}
-                    secondary={formatBytes(file.size)}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            {!figpackStatus && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                ℹ️ No figpack metadata found. This figure may not have been
+                uploaded via figpack.
+              </Alert>
+            )}
           </CardContent>
         </Card>
-      )}
 
-      {/* Pin Dialog */}
-      <PinDialog
-        open={pinDialogOpen}
-        onClose={handleClosePinDialog}
-        onPin={handlePin}
-        loading={pinLoading}
-        error={pinError}
-      />
-    </Stack>
+        {/* Details Section */}
+        {figpackStatus && (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 3,
+            }}
+          >
+            {/* Figure Information */}
+            <Box sx={{ flex: 1 }}>
+              <Card>
+                <CardHeader
+                  avatar={<Info color="primary" />}
+                  title="Figure Information"
+                  titleTypographyProps={{ variant: "h6" }}
+                />
+                <CardContent sx={{ pt: 0 }}>
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Figure ID
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontFamily: "monospace" }}
+                      >
+                        {figpackStatus.figure_id || "N/A"}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Figpack Version
+                      </Typography>
+                      <Typography variant="body1">
+                        {figpackStatus.figpack_version || "N/A"}
+                      </Typography>
+                    </Box>
+                    {figpackStatus.total_size && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Total Size
+                        </Typography>
+                        <Typography variant="body1">
+                          {formatBytes(figpackStatus.total_size)}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Box>
+
+            {/* Timeline Information */}
+            <Box sx={{ flex: 1 }}>
+              <Card>
+                <CardHeader
+                  avatar={<Schedule color="primary" />}
+                  title="Timeline"
+                  titleTypographyProps={{ variant: "h6" }}
+                />
+                <CardContent sx={{ pt: 0 }}>
+                  <Stack spacing={2}>
+                    {figpackStatus.upload_started && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Upload Started
+                        </Typography>
+                        <Typography variant="body1">
+                          {formatDate(figpackStatus.upload_started)}
+                        </Typography>
+                      </Box>
+                    )}
+                    {figpackStatus.upload_completed && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Upload Completed
+                        </Typography>
+                        <Typography variant="body1">
+                          {formatDate(figpackStatus.upload_completed)}
+                        </Typography>
+                      </Box>
+                    )}
+                    {figpackStatus.expiration && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Expiration
+                        </Typography>
+                        <Typography variant="body1">
+                          {formatDate(figpackStatus.expiration)}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+        )}
+
+        {/* Download Instructions */}
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <CloudDownload color="primary" />
+              <Typography variant="h6">Download Instructions</Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Stack spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                Use the figpack command-line tool to download this figure:
+              </Typography>
+              <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{
+                    fontFamily: "monospace",
+                    wordBreak: "break-all",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  figpack download {figureUrl} figure.tar.gz
+                </Typography>
+              </Paper>
+
+              <Typography variant="subtitle2" sx={{ mt: 2 }}>
+                View Downloaded Figures Locally
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                After downloading, view the figure in your browser:
+              </Typography>
+              <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{ fontFamily: "monospace" }}
+                >
+                  figpack view figure.tar.gz
+                </Typography>
+              </Paper>
+              <Typography variant="body2" color="text.secondary">
+                Or specify a custom port:
+              </Typography>
+              <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{ fontFamily: "monospace" }}
+                >
+                  figpack view figure.tar.gz --port 8080
+                </Typography>
+              </Paper>
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        {/* File Manifest */}
+        {manifest && (
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Folder color="primary" />
+                <Typography variant="h6">
+                  File Manifest ({manifest.files.length} files)
+                </Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={2}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: 2,
+                  }}
+                >
+                  <Box sx={{ flex: 1, textAlign: "center" }}>
+                    <Typography variant="h4" color="primary.main">
+                      {manifest.total_files}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Files
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, textAlign: "center" }}>
+                    <Typography variant="h4" color="primary.main">
+                      {formatBytes(manifest.total_size)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Size
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, textAlign: "center" }}>
+                    <Typography variant="h4" color="primary.main">
+                      {formatDate(manifest.timestamp).split(",")[0]}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Created
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Divider />
+
+                <Box sx={{ maxHeight: 300, overflow: "auto" }}>
+                  <List dense>
+                    {manifest.files.map((file, index) => (
+                      <ListItem key={index} sx={{ px: 0 }}>
+                        <ListItemText
+                          primary={
+                            <Typography
+                              variant="body2"
+                              sx={{ fontFamily: "monospace" }}
+                            >
+                              {file.path}
+                            </Typography>
+                          }
+                          secondary={formatBytes(file.size)}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+        )}
+
+        {/* Pin Dialog */}
+        <PinDialog
+          open={pinDialogOpen}
+          onClose={handleClosePinDialog}
+          onPin={handlePin}
+          loading={pinLoading}
+          error={pinError}
+        />
+      </Stack>
+    </Box>
   );
 };
 
