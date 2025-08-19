@@ -52,7 +52,7 @@ splitter = vv.Splitter(
     split_pos=0.3  # 30% for left pane
 )
 
-splitter.show(open_in_browser=True)
+splitter.show(open_in_browser=True, title="Splitter Example")
 ```
 
 ## Constructor Parameters

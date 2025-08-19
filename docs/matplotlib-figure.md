@@ -28,7 +28,7 @@ ax.grid(True)
 
 # Create figpack view
 view = vv.MatplotlibFigure(fig=fig)
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Matplotlib Figure Example")
 ```
 
 ## Constructor Parameters
@@ -79,7 +79,7 @@ ax4.set_aspect("equal")
 plt.tight_layout()
 
 view = vv.MatplotlibFigure(fig=fig)
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Multiple Subplots Example")
 ```
 
 ## Example

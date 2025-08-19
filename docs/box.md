@@ -53,7 +53,7 @@ box = vv.Box(
     ]
 )
 
-box.show(open_in_browser=True)
+box.show(open_in_browser=True, title="Box Layout Example")
 ```
 
 ## Constructor Parameters

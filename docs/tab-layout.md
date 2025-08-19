@@ -74,7 +74,7 @@ tabs = vv.TabLayout(
     ]
 )
 
-tabs.show(open_in_browser=True)
+tabs.show(open_in_browser=True, title="Tab Layout Example")
 ```
 
 ## Constructor Parameters

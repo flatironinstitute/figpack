@@ -29,7 +29,7 @@ def example():
 
 """)
 
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Markdown Example")
 
 ````
 

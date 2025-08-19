@@ -23,7 +23,7 @@ fig.update_layout(title="Sine Wave", xaxis_title="x", yaxis_title="sin(x)")
 
 # Create figpack view
 view = vv.PlotlyFigure(fig=fig)
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Plotly Figure Example")
 ```
 
 ## Constructor Parameters
@@ -57,7 +57,7 @@ fig.add_trace(go.Scatter(x=np.random.randn(100), y=np.random.randn(100),
 fig.update_layout(height=600, title_text="Multiple Subplots")
 
 view = vv.PlotlyFigure(fig=fig)
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Multiple Subplots Example")
 ```
 
 ## Example

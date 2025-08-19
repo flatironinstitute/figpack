@@ -13,7 +13,7 @@ recording, sorting = se.toy_example(
     num_units=9, duration=300, seed=0, num_segments=1
 )
 view = ssv.Autocorrelograms.from_sorting(sorting)
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Autocorrelograms Example")
 ```
 
 More detailed example, constructing a custom `Autocorrelograms` view and combining it with a units table.

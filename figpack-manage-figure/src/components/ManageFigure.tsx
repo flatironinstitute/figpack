@@ -321,7 +321,7 @@ const ManageFigure: React.FC = () => {
             title={
               <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
                 <Typography variant="h5" component="div">
-                  Figure Manager
+                  Figure
                 </Typography>
                 {figpackStatus && (
                   <Chip

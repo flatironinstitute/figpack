@@ -32,7 +32,7 @@ view = vv.MultiChannelTimeseries(
     channel_ids=["Channel_1", "Channel_2", "Channel_3"]
 )
 
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Multi-Channel Timeseries Example")
 ```
 
 ## Constructor Parameters

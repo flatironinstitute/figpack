@@ -39,7 +39,7 @@ t_end = np.array([3, 7])
 graph.add_interval_series(name="intervals", t_start=t_start, t_end=t_end, color="lightblue")
 
 # Display the graph
-graph.show(open_in_browser=True)
+graph.show(open_in_browser=True, title="Timeseries Graph Example")
 ```
 
 ## Constructor Parameters

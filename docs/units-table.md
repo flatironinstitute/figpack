@@ -35,7 +35,7 @@ for unit_id in sorting.get_unit_ids():
     )
 
 view = ssv.UnitsTable(columns=columns, rows=rows)
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Units Table Example")
 ```
 
 More detailed example with similarity scores:
