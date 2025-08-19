@@ -18,7 +18,7 @@ FIGPACK_FIGURES_BASE_URL = "https://figures.figpack.org/figures/default"
 
 
 def _upload_single_file(
-    figure_id: str, relative_path: str, file_path: pathlib.Path, passcode: str
+    figure_id: str, relative_path: str, file_path: pathlib.Path, api_key: str
 ) -> str:
     """
     Worker function to upload a single file
@@ -31,9 +31,9 @@ def _upload_single_file(
     if file_type == "small":
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        _upload_small_file(figure_id, relative_path, content, passcode)
+        _upload_small_file(figure_id, relative_path, content, api_key)
     else:  # large file
-        _upload_large_file(figure_id, relative_path, file_path, passcode)
+        _upload_large_file(figure_id, relative_path, file_path, api_key)
 
     return relative_path
 
@@ -134,7 +134,7 @@ def _find_available_figure_id(base_figure_id: str) -> tuple:
             )
 
 
-def _upload_bundle(tmpdir: str, passcode: str) -> None:
+def _upload_bundle(tmpdir: str, api_key: str) -> None:
     """
     Upload the prepared bundle to the cloud using parallel uploads
     """
@@ -166,7 +166,7 @@ def _upload_bundle(tmpdir: str, passcode: str) -> None:
         "figpack_version": __version__,
     }
     _upload_small_file(
-        figure_id, "figpack.json", json.dumps(figpack_json, indent=2), passcode
+        figure_id, "figpack.json", json.dumps(figpack_json, indent=2), api_key
     )
 
     # Collect all files to upload
@@ -203,7 +203,7 @@ def _upload_bundle(tmpdir: str, passcode: str) -> None:
             # Submit all upload tasks
             future_to_file = {
                 executor.submit(
-                    _upload_single_file, figure_id, rel_path, file_path, passcode
+                    _upload_single_file, figure_id, rel_path, file_path, api_key
                 ): rel_path
                 for rel_path, file_path in files_to_upload
             }
@@ -236,7 +236,7 @@ def _upload_bundle(tmpdir: str, passcode: str) -> None:
                                 figure_id,
                                 "figpack.json",
                                 json.dumps(figpack_json, indent=2),
-                                passcode,
+                                api_key,
                             )
                             print(
                                 f"Updated figpack.json with progress: {uploaded_count}/{total_files_to_upload}"
@@ -262,7 +262,7 @@ def _upload_bundle(tmpdir: str, passcode: str) -> None:
         manifest["total_size"] += file_size
 
     _upload_small_file(
-        figure_id, "manifest.json", json.dumps(manifest, indent=2), passcode
+        figure_id, "manifest.json", json.dumps(manifest, indent=2), api_key
     )
     print("Uploaded manifest.json")
     print(f"Total size: {manifest['total_size'] / (1024 * 1024):.2f} MB")
@@ -279,7 +279,7 @@ def _upload_bundle(tmpdir: str, passcode: str) -> None:
         "figpack_version": __version__,
     }
     _upload_small_file(
-        figure_id, "figpack.json", json.dumps(figpack_json, indent=2), passcode
+        figure_id, "figpack.json", json.dumps(figpack_json, indent=2), api_key
     )
     print("Upload completed successfully")
 
@@ -349,7 +349,7 @@ def _is_zarr_chunk(file_name: str) -> bool:
 
 
 def _upload_small_file(
-    figure_id: str, file_path: str, content: str, passcode: str
+    figure_id: str, file_path: str, content: str, api_key: str
 ) -> None:
     """
     Upload a small file by sending content directly
@@ -362,7 +362,7 @@ def _upload_small_file(
         raise Exception(f"Content for {file_path} is not UTF-8 encodable: {e}")
     payload = {
         "destinationUrl": destination_url,
-        "passcode": passcode,
+        "apiKey": api_key,
         "content": content,
     }
     # check that payload is json serializable
@@ -383,7 +383,7 @@ def _upload_small_file(
 
 
 def _upload_large_file(
-    figure_id: str, file_path: str, local_file_path: pathlib.Path, passcode: str
+    figure_id: str, file_path: str, local_file_path: pathlib.Path, api_key: str
 ) -> None:
     """
     Upload a large file using signed URL
@@ -394,7 +394,7 @@ def _upload_large_file(
     # Get signed URL
     payload = {
         "destinationUrl": destination_url,
-        "passcode": passcode,
+        "apiKey": api_key,
         "size": file_size,
     }
 

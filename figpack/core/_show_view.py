@@ -28,15 +28,15 @@ def _show_view(
 
         if upload:
             # Check for required environment variable
-            passcode = os.environ.get("FIGPACK_UPLOAD_PASSCODE")
-            if not passcode:
+            api_key = os.environ.get("FIGPACK_API_KEY")
+            if not api_key:
                 raise EnvironmentError(
-                    "FIGPACK_UPLOAD_PASSCODE environment variable must be set to upload views."
+                    "FIGPACK_API_KEY environment variable must be set to upload views."
                 )
 
             # Upload the bundle
             print("Starting upload...")
-            figure_url = _upload_bundle(tmpdir, passcode)
+            figure_url = _upload_bundle(tmpdir, api_key)
 
             if open_in_browser:
                 webbrowser.open(figure_url)

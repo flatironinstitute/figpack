@@ -57,6 +57,7 @@ interface FigpackStatus {
   figpack_version?: string;
   pinned?: boolean;
   pin_info?: PinInfo;
+  owner_email?: string;
 }
 
 interface ManifestFile {
@@ -459,7 +460,7 @@ const ManageFigure: React.FC = () => {
                       startIcon={<PushPin />}
                       onClick={handleOpenPinDialog}
                     >
-                      Pin Forever
+                      Pin
                     </Button>
                   </Box>
                 </Alert>
@@ -523,6 +524,16 @@ const ManageFigure: React.FC = () => {
                         {figpackStatus.figure_id || "N/A"}
                       </Typography>
                     </Box>
+                    {figpackStatus.owner_email && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Owner
+                        </Typography>
+                        <Typography variant="body1">
+                          {figpackStatus.owner_email}
+                        </Typography>
+                      </Box>
+                    )}
                     <Box>
                       <Typography variant="body2" color="text.secondary">
                         Figpack Version

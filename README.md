@@ -82,7 +82,7 @@ view.show(open_in_browser=True, title="Local Visualization")
 
 ### Sharing Online
 
-Set the `FIGPACK_UPLOAD_PASSCODE` environment variable and use:
+Set the `FIGPACK_API_KEY` environment variable and use:
 
 ```python
 view.show(upload=True, open_in_browser=True, title="Shared Visualization")

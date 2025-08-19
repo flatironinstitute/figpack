@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { UploadRequest, UploadResponse, ValidationResult, FileValidationResult, ValidationError } from '../../types';
 import { Bucket, getSignedUploadUrl } from '../../lib/s3Helpers';
+import { validateApiKey } from '../../lib/adminAuth';
 
 const bucketCredentials = process.env.BUCKET_CREDENTIALS;
 if (!bucketCredentials) {
@@ -198,32 +199,26 @@ export default async function handler(
 
   try {
     // Parse request body
-    const { destinationUrl, passcode, content, size }: UploadRequest = req.body;
+    const { destinationUrl, apiKey, content, size }: UploadRequest = req.body;
 
     // Validate required fields
-    if (!destinationUrl || !passcode) {
+    if (!destinationUrl || !apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: destinationUrl, passcode'
+        message: 'Missing required fields: destinationUrl, apiKey'
       });
     }
 
-    // Authenticate with passcode
-    const expectedPasscode = process.env.FIGPACK_UPLOAD_PASSCODE;
-    if (!expectedPasscode) {
-      console.error('FIGPACK_UPLOAD_PASSCODE environment variable not set');
-      return res.status(500).json({
-        success: false,
-        message: 'Server configuration error'
-      });
-    }
-
-    if (passcode !== expectedPasscode) {
+    // Authenticate with API key
+    const authResult = await validateApiKey(apiKey);
+    if (!authResult.isValid || !authResult.user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid passcode'
+        message: 'Invalid API key'
       });
     }
+
+    const userEmail = authResult.user.email;
 
     // Validate destination URL
     const urlValidation = validateDestinationUrl(destinationUrl);
@@ -264,8 +259,24 @@ export default async function handler(
         });
       }
 
+      let finalContent = content;
+
+      // If this is a figpack.json file, add the user email to track ownership
+      if (actualFileName === 'figpack.json') {
+        try {
+          const figpackData = JSON.parse(content);
+          figpackData.owner_email = userEmail;
+          finalContent = JSON.stringify(figpackData, null, 2);
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid JSON in figpack.json file'
+          });
+        }
+      }
+
       // Upload small file
-      await uploadSmallFile(destinationUrl, content, urlValidation.figureId!);
+      await uploadSmallFile(destinationUrl, finalContent, urlValidation.figureId!);
 
       return res.status(200).json({
         success: true,

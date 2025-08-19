@@ -293,12 +293,12 @@ class TestUploadSmallFile:
         mock_response.ok = True
         mock_post.return_value = mock_response
 
-        _upload_small_file("test_id", "test.json", '{"test": "data"}', "passcode")
+        _upload_small_file("test_id", "test.json", '{"test": "data"}', "api_key")
 
         mock_post.assert_called_once()
         call_args = mock_post.call_args
         assert call_args[1]["json"]["content"] == '{"test": "data"}'
-        assert call_args[1]["json"]["passcode"] == "passcode"
+        assert call_args[1]["json"]["apiKey"] == "api_key"
 
     @patch("figpack.core._upload_bundle.requests.post")
     def test_upload_small_file_failure(self, mock_post):
@@ -310,7 +310,7 @@ class TestUploadSmallFile:
         mock_post.return_value = mock_response
 
         with pytest.raises(Exception, match="Failed to upload test.json"):
-            _upload_small_file("test_id", "test.json", '{"test": "data"}', "passcode")
+            _upload_small_file("test_id", "test.json", '{"test": "data"}', "api_key")
 
     @patch("figpack.core._upload_bundle.requests.post")
     def test_upload_small_file_non_utf8(self, mock_post):
@@ -320,7 +320,7 @@ class TestUploadSmallFile:
         invalid_content = "\udcff"  # This is a surrogate character
 
         with pytest.raises(Exception, match="not UTF-8 encodable"):
-            _upload_small_file("test_id", "test.json", invalid_content, "passcode")
+            _upload_small_file("test_id", "test.json", invalid_content, "api_key")
 
         # Should not make any HTTP requests since it fails before that
         mock_post.assert_not_called()
@@ -351,7 +351,7 @@ class TestUploadLargeFile:
         mock_put_response.ok = True
         mock_put.return_value = mock_put_response
 
-        _upload_large_file("test_id", "test.bin", test_file, "passcode")
+        _upload_large_file("test_id", "test.bin", test_file, "api_key")
 
         # Verify signed URL request
         mock_post.assert_called_once()
@@ -376,7 +376,7 @@ class TestUploadLargeFile:
         mock_post.return_value = mock_response
 
         with pytest.raises(Exception, match="Failed to get signed URL"):
-            _upload_large_file("test_id", "test.bin", test_file, "passcode")
+            _upload_large_file("test_id", "test.bin", test_file, "api_key")
 
     @patch("figpack.core._upload_bundle.requests.put")
     @patch("figpack.core._upload_bundle.requests.post")
@@ -401,7 +401,7 @@ class TestUploadLargeFile:
         mock_put.return_value = mock_put_response
 
         with pytest.raises(Exception, match="Failed to upload test.bin to signed URL"):
-            _upload_large_file("test_id", "test.bin", test_file, "passcode")
+            _upload_large_file("test_id", "test.bin", test_file, "api_key")
 
 
 class TestUploadSingleFile:
@@ -419,11 +419,11 @@ class TestUploadSingleFile:
         # Mock file type determination to return "small"
         mock_determine_type.return_value = "small"
 
-        result = _upload_single_file("test_id", "test.json", test_file, "passcode")
+        result = _upload_single_file("test_id", "test.json", test_file, "api_key")
 
         assert result == "test.json"
         mock_upload_small.assert_called_once_with(
-            "test_id", "test.json", '{"test": "data"}', "passcode"
+            "test_id", "test.json", '{"test": "data"}', "api_key"
         )
 
     @patch("figpack.core._upload_bundle._upload_large_file")
@@ -438,11 +438,11 @@ class TestUploadSingleFile:
         # Mock file type determination to return "large"
         mock_determine_type.return_value = "large"
 
-        result = _upload_single_file("test_id", "test.bin", test_file, "passcode")
+        result = _upload_single_file("test_id", "test.bin", test_file, "api_key")
 
         assert result == "test.bin"
         mock_upload_large.assert_called_once_with(
-            "test_id", "test.bin", test_file, "passcode"
+            "test_id", "test.bin", test_file, "api_key"
         )
 
 
@@ -458,7 +458,7 @@ class TestUploadBundle:
         mock_compute_id.return_value = "base_figure_id"
         mock_find_id.return_value = (None, "completed_figure_id")
 
-        result = _upload_bundle(str(temp_dir), "test_passcode")
+        result = _upload_bundle(str(temp_dir), "test_api_key")
 
         expected_url = (
             "https://figures.figpack.org/figures/default/completed_figure_id/index.html"
@@ -501,7 +501,7 @@ class TestUploadBundle:
         mock_executor.submit.side_effect = [mock_future1, mock_future2]
         mock_as_completed.return_value = [mock_future1, mock_future2]
 
-        result = _upload_bundle(str(temp_dir), "test_passcode")
+        result = _upload_bundle(str(temp_dir), "test_api_key")
 
         expected_url = (
             "https://figures.figpack.org/figures/default/new_figure_id/index.html"
@@ -549,7 +549,7 @@ class TestUploadBundle:
         mock_as_completed.return_value = [mock_future]
 
         with pytest.raises(Exception, match="Upload failed"):
-            _upload_bundle(str(temp_dir), "test_passcode")
+            _upload_bundle(str(temp_dir), "test_api_key")
 
     @patch("figpack.core._upload_bundle._upload_small_file")
     @patch("figpack.core._upload_bundle._find_available_figure_id")
@@ -561,7 +561,7 @@ class TestUploadBundle:
         mock_compute_id.return_value = "base_figure_id"
         mock_find_id.return_value = ("new_figure_id", None)
 
-        result = _upload_bundle(str(temp_dir), "test_passcode")
+        result = _upload_bundle(str(temp_dir), "test_api_key")
 
         expected_url = (
             "https://figures.figpack.org/figures/default/new_figure_id/index.html"
@@ -614,7 +614,7 @@ class TestUploadBundle:
         mock_executor.submit.side_effect = futures
         mock_as_completed.return_value = futures
 
-        result = _upload_bundle(str(temp_dir), "test_passcode")
+        result = _upload_bundle(str(temp_dir), "test_api_key")
 
         expected_url = (
             "https://figures.figpack.org/figures/default/new_figure_id/index.html"

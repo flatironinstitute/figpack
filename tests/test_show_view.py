@@ -99,7 +99,7 @@ class TestShowView:
         test_url = "https://example.com/figure/123"
         mock_upload.return_value = test_url
 
-        with patch.dict(os.environ, {"FIGPACK_UPLOAD_PASSCODE": "test_passcode"}):
+        with patch.dict(os.environ, {"FIGPACK_API_KEY": "test_api_key"}):
             result = _show_view(view, upload=True, open_in_browser=True)
 
         assert result == test_url
@@ -115,41 +115,41 @@ class TestShowView:
         test_url = "https://example.com/figure/456"
         mock_upload.return_value = test_url
 
-        with patch.dict(os.environ, {"FIGPACK_UPLOAD_PASSCODE": "test_passcode"}):
+        with patch.dict(os.environ, {"FIGPACK_API_KEY": "test_api_key"}):
             result = _show_view(view, upload=True, open_in_browser=False)
 
         assert result == test_url
         mock_upload.assert_called_once()
 
     @patch("figpack.core._show_view.prepare_figure_bundle")
-    def test_show_view_upload_missing_passcode(self, mock_prepare):
-        """Test _show_view upload fails without passcode"""
+    def test_show_view_upload_missing_api_key(self, mock_prepare):
+        """Test _show_view upload fails without API key"""
         view = MockView()
 
-        # Ensure FIGPACK_UPLOAD_PASSCODE is not set
+        # Ensure FIGPACK_API_KEY is not set
         with patch.dict(os.environ, {}, clear=True):
             with pytest.raises(
                 EnvironmentError,
-                match="FIGPACK_UPLOAD_PASSCODE environment variable must be set",
+                match="FIGPACK_API_KEY environment variable must be set",
             ):
                 _show_view(view, upload=True)
 
     @patch("figpack.core._show_view._upload_bundle")
     @patch("figpack.core._show_view.prepare_figure_bundle")
-    def test_show_view_upload_with_passcode_from_env(self, mock_prepare, mock_upload):
-        """Test _show_view upload uses passcode from environment"""
+    def test_show_view_upload_with_api_key_from_env(self, mock_prepare, mock_upload):
+        """Test _show_view upload uses API key from environment"""
         view = MockView()
-        test_passcode = "secret_passcode_123"
+        test_api_key = "secret_api_key_123"
         test_url = "https://example.com/figure/789"
         mock_upload.return_value = test_url
 
-        with patch.dict(os.environ, {"FIGPACK_UPLOAD_PASSCODE": test_passcode}):
+        with patch.dict(os.environ, {"FIGPACK_API_KEY": test_api_key}):
             result = _show_view(view, upload=True)
 
-        # Verify upload was called with the correct passcode
+        # Verify upload was called with the correct API key
         mock_upload.assert_called_once()
         args, kwargs = mock_upload.call_args
-        assert args[1] == test_passcode  # Second argument should be passcode
+        assert args[1] == test_api_key  # Second argument should be API key
         assert result == test_url
 
 

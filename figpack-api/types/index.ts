@@ -1,6 +1,6 @@
 export interface UploadRequest {
   destinationUrl: string;
-  passcode: string;
+  apiKey: string;
   fileName: string;
   content?: string; // for small files
   size?: number;    // for large files

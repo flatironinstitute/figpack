@@ -44,7 +44,7 @@ const AboutButton: React.FC<{ title?: string; description?: string }> = ({
 const ManageButton: React.FC = () => {
   const handleManageClick = () => {
     const currentUrl = window.location.href;
-    const managementUrl = `https://manage.figpack.org/manage?figure_url=${encodeURIComponent(currentUrl)}`;
+    const managementUrl = `https://manage.figpack.org/figure?figure_url=${encodeURIComponent(currentUrl)}`;
     window.open(managementUrl, "_blank");
   };
 
