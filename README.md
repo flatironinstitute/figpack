@@ -37,7 +37,7 @@ y = np.sin(2 * np.pi * t)
 graph.add_line_series(name="sine wave", t=t, y=y, color="blue")
 
 # Display the visualization
-graph.show(open_in_browser=True)
+graph.show(open_in_browser=True, title="Quick Start Example")
 ```
 
 ## Available Views
@@ -77,7 +77,7 @@ See the `examples/` directory for working examples of each view type.
 ### Local-only Mode
 
 ```python
-view.show(open_in_browser=True)
+view.show(open_in_browser=True, title="Local Visualization")
 ```
 
 ### Sharing Online
@@ -85,7 +85,7 @@ view.show(open_in_browser=True)
 Set the `FIGPACK_UPLOAD_PASSCODE` environment variable and use:
 
 ```python
-view.show(upload=True, open_in_browser=True)
+view.show(upload=True, open_in_browser=True, title="Shared Visualization")
 ```
 
 ### Development Mode
