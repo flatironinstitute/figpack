@@ -73,70 +73,130 @@ def _compute_deterministic_figure_id(tmpdir_path: pathlib.Path) -> str:
     return combined_hash.hexdigest()
 
 
-def _check_existing_figure(figure_id: str) -> dict:
+def _create_or_get_figure(
+    figure_id: str, api_key: str, total_files: int = None, total_size: int = None
+) -> dict:
     """
-    Check if a figure already exists and return its status
+    Create a new figure or get existing figure information
 
     Returns:
-        dict: Contains 'exists' (bool) and 'status' (str) if exists
+        dict: Figure information from the API
     """
-    figpack_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/figpack.json"
+    payload = {"figureId": figure_id, "apiKey": api_key, "figpackVersion": __version__}
 
-    try:
-        response = requests.get(figpack_url, timeout=10)
-        if response.ok:
-            figpack_data = response.json()
-            return {"exists": True, "status": figpack_data.get("status", "unknown")}
-        else:
-            return {"exists": False}
-    except Exception:
-        return {"exists": False}
+    if total_files is not None:
+        payload["totalFiles"] = total_files
+    if total_size is not None:
+        payload["totalSize"] = total_size
 
+    response = requests.post(f"{FIGPACK_API_BASE_URL}/api/figures/create", json=payload)
 
-def _find_available_figure_id(base_figure_id: str) -> tuple:
-    """
-    Find an available figure ID by checking base_figure_id, then base_figure_id-1, base_figure_id-2, etc.
+    if not response.ok:
+        try:
+            error_data = response.json()
+            error_msg = error_data.get("message", "Unknown error")
+        except:
+            error_msg = f"HTTP {response.status_code}"
+        raise Exception(f"Failed to create figure {figure_id}: {error_msg}")
 
-    Returns:
-        tuple: (figure_id_to_use, completed_figure_id) where:
-               - figure_id_to_use is None if upload should be skipped
-               - completed_figure_id is the ID of the completed figure if one exists
-    """
-    # First check the base figure ID
-    result = _check_existing_figure(base_figure_id)
-    if not result["exists"]:
-        return (base_figure_id, None)
-    elif result["status"] == "completed":
-        print(
-            f"Figure {base_figure_id} already exists and is completed. Skipping upload."
+    response_data = response.json()
+    if not response_data.get("success"):
+        raise Exception(
+            f"Failed to create figure {figure_id}: {response_data.get('message', 'Unknown error')}"
         )
-        return (None, base_figure_id)  # Signal to skip upload, return completed ID
 
-    # If exists but not completed, try with suffixes
-    suffix = 1
-    while True:
-        candidate_id = f"{base_figure_id}-{suffix}"
-        result = _check_existing_figure(candidate_id)
-
-        if not result["exists"]:
-            print(f"Using figure ID: {candidate_id}")
-            return (candidate_id, None)
-        elif result["status"] == "completed":
-            print(
-                f"Figure {candidate_id} already exists and is completed. Skipping upload."
-            )
-            return (None, candidate_id)  # Signal to skip upload, return completed ID
-
-        suffix += 1
-        if suffix > 100:  # Safety limit
-            raise Exception(
-                "Too many existing figure variants, unable to find available ID"
-            )
+    return response_data
 
 
-def _upload_bundle(tmpdir: str, api_key: str) -> None:
+def _finalize_figure(figure_id: str, api_key: str) -> dict:
     """
-    Upload the prepared bundle to the cloud using parallel uploads
+    Finalize a figure upload
+
+    Returns:
+        dict: Figure information from the API
+    """
+    payload = {
+        "figureId": figure_id,
+        "apiKey": api_key,
+    }
+
+    response = requests.post(
+        f"{FIGPACK_API_BASE_URL}/api/figures/finalize", json=payload
+    )
+
+    if not response.ok:
+        try:
+            error_data = response.json()
+            error_msg = error_data.get("message", "Unknown error")
+        except:
+            error_msg = f"HTTP {response.status_code}"
+        raise Exception(f"Failed to finalize figure {figure_id}: {error_msg}")
+
+    response_data = response.json()
+    if not response_data.get("success"):
+        raise Exception(
+            f"Failed to finalize figure {figure_id}: {response_data.get('message', 'Unknown error')}"
+        )
+
+    return response_data
+
+
+def _find_available_figure_id(
+    base_figure_id: str, api_key: str, total_files: int = None, total_size: int = None
+) -> tuple:
+    """
+    Find an available figure ID by trying to create figures with incremental suffixes
+
+    Returns:
+        tuple: (figure_id_to_use, figure_info) where:
+               - figure_id_to_use is the ID to use for upload
+               - figure_info is the figure information if it already exists and is completed
+    """
+    # First try the base figure ID
+    try:
+        result = _create_or_get_figure(base_figure_id, api_key, total_files, total_size)
+        figure_info = result.get("figure", {})
+
+        if figure_info.get("status") == "completed":
+            print(
+                f"Figure {base_figure_id} already exists and is completed. Skipping upload."
+            )
+            return (None, figure_info)
+        else:
+            print(f"Using figure ID: {base_figure_id}")
+            return (base_figure_id, figure_info)
+    except Exception as e:
+        print(f"Error checking figure {base_figure_id}: {e}")
+
+    # If base ID failed, try with suffixes
+    suffix = 1
+    while suffix <= 100:  # Safety limit
+        candidate_id = f"{base_figure_id}-{suffix}"
+        try:
+            result = _create_or_get_figure(
+                candidate_id, api_key, total_files, total_size
+            )
+            figure_info = result.get("figure", {})
+
+            if figure_info.get("status") == "completed":
+                print(
+                    f"Figure {candidate_id} already exists and is completed. Skipping upload."
+                )
+                return (None, figure_info)
+            else:
+                print(f"Using figure ID: {candidate_id}")
+                return (candidate_id, figure_info)
+        except Exception as e:
+            print(f"Error checking figure {candidate_id}: {e}")
+            suffix += 1
+            continue
+
+    raise Exception("Too many existing figure variants, unable to find available ID")
+
+
+def _upload_bundle(tmpdir: str, api_key: str) -> str:
+    """
+    Upload the prepared bundle to the cloud using the new database-driven approach
     """
     tmpdir_path = pathlib.Path(tmpdir)
 
@@ -145,30 +205,6 @@ def _upload_bundle(tmpdir: str, api_key: str) -> None:
     base_figure_id = _compute_deterministic_figure_id(tmpdir_path)
     print(f"Base figure ID: {base_figure_id}")
 
-    # Find available figure ID (check for existing uploads)
-    figure_id, completed_figure_id = _find_available_figure_id(base_figure_id)
-
-    # If figure_id is None, it means we found a completed upload and should skip
-    if figure_id is None:
-        figure_url = f"{FIGPACK_FIGURES_BASE_URL}/{completed_figure_id}/index.html"
-        print(f"Figure already exists at: {figure_url}")
-        return figure_url
-
-    print(f"Using figure ID: {figure_id}")
-
-    # First, upload initial figpack.json with "uploading" status
-    print("Uploading initial status...")
-    figpack_json = {
-        "status": "uploading",
-        "upload_started": datetime.now(timezone.utc).isoformat(),
-        "upload_updated": datetime.now(timezone.utc).isoformat(),
-        "figure_id": figure_id,
-        "figpack_version": __version__,
-    }
-    _upload_small_file(
-        figure_id, "figpack.json", json.dumps(figpack_json, indent=2), api_key
-    )
-
     # Collect all files to upload
     all_files = []
     for file_path in tmpdir_path.rglob("*"):
@@ -176,27 +212,41 @@ def _upload_bundle(tmpdir: str, api_key: str) -> None:
             relative_path = file_path.relative_to(tmpdir_path)
             all_files.append((str(relative_path), file_path))
 
-    print(f"Found {len(all_files)} files to upload")
+    # Calculate total files and size for metadata
+    total_files = len(all_files)
+    total_size = sum(file_path.stat().st_size for _, file_path in all_files)
+    print(
+        f"Found {total_files} files to upload, total size: {total_size / (1024 * 1024):.2f} MB"
+    )
 
-    # Filter out figpack.json since we already uploaded the initial version
-    files_to_upload = [
-        (rel_path, file_path)
-        for rel_path, file_path in all_files
-        if rel_path != "figpack.json"
-    ]
+    # Find available figure ID and create/get figure in database with metadata
+    figure_id, completed_figure_info = _find_available_figure_id(
+        base_figure_id, api_key, total_files, total_size
+    )
+
+    # If figure_id is None, it means we found a completed upload and should skip
+    if figure_id is None:
+        figure_url = (
+            f"{FIGPACK_FIGURES_BASE_URL}/{completed_figure_info['figureId']}/index.html"
+        )
+        print(f"Figure already exists at: {figure_url}")
+        return figure_url
+
+    print(f"Using figure ID: {figure_id}")
+
+    files_to_upload = all_files
     total_files_to_upload = len(files_to_upload)
 
     if total_files_to_upload == 0:
-        print("No additional files to upload")
+        print("No files to upload")
     else:
         print(
-            f"Uploading {total_files_to_upload} files with up to 8 concurrent uploads..."
+            f"Uploading {total_files_to_upload} files with up to {MAX_WORKERS_FOR_UPLOAD} concurrent uploads..."
         )
 
         # Thread-safe progress tracking
         uploaded_count = 0
         count_lock = threading.Lock()
-        timer = time.time()
 
         # Upload files in parallel with concurrent uploads
         with ThreadPoolExecutor(max_workers=MAX_WORKERS_FOR_UPLOAD) as executor:
@@ -221,36 +271,14 @@ def _upload_bundle(tmpdir: str, api_key: str) -> None:
                             f"Uploaded {uploaded_count}/{total_files_to_upload}: {relative_path}"
                         )
 
-                        # Update progress every 60 seconds
-                        elapsed_time = time.time() - timer
-                        if elapsed_time > 60:
-                            figpack_json = {
-                                **figpack_json,
-                                "status": "uploading",
-                                "upload_progress": f"{uploaded_count}/{total_files_to_upload}",
-                                "upload_updated": datetime.now(
-                                    timezone.utc
-                                ).isoformat(),
-                            }
-                            _upload_small_file(
-                                figure_id,
-                                "figpack.json",
-                                json.dumps(figpack_json, indent=2),
-                                api_key,
-                            )
-                            print(
-                                f"Updated figpack.json with progress: {uploaded_count}/{total_files_to_upload}"
-                            )
-                            timer = time.time()
-
                 except Exception as e:
                     print(f"Failed to upload {relative_path}: {e}")
                     raise  # Re-raise the exception to stop the upload process
 
-    # Create and upload manifest.json
-    print("Creating manifest.json...")
+    # Create manifest for finalization
+    print("Creating manifest...")
     manifest = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": time.time(),
         "files": [],
         "total_size": 0,
         "total_files": len(files_to_upload),
@@ -261,26 +289,17 @@ def _upload_bundle(tmpdir: str, api_key: str) -> None:
         manifest["files"].append({"path": rel_path, "size": file_size})
         manifest["total_size"] += file_size
 
+    print(f"Total size: {manifest['total_size'] / (1024 * 1024):.2f} MB")
+
+    # Upload manifest.json as a small file
+    print("Uploading manifest.json...")
     _upload_small_file(
         figure_id, "manifest.json", json.dumps(manifest, indent=2), api_key
     )
-    print("Uploaded manifest.json")
-    print(f"Total size: {manifest['total_size'] / (1024 * 1024):.2f} MB")
 
-    # Finally, upload completion status
-    figpack_json = {
-        **figpack_json,
-        "status": "completed",
-        "upload_completed": datetime.now(timezone.utc).isoformat(),
-        "expiration": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
-        "figure_id": figure_id,
-        "total_files": len(all_files),
-        "total_size": manifest["total_size"],
-        "figpack_version": __version__,
-    }
-    _upload_small_file(
-        figure_id, "figpack.json", json.dumps(figpack_json, indent=2), api_key
-    )
+    # Finalize the figure upload
+    print("Finalizing figure...")
+    _finalize_figure(figure_id, api_key)
     print("Upload completed successfully")
 
     figure_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/index.html"
@@ -293,7 +312,7 @@ def _determine_file_type(file_path: str) -> str:
     Based on the validation logic in the API
     """
     # Check exact matches first
-    if file_path == "figpack.json" or file_path == "index.html":
+    if file_path == "index.html":
         return "small"
 
     # Check zarr metadata files
@@ -352,19 +371,21 @@ def _upload_small_file(
     figure_id: str, file_path: str, content: str, api_key: str
 ) -> None:
     """
-    Upload a small file by sending content directly
+    Upload a small file by sending content directly using the new API format
     """
-    destination_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/{file_path}"
-
     try:
         content.encode("utf-8")
     except Exception as e:
         raise Exception(f"Content for {file_path} is not UTF-8 encodable: {e}")
+
+    # Use new API format with figureId and relativePath
     payload = {
-        "destinationUrl": destination_url,
+        "figureId": figure_id,
+        "relativePath": file_path,
         "apiKey": api_key,
         "content": content,
     }
+
     # check that payload is json serializable
     try:
         json.dumps(payload)
@@ -386,14 +407,14 @@ def _upload_large_file(
     figure_id: str, file_path: str, local_file_path: pathlib.Path, api_key: str
 ) -> None:
     """
-    Upload a large file using signed URL
+    Upload a large file using signed URL with the new API format
     """
-    destination_url = f"{FIGPACK_FIGURES_BASE_URL}/{figure_id}/{file_path}"
     file_size = local_file_path.stat().st_size
 
-    # Get signed URL
+    # Get signed URL using new API format
     payload = {
-        "destinationUrl": destination_url,
+        "figureId": figure_id,
+        "relativePath": file_path,
         "apiKey": api_key,
         "size": file_size,
     }

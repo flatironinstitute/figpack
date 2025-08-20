@@ -1,0 +1,157 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { validateApiKey } from '../../../lib/adminAuth';
+import connectDB, { Figure, IFigure } from '../../../lib/db';
+import { updateFigureJson } from '../../../lib/figureJsonManager';
+
+interface CreateFigureRequest {
+  figureId: string;
+  apiKey: string;
+  totalFiles?: number;
+  totalSize?: number;
+  figpackVersion?: string;
+}
+
+interface CreateFigureResponse {
+  success: boolean;
+  message?: string;
+  figure?: IFigure;
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<CreateFigureResponse>
+) {
+  // Set CORS headers
+  const allowedOrigins = [
+    'https://manage.figpack.org',
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ];
+  
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({
+      success: false,
+      message: 'Method not allowed'
+    });
+  }
+
+  try {
+    // Connect to database
+    await connectDB();
+
+    // Parse request body
+    const { figureId, apiKey }: CreateFigureRequest = req.body;
+
+    // Validate required fields
+    if (!figureId || !apiKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: figureId, apiKey'
+      });
+    }
+
+    // Validate figureId format (should be alphanumeric with hyphens)
+    if (!/^[a-zA-Z0-9-]+$/.test(figureId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid figureId format. Must contain only letters, numbers, and hyphens.'
+      });
+    }
+
+    // Authenticate with API key
+    const authResult = await validateApiKey(apiKey);
+    if (!authResult.isValid || !authResult.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid API key'
+      });
+    }
+
+    const userEmail = authResult.user.email;
+
+    // Check if figure already exists
+    const existingFigure = await Figure.findOne({ figureId });
+    
+    if (existingFigure) {
+      // Figure exists, return its information (no error as per requirements)
+      return res.status(200).json({
+        success: true,
+        message: 'Figure already exists',
+        figure: existingFigure.toObject()
+      });
+    }
+
+    // Create new figure document
+    const now = Date.now();
+    const oneDayFromNow = now + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+    const newFigure = new Figure({
+      figureId,
+      status: 'uploading',
+      ownerEmail: userEmail,
+      uploadStarted: now,
+      uploadUpdated: now,
+      expiration: oneDayFromNow,
+      figpackVersion: req.body.figpackVersion || '1.0.0',
+      totalFiles: req.body.totalFiles,
+      totalSize: req.body.totalSize,
+      createdAt: now,
+      updatedAt: now
+    });
+
+    await newFigure.save();
+    
+    // Update figpack.json in the figure directory
+    try {
+      await updateFigureJson(newFigure);
+    } catch (error) {
+      console.error('Error updating figpack.json:', error);
+      // Continue with the request even if figpack.json update fails
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Figure created successfully',
+      figure: newFigure.toObject()
+    });
+
+  } catch (error) {
+    console.error('Create figure API error:', error);
+    
+    // Handle duplicate key error (race condition)
+    if (error instanceof Error && 'code' in error && error.code === 11000) {
+      // Try to fetch the existing figure
+      try {
+        const { figureId } = req.body;
+        const existingFigure = await Figure.findOne({ figureId });
+        if (existingFigure) {
+          return res.status(200).json({
+            success: true,
+            message: 'Figure already exists',
+            figure: existingFigure.toObject()
+          });
+        }
+      } catch (fetchError) {
+        console.error('Error fetching existing figure:', fetchError);
+      }
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+}

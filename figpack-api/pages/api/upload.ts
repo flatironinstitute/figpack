@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { UploadRequest, UploadResponse, ValidationResult, FileValidationResult, ValidationError } from '../../types';
+import { UploadRequest, UploadResponse, NewUploadRequest, ValidationResult, FileValidationResult, ValidationError } from '../../types';
 import { Bucket, getSignedUploadUrl } from '../../lib/s3Helpers';
 import { validateApiKey } from '../../lib/adminAuth';
+import connectDB, { Figure } from '../../lib/db';
 
 const bucketCredentials = process.env.BUCKET_CREDENTIALS;
 if (!bucketCredentials) {
@@ -48,7 +49,7 @@ function isZarrChunk(fileName: string): boolean {
 
 function validateFilePath(path: string): FileValidationResult {
   // Check exact matches first
-  if (path === 'figpack.json' || path === 'index.html' || path === "manifest.json") {
+  if (path === 'index.html' || path === "manifest.json") {
     return { valid: true, type: 'small' };
   }
 
@@ -107,10 +108,6 @@ function validateZarrMetadata(content: string, fileName: string): boolean {
 }
 
 function validateContent(content: string, fileName: string): boolean {
-  if (fileName === 'figpack.json') {
-    return validateJsonContent(content);
-  }
-  
   if (fileName.endsWith('.html')) {
     return validateHtmlContent(content);
   }
@@ -180,7 +177,16 @@ export default async function handler(
   res: NextApiResponse<UploadResponse>
 ) {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', 'https://manage.figpack.org');
+  const allowedOrigins = [
+    'https://manage.figpack.org',
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ];
+  
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -198,14 +204,52 @@ export default async function handler(
   }
 
   try {
-    // Parse request body
-    const { destinationUrl, apiKey, content, size }: UploadRequest = req.body;
+    // Connect to database
+    await connectDB();
 
-    // Validate required fields
-    if (!destinationUrl || !apiKey) {
+    // Check if this is the new API format or legacy format
+    const body = req.body;
+    let figureId: string;
+    let relativePath: string;
+    let apiKey: string;
+    let content: string | undefined;
+    let size: number | undefined;
+
+    // New API format: { figureId, relativePath, apiKey, content?, size? }
+    if (body.figureId && body.relativePath) {
+      ({ figureId, relativePath, apiKey, content, size } = body as NewUploadRequest);
+    }
+    // Legacy API format: { destinationUrl, apiKey, content?, size? }
+    else if (body.destinationUrl) {
+      const { destinationUrl, apiKey: legacyApiKey, content: legacyContent, size: legacySize } = body as UploadRequest;
+      
+      // Parse figureId and relativePath from destinationUrl
+      const urlValidation = validateDestinationUrl(destinationUrl);
+      if (!urlValidation.valid || !urlValidation.figureId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid destination URL. Must start with https://figures.figpack.org/figures/default/<figure-id>/'
+        });
+      }
+      
+      figureId = urlValidation.figureId;
+      relativePath = destinationUrl.split('/').slice(6).join('/'); // Remove base URL part
+      apiKey = legacyApiKey;
+      content = legacyContent;
+      size = legacySize;
+    }
+    else {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: destinationUrl, apiKey'
+        message: 'Missing required fields. Provide either (figureId, relativePath, apiKey) or (destinationUrl, apiKey)'
+      });
+    }
+
+    // Validate required fields
+    if (!figureId || !relativePath || !apiKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: figureId, relativePath, apiKey'
       });
     }
 
@@ -220,27 +264,33 @@ export default async function handler(
 
     const userEmail = authResult.user.email;
 
-    // Validate destination URL
-    const urlValidation = validateDestinationUrl(destinationUrl);
-    if (!urlValidation.valid) {
-      return res.status(400).json({
+    // Find and verify figure ownership
+    const figure = await Figure.findOne({ figureId });
+    if (!figure) {
+      return res.status(404).json({
         success: false,
-        message: 'Invalid destination URL. Must start with https://figures.figpack.org/figures/default/<figure-id>/'
+        message: 'Figure not found. Please create the figure first using /api/figures/create'
       });
     }
 
-    const filePath = destinationUrl.split('/').slice(6).join('/'); // Remove base URL part
+    if (figure.ownerEmail !== userEmail) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You are not the owner of this figure.'
+      });
+    }
 
     // Validate file path
-    const fileValidation = validateFilePath(filePath);
+    const fileValidation = validateFilePath(relativePath);
     if (!fileValidation.valid) {
       return res.status(400).json({
         success: false,
-        message: `Invalid file path ${filePath}. Must be a valid figpack file type.`
+        message: `Invalid file path ${relativePath}. Must be a valid figpack file type.`
       });
     }
 
-    const actualFileName = getFileName(filePath);
+    const actualFileName = getFileName(relativePath);
+    const destinationUrl = `https://figures.figpack.org/figures/default/${figureId}/${relativePath}`;
 
     // Handle small files (content provided)
     if (fileValidation.type === 'small') {
@@ -259,24 +309,14 @@ export default async function handler(
         });
       }
 
-      let finalContent = content;
-
-      // If this is a figpack.json file, add the user email to track ownership
-      if (actualFileName === 'figpack.json') {
-        try {
-          const figpackData = JSON.parse(content);
-          figpackData.owner_email = userEmail;
-          finalContent = JSON.stringify(figpackData, null, 2);
-        } catch (error) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid JSON in figpack.json file'
-          });
-        }
-      }
-
       // Upload small file
-      await uploadSmallFile(destinationUrl, finalContent, urlValidation.figureId!);
+      await uploadSmallFile(destinationUrl, content, figureId);
+
+      // Update figure's uploadUpdated timestamp
+      await Figure.findOneAndUpdate(
+        { figureId },
+        { uploadUpdated: Date.now() }
+      );
 
       return res.status(200).json({
         success: true,
@@ -303,7 +343,13 @@ export default async function handler(
       }
 
       // Generate signed URL
-      const signedUrl = await generateSignedUploadUrl(destinationUrl, size, urlValidation.figureId!);
+      const signedUrl = await generateSignedUploadUrl(destinationUrl, size, figureId);
+
+      // Update figure's uploadUpdated timestamp
+      await Figure.findOneAndUpdate(
+        { figureId },
+        { uploadUpdated: Date.now() }
+      );
 
       return res.status(200).json({
         success: true,

@@ -1,0 +1,249 @@
+import React, { useState, useMemo } from "react";
+import {
+  Box,
+  CircularProgress,
+  Stack,
+  Typography,
+  Alert,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
+import PinDialog from "./PinDialog";
+import ApiKeyDialog from "./ApiKeyDialog";
+import DeleteDialog from "./DeleteDialog";
+import FileManifest from "./FileManifest";
+import DownloadInstructions from "./DownloadInstructions";
+import FigureDetails from "./FigureDetails";
+import useApiKey from "../AdminPage/useApiKey";
+import FigureHeader from "./FigureHeader";
+import useFigure from "./useFigure";
+import { usePin } from "./usePin";
+import { useRenew } from "./useRenew";
+import { useDelete } from "./useDelete";
+
+const ManageFigurePage: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "renew" | "pin" | "delete" | null
+  >(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { apiKey, setApiKey } = useApiKey();
+
+  const figureUrl = useMemo(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("figure_url") || "";
+  }, []);
+
+  const {
+    figureId,
+    figpackStatus,
+    manifest,
+    loading,
+    error,
+    isExpired,
+    getTimeUntilExpiration,
+    formatBytes,
+    formatDate,
+    loadFigureData,
+  } = useFigure(figureUrl);
+
+  const {
+    pinDialogOpen,
+    pinLoading,
+    unpinLoading,
+    pinError,
+    handlePin,
+    handleUnpin,
+    handleOpenPinDialog,
+    handleClosePinDialog,
+  } = usePin(figureUrl, apiKey, loadFigureData);
+
+  const { renewLoading, apiError, handleRenew } = useRenew(
+    figureUrl,
+    apiKey,
+    loadFigureData
+  );
+
+  const {
+    deleteLoading,
+    deleteError,
+    handleDelete: handleDeleteRequest,
+  } = useDelete(() => {
+    // On successful delete, redirect to home
+    window.location.href = "/";
+  });
+
+  const handleDeleteWithDialog = async (apiKeyToUse: string) => {
+    const result = await handleDeleteRequest(figureId, apiKeyToUse);
+    if (result?.requiresApiKey) {
+      setPendingAction("delete");
+      setApiKeyDialogOpen(true);
+    }
+  };
+
+  const handleOpenDeleteDialog = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  const handleRefresh = () => {
+    if (figureUrl) {
+      loadFigureData(figureUrl);
+    }
+  };
+
+  const handleRenewWithDialog = async (apiKeyToUse?: string) => {
+    const result = await handleRenew(apiKeyToUse);
+    if (result?.requiresApiKey) {
+      setPendingAction("renew");
+      setApiKeyDialogOpen(true);
+    }
+  };
+
+  const handlePinWithDialog = async (pinInfo: {
+    name: string;
+    figure_description: string;
+  }) => {
+    const result = await handlePin(pinInfo);
+    if (result?.requiresApiKey) {
+      setPendingAction("pin");
+      setApiKeyDialogOpen(true);
+    }
+  };
+
+  const handleUnpinWithDialog = async () => {
+    const result = await handleUnpin();
+    if (result?.requiresApiKey) {
+      setPendingAction("pin");
+      setApiKeyDialogOpen(true);
+    }
+  };
+
+  const handleApiKeySubmit = () => {
+    if (!apiKey.trim()) return;
+
+    setApiKeyDialogOpen(false);
+
+    if (pendingAction === "renew") {
+      handleRenewWithDialog(apiKey);
+    } else if (pendingAction === "pin") {
+      // For pin, we need to open the pin dialog first
+      handleOpenPinDialog();
+    } else if (pendingAction === "delete") {
+      handleDeleteWithDialog(apiKey);
+    }
+
+    setPendingAction(null);
+  };
+
+  const handleApiKeyCancel = () => {
+    setApiKeyDialogOpen(false);
+    setPendingAction(null);
+    setApiKey("");
+  };
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="300px"
+        flexDirection="column"
+      >
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading figure data...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (error || apiError) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        {error || apiError}
+      </Alert>
+    );
+  }
+
+  return (
+    <Box sx={{ maxWidth: "100%", mx: "auto" }}>
+      <Stack spacing={3}>
+        <FigureHeader
+          figureUrl={figureUrl}
+          figpackStatus={figpackStatus}
+          isMobile={isMobile}
+          isExpired={isExpired}
+          getTimeUntilExpiration={getTimeUntilExpiration}
+          renewLoading={renewLoading}
+          handleRefresh={handleRefresh}
+          handleRenew={() => handleRenewWithDialog()}
+          handleOpenPinDialog={handleOpenPinDialog}
+          handleUnpin={handleUnpinWithDialog}
+          handleDelete={handleOpenDeleteDialog}
+          unpinLoading={unpinLoading}
+          deleteLoading={deleteLoading}
+          formatDate={formatDate}
+        />
+
+        {/* Details Section */}
+        {figpackStatus && (
+          <FigureDetails
+            figpackStatus={figpackStatus}
+            formatBytes={formatBytes}
+            formatDate={formatDate}
+          />
+        )}
+
+        {/* Download Instructions */}
+        <DownloadInstructions figureUrl={figureUrl} />
+
+        {/* File Manifest */}
+        {manifest && (
+          <FileManifest
+            manifest={manifest}
+            formatBytes={formatBytes}
+            formatDate={formatDate}
+          />
+        )}
+
+        {/* Pin Dialog */}
+        <PinDialog
+          open={pinDialogOpen}
+          onClose={handleClosePinDialog}
+          onPin={handlePinWithDialog}
+          loading={pinLoading}
+          error={pinError}
+        />
+
+        {/* API Key Dialog */}
+        <ApiKeyDialog
+          open={apiKeyDialogOpen}
+          onClose={handleApiKeyCancel}
+          onSubmit={handleApiKeySubmit}
+          apiKey={apiKey}
+          setApiKey={setApiKey}
+          pendingAction={pendingAction}
+        />
+
+        {/* Delete Dialog */}
+        <DeleteDialog
+          open={deleteDialogOpen}
+          onClose={handleCloseDeleteDialog}
+          onConfirm={() => handleDeleteWithDialog(apiKey)}
+          loading={deleteLoading}
+          error={deleteError}
+        />
+      </Stack>
+    </Box>
+  );
+};
+
+export default ManageFigurePage;

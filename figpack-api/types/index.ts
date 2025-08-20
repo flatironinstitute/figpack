@@ -39,3 +39,40 @@ export interface RenewResponse {
   message?: string;
   newExpiration?: string;
 }
+
+// Figure management types
+export interface CreateFigureRequest {
+  figureId: string;
+  apiKey: string;
+}
+
+export interface CreateFigureResponse {
+  success: boolean;
+  message?: string;
+  figure?: any; // Will be IFigure from db.ts
+}
+
+export interface FinalizeFigureRequest {
+  figureId: string;
+  apiKey: string;
+  manifest?: {
+    totalFiles: number;
+    totalSize: number;
+    figpackVersion?: string;
+  };
+}
+
+export interface FinalizeFigureResponse {
+  success: boolean;
+  message?: string;
+  figure?: any; // Will be IFigure from db.ts
+}
+
+// Updated upload request to include figureId and relativePath
+export interface NewUploadRequest {
+  figureId: string;
+  relativePath: string;
+  apiKey: string;
+  content?: string; // for small files
+  size?: number;    // for large files
+}

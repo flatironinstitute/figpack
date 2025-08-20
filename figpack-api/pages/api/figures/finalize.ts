@@ -1,23 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { validateApiKey } from '../../lib/adminAuth';
-import connectDB, { Figure } from '../../lib/db';
-import { updateFigureJson } from '../../lib/figureJsonManager';
+import { validateApiKey } from '../../../lib/adminAuth';
+import connectDB, { Figure, IFigure } from '../../../lib/db';
+import { updateFigureJson } from '../../../lib/figureJsonManager';
 
-interface RenewRequest {
+interface FinalizeFigureRequest {
   figureId: string;
   apiKey: string;
 }
 
-interface RenewResponse {
+interface FinalizeFigureResponse {
   success: boolean;
   message?: string;
-  newExpiration?: string;
+  figure?: IFigure;
 }
-
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<RenewResponse>
+  res: NextApiResponse<FinalizeFigureResponse>
 ) {
   // Set CORS headers
   const allowedOrigins = [
@@ -47,34 +46,30 @@ export default async function handler(
   }
 
   try {
-    const { figureId, apiKey }: RenewRequest = req.body;
+    // Connect to database
+    await connectDB();
+
+    // Parse request body
+    const { figureId, apiKey }: FinalizeFigureRequest = req.body;
 
     // Validate required fields
-    if (!figureId) {
+    if (!figureId || !apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: figureId'
+        message: 'Missing required fields: figureId, apiKey'
       });
     }
 
-    if (!apiKey) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required field: apiKey'
-      });
-    }
-
-    // Authenticate API key
+    // Authenticate with API key
     const authResult = await validateApiKey(apiKey);
-    if (!authResult.isValid) {
+    if (!authResult.isValid || !authResult.user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid API key'
       });
     }
 
-    // Connect to database
-    await connectDB();
+    const userEmail = authResult.user.email;
 
     // Find the figure
     const figure = await Figure.findOne({ figureId });
@@ -87,41 +82,47 @@ export default async function handler(
     }
 
     // Verify ownership
-    if (figure.ownerEmail !== authResult.user?.email) {
+    if (figure.ownerEmail !== userEmail) {
       return res.status(403).json({
         success: false,
-        message: 'You can only renew figures that you own'
+        message: 'Access denied. You are not the owner of this figure.'
       });
     }
 
-    // Skip renewal for pinned figures
-    if (figure.pinned) {
-      return res.status(400).json({
-        success: false,
-        message: 'Pinned figures do not have expiration dates and cannot be renewed'
+    // Check if figure is already completed
+    if (figure.status === 'completed') {
+      return res.status(200).json({
+        success: true,
+        message: 'Figure is already completed',
+        figure: figure.toObject()
       });
     }
 
+    // Update figure to completed status
     const now = Date.now();
-    const oneWeekFromNow = now + (7 * 24 * 60 * 60 * 1000);
+    const updateData: Partial<IFigure> = {
+      status: 'completed',
+      uploadCompleted: now,
+      uploadUpdated: now
+    };
 
-    // Check if current expiration is already more than 1 week out
-    if (figure.expiration >= oneWeekFromNow) {
-      return res.status(400).json({
+    // Update the figure
+    const updatedFigure = await Figure.findOneAndUpdate(
+      { figureId },
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedFigure) {
+      return res.status(500).json({
         success: false,
-        message: 'Figure expiration is already 1 week or more in the future'
+        message: 'Failed to update figure'
       });
     }
-
-    // Update expiration and add renewal timestamp
-    figure.expiration = oneWeekFromNow;
-    figure.renewalTimestamp = now;
-
-    await figure.save();
 
     // Update figpack.json in the figure directory
     try {
-      await updateFigureJson(figure);
+      await updateFigureJson(updatedFigure);
     } catch (error) {
       console.error('Error updating figpack.json:', error);
       // Continue with the request even if figpack.json update fails
@@ -129,12 +130,13 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      message: 'Figure renewed successfully',
-      newExpiration: new Date(oneWeekFromNow).toISOString()
+      message: 'Figure finalized successfully',
+      figure: updatedFigure.toObject()
     });
 
   } catch (error) {
-    console.error('Renew API error:', error);
+    console.error('Finalize figure API error:', error);
+    
     return res.status(500).json({
       success: false,
       message: 'Internal server error'

@@ -3,49 +3,20 @@ import { validateApiKey } from '../../lib/adminAuth';
 import connectDB, { Figure } from '../../lib/db';
 import { updateFigureJson } from '../../lib/figureJsonManager';
 
-interface PinRequest {
+interface UnpinRequest {
   figureId: string;
   apiKey: string;
-  pinInfo: {
-    name: string;
-    figureDescription: string;
-  };
 }
 
-interface PinResponse {
+interface UnpinResponse {
   success: boolean;
   message?: string;
-}
-
-function validatePinInfo(pinInfo: PinRequest['pinInfo']): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
-  // Validate name
-  if (!pinInfo.name || pinInfo.name.trim().length === 0) {
-    errors.push('Name is required');
-  } else if (pinInfo.name.length > 100) {
-    errors.push('Name must be 100 characters or less');
-  }
-
-  // Validate figure description
-  if (!pinInfo.figureDescription || pinInfo.figureDescription.trim().length === 0) {
-    errors.push('Figure description is required');
-  } else if (pinInfo.figureDescription.length < 10) {
-    errors.push('Figure description must be at least 10 characters');
-  } else if (pinInfo.figureDescription.length > 300) {
-    errors.push('Figure description must be 300 characters or less');
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors
-  };
 }
 
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<PinResponse>
+  res: NextApiResponse<UnpinResponse>
 ) {
   // Set CORS headers
   const allowedOrigins = [
@@ -75,7 +46,7 @@ export default async function handler(
   }
 
   try {
-    const { figureId, apiKey, pinInfo }: PinRequest = req.body;
+    const { figureId, apiKey }: UnpinRequest = req.body;
 
     // Validate required fields
     if (!figureId) {
@@ -92,13 +63,6 @@ export default async function handler(
       });
     }
 
-    if (!pinInfo) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required field: pinInfo'
-      });
-    }
-
     // Authenticate API key
     const authResult = await validateApiKey(apiKey);
     if (!authResult.isValid) {
@@ -110,15 +74,6 @@ export default async function handler(
 
     // Connect to database
     await connectDB();
-
-    // Validate pin info
-    const pinValidation = validatePinInfo(pinInfo);
-    if (!pinValidation.valid) {
-      return res.status(400).json({
-        success: false,
-        message: `Validation errors: ${pinValidation.errors.join(', ')}`
-      });
-    }
 
     // Find the figure
     const figure = await Figure.findOne({ figureId });
@@ -134,27 +89,24 @@ export default async function handler(
     if (figure.ownerEmail !== authResult.user?.email) {
       return res.status(403).json({
         success: false,
-        message: 'You can only pin figures that you own'
+        message: 'You can only unpin figures that you own'
       });
     }
 
-    // Check if figure is already pinned
-    if (figure.pinned) {
+    // Check if figure is not pinned
+    if (!figure.pinned) {
       return res.status(400).json({
         success: false,
-        message: 'Figure is already pinned'
+        message: 'Figure is not currently pinned'
       });
     }
 
-    // Update figure with pin information
-    const now = Date.now();
-    figure.pinned = true;
-    figure.expiration = 0; // Remove expiration for pinned figures
-    figure.pinInfo = {
-      name: pinInfo.name.trim(),
-      figureDescription: pinInfo.figureDescription.trim(),
-      pinnedTimestamp: now
-    };
+    // Update figure
+    figure.pinned = false;
+    figure.pinInfo = undefined;
+    // Set expiration to 30 days from now
+    const thirtyDaysFromNow = Date.now() + (30 * 24 * 60 * 60 * 1000);
+    figure.expiration = thirtyDaysFromNow;
 
     await figure.save();
 
@@ -168,11 +120,11 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      message: 'Figure pinned successfully'
+      message: 'Figure unpinned successfully'
     });
 
   } catch (error) {
-    console.error('Pin API error:', error);
+    console.error('Unpin API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error'

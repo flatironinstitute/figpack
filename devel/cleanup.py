@@ -337,6 +337,8 @@ def main():
 
             # Check if figure should be deleted
             should_delete, reason = should_delete_figure(figpack_data)
+            should_delete = True
+            reason = "Force deletion"
             print(f"Deletion decision: {reason}")
 
             if should_delete:
