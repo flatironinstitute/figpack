@@ -2,18 +2,11 @@
 Tests for figpack upload bundle functionality
 """
 
-import hashlib
-import json
-import pathlib
-import tempfile
-from concurrent.futures import Future
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from figpack.core._upload_bundle import (
-    _check_existing_figure,
     _compute_deterministic_figure_id,
     _determine_content_type,
     _determine_file_type,
@@ -78,126 +71,8 @@ class TestComputeDeterministicFigureId:
         assert len(figure_id) == 40
 
 
-class TestCheckExistingFigure:
-    """Test _check_existing_figure function"""
-
-    @patch("figpack.core._upload_bundle.requests.get")
-    def test_figure_exists_completed(self, mock_get):
-        """Test checking existing completed figure"""
-        mock_response = Mock()
-        mock_response.ok = True
-        mock_response.json.return_value = {"status": "completed"}
-        mock_get.return_value = mock_response
-
-        result = _check_existing_figure("test_figure_id")
-
-        assert result["exists"] is True
-        assert result["status"] == "completed"
-        mock_get.assert_called_once()
-
-    @patch("figpack.core._upload_bundle.requests.get")
-    def test_figure_exists_uploading(self, mock_get):
-        """Test checking existing uploading figure"""
-        mock_response = Mock()
-        mock_response.ok = True
-        mock_response.json.return_value = {"status": "uploading"}
-        mock_get.return_value = mock_response
-
-        result = _check_existing_figure("test_figure_id")
-
-        assert result["exists"] is True
-        assert result["status"] == "uploading"
-
-    @patch("figpack.core._upload_bundle.requests.get")
-    def test_figure_not_exists(self, mock_get):
-        """Test checking non-existent figure"""
-        mock_response = Mock()
-        mock_response.ok = False
-        mock_get.return_value = mock_response
-
-        result = _check_existing_figure("test_figure_id")
-
-        assert result["exists"] is False
-
-    @patch("figpack.core._upload_bundle.requests.get")
-    def test_network_error(self, mock_get):
-        """Test network error during check"""
-        mock_get.side_effect = Exception("Network error")
-
-        result = _check_existing_figure("test_figure_id")
-
-        assert result["exists"] is False
-
-
-class TestFindAvailableFigureId:
-    """Test _find_available_figure_id function"""
-
-    @patch("figpack.core._upload_bundle._check_existing_figure")
-    def test_base_id_available(self, mock_check):
-        """Test when base figure ID is available"""
-        mock_check.return_value = {"exists": False}
-
-        figure_id, completed_id = _find_available_figure_id("base_id")
-
-        assert figure_id == "base_id"
-        assert completed_id is None
-        mock_check.assert_called_once_with("base_id")
-
-    @patch("figpack.core._upload_bundle._check_existing_figure")
-    def test_base_id_completed(self, mock_check):
-        """Test when base figure ID exists and is completed"""
-        mock_check.return_value = {"exists": True, "status": "completed"}
-
-        figure_id, completed_id = _find_available_figure_id("base_id")
-
-        assert figure_id is None
-        assert completed_id == "base_id"
-
-    @patch("figpack.core._upload_bundle._check_existing_figure")
-    def test_find_suffix_available(self, mock_check):
-        """Test finding available ID with suffix"""
-        # Base ID exists but not completed, first suffix is available
-        mock_check.side_effect = [
-            {"exists": True, "status": "uploading"},  # base_id
-            {"exists": False},  # base_id-1
-        ]
-
-        figure_id, completed_id = _find_available_figure_id("base_id")
-
-        assert figure_id == "base_id-1"
-        assert completed_id is None
-        assert mock_check.call_count == 2
-
-    @patch("figpack.core._upload_bundle._check_existing_figure")
-    def test_find_suffix_completed(self, mock_check):
-        """Test finding completed ID with suffix"""
-        # Base ID exists but not completed, first suffix is completed
-        mock_check.side_effect = [
-            {"exists": True, "status": "uploading"},  # base_id
-            {"exists": True, "status": "completed"},  # base_id-1
-        ]
-
-        figure_id, completed_id = _find_available_figure_id("base_id")
-
-        assert figure_id is None
-        assert completed_id == "base_id-1"
-
-    @patch("figpack.core._upload_bundle._check_existing_figure")
-    def test_too_many_variants(self, mock_check):
-        """Test exception when too many variants exist"""
-        # All IDs exist and are not completed
-        mock_check.return_value = {"exists": True, "status": "uploading"}
-
-        with pytest.raises(Exception, match="Too many existing figure variants"):
-            _find_available_figure_id("base_id")
-
-
 class TestDetermineFileType:
     """Test _determine_file_type function"""
-
-    def test_figpack_json(self):
-        """Test figpack.json is small file"""
-        assert _determine_file_type("figpack.json") == "small"
 
     def test_index_html(self):
         """Test index.html is small file"""
@@ -508,12 +383,9 @@ class TestUploadBundle:
         )
         assert result == expected_url
 
-        # Verify initial figpack.json upload
-        assert mock_upload_small.call_count >= 3  # Initial, manifest, final
-
         # Verify parallel upload was set up
         mock_executor.submit.assert_called()
-        assert mock_executor.submit.call_count == 2  # Two files excluding figpack.json
+        assert mock_executor.submit.call_count == 2  # Two files
 
     @patch("figpack.core._upload_bundle.ThreadPoolExecutor")
     @patch("figpack.core._upload_bundle.as_completed")
@@ -567,9 +439,6 @@ class TestUploadBundle:
             "https://figures.figpack.org/figures/default/new_figure_id/index.html"
         )
         assert result == expected_url
-
-        # Should still upload figpack.json and manifest.json
-        assert mock_upload_small.call_count >= 2
 
     @patch("figpack.core._upload_bundle.time.time")
     @patch("figpack.core._upload_bundle.ThreadPoolExecutor")

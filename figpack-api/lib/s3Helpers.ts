@@ -81,6 +81,41 @@ export const deleteObject = async (bucket: Bucket, key: string): Promise<void> =
     })
 }
 
+export const deleteObjects = async (bucket: Bucket, keys: string[]): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+        const s3 = getS3Client(bucket)
+        const bucketName = bucketNameFromUri(bucket.uri)
+        
+        // S3 allows max 1000 objects per delete operation
+        const chunkSize = 1000;
+        const deletePromises = [];
+        
+        for (let i = 0; i < keys.length; i += chunkSize) {
+            const chunk = keys.slice(i, i + chunkSize);
+            const deletePromise = new Promise<void>((resolveChunk, rejectChunk) => {
+                s3.deleteObjects({
+                    Bucket: bucketName,
+                    Delete: {
+                        Objects: chunk.map(key => ({ Key: key })),
+                        Quiet: true
+                    }
+                }, (err) => {
+                    if (err) {
+                        rejectChunk(new Error(`Problem deleting objects: ${err.message}`))
+                    } else {
+                        resolveChunk()
+                    }
+                })
+            });
+            deletePromises.push(deletePromise);
+        }
+
+        Promise.all(deletePromises)
+            .then(() => resolve())
+            .catch(err => reject(err));
+    })
+}
+
 export const copyObject = async (bucket: Bucket, srcKey: string, dstKey: string): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
         const s3 = getS3Client(bucket)

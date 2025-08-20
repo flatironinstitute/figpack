@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { Figure } from '../../../lib/db';
 import { validateApiKey } from '../../../lib/adminAuth';
 
-import { Bucket, deleteObject, listObjects } from '../../../lib/s3Helpers';
+import { Bucket, deleteObjects, listObjects } from '../../../lib/s3Helpers';
 import connectDB from '../../../lib/db';
 
 interface DeleteFigureRequest {
@@ -108,13 +108,17 @@ export default async function handler(
         // Delete files from S3
         const prefix = `figures/default/${figureId}/`;
         let continuationToken: string | undefined;
+        const objectsToDelete: string[] = [];
+        
         do {
             const result = await listObjects(bucket, prefix, { continuationToken });
-            for (const obj of result.objects) {
-                await deleteObject(bucket, obj.Key);
-            }
+            objectsToDelete.push(...result.objects.map(obj => obj.Key));
             continuationToken = result.continuationToken;
         } while (continuationToken);
+
+        if (objectsToDelete.length > 0) {
+            await deleteObjects(bucket, objectsToDelete);
+        }
 
         // Delete from MongoDB
         await Figure.deleteOne({ figureId });
@@ -129,4 +133,3 @@ export default async function handler(
         });
     }
 }
-
