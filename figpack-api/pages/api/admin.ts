@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { AdminRequest, AdminResponse } from '../../types/admin';
-import { authenticateAdmin, validateAdminData } from '../../lib/adminAuth';
-import { loadAdminData, saveAdminData, createInitialAdminData, adminFileExists } from '../../lib/adminStorage';
+import { authenticateAdmin, getAllUsers } from '../../lib/adminAuth';
 import { checkRateLimit, getClientIP } from '../../lib/rateLimiter';
 
 export default async function handler(
@@ -20,7 +19,7 @@ export default async function handler(
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
 
   // Handle preflight OPTIONS request
@@ -28,11 +27,11 @@ export default async function handler(
     return res.status(200).end();
   }
 
-  // Only allow GET and POST requests
-  if (req.method !== 'GET' && req.method !== 'POST') {
+  // Only allow GET requests (POST is now handled by /api/users)
+  if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,
-      message: 'Method not allowed'
+      message: 'Method not allowed. Use /api/users for user management.'
     });
   }
 
@@ -58,16 +57,7 @@ export default async function handler(
     res.setHeader('X-RateLimit-Reset', Math.ceil(rateLimit.resetTime / 1000).toString());
 
     // Extract API key from request
-    let apiKey: string;
-    
-    if (req.method === 'GET') {
-      // For GET requests, API key can be in query params or headers
-      apiKey = (req.query.apiKey as string) || req.headers['x-api-key'] as string;
-    } else {
-      // For POST requests, API key should be in body
-      const { apiKey: bodyApiKey }: AdminRequest = req.body;
-      apiKey = bodyApiKey;
-    }
+    const apiKey = (req.query.apiKey as string) || req.headers['x-api-key'] as string;
 
     if (!apiKey) {
       return res.status(400).json({
@@ -86,93 +76,26 @@ export default async function handler(
       });
     }
 
-    const secretKey = process.env.FIGPACK_ADMIN_SECRET_KEY;
-    if (!secretKey) {
-      console.error('FIGPACK_ADMIN_SECRET_KEY environment variable not set');
+    // Handle GET request - return admin data in legacy format for compatibility
+    try {
+      const users = await getAllUsers();
+      
+      const adminData = {
+        users: users,
+        version: '2.0.0', // Updated version to indicate MongoDB backend
+        lastModified: new Date().toISOString()
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: adminData
+      });
+    } catch (error) {
+      console.error('Error loading admin data:', error);
       return res.status(500).json({
         success: false,
-        message: 'Server configuration error'
+        message: 'Failed to load admin data'
       });
-    }
-
-    if (req.method === 'GET') {
-      // Handle GET request - return admin data
-      try {
-        let adminData = await loadAdminData(secretKey);
-        
-        if (!adminData) {
-          // If no admin file exists, create initial structure
-          adminData = createInitialAdminData();
-        }
-
-        return res.status(200).json({
-          success: true,
-          data: adminData
-        });
-      } catch (error) {
-        console.error('Error loading admin data:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to load admin data'
-        });
-      }
-    }
-
-    if (req.method === 'POST') {
-      // Handle POST request - update admin data
-      const { data }: AdminRequest = req.body;
-      
-      if (!data) {
-        return res.status(400).json({
-          success: false,
-          message: 'Admin data is required'
-        });
-      }
-
-      // Validate the admin data structure
-      if (!validateAdminData(data)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid admin data structure'
-        });
-      }
-
-      // Additional validation: ensure email uniqueness
-      const emails = data.users.map(user => user.email.toLowerCase());
-      const uniqueEmails = new Set(emails);
-      if (emails.length !== uniqueEmails.size) {
-        return res.status(400).json({
-          success: false,
-          message: 'Duplicate email addresses found'
-        });
-      }
-
-      // Additional validation: ensure API key uniqueness
-      const apiKeys = data.users.map(user => user.apiKey);
-      const uniqueApiKeys = new Set(apiKeys);
-      if (apiKeys.length !== uniqueApiKeys.size) {
-        return res.status(400).json({
-          success: false,
-          message: 'Duplicate API keys found'
-        });
-      }
-
-
-      try {
-        // Save the admin data
-        await saveAdminData(data, secretKey);
-
-        return res.status(200).json({
-          success: true,
-          message: 'Admin data updated successfully'
-        });
-      } catch (error) {
-        console.error('Error saving admin data:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to save admin data'
-        });
-      }
     }
 
   } catch (error) {

@@ -141,4 +141,79 @@ figureSchema.index({ expiration: 1 });
 
 export const Figure: Model<IFigureDocument> = mongoose.models.Figure || mongoose.model('Figure', figureSchema);
 
+// User interface
+export interface IUser {
+  email: string;              // Primary identifier (unique)
+  name: string;
+  researchDescription: string;
+  apiKey: string;             // Unique API key
+  isAdmin: boolean;
+  createdAt: number;          // Unix timestamp
+  updatedAt: number;          // Unix timestamp
+}
+
+export interface IUserDocument extends IUser, Document {}
+
+// User schema
+const userSchema = new mongoose.Schema<IUserDocument>({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    validate: {
+      validator: function(email: string) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      },
+      message: 'Invalid email format'
+    }
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 1,
+    maxlength: 100
+  },
+  researchDescription: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 1000
+  },
+  apiKey: {
+    type: String,
+    required: true,
+    unique: true,
+    minlength: 32
+  },
+  isAdmin: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  createdAt: {
+    type: Number,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Number,
+    default: Date.now
+  }
+});
+
+// Update the updatedAt field on save
+userSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Create indexes for fast lookups
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ apiKey: 1 }, { unique: true });
+userSchema.index({ isAdmin: 1 });
+
+export const User: Model<IUserDocument> = mongoose.models.User || mongoose.model('User', userSchema);
+
 export default connectDB;

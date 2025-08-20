@@ -1,32 +1,53 @@
 import { AuthResult, User, AdminData } from '../types/admin';
-import { loadAdminData, adminFileExists, hasAdminUsers } from './adminStorage';
-import { secureCompare } from './adminCrypto';
+import { User as UserModel, IUserDocument } from './db';
+import connectDB from './db';
+import crypto from 'crypto';
+
+// Simple secure comparison function to replace the one from adminCrypto
+function secureCompare(a: string, b: string): boolean {
+    if (a.length !== b.length) {
+        return false;
+    }
+    
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+        result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+    
+    return result === 0;
+}
 
 /**
- * Validates an API key against the admin data
+ * Generates a new API key
+ */
+export function generateApiKey(): string {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Validates an API key against the MongoDB user database
  */
 export async function validateApiKey(apiKey: string): Promise<AuthResult> {
     try {
-        const secretKey = process.env.FIGPACK_ADMIN_SECRET_KEY;
-        if (!secretKey) {
-            console.error('FIGPACK_ADMIN_SECRET_KEY environment variable not set');
-            return { isValid: false, isAdmin: false };
-        }
-
-        // Load admin data
-        const adminData = await loadAdminData(secretKey);
-        
-        if (!adminData) {
-            // No admin file exists
-            return { isValid: false, isAdmin: false };
-        }
+        // Connect to database
+        await connectDB();
 
         // Find user with matching API key
-        const user = adminData.users.find(u => secureCompare(u.apiKey, apiKey));
+        const userDoc: IUserDocument | null = await UserModel.findOne({ apiKey });
         
-        if (!user) {
+        if (!userDoc) {
             return { isValid: false, isAdmin: false };
         }
+
+        // Convert MongoDB document to User interface
+        const user: User = {
+            email: userDoc.email,
+            name: userDoc.name,
+            researchDescription: userDoc.researchDescription,
+            apiKey: userDoc.apiKey,
+            isAdmin: userDoc.isAdmin,
+            createdAt: new Date(userDoc.createdAt).toISOString()
+        };
 
         return {
             isValid: true,
@@ -81,10 +102,202 @@ export async function authenticateAdmin(apiKey: string): Promise<AuthResult> {
 }
 
 /**
- * Finds a user by email in the admin data
+ * Authenticates a user (admin or regular user) using their API key
  */
-export function findUserByEmail(adminData: AdminData, email: string): User | undefined {
-    return adminData.users.find(user => user.email.toLowerCase() === email.toLowerCase());
+export async function authenticateUser(apiKey: string): Promise<AuthResult> {
+    // First try to validate as regular API key (includes both admin and regular users)
+    const apiKeyResult = await validateApiKey(apiKey);
+    
+    if (apiKeyResult.isValid) {
+        return apiKeyResult;
+    }
+
+    // If API key validation failed, try bootstrap key
+    const bootstrapResult = await validateBootstrapKey(apiKey);
+    
+    return bootstrapResult;
+}
+
+/**
+ * Finds a user by email in the MongoDB database
+ */
+export async function findUserByEmail(email: string): Promise<User | null> {
+    try {
+        await connectDB();
+        const userDoc: IUserDocument | null = await UserModel.findOne({ 
+            email: email.toLowerCase() 
+        });
+        
+        if (!userDoc) {
+            return null;
+        }
+
+        return {
+            email: userDoc.email,
+            name: userDoc.name,
+            researchDescription: userDoc.researchDescription,
+            apiKey: userDoc.apiKey,
+            isAdmin: userDoc.isAdmin,
+            createdAt: new Date(userDoc.createdAt).toISOString()
+        };
+    } catch (error) {
+        console.error('Error finding user by email:', error);
+        return null;
+    }
+}
+
+/**
+ * Gets all users from the MongoDB database
+ */
+export async function getAllUsers(): Promise<User[]> {
+    try {
+        await connectDB();
+        const userDocs: IUserDocument[] = await UserModel.find({}).sort({ createdAt: 1 });
+        
+        return userDocs.map(userDoc => ({
+            email: userDoc.email,
+            name: userDoc.name,
+            researchDescription: userDoc.researchDescription,
+            apiKey: userDoc.apiKey,
+            isAdmin: userDoc.isAdmin,
+            createdAt: new Date(userDoc.createdAt).toISOString()
+        }));
+    } catch (error) {
+        console.error('Error getting all users:', error);
+        return [];
+    }
+}
+
+/**
+ * Creates a new user in the MongoDB database
+ */
+export async function createUser(userData: Omit<User, 'createdAt'>): Promise<User | null> {
+    try {
+        await connectDB();
+        
+        const newUser = new UserModel({
+            email: userData.email.toLowerCase(),
+            name: userData.name,
+            researchDescription: userData.researchDescription,
+            apiKey: userData.apiKey,
+            isAdmin: userData.isAdmin,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        });
+
+        const savedUser = await newUser.save();
+        
+        return {
+            email: savedUser.email,
+            name: savedUser.name,
+            researchDescription: savedUser.researchDescription,
+            apiKey: savedUser.apiKey,
+            isAdmin: savedUser.isAdmin,
+            createdAt: new Date(savedUser.createdAt).toISOString()
+        };
+    } catch (error) {
+        console.error('Error creating user:', error);
+        return null;
+    }
+}
+
+/**
+ * Updates a user in the MongoDB database
+ */
+export async function updateUser(email: string, userData: Partial<Omit<User, 'email' | 'createdAt'>>): Promise<User | null> {
+    try {
+        await connectDB();
+        
+        const updatedUserDoc = await UserModel.findOneAndUpdate(
+            { email: email.toLowerCase() },
+            { 
+                ...userData,
+                updatedAt: Date.now()
+            },
+            { new: true }
+        );
+
+        if (!updatedUserDoc) {
+            return null;
+        }
+
+        return {
+            email: updatedUserDoc.email,
+            name: updatedUserDoc.name,
+            researchDescription: updatedUserDoc.researchDescription,
+            apiKey: updatedUserDoc.apiKey,
+            isAdmin: updatedUserDoc.isAdmin,
+            createdAt: new Date(updatedUserDoc.createdAt).toISOString()
+        };
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return null;
+    }
+}
+
+/**
+ * Deletes a user from the MongoDB database
+ */
+export async function deleteUser(email: string): Promise<boolean> {
+    try {
+        await connectDB();
+        
+        const result = await UserModel.deleteOne({ email: email.toLowerCase() });
+        return result.deletedCount > 0;
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        return false;
+    }
+}
+
+/**
+ * Regenerates API key for a user
+ */
+export async function regenerateApiKey(email: string): Promise<User | null> {
+    try {
+        await connectDB();
+        
+        const newApiKey = generateApiKey();
+        
+        const updatedUserDoc = await UserModel.findOneAndUpdate(
+            { email: email.toLowerCase() },
+            { 
+                apiKey: newApiKey,
+                updatedAt: Date.now()
+            },
+            { new: true }
+        );
+
+        if (!updatedUserDoc) {
+            return null;
+        }
+
+        return {
+            email: updatedUserDoc.email,
+            name: updatedUserDoc.name,
+            researchDescription: updatedUserDoc.researchDescription,
+            apiKey: updatedUserDoc.apiKey,
+            isAdmin: updatedUserDoc.isAdmin,
+            createdAt: new Date(updatedUserDoc.createdAt).toISOString()
+        };
+    } catch (error) {
+        console.error('Error regenerating API key:', error);
+        return null;
+    }
+}
+
+/**
+ * Checks if there are any admin users in the system
+ */
+export async function hasAdminUsers(): Promise<boolean> {
+    try {
+        await connectDB();
+        const adminCount = await UserModel.countDocuments({ isAdmin: true });
+        return adminCount > 0;
+    } catch (error) {
+        console.error('Error checking for admin users:', error);
+        return false;
+    }
 }
 
 /**

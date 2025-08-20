@@ -1,36 +1,82 @@
-import type { AdminData } from './AdminData';
-import validateAdminData from './validateAdminData';
+import type { User } from './UsersSummary';
 
-interface SaveResult {
+interface UserResult {
   success: boolean;
   message?: string;
-  data?: AdminData;
+  user?: User;
 }
 
-export const saveAdminData = async (apiKey: string, adminData: AdminData): Promise<SaveResult> => {
-  // Validate the data before sending
+interface UsersResult {
+  success: boolean;
+  message?: string;
+  users?: User[];
+}
+
+const API_BASE_URL = "https://figpack-api.vercel.app/api";
+
+// Get all users
+export const getUsers = async (apiKey: string): Promise<UsersResult> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
   }
 
-  if (!adminData) {
-    return { success: false, message: "No data to save" };
+  try {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Admin endpoint now only returns users array for admin users
+      if (result.users) {
+        return { 
+          success: true, 
+          users: result.users
+        };
+      } else {
+        return { 
+          success: false, 
+          message: "No user data received" 
+        };
+      }
+    } else {
+      return { 
+        success: false, 
+        message: result.message || "Failed to get users. Make sure you have admin permissions." 
+      };
+    }
+  } catch (err) {
+    return { 
+      success: false, 
+      message: `Error getting users: ${err}` 
+    };
+  }
+};
+
+// Create a new user
+export const createUser = async (apiKey: string, user: Omit<User, 'createdAt'>): Promise<UserResult> => {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
   }
 
-  const validation = validateAdminData(adminData);
-  if (!validation.valid) {
-    return { success: false, message: `Validation error: ${validation.error}` };
+  if (!user) {
+    return { success: false, message: "User data is required" };
   }
 
   try {
-    const response = await fetch("https://figpack-api.vercel.app/api/admin", {
+    const response = await fetch(`${API_BASE_URL}/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": apiKey,
       },
       body: JSON.stringify({
-        apiKey: apiKey,
-        data: validation.data,
+        user: user,
       }),
     });
 
@@ -39,19 +85,107 @@ export const saveAdminData = async (apiKey: string, adminData: AdminData): Promi
     if (result.success) {
       return { 
         success: true, 
-        message: "Admin data saved successfully",
-        data: validation.data
+        message: result.message || "User created successfully",
+        user: result.user
       };
     } else {
       return { 
         success: false, 
-        message: result.message || "Failed to save admin data" 
+        message: result.message || "Failed to create user" 
       };
     }
   } catch (err) {
     return { 
       success: false, 
-      message: `Error saving data: ${err}` 
+      message: `Error creating user: ${err}` 
     };
   }
-}
+};
+
+// Update an existing user
+export const updateUser = async (apiKey: string, email: string, userData: Partial<Omit<User, 'email' | 'createdAt'>>): Promise<UserResult> => {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
+  }
+
+  if (!email || !userData) {
+    return { success: false, message: "Email and user data are required" };
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        email: email,
+        user: userData,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      return { 
+        success: true, 
+        message: result.message || "User updated successfully",
+        user: result.user
+      };
+    } else {
+      return { 
+        success: false, 
+        message: result.message || "Failed to update user" 
+      };
+    }
+  } catch (err) {
+    return { 
+      success: false, 
+      message: `Error updating user: ${err}` 
+    };
+  }
+};
+
+// Delete a user
+export const deleteUser = async (apiKey: string, email: string): Promise<{ success: boolean; message?: string }> => {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
+  }
+
+  if (!email) {
+    return { success: false, message: "Email is required" };
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        email: email,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      return { 
+        success: true, 
+        message: result.message || "User deleted successfully"
+      };
+    } else {
+      return { 
+        success: false, 
+        message: result.message || "Failed to delete user" 
+      };
+    }
+  } catch (err) {
+    return { 
+      success: false, 
+      message: `Error deleting user: ${err}` 
+    };
+  }
+};

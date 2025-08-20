@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import "./App.css";
 import AdminPage from "./pages/AdminPage/AdminPage";
 import ManageFigurePage from "./pages/ManageFigurePage/ManageFigurePage";
+import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Routes>
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/figure" element={<ManageFigurePage />} />
           {/* Redirect from /manage to /figure for backward compatibility */}
           <Route path="/manage" element={<ManageFigurePage />} />

@@ -1,9 +1,4 @@
-import {
-  AdminPanelSettings,
-  Key,
-  Visibility,
-  VisibilityOff,
-} from "@mui/icons-material";
+import { AdminPanelSettings, Key } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -11,43 +6,61 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  IconButton,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
-import type { AdminData } from "./AdminData";
-import AdminDataEditor from "./AdminDataEditor";
 import AdminHeader from "./AdminHeader";
 import AdminSpecDialog from "./AdminSpecDialog";
 import type { User } from "./UsersSummary";
 import UsersSummary from "./UsersSummary";
-import { saveAdminData } from "./adminApi";
-import { authenticateAndLoadAdminData } from "./authenticateAdmin";
+import AddUserDialog from "./AddUserDialog";
+import EditUserDialog from "./EditUserDialog";
+import { getUsers, createUser, updateUser, deleteUser } from "./adminApi";
 import useApiKey from "./useApiKey";
+
+import ApiKeyField from "../../components/ApiKeyField";
 
 const AdminPage: React.FC = () => {
   const { apiKey, setApiKey } = useApiKey();
-  const [showApiKey, setShowApiKey] = useState<boolean>(false);
-  const [adminData, setAdminData] = useState<AdminData | null>(null);
+  const [adminData, setAdminData] = useState<{
+    users: User[];
+  } | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [specDialogOpen, setSpecDialogOpen] = useState<boolean>(false);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState<boolean>(false);
+  const [editUserDialogOpen, setEditUserDialogOpen] = useState<boolean>(false);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
 
   const handleAuthenticate = useMemo(
     () =>
       async (key: string = apiKey.trim()) => {
         setLoading(true);
-        await authenticateAndLoadAdminData(key, {
-          setAdminData,
-          setIsAuthenticated,
-          setError,
-          setSuccess,
-        });
+        setError(null);
+        setSuccess(null);
+
+        try {
+          // Try to get users to verify authentication
+          const result = await getUsers(key);
+          if (result.success) {
+            setIsAuthenticated(true);
+            setAdminData({
+              users: result.users || [],
+            });
+            setSuccess("Successfully authenticated");
+          } else {
+            setIsAuthenticated(false);
+            setError(result.message || "Authentication failed");
+          }
+        } catch (error) {
+          setIsAuthenticated(false);
+          setError(`Authentication error: ${error}`);
+        }
+
         setLoading(false);
       },
     [apiKey]
@@ -64,32 +77,6 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
-
-    if (!adminData) return;
-
-    try {
-      const result = await saveAdminData(apiKey, adminData);
-      if (result.success) {
-        setSuccess(result.message || "Admin data saved successfully");
-        if (result.data) {
-          setAdminData(result.data);
-        }
-        // Refresh to get the updated lastModified timestamp
-        setTimeout(() => handleRefresh(), 1000);
-      } else {
-        setError(result.message || "Failed to save admin data");
-      }
-    } catch (err) {
-      setError(`Error saving data: ${err}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleLogout = () => {
     setApiKey("");
     setAdminData(null);
@@ -98,41 +85,84 @@ const AdminPage: React.FC = () => {
     setSuccess(null);
   };
 
-  const generateNewApiKey = () => {
-    // Generate a 64-character hex string (32 bytes)
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-      ""
-    );
+  const handleAddUser = async (userData: Omit<User, "createdAt">) => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const result = await createUser(apiKey, userData);
+      if (result.success) {
+        setSuccess("User created successfully");
+        // Refresh the user list
+        handleRefresh();
+      } else {
+        setError(result.message || "Failed to create user");
+      }
+    } catch (error) {
+      setError(`Error creating user: ${error}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const addNewUser = () => {
-    const newUser: User = {
-      email: "new-user@example.com",
-      name: "New User",
-      researchDescription: "Research description here",
-      apiKey: generateNewApiKey(),
-      isAdmin: false,
-      createdAt: new Date().toISOString(),
-    };
+  const handleUpdateUser = async (
+    email: string,
+    userData: Partial<Omit<User, "email" | "createdAt">>
+  ) => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
 
-    const currentData = adminData || {
-      users: [],
-      version: "1.0.0",
-      lastModified: new Date().toISOString(),
-    };
-    const updatedData = {
-      ...currentData,
-      users: [...currentData.users, newUser],
-    };
+    try {
+      const result = await updateUser(apiKey, email, userData);
+      if (result.success) {
+        setSuccess("User updated successfully");
+        // Refresh the user list
+        handleRefresh();
+      } else {
+        setError(result.message || "Failed to update user");
+      }
+    } catch (error) {
+      setError(`Error updating user: ${error}`);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    setAdminData(updatedData);
+  const handleEditUser = (user: User) => {
+    setUserToEdit(user);
+    setEditUserDialogOpen(true);
+  };
+
+  const handleDeleteUserFromSummary = (user: User) => {
+    handleDeleteUser(user.email);
+  };
+
+  const handleDeleteUser = async (email: string) => {
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const result = await deleteUser(apiKey, email);
+      if (result.success) {
+        setSuccess("User deleted successfully");
+        // Refresh the user list
+        handleRefresh();
+      } else {
+        setError(result.message || "Failed to delete user");
+      }
+    } catch (error) {
+      setError(`Error deleting user: ${error}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!isAuthenticated) {
     return (
-      <Box sx={{ maxWidth: 600, mx: "auto", mt: 4 }}>
+      <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4 }}>
         <Card>
           <CardContent>
             <Box display="flex" alignItems="center" gap={2} mb={3}>
@@ -146,23 +176,10 @@ const AdminPage: React.FC = () => {
             </Typography>
 
             <Stack spacing={3}>
-              <TextField
-                label="API Key"
-                type={showApiKey ? "text" : "password"}
+              <ApiKeyField
                 value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                fullWidth
+                onChange={setApiKey}
                 placeholder="Enter your admin API key or bootstrap key"
-                InputProps={{
-                  endAdornment: (
-                    <IconButton
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      edge="end"
-                    >
-                      {showApiKey ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  ),
-                }}
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
                     handleAuthenticate(apiKey.trim());
@@ -195,7 +212,6 @@ const AdminPage: React.FC = () => {
         <Card>
           <CardContent>
             <AdminHeader
-              adminData={adminData}
               onRefresh={handleRefresh}
               onLogout={handleLogout}
               onOpenSpec={() => setSpecDialogOpen(true)}
@@ -203,25 +219,36 @@ const AdminPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Admin Data Editor */}
-        <Card>
-          <AdminDataEditor
-            adminData={adminData}
-            onAdminDataChange={setAdminData}
-            onSave={handleSave}
-            onAddNewUser={addNewUser}
-            error={error}
-            success={success}
-            saving={saving}
-          />
-        </Card>
-
         {/* Current Users Summary */}
-        {adminData && <UsersSummary users={adminData.users} />}
+        {adminData && (
+          <UsersSummary
+            users={adminData.users}
+            onEditUser={handleEditUser}
+            onDeleteUser={handleDeleteUserFromSummary}
+            onAddUser={() => setAddUserDialogOpen(true)}
+          />
+        )}
 
         <AdminSpecDialog
           open={specDialogOpen}
           onClose={() => setSpecDialogOpen(false)}
+        />
+
+        <AddUserDialog
+          open={addUserDialogOpen}
+          onClose={() => setAddUserDialogOpen(false)}
+          onAddUser={handleAddUser}
+          loading={saving}
+          error={error}
+        />
+
+        <EditUserDialog
+          open={editUserDialogOpen}
+          onClose={() => setEditUserDialogOpen(false)}
+          onUpdateUser={handleUpdateUser}
+          user={userToEdit}
+          loading={saving}
+          error={error}
         />
       </Stack>
     </Box>

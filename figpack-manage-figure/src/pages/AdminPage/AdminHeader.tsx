@@ -1,21 +1,14 @@
-import React from "react";
-import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
 import { AdminPanelSettings, Info, Refresh } from "@mui/icons-material";
-import type { User } from "./UsersSummary";
+import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
+import React from "react";
 
 interface AdminHeaderProps {
-  adminData: {
-    lastModified: string;
-    version: string;
-    users: User[];
-  } | null;
   onRefresh: () => void;
   onLogout: () => void;
   onOpenSpec: () => void;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
-  adminData,
   onRefresh,
   onLogout,
   onOpenSpec,
@@ -26,7 +19,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb={0}
       >
         <Box display="flex" alignItems="center" gap={2}>
           <AdminPanelSettings color="primary" fontSize="large" />
@@ -48,17 +41,6 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
           </Button>
         </Box>
       </Box>
-
-      {adminData && (
-        <Box>
-          <Typography variant="body2" color="text.secondary">
-            Last modified: {new Date(adminData.lastModified).toLocaleString()}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Version: {adminData.version} • Users: {adminData.users.length}
-          </Typography>
-        </Box>
-      )}
     </Box>
   );
 };
