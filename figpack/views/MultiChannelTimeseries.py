@@ -160,10 +160,14 @@ class MultiChannelTimeseries(FigpackView):
             elements_per_timepoint * bytes_per_element
         )
 
-        # Round down to nearest power of 2 for efficiency
-        chunk_timepoints = 2 ** int(math.log2(max_timepoints_per_chunk))
+        # Find next lower power of 2
+        chunk_timepoints = 2 ** math.floor(math.log2(max_timepoints_per_chunk))
         chunk_timepoints = max(chunk_timepoints, 1)  # At least 1
         chunk_timepoints = min(chunk_timepoints, n_timepoints)  # At most n_timepoints
+
+        # If n_timepoints is less than our calculated size, round down to next power of 2
+        if chunk_timepoints > n_timepoints:
+            chunk_timepoints = 2 ** math.floor(math.log2(n_timepoints))
 
         if len(shape) == 2:
             return (chunk_timepoints, n_channels)

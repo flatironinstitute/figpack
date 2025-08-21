@@ -21,7 +21,15 @@ class Image(FigpackView):
 
         Args:
             image_path_or_data: Path to image file or raw image bytes
+
+        Raises:
+            ValueError: If image_path_or_data is not a string or bytes
         """
+        if not isinstance(image_path_or_data, (str, bytes)):
+            raise ValueError(
+                "image_path_or_data must be a file path (str) or raw bytes"
+            )
+
         self.image_path_or_data = image_path_or_data
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:

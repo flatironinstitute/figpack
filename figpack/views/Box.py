@@ -29,7 +29,13 @@ class Box(FigpackView):
             direction: Layout direction - "horizontal" or "vertical"
             show_titles: Whether to show titles for layout items
             items: List of LayoutItem objects containing the child views
+
+        Raises:
+            ValueError: If direction is not "horizontal" or "vertical"
         """
+        if direction not in ["horizontal", "vertical"]:
+            raise ValueError('direction must be either "horizontal" or "vertical"')
+
         self.direction = direction
         self.show_titles = show_titles
         self.items = items
