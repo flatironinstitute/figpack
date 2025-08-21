@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { validateApiKey } from '../../../lib/adminAuth';
 import connectDB, { Figure, IFigure } from '../../../lib/db';
+import { setCorsHeaders } from '../../../lib/config';
 
 interface GetFigureRequest {
   figureUrl: string | string[];
@@ -22,18 +23,7 @@ export default async function handler(
   res: NextApiResponse<GetFigureResponse>
 ) {
   // Set CORS headers
-  const allowedOrigins = [
-    'https://manage.figpack.org',
-    'http://localhost:5173',
-    'http://localhost:5174'
-  ];
-  
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setCorsHeaders(req, res);
 
   // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {

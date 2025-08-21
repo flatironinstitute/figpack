@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Figure } from '../../../lib/db';
 import { validateApiKey } from '../../../lib/adminAuth';
-
 import { Bucket, deleteObjects, listObjects } from '../../../lib/s3Helpers';
 import connectDB from '../../../lib/db';
+import { setCorsHeaders } from '../../../lib/config';
 
 interface DeleteFigureRequest {
     figureUrl: string;
@@ -31,18 +31,7 @@ export default async function handler(
     res: NextApiResponse<DeleteFigureResponse>
 ) {
     // Set CORS headers
-    const allowedOrigins = [
-        'https://manage.figpack.org',
-        'http://localhost:5173',
-        'http://localhost:5174'
-    ];
-    
-    const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+    setCorsHeaders(req, res);
 
     // Handle preflight OPTIONS request
     if (req.method === 'OPTIONS') {

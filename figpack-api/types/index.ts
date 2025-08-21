@@ -10,13 +10,13 @@ export interface UploadResponse {
   success: boolean;
   message?: string;
   signedUrl?: string;
-  uploadId?: string;  // tracking
+  uploadId?: string; // tracking
 }
 
 export class ValidationError extends Error {
   constructor(message: string, public field: string) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
@@ -58,10 +58,25 @@ export interface FinalizeFigureResponse {
   figure?: any; // Will be IFigure from db.ts
 }
 
-// Updated upload request to include figureUrl and relativePath
-export interface NewUploadRequest {
-  figureUrl: string;
+// Batch upload types - replacing single file upload
+export interface BatchUploadItem {
   relativePath: string;
-  apiKey: string;
   size: number;
+}
+
+export interface BatchUploadRequest {
+  figureUrl: string;
+  files: BatchUploadItem[];
+  apiKey: string;
+}
+
+export interface BatchUploadResponseItem {
+  relativePath: string;
+  signedUrl: string;
+}
+
+export interface BatchUploadResponse {
+  success: boolean;
+  message?: string;
+  signedUrls?: BatchUploadResponseItem[];
 }

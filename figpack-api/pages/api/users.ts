@@ -10,6 +10,7 @@ import {
   validateUserData
 } from '../../lib/adminAuth';
 import { checkRateLimit, getClientIP } from '../../lib/rateLimiter';
+import { setCorsHeaders } from '../../lib/config';
 
 interface UsersResponse {
   success: boolean;
@@ -23,19 +24,7 @@ export default async function handler(
   res: NextApiResponse<UsersResponse>
 ) {
   // Set CORS headers
-  const allowedOrigins = [
-    'https://manage.figpack.org',
-    'http://localhost:5173',
-    'http://localhost:5174'
-  ];
-  
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+  setCorsHeaders(req, res);
 
   // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {

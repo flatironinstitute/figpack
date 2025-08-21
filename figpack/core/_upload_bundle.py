@@ -16,23 +16,28 @@ from .config import FIGPACK_API_BASE_URL
 thisdir = pathlib.Path(__file__).parent.resolve()
 
 
-def _upload_single_file(
-    figure_url: str, relative_path: str, file_path: pathlib.Path, api_key: str
-) -> str:
+def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> dict:
     """
-    Worker function to upload a single file using signed URL
+    Get signed URLs for a batch of files
+
+    Args:
+        figure_url: The figure URL
+        files_batch: List of tuples (relative_path, file_path)
+        api_key: API key for authentication
 
     Returns:
-        str: The relative path of the uploaded file
+        dict: Mapping of relative_path to signed_url
     """
-    file_size = file_path.stat().st_size
+    # Prepare batch request
+    files_data = []
+    for relative_path, file_path in files_batch:
+        file_size = file_path.stat().st_size
+        files_data.append({"relativePath": relative_path, "size": file_size})
 
-    # Get signed URL
     payload = {
         "figureUrl": figure_url,
-        "relativePath": relative_path,
+        "files": files_data,
         "apiKey": api_key,
-        "size": file_size,
     }
 
     response = requests.post(f"{FIGPACK_API_BASE_URL}/api/upload", json=payload)
@@ -43,18 +48,35 @@ def _upload_single_file(
             error_msg = error_data.get("message", "Unknown error")
         except:
             error_msg = f"HTTP {response.status_code}"
-        raise Exception(f"Failed to get signed URL for {relative_path}: {error_msg}")
+        raise Exception(f"Failed to get signed URLs for batch: {error_msg}")
 
     response_data = response.json()
     if not response_data.get("success"):
         raise Exception(
-            f"Failed to get signed URL for {relative_path}: {response_data.get('message', 'Unknown error')}"
+            f"Failed to get signed URLs for batch: {response_data.get('message', 'Unknown error')}"
         )
 
-    signed_url = response_data.get("signedUrl")
-    if not signed_url:
-        raise Exception(f"No signed URL returned for {relative_path}")
+    signed_urls_data = response_data.get("signedUrls", [])
+    if not signed_urls_data:
+        raise Exception("No signed URLs returned for batch")
 
+    # Convert to mapping
+    signed_urls_map = {}
+    for item in signed_urls_data:
+        signed_urls_map[item["relativePath"]] = item["signedUrl"]
+
+    return signed_urls_map
+
+
+def _upload_single_file_with_signed_url(
+    relative_path: str, file_path: pathlib.Path, signed_url: str
+) -> str:
+    """
+    Upload a single file using a pre-obtained signed URL
+
+    Returns:
+        str: The relative path of the uploaded file
+    """
     # Upload file to signed URL
     content_type = _determine_content_type(relative_path)
     with open(file_path, "rb") as f:
@@ -235,39 +257,63 @@ def _upload_bundle(tmpdir: str, api_key: str, title: str = None) -> str:
         print("No files to upload")
     else:
         print(
-            f"Uploading {total_files_to_upload} files with up to {MAX_WORKERS_FOR_UPLOAD} concurrent uploads..."
+            f"Uploading {total_files_to_upload} files in batches of 20 with up to {MAX_WORKERS_FOR_UPLOAD} concurrent uploads per batch..."
         )
 
         # Thread-safe progress tracking
         uploaded_count = 0
         count_lock = threading.Lock()
 
-        # Upload files in parallel with concurrent uploads
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS_FOR_UPLOAD) as executor:
-            # Submit all upload tasks
-            future_to_file = {
-                executor.submit(
-                    _upload_single_file, figure_url, rel_path, file_path, api_key
-                ): rel_path
-                for rel_path, file_path in files_to_upload
-            }
+        # Process files in batches of 20
+        batch_size = 20
+        for i in range(0, total_files_to_upload, batch_size):
+            batch = files_to_upload[i : i + batch_size]
+            batch_num = i // batch_size + 1
+            total_batches = (total_files_to_upload + batch_size - 1) // batch_size
 
-            # Process completed uploads
-            for future in as_completed(future_to_file):
-                relative_path = future_to_file[future]
-                try:
-                    future.result()  # This will raise any exception that occurred during upload
+            print(
+                f"Processing batch {batch_num}/{total_batches} ({len(batch)} files)..."
+            )
 
-                    # Thread-safe progress update
-                    with count_lock:
-                        uploaded_count += 1
-                        print(
-                            f"Uploaded {uploaded_count}/{total_files_to_upload}: {relative_path}"
+            # Get signed URLs for this batch
+            try:
+                signed_urls_map = _get_batch_signed_urls(figure_url, batch, api_key)
+            except Exception as e:
+                print(f"Failed to get signed URLs for batch {batch_num}: {e}")
+                raise
+
+            # Upload files in this batch in parallel
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS_FOR_UPLOAD) as executor:
+                # Submit upload tasks for this batch
+                future_to_file = {}
+                for rel_path, file_path in batch:
+                    if rel_path in signed_urls_map:
+                        future = executor.submit(
+                            _upload_single_file_with_signed_url,
+                            rel_path,
+                            file_path,
+                            signed_urls_map[rel_path],
                         )
+                        future_to_file[future] = rel_path
+                    else:
+                        print(f"Warning: No signed URL found for {rel_path}")
 
-                except Exception as e:
-                    print(f"Failed to upload {relative_path}: {e}")
-                    raise  # Re-raise the exception to stop the upload process
+                # Process completed uploads for this batch
+                for future in as_completed(future_to_file):
+                    relative_path = future_to_file[future]
+                    try:
+                        future.result()  # This will raise any exception that occurred during upload
+
+                        # Thread-safe progress update
+                        with count_lock:
+                            uploaded_count += 1
+                            print(
+                                f"Uploaded {uploaded_count}/{total_files_to_upload}: {relative_path}"
+                            )
+
+                    except Exception as e:
+                        print(f"Failed to upload {relative_path}: {e}")
+                        raise  # Re-raise the exception to stop the upload process
 
     # Create manifest for finalization
     print("Creating manifest...")
@@ -285,48 +331,42 @@ def _upload_bundle(tmpdir: str, api_key: str, title: str = None) -> str:
 
     print(f"Total size: {manifest['total_size'] / (1024 * 1024):.2f} MB")
 
-    # Upload manifest.json
+    # Upload manifest.json using batch API
     print("Uploading manifest.json...")
     manifest_content = json.dumps(manifest, indent=2)
     manifest_size = len(manifest_content.encode("utf-8"))
 
-    manifest_payload = {
-        "figureUrl": figure_url,
-        "relativePath": "manifest.json",
-        "apiKey": api_key,
-        "size": manifest_size,
-    }
+    # Create a temporary file for the manifest
+    import tempfile
 
-    response = requests.post(
-        f"{FIGPACK_API_BASE_URL}/api/upload", json=manifest_payload
-    )
-    if not response.ok:
-        try:
-            error_data = response.json()
-            error_msg = error_data.get("message", "Unknown error")
-        except:
-            error_msg = f"HTTP {response.status_code}"
-        raise Exception(f"Failed to get signed URL for manifest.json: {error_msg}")
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False
+    ) as temp_file:
+        temp_file.write(manifest_content)
+        temp_file_path = pathlib.Path(temp_file.name)
 
-    response_data = response.json()
-    if not response_data.get("success"):
-        raise Exception(
-            f"Failed to get signed URL for manifest.json: {response_data.get('message', 'Unknown error')}"
+    try:
+        # Use batch API for manifest
+        manifest_batch = [("manifest.json", temp_file_path)]
+        signed_urls_map = _get_batch_signed_urls(figure_url, manifest_batch, api_key)
+
+        if "manifest.json" not in signed_urls_map:
+            raise Exception("No signed URL returned for manifest.json")
+
+        # Upload manifest using signed URL
+        upload_response = requests.put(
+            signed_urls_map["manifest.json"],
+            data=manifest_content,
+            headers={"Content-Type": "application/json"},
         )
 
-    signed_url = response_data.get("signedUrl")
-    if not signed_url:
-        raise Exception("No signed URL returned for manifest.json")
-
-    # Upload manifest using signed URL
-    upload_response = requests.put(
-        signed_url, data=manifest_content, headers={"Content-Type": "application/json"}
-    )
-
-    if not upload_response.ok:
-        raise Exception(
-            f"Failed to upload manifest.json to signed URL: HTTP {upload_response.status_code}"
-        )
+        if not upload_response.ok:
+            raise Exception(
+                f"Failed to upload manifest.json to signed URL: HTTP {upload_response.status_code}"
+            )
+    finally:
+        # Clean up temporary file
+        temp_file_path.unlink(missing_ok=True)
 
     # Finalize the figure upload
     print("Finalizing figure...")

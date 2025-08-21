@@ -1,1 +1,30 @@
-export const bucketBaseUrl = process.env.BUCKET_BASE_URL || 'https://figures.figpack.org';
+export const bucketBaseUrl =
+  process.env.BUCKET_BASE_URL || "https://figures.figpack.org";
+
+const defaultAllowedOrigins = [
+  "https://figpack.org",
+  "https://manage.figpack.org",
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
+
+export const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS || defaultAllowedOrigins.join(",")
+)
+  .split(",")
+  .map((origin) => origin.trim());
+
+export const setCorsHeaders = (req: any, res: any) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, x-api-key"
+    );
+  }
+};
