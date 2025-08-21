@@ -3,7 +3,7 @@ import { validateApiKey } from '../../../lib/adminAuth';
 import connectDB, { Figure, IFigure } from '../../../lib/db';
 
 interface GetFigureRequest {
-  figureId?: string | string[];
+  figureUrl: string | string[];
   apiKey?: string | string[]; // Optional for read-only access
 }
 
@@ -11,24 +11,10 @@ interface FigureWithAccess extends IFigure {
   hasWriteAccess?: boolean;
 }
 
-interface PublicFigure {
-  figureId: string;
-  status: 'uploading' | 'completed' | 'failed';
-  uploadStarted: number;
-  uploadUpdated: number;
-  expiration: number;
-  figpackVersion: string;
-  createdAt: number;
-  updatedAt: number;
-  uploadCompleted?: number;
-  totalFiles?: number;
-  totalSize?: number;
-}
-
 interface GetFigureResponse {
   success: boolean;
   message?: string;
-  figure?: PublicFigure | FigureWithAccess;
+  figure?: IFigure | FigureWithAccess;
 }
 
 export default async function handler(
@@ -67,20 +53,20 @@ export default async function handler(
     await connectDB();
 
     // Parse query parameters
-    const { figureId, apiKey } = req.query;
+    const { figureUrl, apiKey } = req.query;
 
     // Validate required fields
-    // Ensure figureId is a string
-    const figureIdStr = Array.isArray(figureId) ? figureId[0] : figureId;
-    if (!figureIdStr) {
+    // Ensure figureUrl is a string
+    const figureUrlStr = Array.isArray(figureUrl) ? figureUrl[0] : figureUrl;
+    if (!figureUrlStr) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: figureId'
+        message: 'Missing required field: figureUrl'
       });
     }
 
     // Find the figure
-    const figure = await Figure.findOne({ figureId: figureIdStr });
+    const figure = await Figure.findOne({ figureUrl: figureUrlStr });
     
     if (!figure) {
       return res.status(404).json({
@@ -108,26 +94,10 @@ export default async function handler(
       }
     }
 
-    // For public access, return only necessary information
-    const publicFigure: PublicFigure = {
-      figureId: figure.figureId,
-      status: figure.status,
-      uploadStarted: figure.uploadStarted,
-      uploadUpdated: figure.uploadUpdated,
-      expiration: figure.expiration,
-      figpackVersion: figure.figpackVersion,
-      createdAt: figure.createdAt,
-      updatedAt: figure.updatedAt,
-      // Optional fields
-      uploadCompleted: figure.uploadCompleted,
-      totalFiles: figure.totalFiles,
-      totalSize: figure.totalSize
-    };
-
     return res.status(200).json({
       success: true,
       message: 'Figure found',
-      figure: publicFigure
+      figure
     });
 
   } catch (error) {

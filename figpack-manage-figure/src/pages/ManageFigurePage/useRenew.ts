@@ -1,27 +1,23 @@
 import { useState } from 'react';
+import { FIGPACK_API_BASE_URL } from '../../config';
 
 export const useRenew = (
-  figureUrl: string,
-  apiKey: string | null,
   loadFigureData: (url: string) => Promise<void>
 ) => {
   const [renewLoading, setRenewLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleRenew = async (apiKeyToUse?: string) => {
-    if (!figureUrl) return;
-
-    const keyToUse = apiKeyToUse || apiKey;
-    if (!keyToUse) {
+  const handleRenew = async (figureUrl: string, apiKey: string | null) => {
+    if (!apiKey) {
       return { requiresApiKey: true };
     }
 
     setRenewLoading(true);
     try {
-      const response = await fetch("https://figpack-api.vercel.app/api/renew", {
+      const response = await fetch(`${FIGPACK_API_BASE_URL}/api/renew`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ figureUrl: figureUrl, apiKey: keyToUse }),
+        body: JSON.stringify({ figureUrl, apiKey }),
       });
 
       const result = await response.json();

@@ -1,13 +1,12 @@
 import { useState } from 'react';
+import { FIGPACK_API_BASE_URL } from '../../config';
 
 interface PinInfo {
   name: string;
-  figure_description: string;
+  figureDescription: string;
 }
 
 export const usePin = (
-  figureUrl: string,
-  apiKey: string | null,
   loadFigureData: (url: string) => Promise<void>
 ) => {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
@@ -15,9 +14,7 @@ export const usePin = (
   const [pinError, setPinError] = useState<string | null>(null);
   const [unpinLoading, setUnpinLoading] = useState(false);
 
-  const handlePin = async (pinInfo: PinInfo) => {
-    if (!figureUrl) return;
-
+  const handlePin = async (figureUrl: string, pinInfo: PinInfo, apiKey: string | null) => {
     if (!apiKey) {
       return { requiresApiKey: true };
     }
@@ -25,11 +22,11 @@ export const usePin = (
     setPinLoading(true);
     setPinError(null);
     try {
-      const response = await fetch("https://figpack-api.vercel.app/api/pin", {
+      const response = await fetch(`${FIGPACK_API_BASE_URL}/api/pin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          figureUrl: figureUrl,
+          figureUrl,
           apiKey: apiKey,
           pinInfo: pinInfo,
         }),
@@ -63,9 +60,7 @@ export const usePin = (
     setPinDialogOpen(false);
   };
 
-  const handleUnpin = async () => {
-    if (!figureUrl) return;
-
+  const handleUnpin = async (figureUrl: string, apiKey: string | null) => {
     if (!apiKey) {
       return { requiresApiKey: true };
     }
@@ -73,11 +68,11 @@ export const usePin = (
     setUnpinLoading(true);
     setPinError(null);
     try {
-      const response = await fetch("https://figpack-api.vercel.app/api/unpin", {
+      const response = await fetch(`${FIGPACK_API_BASE_URL}/api/unpin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          figureUrl: figureUrl,
+          figureUrl,
           apiKey: apiKey,
         }),
       });

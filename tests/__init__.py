@@ -1,3 +1,0 @@
-"""
-Test suite for figpack
-"""

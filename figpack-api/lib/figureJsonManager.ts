@@ -1,3 +1,4 @@
+import { bucketBaseUrl } from './config';
 import { IFigure } from './db';
 import getS3Client from './getS3Client';
 import { Bucket, putObject } from './s3Helpers';
@@ -16,7 +17,7 @@ const bucket: Bucket = {
 export const updateFigureJson = async (figure: IFigure) => {
     // Create the JSON content based on figure data
     const jsonContent: any = {
-        figureId: figure.figureId,
+        figureUrl: figure.figureUrl,
         status: figure.status,
         uploadStarted: figure.uploadStarted,
         uploadUpdated: figure.uploadUpdated,
@@ -37,12 +38,18 @@ export const updateFigureJson = async (figure: IFigure) => {
     }
 
     try {
+        const prefix = `${bucketBaseUrl}/`;
+        if (!figure.figureUrl.startsWith(prefix)) {
+            throw new Error(`Figure URL must start with ${prefix}`);
+        }
+        const figureUrlWithoutIndexHtml = figure.figureUrl.endsWith('/index.html') ? figure.figureUrl.slice(0, -'/index.html'.length) : figure.figureUrl;
+        const key = figureUrlWithoutIndexHtml.slice(prefix.length) + '/figpack.json';
         // Store the JSON file in the figure's directory
         await putObject(
             bucket,
             {
                 Bucket: 'figpack-figures',
-                Key: `figures/default/${figure.figureId}/figpack.json`,
+                Key: key,
                 Body: JSON.stringify(jsonContent, null, 2),
                 ContentType: 'application/json'
             }

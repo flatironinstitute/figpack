@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 
 interface FigpackStatus {
   status: string;
-  upload_started?: string;
-  upload_completed?: string;
+  uploadStarted?: string;
+  uploadCompleted?: string;
   expiration?: string;
-  figure_id?: string;
-  total_files?: number;
+  figureUrl?: string;
+  totalFiles?: number;
 }
 
 interface FigpackStatusResult {

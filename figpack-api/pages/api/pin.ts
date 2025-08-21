@@ -4,7 +4,7 @@ import connectDB, { Figure } from '../../lib/db';
 import { updateFigureJson } from '../../lib/figureJsonManager';
 
 interface PinRequest {
-  figureId: string;
+  figureUrl: string;
   apiKey: string;
   pinInfo: {
     name: string;
@@ -75,13 +75,13 @@ export default async function handler(
   }
 
   try {
-    const { figureId, apiKey, pinInfo }: PinRequest = req.body;
+    const { figureUrl, apiKey, pinInfo }: PinRequest = req.body;
 
     // Validate required fields
-    if (!figureId) {
+    if (!figureUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: figureId'
+        message: 'Missing required field: figureUrl'
       });
     }
 
@@ -121,7 +121,7 @@ export default async function handler(
     }
 
     // Find the figure
-    const figure = await Figure.findOne({ figureId });
+    const figure = await Figure.findOne({ figureUrl });
     
     if (!figure) {
       return res.status(404).json({

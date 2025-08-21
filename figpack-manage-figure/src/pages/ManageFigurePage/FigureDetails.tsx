@@ -1,17 +1,18 @@
-import React from "react";
 import {
   Box,
   Card,
   CardContent,
-  CardHeader,
-  Stack,
-  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
 } from "@mui/material";
-import { Info, Schedule } from "@mui/icons-material";
+import React from "react";
 
 interface FigureDetailsProps {
   figpackStatus: {
-    figureId: string;
+    figureUrl: string;
     ownerEmail?: string;
     figpackVersion: string;
     totalSize?: number;
@@ -40,62 +41,59 @@ const FigureDetails: React.FC<FigureDetailsProps> = ({
       {/* Figure Information */}
       <Box sx={{ flex: 1 }}>
         <Card>
-          <CardHeader
-            avatar={<Info color="primary" />}
-            title="Figure Information"
-            titleTypographyProps={{ variant: "h6" }}
-          />
           <CardContent sx={{ pt: 0 }}>
-            <Stack spacing={2}>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Figure ID
-                </Typography>
-                <Typography variant="body1" sx={{ fontFamily: "monospace" }}>
-                  {figpackStatus.figureId || "N/A"}
-                </Typography>
-              </Box>
-              {figpackStatus.ownerEmail && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Owner
-                  </Typography>
-                  <Typography variant="body1">
-                    {figpackStatus.ownerEmail}
-                  </Typography>
-                </Box>
-              )}
-              {figpackStatus.hasWriteAccess !== undefined && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Access Level
-                  </Typography>
-                  <Typography variant="body1">
-                    {figpackStatus.hasWriteAccess
-                      ? "Write Access"
-                      : "Read Only"}
-                  </Typography>
-                </Box>
-              )}
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Figpack Version
-                </Typography>
-                <Typography variant="body1">
-                  {figpackStatus.figpackVersion || "N/A"}
-                </Typography>
-              </Box>
-              {figpackStatus.totalSize && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Total Size
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatBytes(figpackStatus.totalSize)}
-                  </Typography>
-                </Box>
-              )}
-            </Stack>
+            <TableContainer>
+              <Table size="small">
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ width: "40%", color: "text.secondary" }}>
+                      Figure URL
+                    </TableCell>
+                    <TableCell sx={{ fontFamily: "monospace" }}>
+                      {figpackStatus.figureUrl || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                  {figpackStatus.ownerEmail && (
+                    <TableRow>
+                      <TableCell sx={{ color: "text.secondary" }}>
+                        Owner
+                      </TableCell>
+                      <TableCell>{figpackStatus.ownerEmail}</TableCell>
+                    </TableRow>
+                  )}
+                  {figpackStatus.hasWriteAccess !== undefined && (
+                    <TableRow>
+                      <TableCell sx={{ color: "text.secondary" }}>
+                        Access Level
+                      </TableCell>
+                      <TableCell>
+                        {figpackStatus.hasWriteAccess
+                          ? "Write Access"
+                          : "Read Only"}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  <TableRow>
+                    <TableCell sx={{ color: "text.secondary" }}>
+                      Figpack Version
+                    </TableCell>
+                    <TableCell>
+                      {figpackStatus.figpackVersion || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                  {figpackStatus.totalSize && (
+                    <TableRow>
+                      <TableCell sx={{ color: "text.secondary" }}>
+                        Total Size
+                      </TableCell>
+                      <TableCell>
+                        {formatBytes(figpackStatus.totalSize)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </CardContent>
         </Card>
       </Box>
@@ -103,43 +101,41 @@ const FigureDetails: React.FC<FigureDetailsProps> = ({
       {/* Timeline Information */}
       <Box sx={{ flex: 1 }}>
         <Card>
-          <CardHeader
-            avatar={<Schedule color="primary" />}
-            title="Timeline"
-            titleTypographyProps={{ variant: "h6" }}
-          />
           <CardContent sx={{ pt: 0 }}>
-            <Stack spacing={2}>
-              {figpackStatus.uploadStarted && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Upload Started
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatDate(figpackStatus.uploadStarted)}
-                  </Typography>
-                </Box>
-              )}
-              {figpackStatus.uploadCompleted && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Upload Completed
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatDate(figpackStatus.uploadCompleted)}
-                  </Typography>
-                </Box>
-              )}
-              {/* expiration is required in our new model */}
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Expiration
-                </Typography>
-                <Typography variant="body1">
-                  {formatDate(figpackStatus.expiration)}
-                </Typography>
-              </Box>
-            </Stack>
+            <TableContainer>
+              <Table size="small">
+                <TableBody>
+                  {figpackStatus.uploadStarted && (
+                    <TableRow>
+                      <TableCell sx={{ width: "40%", color: "text.secondary" }}>
+                        Upload Started
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(figpackStatus.uploadStarted)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {figpackStatus.uploadCompleted && (
+                    <TableRow>
+                      <TableCell sx={{ color: "text.secondary" }}>
+                        Upload Completed
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(figpackStatus.uploadCompleted)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  <TableRow>
+                    <TableCell sx={{ color: "text.secondary" }}>
+                      Expiration
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(figpackStatus.expiration)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
           </CardContent>
         </Card>
       </Box>

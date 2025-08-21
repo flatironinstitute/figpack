@@ -101,7 +101,7 @@ const UserProfilePage: React.FC = () => {
     setSuccess(null);
 
     try {
-      const result = await updateUserProfile(apiKey, user.email, formData);
+      const result = await updateUserProfile(apiKey, formData);
       if (result.success && result.user) {
         setUser(result.user);
         setSuccess("Profile updated successfully");

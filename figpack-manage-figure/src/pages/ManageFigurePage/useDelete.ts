@@ -1,23 +1,22 @@
 import { useState } from 'react';
-
-const API_BASE_URL = 'https://figpack-api.vercel.app';
+import { FIGPACK_API_BASE_URL } from '../../config';
 
 export const useDelete = (onSuccess: () => void) => {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
-    const handleDelete = async (figureId: string, apiKeyToUse: string) => {
+    const handleDelete = async (figureUrl: string, apiKeyToUse: string) => {
         setDeleteLoading(true);
         setDeleteError(null);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/figures/delete`, {
+            const response = await fetch(`${FIGPACK_API_BASE_URL}/api/figures/delete`, {
                 method: 'POST',
                 headers: {
                     'x-api-key': apiKeyToUse,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ figureId, apiKey: apiKeyToUse })
+                body: JSON.stringify({ figureUrl, apiKey: apiKeyToUse })
             });
 
             const data = await response.json();

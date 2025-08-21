@@ -14,7 +14,7 @@ import {
 
 interface PinInfo {
   name: string;
-  figure_description: string;
+  figureDescription: string;
 }
 
 interface PinDialogProps {
@@ -36,7 +36,7 @@ const PinDialog: React.FC<PinDialogProps> = ({
 }) => {
   const [pinInfo, setPinInfo] = useState<PinInfo>({
     name: "",
-    figure_description: "",
+    figureDescription: "",
   });
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -50,7 +50,7 @@ const PinDialog: React.FC<PinDialogProps> = ({
         setPinInfo((prev) => ({
           ...prev,
           name: parsed.name || "",
-          // Don't load figure_description as it should be unique per figure
+          // Don't load figureDescription as it should be unique per figure
         }));
       } catch (err) {
         console.warn("Failed to parse saved pin info:", err);
@@ -58,7 +58,7 @@ const PinDialog: React.FC<PinDialogProps> = ({
     }
   }, [open]);
 
-  // Save user info to localStorage (excluding figure_description)
+  // Save user info to localStorage (excluding figureDescription)
   const saveUserInfo = (info: PinInfo) => {
     const toSave = {
       name: info.name,
@@ -75,11 +75,11 @@ const PinDialog: React.FC<PinDialogProps> = ({
       errors.push("Name must be 100 characters or less");
     }
 
-    if (!pinInfo.figure_description.trim()) {
+    if (!pinInfo.figureDescription.trim()) {
       errors.push("Figure description is required");
-    } else if (pinInfo.figure_description.length < 10) {
+    } else if (pinInfo.figureDescription.length < 10) {
       errors.push("Figure description must be at least 10 characters");
-    } else if (pinInfo.figure_description.length > 300) {
+    } else if (pinInfo.figureDescription.length > 300) {
       errors.push("Figure description must be 300 characters or less");
     }
 
@@ -98,7 +98,7 @@ const PinDialog: React.FC<PinDialogProps> = ({
       // Reset form on success
       setPinInfo({
         name: "",
-        figure_description: "",
+        figureDescription: "",
       });
       setValidationErrors([]);
     } catch {
@@ -171,17 +171,17 @@ const PinDialog: React.FC<PinDialogProps> = ({
 
           <TextField
             label="Brief description of this figure"
-            value={pinInfo.figure_description}
-            onChange={handleInputChange("figure_description")}
+            value={pinInfo.figureDescription}
+            onChange={handleInputChange("figureDescription")}
             fullWidth
             required
             multiline
             rows={4}
-            helperText={`${pinInfo.figure_description.length}/300 characters`}
+            helperText={`${pinInfo.figureDescription.length}/300 characters`}
             error={
-              pinInfo.figure_description.length > 300 ||
-              (pinInfo.figure_description.length > 0 &&
-                pinInfo.figure_description.length < 10)
+              pinInfo.figureDescription.length > 300 ||
+              (pinInfo.figureDescription.length > 0 &&
+                pinInfo.figureDescription.length < 10)
             }
           />
         </Box>

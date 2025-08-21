@@ -4,7 +4,7 @@ import connectDB, { Figure, IFigure } from '../../../lib/db';
 import { updateFigureJson } from '../../../lib/figureJsonManager';
 
 interface FinalizeFigureRequest {
-  figureId: string;
+  figureUrl: string;
   apiKey: string;
 }
 
@@ -50,13 +50,13 @@ export default async function handler(
     await connectDB();
 
     // Parse request body
-    const { figureId, apiKey }: FinalizeFigureRequest = req.body;
+    const { figureUrl, apiKey }: FinalizeFigureRequest = req.body;
 
     // Validate required fields
-    if (!figureId || !apiKey) {
+    if (!figureUrl || !apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: figureId, apiKey'
+        message: 'Missing required fields: figureUrl, apiKey'
       });
     }
 
@@ -72,7 +72,7 @@ export default async function handler(
     const userEmail = authResult.user.email;
 
     // Find the figure
-    const figure = await Figure.findOne({ figureId });
+    const figure = await Figure.findOne({ figureUrl });
     
     if (!figure) {
       return res.status(404).json({
@@ -108,7 +108,7 @@ export default async function handler(
 
     // Update the figure
     const updatedFigure = await Figure.findOneAndUpdate(
-      { figureId },
+      { figureUrl },
       updateData,
       { new: true }
     );

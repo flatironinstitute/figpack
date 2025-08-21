@@ -1,3 +1,5 @@
+import { FIGPACK_API_BASE_URL } from "../../config";
+
 interface User {
   email: string;
   name: string;
@@ -14,14 +16,12 @@ interface ApiResponse {
   users?: User[];
 }
 
-const API_BASE_URL = 'https://figpack-api.vercel.app';
-
 /**
  * Get user profile information
  */
 export async function getUserProfile(apiKey: string): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/user`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -45,11 +45,10 @@ export async function getUserProfile(apiKey: string): Promise<ApiResponse> {
  */
 export async function updateUserProfile(
   apiKey: string,
-  email: string,
   userData: { name: string; researchDescription: string }
 ): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/user`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -76,7 +75,7 @@ export async function updateUserProfile(
  */
 export async function regenerateUserApiKey(apiKey: string): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/user`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -2,9 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { validateApiKey } from '../../../lib/adminAuth';
 import connectDB, { Figure, IFigure } from '../../../lib/db';
 import { updateFigureJson } from '../../../lib/figureJsonManager';
+import { bucketBaseUrl } from '@/lib/config';
 
 interface CreateFigureRequest {
-  figureId: string;
+  figureHash: string;
   apiKey: string;
   totalFiles?: number;
   totalSize?: number;
@@ -13,7 +14,7 @@ interface CreateFigureRequest {
 
 interface CreateFigureResponse {
   success: boolean;
-  message?: string;
+  message: string;
   figure?: IFigure;
 }
 
@@ -53,21 +54,21 @@ export default async function handler(
     await connectDB();
 
     // Parse request body
-    const { figureId, apiKey }: CreateFigureRequest = req.body;
+    const { figureHash, apiKey }: CreateFigureRequest = req.body;
 
     // Validate required fields
-    if (!figureId || !apiKey) {
+    if (!figureHash || !apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: figureId, apiKey'
+        message: 'Missing required fields: figureHash, apiKey'
       });
     }
 
-    // Validate figureId format (should be alphanumeric with hyphens)
-    if (!/^[a-zA-Z0-9-]+$/.test(figureId)) {
+    // Validate hash format (should be 40 hex characters)
+    if (!/^[0-9a-f]{40}$/.test(figureHash)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid figureId format. Must contain only letters, numbers, and hyphens.'
+        message: 'Invalid figureHash format'
       });
     }
 
@@ -82,15 +83,56 @@ export default async function handler(
 
     const userEmail = authResult.user.email;
 
-    // Check if figure already exists
-    const existingFigure = await Figure.findOne({ figureId });
-    
+    const baseFigureString = `${figureHash}`;
+    let count = 0;
+    let figureUrlToUse: string | undefined;
+    let figureIsExistingAndCompleted = false;
+    let existingFigure: IFigure | null = null;
+    while (true) {
+      const candidateaFigureString = `${baseFigureString}${count > 0 ? `-${count}` : ''}`;
+      const candidateFigureUrl = `${bucketBaseUrl}/figures/default/${candidateaFigureString}/index.html`;
+      existingFigure = await Figure.findOne({ figureUrl: candidateFigureUrl });
+      if (!existingFigure) {
+        figureUrlToUse = candidateFigureUrl;
+        break; // Found a unique figureString
+      }
+      if (existingFigure.status === 'completed') {
+        // Figure exists and is completed, use it
+        figureUrlToUse = candidateFigureUrl;
+        figureIsExistingAndCompleted = true;
+        break;
+      }
+      count += 1;
+      if (count > 20) {
+        return res.status(500).json({
+          success: false,
+          message: 'Too many attempts to find a unique figureString'
+        });
+      }
+    }
+
+    if (figureIsExistingAndCompleted) {
+      // Figure already exists and is completed, return its information
+      if (!existingFigure) {
+        return res.status(500).json({
+          success: false,
+          message: 'Internal error: existing figure is null'
+        });
+      }
+      // Return existing completed figure
+      return res.status(200).json({
+        success: true,
+        message: 'Figure already exists and is completed',
+        figure: existingFigure
+      });
+    }
+
     if (existingFigure) {
       // Figure exists, return its information (no error as per requirements)
       return res.status(200).json({
         success: true,
         message: 'Figure already exists',
-        figure: existingFigure.toObject()
+        figure: existingFigure
       });
     }
 
@@ -99,7 +141,7 @@ export default async function handler(
     const oneDayFromNow = now + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
 
     const newFigure = new Figure({
-      figureId,
+      figureUrl: figureUrlToUse,
       status: 'uploading',
       ownerEmail: userEmail,
       uploadStarted: now,
@@ -131,27 +173,9 @@ export default async function handler(
   } catch (error) {
     console.error('Create figure API error:', error);
     
-    // Handle duplicate key error (race condition)
-    if (error instanceof Error && 'code' in error && error.code === 11000) {
-      // Try to fetch the existing figure
-      try {
-        const { figureId } = req.body;
-        const existingFigure = await Figure.findOne({ figureId });
-        if (existingFigure) {
-          return res.status(200).json({
-            success: true,
-            message: 'Figure already exists',
-            figure: existingFigure.toObject()
-          });
-        }
-      } catch (fetchError) {
-        console.error('Error fetching existing figure:', fetchError);
-      }
-    }
-
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: `Internal server error: ${error || 'Unknown error'}`
     });
   }
 }

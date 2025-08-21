@@ -38,7 +38,7 @@ async function connectDB() {
 
 // Figure interface
 export interface IFigure {
-  figureId: string;           // Primary identifier
+  figureUrl: string;         // URL to access the figure
   status: 'uploading' | 'completed' | 'failed';
   ownerEmail: string;         // From API key validation
   uploadStarted: number;      // Unix timestamp
@@ -65,7 +65,7 @@ export interface IFigureDocument extends IFigure, Document {}
 // Figure schema
 // Figure schema
 const figureSchema = new mongoose.Schema<IFigureDocument>({
-  figureId: {
+  figureUrl: {
     type: String,
     required: true,
     unique: true
@@ -134,7 +134,7 @@ figureSchema.pre('save', function(next) {
 });
 
 // Create indexes for fast lookups
-figureSchema.index({ figureId: 1 }, { unique: true });
+figureSchema.index({ figureUrl: 1 }, { unique: true });
 figureSchema.index({ ownerEmail: 1 });
 figureSchema.index({ status: 1 });
 figureSchema.index({ expiration: 1 });

@@ -6,7 +6,7 @@ import { Bucket, deleteObjects, listObjects } from '../../../lib/s3Helpers';
 import connectDB from '../../../lib/db';
 
 interface DeleteFigureRequest {
-    figureId: string;
+    figureUrl: string;
     apiKey: string;
 }
 
@@ -58,13 +58,13 @@ export default async function handler(
     }
 
     try {
-        const { figureId, apiKey }: DeleteFigureRequest = req.body;
+        const { figureUrl, apiKey }: DeleteFigureRequest = req.body;
 
         // Validate required fields
-        if (!figureId) {
+        if (!figureUrl) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required field: figureId'
+                message: 'Missing required field: figureUrl'
             });
         }
 
@@ -88,7 +88,7 @@ export default async function handler(
         await connectDB();
 
         // Find the figure
-        const figure = await Figure.findOne({ figureId });
+        const figure = await Figure.findOne({ figureUrl });
 
         if (!figure) {
             return res.status(404).json({
@@ -106,7 +106,8 @@ export default async function handler(
         }
 
         // Delete files from S3
-        const prefix = `figures/default/${figureId}/`;
+        const figureUrlWithoutIndexHtml = figureUrl.endsWith('/index.html') ? figureUrl.slice(0, -'/index.html'.length) : figureUrl;
+        const prefix = `figures/default/${figureUrlWithoutIndexHtml}/`;
         let continuationToken: string | undefined;
         const objectsToDelete: string[] = [];
         
@@ -121,7 +122,7 @@ export default async function handler(
         }
 
         // Delete from MongoDB
-        await Figure.deleteOne({ figureId });
+        await Figure.deleteOne({ figureUrl });
 
         return res.status(200).json({ success: true, message: 'Figure deleted successfully' });
     }

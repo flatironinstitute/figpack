@@ -2,25 +2,15 @@ export interface UploadRequest {
   destinationUrl: string;
   apiKey: string;
   fileName: string;
-  content?: string; // for small files
-  size?: number;    // for large files
+  content?: string;
+  size?: number;
 }
 
 export interface UploadResponse {
   success: boolean;
   message?: string;
-  signedUrl?: string; // for large files
+  signedUrl?: string;
   uploadId?: string;  // tracking
-}
-
-export interface ValidationResult {
-  valid: boolean;
-  figureId?: string;
-}
-
-export interface FileValidationResult {
-  valid: boolean;
-  type: 'small' | 'large';
 }
 
 export class ValidationError extends Error {
@@ -42,7 +32,7 @@ export interface RenewResponse {
 
 // Figure management types
 export interface CreateFigureRequest {
-  figureId: string;
+  figureHash: string;
   apiKey: string;
 }
 
@@ -53,7 +43,7 @@ export interface CreateFigureResponse {
 }
 
 export interface FinalizeFigureRequest {
-  figureId: string;
+  figureUrl: string;
   apiKey: string;
   manifest?: {
     totalFiles: number;
@@ -68,11 +58,10 @@ export interface FinalizeFigureResponse {
   figure?: any; // Will be IFigure from db.ts
 }
 
-// Updated upload request to include figureId and relativePath
+// Updated upload request to include figureUrl and relativePath
 export interface NewUploadRequest {
-  figureId: string;
+  figureUrl: string;
   relativePath: string;
   apiKey: string;
-  content?: string; // for small files
-  size?: number;    // for large files
+  size: number;
 }

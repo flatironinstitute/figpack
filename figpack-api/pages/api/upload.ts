@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { UploadRequest, UploadResponse, NewUploadRequest, ValidationResult, FileValidationResult, ValidationError } from '../../types';
+import { UploadRequest, UploadResponse, NewUploadRequest, ValidationError } from '../../types';
 import { Bucket, getSignedUploadUrl } from '../../lib/s3Helpers';
 import { validateApiKey } from '../../lib/adminAuth';
 import connectDB, { Figure } from '../../lib/db';
+import { bucketBaseUrl } from '@/lib/config';
 
 const bucketCredentials = process.env.BUCKET_CREDENTIALS;
 if (!bucketCredentials) {
@@ -12,28 +13,6 @@ if (!bucketCredentials) {
 const bucket: Bucket = {
     uri: 'r2://figpack-figures',
     credentials: bucketCredentials
-}
-
-// Validation functions using only string methods
-function validateDestinationUrl(url: string): ValidationResult {
-  const expectedPrefix = 'https://figures.figpack.org/figures/default/';
-  
-  if (!url.startsWith(expectedPrefix)) {
-    return { valid: false };
-  }
-  
-  const afterPrefix = url.substring(expectedPrefix.length);
-  const slashIndex = afterPrefix.indexOf('/');
-  
-  if (slashIndex === -1 || slashIndex === 0) {
-    return { valid: false };
-  }
-  
-  const figureId = afterPrefix.substring(0, slashIndex);
-  return {
-    valid: figureId.length > 0,
-    figureId
-  };
 }
 
 function isZarrChunk(fileName: string): boolean {
@@ -47,19 +26,19 @@ function isZarrChunk(fileName: string): boolean {
   return fileName.length > 0 && !fileName.startsWith('.') && !fileName.endsWith('.');
 }
 
-function validateFilePath(path: string): FileValidationResult {
+function validateFilePath(path: string): { valid: boolean } {
   // Check exact matches first
   if (path === 'index.html' || path === "manifest.json") {
-    return { valid: true, type: 'small' };
+    return { valid: true };
   }
 
   if (path.endsWith('.png') && path.startsWith('assets/neurosift-logo')) {
-    return { valid: true, type: 'large' };
+    return { valid: true };
   }
   
   // Check HTML files
   if (path.endsWith('.html')) {
-    return { valid: true, type: 'small' };
+    return { valid: true };
   }
   
   // Check data.zarr directory
@@ -67,11 +46,11 @@ function validateFilePath(path: string): FileValidationResult {
     const fileBaseName = path.split('/').pop() || '';
     // Check if it's a zarr chunk (numeric like 0.0.1)
     if (isZarrChunk(fileBaseName)) {
-      return { valid: true, type: 'large' };
+      return { valid: true };
     }
     // Check for zarr metadata files in subdirectories
     if ([".zattrs", ".zgroup", ".zarray", ".zmetadata"].includes(fileBaseName)) {
-      return { valid: true, type: 'small' };
+      return { valid: true };
     }
   }
   
@@ -79,11 +58,11 @@ function validateFilePath(path: string): FileValidationResult {
   if (path.startsWith('assets/')) {
     const fileName = path.substring('assets/'.length);
     if (fileName.endsWith('.js') || fileName.endsWith('.css')) {
-      return { valid: true, type: 'large' };
+      return { valid: true };
     }
   }
   
-  return { valid: false, type: 'small' };
+  return { valid: false };
 }
 
 function validateJsonContent(content: string): boolean {
@@ -120,54 +99,19 @@ function validateContent(content: string, fileName: string): boolean {
   return true; // For other file types, assume content is valid
 }
 
-function getFileName(path: string): string {
+function getBaseFileName(path: string): string {
   const lastSlash = path.lastIndexOf('/');
   return lastSlash === -1 ? path : path.substring(lastSlash + 1);
 }
 
-// Placeholder functions for cloud storage operations
-async function uploadSmallFile(destinationUrl: string, content: string, figureId: string) {
-  const url = await generateSignedUploadUrl(destinationUrl, content.length, figureId);
-  // put the content to the signed URL
-  await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': determineContentTypeForUpload(getFileName(destinationUrl)),
-    },
-    body: content
-  });
-  console.log(`File uploaded to ${destinationUrl}`);
-}
-
-function determineContentTypeForUpload(fileName: string): string {
-  const extension = fileName.split('.').pop();
-  switch (extension) {
-    case 'json':
-      return 'application/json';
-    case 'html':
-      return 'text/html';
-    case 'css':
-      return 'text/css';
-    case 'js':
-      return 'application/javascript';
-    case 'png':
-    case 'zattrs':
-    case 'zgroup':
-    case 'zarray':
-    case 'zmetadata':
-      return 'application/json';
-    default:
-      return 'application/octet-stream';
+async function generateSignedUploadUrl(destinationUrl: string, size: number): Promise<string> {
+  if (!destinationUrl.startsWith(bucketBaseUrl + "/")) {
+    throw new Error(`Invalid destination URL: ${destinationUrl}. Must start with ${bucketBaseUrl}/`);
   }
-}
-
-async function generateSignedUploadUrl(destinationUrl: string, size: number, figureId: string): Promise<string> {
-  // TODO: Implement actual signed URL generation
   console.log(`Generating signed URL for ${destinationUrl}`);
   console.log(`File size: ${size}`);
-  console.log(`Figure ID: ${figureId}`);
   
-  const fileKey = destinationUrl.slice("https://figures.figpack.org/".length)
+  const fileKey = destinationUrl.slice(`${bucketBaseUrl}/`.length)
   const signedUrl = await getSignedUploadUrl(bucket, fileKey);
   return signedUrl;
 }
@@ -209,47 +153,14 @@ export default async function handler(
 
     // Check if this is the new API format or legacy format
     const body = req.body;
-    let figureId: string;
-    let relativePath: string;
-    let apiKey: string;
-    let content: string | undefined;
-    let size: number | undefined;
 
-    // New API format: { figureId, relativePath, apiKey, content?, size? }
-    if (body.figureId && body.relativePath) {
-      ({ figureId, relativePath, apiKey, content, size } = body as NewUploadRequest);
-    }
-    // Legacy API format: { destinationUrl, apiKey, content?, size? }
-    else if (body.destinationUrl) {
-      const { destinationUrl, apiKey: legacyApiKey, content: legacyContent, size: legacySize } = body as UploadRequest;
-      
-      // Parse figureId and relativePath from destinationUrl
-      const urlValidation = validateDestinationUrl(destinationUrl);
-      if (!urlValidation.valid || !urlValidation.figureId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid destination URL. Must start with https://figures.figpack.org/figures/default/<figure-id>/'
-        });
-      }
-      
-      figureId = urlValidation.figureId;
-      relativePath = destinationUrl.split('/').slice(6).join('/'); // Remove base URL part
-      apiKey = legacyApiKey;
-      content = legacyContent;
-      size = legacySize;
-    }
-    else {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields. Provide either (figureId, relativePath, apiKey) or (destinationUrl, apiKey)'
-      });
-    }
+    const { figureUrl, relativePath, apiKey, size } = body as NewUploadRequest;
 
     // Validate required fields
-    if (!figureId || !relativePath || !apiKey) {
+    if (!figureUrl || !relativePath || !apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: figureId, relativePath, apiKey'
+        message: 'Missing required fields: figureUrl, relativePath, apiKey'
       });
     }
 
@@ -265,7 +176,7 @@ export default async function handler(
     const userEmail = authResult.user.email;
 
     // Find and verify figure ownership
-    const figure = await Figure.findOne({ figureId });
+    const figure = await Figure.findOne({ figureUrl });
     if (!figure) {
       return res.status(404).json({
         success: false,
@@ -289,74 +200,40 @@ export default async function handler(
       });
     }
 
-    const actualFileName = getFileName(relativePath);
-    const destinationUrl = `https://figures.figpack.org/figures/default/${figureId}/${relativePath}`;
+    const baseFileName = getBaseFileName(relativePath);
+    const figureUrlWithoutIndexHtml = figureUrl.endsWith('/index.html') ? figureUrl.slice(0, -'/index.html'.length) : figureUrl;
+    const destinationUrl = `${figureUrlWithoutIndexHtml}/${relativePath}`;
 
-    // Handle small files (content provided)
-    if (fileValidation.type === 'small') {
-      if (!content) {
-        return res.status(400).json({
-          success: false,
-          message: 'Content is required for this file type'
-        });
-      }
-
-      // Validate content format
-      if (!validateContent(content, actualFileName)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid content format for file type'
-        });
-      }
-
-      // Upload small file
-      await uploadSmallFile(destinationUrl, content, figureId);
-
-      // Update figure's uploadUpdated timestamp
-      await Figure.findOneAndUpdate(
-        { figureId },
-        { uploadUpdated: Date.now() }
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'File uploaded successfully'
+    if (typeof size !== 'number' || size <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid size is required. Provide either content or size parameter.'
       });
     }
 
-    // Handle large files (size provided, return signed URL)
-    if (fileValidation.type === 'large') {
-      if (typeof size !== 'number' || size <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid size is required for this file type'
-        });
-      }
-
-      // Check reasonable size limits (e.g., max 1GB)
-      const maxSize = 1024 * 1024 * 1024; // 1GB
-      if (size > maxSize) {
-        return res.status(400).json({
-          success: false,
-          message: 'File size exceeds maximum allowed size'
-        });
-      }
-
-      // Generate signed URL
-      const signedUrl = await generateSignedUploadUrl(destinationUrl, size, figureId);
-
-      // Update figure's uploadUpdated timestamp
-      await Figure.findOneAndUpdate(
-        { figureId },
-        { uploadUpdated: Date.now() }
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'Signed URL generated successfully',
-        signedUrl
+    // Check reasonable size limits (e.g., max 1GB)
+    const maxSize = 1024 * 1024 * 1024; // 1GB
+    if (size > maxSize) {
+      return res.status(400).json({
+        success: false,
+        message: 'File size exceeds maximum allowed size'
       });
     }
+
+    // Generate signed URL
+    const signedUrl = await generateSignedUploadUrl(destinationUrl, size);
+
+    // Update figure's uploadUpdated timestamp
+    await Figure.findOneAndUpdate(
+      { figureUrl },
+      { uploadUpdated: Date.now() }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Signed URL generated successfully',
+      signedUrl
+    });
 
   } catch (error) {
     console.error('Upload API error:', error);

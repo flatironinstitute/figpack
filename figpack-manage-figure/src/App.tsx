@@ -20,8 +20,6 @@ function App() {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/figure" element={<ManageFigurePage />} />
-          {/* Redirect from /manage to /figure for backward compatibility */}
-          <Route path="/manage" element={<ManageFigurePage />} />
           <Route path="/" element={<Empty />} />
         </Routes>
       </Container>

@@ -4,7 +4,7 @@ import connectDB, { Figure } from '../../lib/db';
 import { updateFigureJson } from '../../lib/figureJsonManager';
 
 interface RenewRequest {
-  figureId: string;
+  figureUrl: string;
   apiKey: string;
 }
 
@@ -47,13 +47,13 @@ export default async function handler(
   }
 
   try {
-    const { figureId, apiKey }: RenewRequest = req.body;
+    const { figureUrl, apiKey }: RenewRequest = req.body;
 
     // Validate required fields
-    if (!figureId) {
+    if (!figureUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: figureId'
+        message: 'Missing required field: figureUrl'
       });
     }
 
@@ -77,7 +77,7 @@ export default async function handler(
     await connectDB();
 
     // Find the figure
-    const figure = await Figure.findOne({ figureId });
+    const figure = await Figure.findOne({ figureUrl });
     
     if (!figure) {
       return res.status(404).json({

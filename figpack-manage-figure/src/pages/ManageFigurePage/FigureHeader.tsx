@@ -36,7 +36,7 @@ interface FigpackStatus {
   uploadStarted?: number;
   uploadCompleted?: number;
   expiration?: number;
-  figureId?: string;
+  figureUrl?: string;
   totalFiles?: number;
   totalSize?: number;
   figpackVersion?: string;

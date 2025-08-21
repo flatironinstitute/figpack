@@ -1,3 +1,4 @@
+import { FIGPACK_API_BASE_URL } from "../../config";
 import type { AdminData } from "./AdminData";
 
 interface AuthenticateAdminCallbacks {
@@ -25,7 +26,7 @@ export const authenticateAndLoadAdminData = async (
   setSuccess(null);
 
   try {
-    const response = await fetch("https://figpack-api.vercel.app/api/admin", {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/admin`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Manifest } from './FileManifest';
+import { FIGPACK_API_BASE_URL } from '../../config';
 
 export interface PinInfo {
   name: string;
-  figure_description: string;
-  pinned_timestamp: string;
+  figureDescription: string;
+  pinnedTimestamp: number;
 }
 
 export interface FigpackStatus {
   status: 'uploading' | 'completed' | 'failed';
-  figureId: string;
+  figureUrl: string;
   uploadStarted: number;
   uploadUpdated: number;
   expiration: number;
@@ -25,7 +26,7 @@ export interface FigpackStatus {
 }
 
 interface UseFigureResult {
-  figureId: string;
+  figureUrl: string;
   figpackStatus: FigpackStatus | null;
   manifest: Manifest | null;
   loading: boolean;
@@ -90,24 +91,17 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
     }
   };
 
-  const loadFigureData = async (url: string) => {
+  const loadFigureData = useCallback(async (url: string) => {
     try {
       setLoading(true);
       setError(null);
-
-      // Extract figure ID from URL
-      const matches = url.match(/\/figures\/default\/([^/]+)\//);
-      if (!matches) {
-        throw new Error('Invalid figure URL format');
-      }
-      const figureId = matches[1];
 
       // Get API key from local storage if available
       const apiKey = localStorage.getItem('figpack_api_key');
 
       // Fetch figure data from new API endpoint
-      const apiUrl = new URL('/api/figures/get', 'https://figpack-api.vercel.app');
-      apiUrl.searchParams.set('figureId', figureId);
+      const apiUrl = new URL('/api/figures/get', FIGPACK_API_BASE_URL);
+      apiUrl.searchParams.set('figureUrl', figureUrl);
       if (apiKey) {
         apiUrl.searchParams.set('apiKey', apiKey);
       }
@@ -141,7 +135,7 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [figureUrl]);
 
   useEffect(() => {
     if (figureUrl) {
@@ -150,10 +144,10 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
       setError("No figure URL provided");
       setLoading(false);
     }
-  }, [figureUrl]);
+  }, [figureUrl, loadFigureData]);
 
   return {
-    figureId: figpackStatus?.figureId || '',
+    figureUrl,
     figpackStatus,
     manifest,
     loading,

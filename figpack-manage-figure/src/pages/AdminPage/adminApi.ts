@@ -1,3 +1,4 @@
+import { FIGPACK_API_BASE_URL } from '../../config';
 import type { User } from './UsersSummary';
 
 interface UserResult {
@@ -12,8 +13,6 @@ interface UsersResult {
   users?: User[];
 }
 
-const API_BASE_URL = "https://figpack-api.vercel.app/api";
-
 // Get all users
 export const getUsers = async (apiKey: string): Promise<UsersResult> => {
   if (!apiKey) {
@@ -21,7 +20,7 @@ export const getUsers = async (apiKey: string): Promise<UsersResult> => {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -69,7 +68,7 @@ export const createUser = async (apiKey: string, user: Omit<User, 'createdAt'>):
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -113,7 +112,7 @@ export const updateUser = async (apiKey: string, email: string, userData: Partia
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -158,7 +157,7 @@ export const deleteUser = async (apiKey: string, email: string): Promise<{ succe
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

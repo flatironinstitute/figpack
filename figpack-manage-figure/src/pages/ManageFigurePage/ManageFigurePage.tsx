@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   CircularProgress,
@@ -14,6 +14,7 @@ import DeleteDialog from "./DeleteDialog";
 import FileManifest from "./FileManifest";
 import DownloadInstructions from "./DownloadInstructions";
 import FigureDetails from "./FigureDetails";
+import FigurePreview from "./FigurePreview";
 import useApiKey from "../AdminPage/useApiKey";
 import FigureHeader from "./FigureHeader";
 import useFigure from "./useFigure";
@@ -38,7 +39,6 @@ const ManageFigurePage: React.FC = () => {
   }, []);
 
   const {
-    figureId,
     figpackStatus,
     manifest,
     loading,
@@ -59,13 +59,9 @@ const ManageFigurePage: React.FC = () => {
     handleUnpin,
     handleOpenPinDialog,
     handleClosePinDialog,
-  } = usePin(figureUrl, apiKey, loadFigureData);
+  } = usePin(loadFigureData);
 
-  const { renewLoading, apiError, handleRenew } = useRenew(
-    figureUrl,
-    apiKey,
-    loadFigureData
-  );
+  const { renewLoading, apiError, handleRenew } = useRenew(loadFigureData);
 
   const {
     deleteLoading,
@@ -76,77 +72,83 @@ const ManageFigurePage: React.FC = () => {
     window.location.href = "/";
   });
 
-  const handleDeleteWithDialog = async (apiKeyToUse: string) => {
-    const result = await handleDeleteRequest(figureId, apiKeyToUse);
+  const handleDeleteWithDialog = useCallback(async () => {
+    const result = await handleDeleteRequest(figureUrl, apiKey);
     if (result?.requiresApiKey) {
       setPendingAction("delete");
       setApiKeyDialogOpen(true);
     }
-  };
+  }, [figureUrl, apiKey, handleDeleteRequest]);
 
-  const handleOpenDeleteDialog = () => {
+  const handleOpenDeleteDialog = useCallback(() => {
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleCloseDeleteDialog = () => {
+  const handleCloseDeleteDialog = useCallback(() => {
     setDeleteDialogOpen(false);
-  };
+  }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     if (figureUrl) {
       loadFigureData(figureUrl);
     }
-  };
+  }, [figureUrl, loadFigureData]);
 
-  const handleRenewWithDialog = async (apiKeyToUse?: string) => {
-    const result = await handleRenew(apiKeyToUse);
+  const handleRenewWithDialog = useCallback(async () => {
+    const result = await handleRenew(figureUrl, apiKey);
     if (result?.requiresApiKey) {
       setPendingAction("renew");
       setApiKeyDialogOpen(true);
     }
-  };
+  }, [figureUrl, apiKey, handleRenew]);
 
-  const handlePinWithDialog = async (pinInfo: {
-    name: string;
-    figure_description: string;
-  }) => {
-    const result = await handlePin(pinInfo);
+  const handlePinWithDialog = useCallback(
+    async (pinInfo: { name: string; figureDescription: string }) => {
+      const result = await handlePin(figureUrl, pinInfo, apiKey);
+      if (result?.requiresApiKey) {
+        setPendingAction("pin");
+        setApiKeyDialogOpen(true);
+      }
+    },
+    [figureUrl, apiKey, handlePin]
+  );
+
+  const handleUnpinWithDialog = useCallback(async () => {
+    const result = await handleUnpin(figureUrl, apiKey);
     if (result?.requiresApiKey) {
       setPendingAction("pin");
       setApiKeyDialogOpen(true);
     }
-  };
+  }, [figureUrl, apiKey, handleUnpin]);
 
-  const handleUnpinWithDialog = async () => {
-    const result = await handleUnpin();
-    if (result?.requiresApiKey) {
-      setPendingAction("pin");
-      setApiKeyDialogOpen(true);
-    }
-  };
-
-  const handleApiKeySubmit = () => {
+  const handleApiKeySubmit = useCallback(() => {
     if (!apiKey.trim()) return;
 
     setApiKeyDialogOpen(false);
 
     if (pendingAction === "renew") {
-      handleRenewWithDialog(apiKey);
+      handleRenewWithDialog();
     } else if (pendingAction === "pin") {
       // For pin, we need to open the pin dialog first
       handleOpenPinDialog();
     } else if (pendingAction === "delete") {
-      handleDeleteWithDialog(apiKey);
+      handleDeleteWithDialog();
     }
 
     setPendingAction(null);
-  };
+  }, [
+    apiKey,
+    pendingAction,
+    handleRenewWithDialog,
+    handleOpenPinDialog,
+    handleDeleteWithDialog,
+  ]);
 
-  const handleApiKeyCancel = () => {
+  const handleApiKeyCancel = useCallback(() => {
     setApiKeyDialogOpen(false);
     setPendingAction(null);
     setApiKey("");
-  };
+  }, [setApiKey]);
 
   if (loading) {
     return (
@@ -184,7 +186,7 @@ const ManageFigurePage: React.FC = () => {
           getTimeUntilExpiration={getTimeUntilExpiration}
           renewLoading={renewLoading}
           handleRefresh={handleRefresh}
-          handleRenew={() => handleRenewWithDialog()}
+          handleRenew={handleRenewWithDialog}
           handleOpenPinDialog={handleOpenPinDialog}
           handleUnpin={handleUnpinWithDialog}
           handleDelete={handleOpenDeleteDialog}
@@ -201,6 +203,9 @@ const ManageFigurePage: React.FC = () => {
             formatDate={formatDate}
           />
         )}
+
+        {/* Figure Preview */}
+        <FigurePreview figureUrl={figureUrl} />
 
         {/* Download Instructions */}
         <DownloadInstructions figureUrl={figureUrl} />
@@ -237,7 +242,7 @@ const ManageFigurePage: React.FC = () => {
         <DeleteDialog
           open={deleteDialogOpen}
           onClose={handleCloseDeleteDialog}
-          onConfirm={() => handleDeleteWithDialog(apiKey)}
+          onConfirm={handleDeleteWithDialog}
           loading={deleteLoading}
           error={deleteError}
         />
