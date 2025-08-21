@@ -14,6 +14,7 @@ export interface FigpackStatus {
   uploadStarted: number;
   uploadUpdated: number;
   expiration: number;
+  ownerEmail: string;
   figpackVersion: string;
   createdAt: number;
   updatedAt: number;

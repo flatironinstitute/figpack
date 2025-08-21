@@ -25,7 +25,7 @@ const ManageFigurePage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { apiKey } = useAuth();
+  const { apiKey, user } = useAuth();
 
   const figureUrl = useMemo(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -43,6 +43,11 @@ const ManageFigurePage: React.FC = () => {
     formatDate,
     loadFigureData,
   } = useFigure(figureUrl);
+
+  const userOwnsFigure = useMemo(() => {
+    if (!user || !figpackStatus) return false;
+    return user.email === figpackStatus.ownerEmail;
+  }, [user, figpackStatus]);
 
   const {
     pinDialogOpen,
@@ -124,10 +129,14 @@ const ManageFigurePage: React.FC = () => {
           getTimeUntilExpiration={getTimeUntilExpiration}
           renewLoading={renewLoading}
           handleRefresh={handleRefresh}
-          handleRenew={handleRenew}
-          handleOpenPinDialog={handlePin ? handleOpenPinDialog : null}
-          handleUnpin={handleUnpin}
-          handleDelete={handleDelete ? handleOpenDeleteDialog : null}
+          handleRenew={userOwnsFigure ? handleRenew : null}
+          handleOpenPinDialog={
+            handlePin && userOwnsFigure ? handleOpenPinDialog : null
+          }
+          handleUnpin={userOwnsFigure ? handleUnpin : null}
+          handleDelete={
+            handleDelete && userOwnsFigure ? handleOpenDeleteDialog : null
+          }
           unpinLoading={unpinLoading}
           deleteLoading={deleteLoading}
           formatDate={formatDate}
