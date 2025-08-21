@@ -71,6 +71,22 @@ def test_download_file_binary(mock_response, tmp_path):
         assert downloaded_file.read_bytes() == b"test content"
 
 
+def test_download_file_empty_response(tmp_path):
+    base_url = "https://example.com/fig/"
+    file_info = {"path": "test.json", "size": 12}
+
+    mock_resp = MagicMock()
+    mock_resp.text = ""
+    mock_resp.content = b""
+
+    with patch("requests.get", return_value=mock_resp):
+        file_path, success = download_file(base_url, file_info, tmp_path)
+        assert success is True
+        downloaded_file = tmp_path / "test.json"
+        assert downloaded_file.exists()
+        assert downloaded_file.read_text() == ""
+
+
 def test_download_file_failure(tmp_path):
     base_url = "https://example.com/fig/"
     file_info = {"path": "test.json", "size": 12}
@@ -135,10 +151,72 @@ def test_download_figure_manifest_error():
     assert excinfo.value.code == 1
 
 
+def test_download_figure_invalid_manifest():
+    mock_resp = MagicMock()
+    mock_resp.json.side_effect = json.JSONDecodeError("Invalid JSON", "{", 0)
+
+    with patch("requests.get", return_value=mock_resp), pytest.raises(
+        SystemExit
+    ) as excinfo:
+        download_figure("https://example.com/fig", "test.tar.gz")
+    assert excinfo.value.code == 1
+
+
+def test_download_figure_all_files_failed(mock_manifest_response, tmp_path):
+    dest_path = str(tmp_path / "figure.tar.gz")
+
+    with patch("requests.get") as mock_get:
+        # Return manifest but make all file downloads fail
+        mock_get.side_effect = [mock_manifest_response] + [
+            requests.exceptions.RequestException()
+        ] * len(mock_manifest_response.json()["files"])
+
+        with pytest.raises(SystemExit) as excinfo:
+            download_figure("https://example.com/fig", dest_path)
+        assert excinfo.value.code == 1
+        assert not pathlib.Path(dest_path).exists()
+
+
 def test_view_figure_invalid_archive():
     with pytest.raises(SystemExit) as excinfo:
         view_figure("nonexistent.tar.gz")
     assert excinfo.value.code == 1
+
+
+def test_view_figure_wrong_extension():
+    with tempfile.NamedTemporaryFile(suffix=".txt") as tmp_file:
+        with pytest.raises(SystemExit) as excinfo:
+            view_figure(tmp_file.name)
+        assert excinfo.value.code == 1
+
+
+def test_view_figure_invalid_archive_format(tmp_path):
+    # Create an invalid tar.gz file
+    invalid_archive = tmp_path / "invalid.tar.gz"
+    invalid_archive.write_text("Not a tar.gz file")
+
+    with pytest.raises(SystemExit) as excinfo:
+        view_figure(str(invalid_archive))
+    assert excinfo.value.code == 1
+
+
+def test_view_figure_with_port(tmp_path):
+    archive_path = tmp_path / "test.tar.gz"
+
+    # Create a test archive
+    with tarfile.open(archive_path, "w:gz") as tar:
+        temp_file = tmp_path / "index.html"
+        temp_file.write_text("<html>Test</html>")
+        tar.add(temp_file, arcname="index.html")
+
+    with patch("figpack.cli.serve_files") as mock_serve:
+        view_figure(str(archive_path), port=8000)
+        mock_serve.assert_called_once_with(
+            mock.ANY,  # tmp directory path
+            port=8000,
+            open_in_browser=True,
+            allow_origin=None,
+        )
 
 
 def test_main_download(mock_manifest_response, mock_response, tmp_path):
@@ -169,6 +247,27 @@ def test_main_view(tmp_path):
     ) as mock_serve:
         main()
         mock_serve.assert_called_once()
+
+
+def test_main_view_with_port(tmp_path):
+    archive_path = tmp_path / "test.tar.gz"
+
+    # Create a test archive
+    with tarfile.open(archive_path, "w:gz") as tar:
+        temp_file = tmp_path / "index.html"
+        temp_file.write_text("<html>Test</html>")
+        tar.add(temp_file, arcname="index.html")
+
+    with patch(
+        "sys.argv", ["figpack", "view", str(archive_path), "--port", "8000"]
+    ), patch("figpack.cli.serve_files") as mock_serve:
+        main()
+        mock_serve.assert_called_once_with(
+            mock.ANY,  # tmp directory path
+            port=8000,
+            open_in_browser=True,
+            allow_origin=None,
+        )
 
 
 def test_main_help():
