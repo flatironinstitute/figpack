@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FIGPACK_API_BASE_URL } from '../../config';
 
 export const useRenew = (
+  figureUrl: string,
+  apiKey: string | null,
   loadFigureData: (url: string) => Promise<void>
 ) => {
   const [renewLoading, setRenewLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleRenew = async (figureUrl: string, apiKey: string | null) => {
+  const handleRenew = useCallback(async () => {
     if (!apiKey) {
-      return { requiresApiKey: true };
+      throw new Error("API key is required to renew a figure");
     }
 
     setRenewLoading(true);
@@ -34,12 +36,11 @@ export const useRenew = (
     } finally {
       setRenewLoading(false);
     }
-  };
+  }, [figureUrl, apiKey, loadFigureData]);
 
   return {
     renewLoading,
     apiError,
-    handleRenew,
-    setApiError,
+    handleRenew: apiKey ? handleRenew : null,
   };
 };

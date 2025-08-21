@@ -44,12 +44,12 @@ import {
 } from "@mui/icons-material";
 import { getFigures } from "./figuresApi";
 import type { FigureListItem, FigureListParams } from "./figuresApi";
-import useApiKey from "../AdminPage/useApiKey";
+import { useAuth } from "../../hooks/useAuth";
 
 const FiguresPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { apiKey } = useApiKey();
+  const { apiKey } = useAuth();
 
   // State
   const [figures, setFigures] = useState<FigureListItem[]>([]);
@@ -107,7 +107,6 @@ const FiguresPage: React.FC = () => {
   }, []);
 
   const isExpired = useCallback((expiration: number) => {
-    console.log("--- isExpired called with expiration:", expiration);
     return expiration && expiration <= Date.now();
   }, []);
 
@@ -265,9 +264,9 @@ const FiguresPage: React.FC = () => {
   if (!apiKey) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4 }}>
-        <Alert severity="warning">
-          Please set your API key to view your figures. You can do this in the
-          Admin or Profile page.
+        <Alert severity="info">
+          Please log in using the Login button in the top menu bar to view your
+          figures.
         </Alert>
       </Box>
     );

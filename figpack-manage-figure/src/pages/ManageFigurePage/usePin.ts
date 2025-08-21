@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FIGPACK_API_BASE_URL } from '../../config';
 
 interface PinInfo {
@@ -7,6 +7,8 @@ interface PinInfo {
 }
 
 export const usePin = (
+  figureUrl: string,
+  apiKey: string | null,
   loadFigureData: (url: string) => Promise<void>
 ) => {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
@@ -14,9 +16,9 @@ export const usePin = (
   const [pinError, setPinError] = useState<string | null>(null);
   const [unpinLoading, setUnpinLoading] = useState(false);
 
-  const handlePin = async (figureUrl: string, pinInfo: PinInfo, apiKey: string | null) => {
+  const handlePin = useCallback(async (pinInfo: PinInfo) => {
     if (!apiKey) {
-      return { requiresApiKey: true };
+      throw new Error("API key is required to pin a figure");
     }
 
     setPinLoading(true);
@@ -48,7 +50,7 @@ export const usePin = (
     } finally {
       setPinLoading(false);
     }
-  };
+  }, [figureUrl, apiKey, loadFigureData]);
 
   const handleOpenPinDialog = () => {
     setPinError(null);
@@ -60,9 +62,9 @@ export const usePin = (
     setPinDialogOpen(false);
   };
 
-  const handleUnpin = async (figureUrl: string, apiKey: string | null) => {
+  const handleUnpin = useCallback(async () => {
     if (!apiKey) {
-      return { requiresApiKey: true };
+      throw new Error("API key is required to unpin a figure");
     }
 
     setUnpinLoading(true);
@@ -92,15 +94,15 @@ export const usePin = (
     } finally {
       setUnpinLoading(false);
     }
-  };
+  }, [figureUrl, apiKey, loadFigureData]);
 
   return {
     pinDialogOpen,
     pinLoading,
     unpinLoading,
     pinError,
-    handlePin,
-    handleUnpin,
+    handlePin: apiKey ? handlePin : null,
+    handleUnpin: apiKey ? handleUnpin : null,
     handleOpenPinDialog,
     handleClosePinDialog,
   };

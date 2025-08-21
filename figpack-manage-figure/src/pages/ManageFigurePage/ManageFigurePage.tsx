@@ -1,37 +1,31 @@
-import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   CircularProgress,
   Stack,
   Typography,
-  Alert,
-  useTheme,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import PinDialog from "./PinDialog";
-import ApiKeyDialog from "./ApiKeyDialog";
+import React, { useCallback, useMemo, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
 import DeleteDialog from "./DeleteDialog";
-import FileManifest from "./FileManifest";
 import DownloadInstructions from "./DownloadInstructions";
 import FigureDetails from "./FigureDetails";
-import FigurePreview from "./FigurePreview";
-import useApiKey from "../AdminPage/useApiKey";
 import FigureHeader from "./FigureHeader";
+import FigurePreview from "./FigurePreview";
+import FileManifest from "./FileManifest";
+import PinDialog from "./PinDialog";
+import { useDelete } from "./useDelete";
 import useFigure from "./useFigure";
 import { usePin } from "./usePin";
 import { useRenew } from "./useRenew";
-import { useDelete } from "./useDelete";
 
 const ManageFigurePage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<
-    "renew" | "pin" | "delete" | null
-  >(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { apiKey, setApiKey } = useApiKey();
+  const { apiKey } = useAuth();
 
   const figureUrl = useMemo(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -59,26 +53,22 @@ const ManageFigurePage: React.FC = () => {
     handleUnpin,
     handleOpenPinDialog,
     handleClosePinDialog,
-  } = usePin(loadFigureData);
+  } = usePin(figureUrl, apiKey, loadFigureData);
 
-  const { renewLoading, apiError, handleRenew } = useRenew(loadFigureData);
+  const { renewLoading, apiError, handleRenew } = useRenew(
+    figureUrl,
+    apiKey,
+    loadFigureData
+  );
 
-  const {
-    deleteLoading,
-    deleteError,
-    handleDelete: handleDeleteRequest,
-  } = useDelete(() => {
-    // On successful delete, redirect to home
-    window.location.href = "/";
-  });
-
-  const handleDeleteWithDialog = useCallback(async () => {
-    const result = await handleDeleteRequest(figureUrl, apiKey);
-    if (result?.requiresApiKey) {
-      setPendingAction("delete");
-      setApiKeyDialogOpen(true);
+  const { deleteLoading, deleteError, handleDelete } = useDelete(
+    figureUrl,
+    apiKey,
+    () => {
+      // On successful delete, redirect to home
+      window.location.href = "/";
     }
-  }, [figureUrl, apiKey, handleDeleteRequest]);
+  );
 
   const handleOpenDeleteDialog = useCallback(() => {
     setDeleteDialogOpen(true);
@@ -94,61 +84,17 @@ const ManageFigurePage: React.FC = () => {
     }
   }, [figureUrl, loadFigureData]);
 
-  const handleRenewWithDialog = useCallback(async () => {
-    const result = await handleRenew(figureUrl, apiKey);
-    if (result?.requiresApiKey) {
-      setPendingAction("renew");
-      setApiKeyDialogOpen(true);
-    }
-  }, [figureUrl, apiKey, handleRenew]);
-
-  const handlePinWithDialog = useCallback(
+  const handlePinCallback = useCallback(
     async (pinInfo: { name: string; figureDescription: string }) => {
-      const result = await handlePin(figureUrl, pinInfo, apiKey);
-      if (result?.requiresApiKey) {
-        setPendingAction("pin");
-        setApiKeyDialogOpen(true);
+      if (!handlePin) {
+        throw new Error(
+          "Pin functionality is not available without an API key"
+        );
       }
+      await handlePin(pinInfo);
     },
-    [figureUrl, apiKey, handlePin]
+    [handlePin]
   );
-
-  const handleUnpinWithDialog = useCallback(async () => {
-    const result = await handleUnpin(figureUrl, apiKey);
-    if (result?.requiresApiKey) {
-      setPendingAction("pin");
-      setApiKeyDialogOpen(true);
-    }
-  }, [figureUrl, apiKey, handleUnpin]);
-
-  const handleApiKeySubmit = useCallback(() => {
-    if (!apiKey.trim()) return;
-
-    setApiKeyDialogOpen(false);
-
-    if (pendingAction === "renew") {
-      handleRenewWithDialog();
-    } else if (pendingAction === "pin") {
-      // For pin, we need to open the pin dialog first
-      handleOpenPinDialog();
-    } else if (pendingAction === "delete") {
-      handleDeleteWithDialog();
-    }
-
-    setPendingAction(null);
-  }, [
-    apiKey,
-    pendingAction,
-    handleRenewWithDialog,
-    handleOpenPinDialog,
-    handleDeleteWithDialog,
-  ]);
-
-  const handleApiKeyCancel = useCallback(() => {
-    setApiKeyDialogOpen(false);
-    setPendingAction(null);
-    setApiKey("");
-  }, [setApiKey]);
 
   if (loading) {
     return (
@@ -167,14 +113,6 @@ const ManageFigurePage: React.FC = () => {
     );
   }
 
-  if (error || apiError) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        {error || apiError}
-      </Alert>
-    );
-  }
-
   return (
     <Box sx={{ maxWidth: "100%", mx: "auto" }}>
       <Stack spacing={3}>
@@ -186,13 +124,14 @@ const ManageFigurePage: React.FC = () => {
           getTimeUntilExpiration={getTimeUntilExpiration}
           renewLoading={renewLoading}
           handleRefresh={handleRefresh}
-          handleRenew={handleRenewWithDialog}
-          handleOpenPinDialog={handleOpenPinDialog}
-          handleUnpin={handleUnpinWithDialog}
-          handleDelete={handleOpenDeleteDialog}
+          handleRenew={handleRenew}
+          handleOpenPinDialog={handlePin ? handleOpenPinDialog : null}
+          handleUnpin={handleUnpin}
+          handleDelete={handleDelete ? handleOpenDeleteDialog : null}
           unpinLoading={unpinLoading}
           deleteLoading={deleteLoading}
           formatDate={formatDate}
+          errorMessage={error || apiError || pinError || deleteError}
         />
 
         {/* Details Section */}
@@ -223,26 +162,23 @@ const ManageFigurePage: React.FC = () => {
         <PinDialog
           open={pinDialogOpen}
           onClose={handleClosePinDialog}
-          onPin={handlePinWithDialog}
+          onPin={handlePinCallback}
           loading={pinLoading}
           error={pinError}
-        />
-
-        {/* API Key Dialog */}
-        <ApiKeyDialog
-          open={apiKeyDialogOpen}
-          onClose={handleApiKeyCancel}
-          onSubmit={handleApiKeySubmit}
-          apiKey={apiKey}
-          setApiKey={setApiKey}
-          pendingAction={pendingAction}
         />
 
         {/* Delete Dialog */}
         <DeleteDialog
           open={deleteDialogOpen}
           onClose={handleCloseDeleteDialog}
-          onConfirm={handleDeleteWithDialog}
+          onConfirm={() => {
+            if (!handleDelete) {
+              throw new Error(
+                "Delete functionality is not available without an API key"
+              );
+            }
+            handleDelete();
+          }}
           loading={deleteLoading}
           error={deleteError}
         />

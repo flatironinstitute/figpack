@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FIGPACK_API_BASE_URL } from '../../config';
 
-export const useDelete = (onSuccess: () => void) => {
+export const useDelete = (figureUrl: string, apiKey: string | null, onSuccess: () => void) => {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
-    const handleDelete = async (figureUrl: string, apiKeyToUse: string) => {
+    const handleDelete = useCallback(async () => {
+        if (!apiKey) {
+            throw new Error("API key is required to delete a figure");
+        }
         setDeleteLoading(true);
         setDeleteError(null);
 
@@ -13,18 +16,15 @@ export const useDelete = (onSuccess: () => void) => {
             const response = await fetch(`${FIGPACK_API_BASE_URL}/api/figures/delete`, {
                 method: 'POST',
                 headers: {
-                    'x-api-key': apiKeyToUse,
+                    'x-api-key': apiKey,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ figureUrl, apiKey: apiKeyToUse })
+                body: JSON.stringify({ figureUrl, apiKey })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                if (response.status === 401) {
-                    return { requiresApiKey: true };
-                }
                 throw new Error(data.error || 'Failed to delete figure');
             }
 
@@ -36,11 +36,11 @@ export const useDelete = (onSuccess: () => void) => {
         } finally {
             setDeleteLoading(false);
         }
-    };
+    }, [figureUrl, apiKey, onSuccess]);
 
     return {
         deleteLoading,
         deleteError,
-        handleDelete
+        handleDelete: apiKey ? handleDelete : null,
     };
 };

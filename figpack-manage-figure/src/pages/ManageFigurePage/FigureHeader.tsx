@@ -54,13 +54,14 @@ interface FigureHeaderProps {
   getTimeUntilExpiration: () => string | null;
   renewLoading: boolean;
   handleRefresh: () => void;
-  handleRenew: () => void;
-  handleOpenPinDialog: () => void;
-  handleUnpin: () => void;
-  handleDelete: () => void;
+  handleRenew: (() => void) | null;
+  handleOpenPinDialog: (() => void) | null;
+  handleUnpin: (() => void) | null;
+  handleDelete: (() => void) | null;
   deleteLoading: boolean;
   unpinLoading: boolean;
   formatDate: (timestamp: number) => string;
+  errorMessage?: string | null;
 }
 
 const FigureHeader: React.FC<FigureHeaderProps> = ({
@@ -78,6 +79,7 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
   deleteLoading,
   unpinLoading,
   formatDate,
+  errorMessage,
 }) => {
   const getStatusIcon = () => {
     if (!figpackStatus) return <Warning color="warning" />;
@@ -166,6 +168,11 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
           </Box>
         }
       />
+      {errorMessage && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {errorMessage}
+        </Alert>
+      )}
       <CardContent sx={{ pt: 0 }}>
         {/* Figure URL Section */}
         <Box sx={{ mb: 2 }}>
@@ -228,8 +235,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 startIcon={
                   unpinLoading ? <CircularProgress size={16} /> : <PushPin />
                 }
-                onClick={handleUnpin}
-                disabled={unpinLoading}
+                onClick={handleUnpin || undefined}
+                disabled={unpinLoading || !handleUnpin}
               >
                 {unpinLoading ? "Unpinning..." : "Unpin Figure"}
               </Button>
@@ -240,8 +247,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 startIcon={
                   deleteLoading ? <CircularProgress size={16} /> : <Delete />
                 }
-                onClick={handleDelete}
-                disabled={deleteLoading}
+                onClick={handleDelete || undefined}
+                disabled={deleteLoading || !handleDelete}
               >
                 {deleteLoading ? "Deleting..." : "Delete Figure"}
               </Button>
@@ -266,8 +273,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 variant="contained"
                 color="warning"
                 size="small"
-                onClick={handleRenew}
-                disabled={renewLoading}
+                onClick={handleRenew || undefined}
+                disabled={renewLoading || !handleRenew}
                 startIcon={
                   renewLoading ? <CircularProgress size={16} /> : <Schedule />
                 }
@@ -279,7 +286,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 color="success"
                 size="small"
                 startIcon={<PushPin />}
-                onClick={handleOpenPinDialog}
+                onClick={handleOpenPinDialog || undefined}
+                disabled={!handleOpenPinDialog}
               >
                 Pin
               </Button>
@@ -290,8 +298,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 startIcon={
                   deleteLoading ? <CircularProgress size={16} /> : <Delete />
                 }
-                onClick={handleDelete}
-                disabled={deleteLoading}
+                onClick={handleDelete || undefined}
+                disabled={deleteLoading || !handleDelete}
               >
                 {deleteLoading ? "Deleting..." : "Delete Figure"}
               </Button>
@@ -311,7 +319,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 color="success"
                 size="small"
                 startIcon={<PushPin />}
-                onClick={handleOpenPinDialog}
+                onClick={handleOpenPinDialog || undefined}
+                disabled={!handleOpenPinDialog}
               >
                 Pin Figure
               </Button>
@@ -322,8 +331,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 startIcon={
                   deleteLoading ? <CircularProgress size={16} /> : <Delete />
                 }
-                onClick={handleDelete}
-                disabled={deleteLoading}
+                onClick={handleDelete || undefined}
+                disabled={deleteLoading || !handleDelete}
               >
                 {deleteLoading ? "Deleting..." : "Delete Figure"}
               </Button>

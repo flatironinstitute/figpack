@@ -1,18 +1,13 @@
 import { AdminPanelSettings, Info, Refresh } from "@mui/icons-material";
-import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import React from "react";
 
 interface AdminHeaderProps {
   onRefresh: () => void;
-  onLogout: () => void;
   onOpenSpec: () => void;
 }
 
-const AdminHeader: React.FC<AdminHeaderProps> = ({
-  onRefresh,
-  onLogout,
-  onOpenSpec,
-}) => {
+const AdminHeader: React.FC<AdminHeaderProps> = ({ onRefresh, onOpenSpec }) => {
   return (
     <Box>
       <Box
@@ -36,9 +31,6 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
               <Refresh />
             </IconButton>
           </Tooltip>
-          <Button variant="outlined" onClick={onLogout}>
-            Logout
-          </Button>
         </Box>
       </Box>
     </Box>

@@ -1,4 +1,4 @@
-import { AccountCircle, Key, Refresh, Save } from "@mui/icons-material";
+import { AccountCircle, Refresh, Save } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -15,32 +15,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import ApiKeyField from "../../components/ApiKeyField";
-import {
-  getUserProfile,
-  updateUserProfile,
-  regenerateUserApiKey,
-} from "./userProfileApi";
-import useApiKey from "../AdminPage/useApiKey";
-
-interface User {
-  email: string;
-  name: string;
-  researchDescription: string;
-  apiKey: string;
-  isAdmin: boolean;
-  createdAt: string;
-}
+import { updateUserProfile, regenerateUserApiKey } from "./userProfileApi";
+import { useAuth } from "../../hooks/useAuth";
 
 const UserProfilePage: React.FC = () => {
-  const { apiKey, setApiKey } = useApiKey();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { apiKey, isLoggedIn, user, loading, login, refreshUser } = useAuth();
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [regenerateDialogOpen, setRegenerateDialogOpen] =
     useState<boolean>(false);
 
@@ -50,48 +34,15 @@ const UserProfilePage: React.FC = () => {
     researchDescription: "",
   });
 
-  const handleAuthenticate = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const result = await getUserProfile(apiKey.trim());
-      if (result.success && result.user) {
-        setIsAuthenticated(true);
-        setUser(result.user);
-        setFormData({
-          name: result.user.name,
-          researchDescription: result.user.researchDescription,
-        });
-        setSuccess("Successfully authenticated");
-      } else {
-        setIsAuthenticated(false);
-        setError(result.message || "Authentication failed");
-      }
-    } catch (error) {
-      setIsAuthenticated(false);
-      setError(`Authentication error: ${error}`);
+  // Initialize form data when user is loaded
+  React.useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name,
+        researchDescription: user.researchDescription,
+      });
     }
-
-    setLoading(false);
-  }, [apiKey]);
-
-  // Load API key from localStorage on component mount
-  useEffect(() => {
-    if (apiKey) {
-      handleAuthenticate();
-    }
-  }, [apiKey, handleAuthenticate]);
-
-  const handleLogout = () => {
-    setApiKey("");
-    setUser(null);
-    setIsAuthenticated(false);
-    setError(null);
-    setSuccess(null);
-    setFormData({ name: "", researchDescription: "" });
-  };
+  }, [user]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -103,7 +54,7 @@ const UserProfilePage: React.FC = () => {
     try {
       const result = await updateUserProfile(apiKey, formData);
       if (result.success && result.user) {
-        setUser(result.user);
+        await refreshUser();
         setSuccess("Profile updated successfully");
       } else {
         setError(result.message || "Failed to update profile");
@@ -123,8 +74,7 @@ const UserProfilePage: React.FC = () => {
     try {
       const result = await regenerateUserApiKey(apiKey);
       if (result.success && result.user) {
-        setUser(result.user);
-        setApiKey(result.user.apiKey); // Update stored API key
+        login(result.user.apiKey); // Update stored API key
         setSuccess(
           "API key regenerated successfully. Please save your new API key!"
         );
@@ -152,7 +102,7 @@ const UserProfilePage: React.FC = () => {
     (formData.name !== user.name ||
       formData.researchDescription !== user.researchDescription);
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4 }}>
         <Card>
@@ -162,35 +112,24 @@ const UserProfilePage: React.FC = () => {
               <Typography variant="h4">User Profile</Typography>
             </Box>
 
-            <Typography variant="body1" color="text.secondary" paragraph>
-              Enter your API key to access and manage your profile.
-            </Typography>
-
-            <Stack spacing={3}>
-              <ApiKeyField
-                value={apiKey}
-                onChange={setApiKey}
-                placeholder="Enter your API key"
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    handleAuthenticate();
-                  }
-                }}
-              />
-
-              {error && <Alert severity="error">{error}</Alert>}
-              {success && <Alert severity="success">{success}</Alert>}
-
-              <Button
-                variant="contained"
-                onClick={() => handleAuthenticate()}
-                disabled={loading || !apiKey.trim()}
-                startIcon={loading ? <CircularProgress size={20} /> : <Key />}
-                size="large"
-              >
-                {loading ? "Authenticating..." : "Authenticate"}
-              </Button>
-            </Stack>
+            {!isLoggedIn ? (
+              <Alert severity="info">
+                Please log in using the Login button in the top menu bar to
+                access your profile.
+              </Alert>
+            ) : (
+              <>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  Loading your profile...
+                </Typography>
+                {loading && (
+                  <Box display="flex" justifyContent="center" py={2}>
+                    <CircularProgress />
+                  </Box>
+                )}
+                {error && <Alert severity="error">{error}</Alert>}
+              </>
+            )}
           </CardContent>
         </Card>
       </Box>
@@ -217,13 +156,6 @@ const UserProfilePage: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-              <Button
-                variant="outlined"
-                onClick={handleLogout}
-                color="secondary"
-              >
-                Logout
-              </Button>
             </Box>
           </CardContent>
         </Card>
