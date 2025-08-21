@@ -1,50 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from "react";
 import {
+  Launch,
+  PushPin,
+  Refresh,
+  Schedule,
+  Search,
+  Warning,
+} from "@mui/icons-material";
+import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
+  Chip,
+  CircularProgress,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputLabel,
+  Link,
+  MenuItem,
+  Pagination,
+  Paper,
+  Select,
+  Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Button,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Stack,
-  Alert,
-  CircularProgress,
-  Pagination,
-  FormControlLabel,
-  Switch,
   Tooltip,
-  Link,
-  useTheme,
+  Typography,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import {
-  Refresh,
-  Search,
-  Launch,
-  PushPin,
-  Schedule,
-  Warning,
-  CheckCircle,
-  Error,
-  Upload,
-} from "@mui/icons-material";
-import { getFigures } from "./figuresApi";
-import type { FigureListItem, FigureListParams } from "./figuresApi";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import type { FigureListItem, FigureListParams } from "./figuresApi";
+import { getFigures } from "./figuresApi";
+import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
 
 const FiguresPage: React.FC = () => {
   const theme = useTheme();
@@ -222,43 +220,6 @@ const FiguresPage: React.FC = () => {
     return `/figure?figure_url=${encodeURIComponent(figureUrl)}`;
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle color="success" />;
-      case "failed":
-        return <Error color="error" />;
-      case "uploading":
-        return <Upload color="info" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "Uploaded";
-      default:
-        return status.charAt(0).toUpperCase() + status.slice(1);
-    }
-  };
-
-  const getStatusColor = (
-    status: string
-  ): "success" | "error" | "info" | "default" => {
-    switch (status) {
-      case "completed":
-        return "success";
-      case "failed":
-        return "error";
-      case "uploading":
-        return "info";
-      default:
-        return "default";
-    }
-  };
-
   const totalPages = Math.ceil(total / limit);
 
   if (!apiKey) {
@@ -341,9 +302,13 @@ const FiguresPage: React.FC = () => {
                   label="Status"
                 >
                   <MenuItem value="">All</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="uploading">Uploading</MenuItem>
-                  <MenuItem value="failed">Failed</MenuItem>
+                  <MenuItem value="completed">
+                    {getStatusLabel("completed")}
+                  </MenuItem>
+                  <MenuItem value="uploading">
+                    {getStatusLabel("uploading")}
+                  </MenuItem>
+                  <MenuItem value="failed">{getStatusLabel("failed")}</MenuItem>
                 </Select>
               </FormControl>
             </Stack>

@@ -1,11 +1,11 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: "Inter", "Roboto", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: #263238;
+  background-color: #fafafa;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,54 +15,174 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: #455a64;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
 }
 a:hover {
-  color: #535bf2;
+  color: #37474f;
+  text-decoration: underline;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  background-color: #fafafa;
+  color: #263238;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 2.5em;
+  line-height: 1.2;
+  font-weight: 500;
+  color: #263238;
+}
+
+h2 {
+  font-size: 2em;
+  line-height: 1.3;
+  font-weight: 500;
+  color: #263238;
+}
+
+h3 {
+  font-size: 1.5em;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #263238;
 }
 
 button {
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #455a64;
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 button:hover {
-  border-color: #646cff;
+  background-color: #37474f;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #455a64;
+  outline-offset: 2px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Scientific application specific styles */
+.scientific-content {
+  font-family: "Inter", "Roboto", sans-serif;
+  line-height: 1.6;
+}
+
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.data-table th,
+.data-table td {
+  border: none;
+  border-bottom: 1px solid #e8eaed;
+  padding: 1rem 0.75rem;
+  text-align: left;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.data-table th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+  font-weight: 600;
+  color: #263238;
+  letter-spacing: 0.5px;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(69, 90, 100, 0.02);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.code-block {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  padding: 1.25rem;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.code-block:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+}
+
+/* Friendly spacing and layout improvements */
+.container-spacing {
+  padding: 2rem 1rem;
+}
+
+.section-spacing {
+  margin: 2rem 0;
+}
+
+.friendly-border {
+  border: 1px solid #e8eaed;
+  border-radius: 12px;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  transition: all 0.2s ease-in-out;
+}
+
+.friendly-border:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+  border-color: #dadce0;
+}
+
+/* Smooth scrolling for better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #455a64;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Loading animation for better perceived performance */
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
   }
-  a:hover {
-    color: #747bff;
+  50% {
+    opacity: 0.7;
   }
-  button {
-    background-color: #f9f9f9;
-  }
+}
+
+.loading-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+/* Subtle gradient backgrounds for sections */
+.section-gradient {
+  background: linear-gradient(135deg, rgba(248, 249, 250, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 1rem 0;
 }

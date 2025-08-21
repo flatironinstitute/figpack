@@ -1,29 +1,30 @@
-import React from "react";
 import {
+  CheckCircle,
+  Delete,
+  Error,
+  Launch,
+  Link as LinkIcon,
+  PushPin,
+  Refresh,
+  Schedule,
+  Warning,
+} from "@mui/icons-material";
+import {
+  Alert,
+  Avatar,
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Button,
-  Alert,
-  CircularProgress,
+  CardHeader,
   Chip,
+  CircularProgress,
   IconButton,
   Tooltip,
-  Avatar,
-  CardHeader,
+  Typography,
 } from "@mui/material";
-import {
-  Refresh,
-  Warning,
-  CheckCircle,
-  Error,
-  PushPin,
-  Launch,
-  Schedule,
-  Delete,
-  Link as LinkIcon,
-} from "@mui/icons-material";
+import React from "react";
+import { getStatusLabel } from "../FiguresPage/utils";
 
 interface PinInfo {
   name: string;
@@ -129,7 +130,7 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
             </Typography>
             {figpackStatus && (
               <Chip
-                label={figpackStatus.status}
+                label={getStatusLabel(figpackStatus.status)}
                 color={getStatusColor()}
                 size="small"
               />
