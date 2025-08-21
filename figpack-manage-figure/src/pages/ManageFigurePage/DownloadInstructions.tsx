@@ -7,12 +7,74 @@ import {
   Typography,
   Stack,
   Paper,
+  IconButton,
+  Tooltip,
+  ClickAwayListener,
 } from "@mui/material";
-import { ExpandMore, CloudDownload } from "@mui/icons-material";
+import { ExpandMore, CloudDownload, ContentCopy } from "@mui/icons-material";
 
 interface DownloadInstructionsProps {
   figureUrl: string;
 }
+
+const CopyableSnippet: React.FC<{ text: string }> = ({ text }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+  };
+
+  const handleClickAway = () => {
+    setCopied(false);
+  };
+
+  return (
+    <ClickAwayListener onClickAway={handleClickAway}>
+      <Paper
+        sx={{
+          p: 2,
+          bgcolor: "grey.100",
+          position: "relative",
+          "&:hover .copy-button": {
+            opacity: 1,
+          },
+        }}
+      >
+        <Typography
+          variant="body2"
+          component="pre"
+          sx={{
+            fontFamily: "monospace",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {text}
+        </Typography>
+        <Tooltip
+          title={copied ? "Copied!" : "Copy to clipboard"}
+          placement="top"
+        >
+          <IconButton
+            className="copy-button"
+            onClick={handleCopy}
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              opacity: 0,
+              transition: "opacity 0.2s",
+            }}
+          >
+            <ContentCopy fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Paper>
+    </ClickAwayListener>
+  );
+};
 
 const DownloadInstructions: React.FC<DownloadInstructionsProps> = ({
   figureUrl,
@@ -40,19 +102,9 @@ const DownloadInstructions: React.FC<DownloadInstructionsProps> = ({
           <Typography variant="body2" color="text.secondary">
             Use the figpack command-line tool to download this figure:
           </Typography>
-          <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{
-                fontFamily: "monospace",
-                wordBreak: "break-all",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              figpack download {figureUrl} figure.tar.gz
-            </Typography>
-          </Paper>
+          <CopyableSnippet
+            text={`figpack download ${figureUrl} figure.tar.gz`}
+          />
 
           <Typography variant="subtitle2" sx={{ mt: 2 }}>
             View Downloaded Figures Locally
@@ -60,27 +112,12 @@ const DownloadInstructions: React.FC<DownloadInstructionsProps> = ({
           <Typography variant="body2" color="text.secondary">
             After downloading, view the figure in your browser:
           </Typography>
-          <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{ fontFamily: "monospace" }}
-            >
-              figpack view figure.tar.gz
-            </Typography>
-          </Paper>
+          <CopyableSnippet text="figpack view figure.tar.gz" />
+
           <Typography variant="body2" color="text.secondary">
             Or specify a custom port:
           </Typography>
-          <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{ fontFamily: "monospace" }}
-            >
-              figpack view figure.tar.gz --port 8080
-            </Typography>
-          </Paper>
+          <CopyableSnippet text="figpack view figure.tar.gz --port 8080" />
         </Stack>
       </AccordionDetails>
     </Accordion>
