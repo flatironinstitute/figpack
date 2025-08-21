@@ -13,12 +13,26 @@ interface FigurePreviewProps {
 }
 
 const FigurePreview: React.FC<FigurePreviewProps> = ({ figureUrl }) => {
+  const [expanded, setExpanded] = React.useState(false);
+
+  const handleChange = (_event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpanded(isExpanded);
+  };
+
   return (
-    <Accordion>
+    <Accordion onChange={handleChange}>
       <AccordionSummary
         expandIcon={<ExpandMore />}
         aria-controls="figure-preview-content"
         id="figure-preview-header"
+        sx={{
+          "&:hover": {
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            "& .MuiTypography-root": {
+              color: "primary.main",
+            },
+          },
+        }}
       >
         <Box display="flex" alignItems="center" gap={1}>
           <Preview color="primary" />
@@ -35,15 +49,17 @@ const FigurePreview: React.FC<FigurePreviewProps> = ({ figureUrl }) => {
             overflow: "hidden",
           }}
         >
-          <iframe
-            src={figureUrl}
-            title="Figure Preview"
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-          />
+          {expanded && (
+            <iframe
+              src={figureUrl}
+              title="Figure Preview"
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+              }}
+            />
+          )}
         </Box>
       </AccordionDetails>
     </Accordion>

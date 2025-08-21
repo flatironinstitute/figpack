@@ -19,7 +19,17 @@ const DownloadInstructions: React.FC<DownloadInstructionsProps> = ({
 }) => {
   return (
     <Accordion>
-      <AccordionSummary expandIcon={<ExpandMore />}>
+      <AccordionSummary
+        expandIcon={<ExpandMore />}
+        sx={{
+          "&:hover": {
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            "& .MuiTypography-root": {
+              color: "primary.main",
+            },
+          },
+        }}
+      >
         <Box display="flex" alignItems="center" gap={1}>
           <CloudDownload color="primary" />
           <Typography variant="h6">Download Instructions</Typography>
