@@ -10,6 +10,7 @@ interface CreateFigureRequest {
   totalFiles?: number;
   totalSize?: number;
   figpackVersion?: string;
+  title?: string;
 }
 
 interface CreateFigureResponse {
@@ -150,6 +151,7 @@ export default async function handler(
       figpackVersion: req.body.figpackVersion || '1.0.0',
       totalFiles: req.body.totalFiles,
       totalSize: req.body.totalSize,
+      title: req.body.title,
       createdAt: now,
       updatedAt: now
     });

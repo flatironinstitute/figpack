@@ -43,6 +43,7 @@ interface FigpackStatus {
   pinned?: boolean;
   pinInfo?: PinInfo;
   ownerEmail?: string;
+  title?: string;
 }
 
 interface FigureHeaderProps {
@@ -122,7 +123,7 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
         title={
           <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
             <Typography variant="h5" component="div">
-              Figure
+              {figpackStatus?.title || "Figure"}
             </Typography>
             {figpackStatus && (
               <Chip

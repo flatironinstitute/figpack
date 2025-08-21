@@ -4,6 +4,7 @@ import "./App.css";
 import AdminPage from "./pages/AdminPage/AdminPage";
 import ManageFigurePage from "./pages/ManageFigurePage/ManageFigurePage";
 import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
+import FiguresPage from "./pages/FiguresPage/FiguresPage";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/profile" element={<UserProfilePage />} />
+          <Route path="/figures" element={<FiguresPage />} />
           <Route path="/figure" element={<ManageFigurePage />} />
           <Route path="/" element={<Empty />} />
         </Routes>

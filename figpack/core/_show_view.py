@@ -36,7 +36,7 @@ def _show_view(
 
             # Upload the bundle
             print("Starting upload...")
-            figure_url = _upload_bundle(tmpdir, api_key)
+            figure_url = _upload_bundle(tmpdir, api_key, title=title)
 
             if open_in_browser:
                 webbrowser.open(figure_url)

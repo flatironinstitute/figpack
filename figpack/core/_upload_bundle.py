@@ -106,10 +106,21 @@ def _compute_deterministic_figure_hash(tmpdir_path: pathlib.Path) -> str:
 
 
 def _create_or_get_figure(
-    figure_hash: str, api_key: str, total_files: int = None, total_size: int = None
+    figure_hash: str,
+    api_key: str,
+    total_files: int = None,
+    total_size: int = None,
+    title: str = None,
 ) -> dict:
     """
     Create a new figure or get existing figure information
+
+    Args:
+        figure_hash: The hash of the figure
+        api_key: The API key for authentication
+        total_files: Optional total number of files
+        total_size: Optional total size of files
+        title: Optional title for the figure
 
     Returns:
         dict: Figure information from the API
@@ -124,6 +135,8 @@ def _create_or_get_figure(
         payload["totalFiles"] = total_files
     if total_size is not None:
         payload["totalSize"] = total_size
+    if title is not None:
+        payload["title"] = title
 
     response = requests.post(f"{FIGPACK_API_BASE_URL}/api/figures/create", json=payload)
 
@@ -177,7 +190,7 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
     return response_data
 
 
-def _upload_bundle(tmpdir: str, api_key: str) -> str:
+def _upload_bundle(tmpdir: str, api_key: str, title: str = None) -> str:
     """
     Upload the prepared bundle to the cloud using the new database-driven approach
     """
@@ -203,7 +216,9 @@ def _upload_bundle(tmpdir: str, api_key: str) -> str:
     )
 
     # Find available figure ID and create/get figure in database with metadata
-    result = _create_or_get_figure(figure_hash, api_key, total_files, total_size)
+    result = _create_or_get_figure(
+        figure_hash, api_key, total_files, total_size, title=title
+    )
     figure_info = result.get("figure", {})
     figure_url = figure_info.get("figureUrl")
 

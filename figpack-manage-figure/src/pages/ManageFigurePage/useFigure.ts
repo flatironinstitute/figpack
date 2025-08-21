@@ -53,7 +53,7 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
   };
 
   const formatDate = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000);
+    const date = new Date(timestamp);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: '2-digit',

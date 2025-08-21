@@ -52,6 +52,7 @@ export interface IFigure {
   createdAt: number;          // Unix timestamp
   updatedAt: number;          // Unix timestamp
   pinned?: boolean;           // Whether the figure is pinned
+  title?: string;             // Optional title for the figure
   pinInfo?: {                 // Information for pinned figures
     name: string;
     figureDescription: string;
@@ -118,6 +119,9 @@ const figureSchema = new mongoose.Schema<IFigureDocument>({
   pinned: {
     type: Boolean,
     default: false
+  },
+  title: {
+    type: String
   },
   pinInfo: {
     name: String,
