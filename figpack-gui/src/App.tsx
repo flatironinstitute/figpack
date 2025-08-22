@@ -1,16 +1,14 @@
-import { ProvideTimeseriesSelection } from "@shared/context-timeseries-selection";
+import { FPPlugin } from "@figpack/plugin-sdk";
+import spikeSortingPlugin from "@figpack/spike-sorting-plugin";
+import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
+import { useEffect, useMemo } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
+import { useFigpackStatus } from "./hooks/useFigpackStatus";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
-import { useFigpackStatus } from "./hooks/useFigpackStatus";
-import { useEffect, useReducer } from "react";
-import {
-  defaultUnitSelection,
-  UnitSelectionContext,
-  unitSelectionReducer,
-} from "@shared/context-unit-selection";
 import "./localStyles.css";
+import mainPlugin from "./main_plugin";
 
 function App() {
   const zarrData = useZarrData();
@@ -29,9 +27,10 @@ function App() {
     }
   }, [zarrData]);
 
-  const [unitSelection, unitSelectionDispatch] = useReducer(
-    unitSelectionReducer,
-    defaultUnitSelection
+  // Get all plugins
+  const plugins: FPPlugin[] = useMemo(
+    () => [mainPlugin, spikeSortingPlugin],
+    []
   );
 
   // Adjust height to account for status bar (30px height)
@@ -75,14 +74,23 @@ function App() {
     );
   }
 
+  // Helper function to wrap content with dynamic context providers
+  const wrapWithContexts = (content: React.ReactNode) => {
+    let wrappedContent = content;
+    plugins.forEach((plugin) => {
+      if (plugin.provideAppContexts) {
+        wrappedContent = plugin.provideAppContexts(wrappedContent);
+      }
+    });
+    return wrappedContent;
+  };
+
   return (
     <>
       <ProvideTimeseriesSelection>
-        <UnitSelectionContext.Provider
-          value={{ unitSelection, unitSelectionDispatch }}
-        >
+        {wrapWithContexts(
           <FPView zarrGroup={zarrData} width={width} height={adjustedHeight} />
-        </UnitSelectionContext.Provider>
+        )}
       </ProvideTimeseriesSelection>
       <StatusBar />
     </>

@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JSX } from "react";
-import {
-  SortingRule,
-  UnitSelectionAction,
-} from "@shared/context-unit-selection";
+import { SortingRule, UnitSelectionAction } from "../context-unit-selection";
 export interface SortableTableWidgetRow {
   rowId: string | number;
   data: {

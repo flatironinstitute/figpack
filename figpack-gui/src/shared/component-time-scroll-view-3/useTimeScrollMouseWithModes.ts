@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { useTimeRange } from "@shared/context-timeseries-selection";
+import { useTimeRange } from "../../shared/context-timeseries-selection";
 import { InteractionMode } from "./TimeScrollToolbar";
 
 type MouseData = {
@@ -25,7 +25,7 @@ type UseTimeScrollMouseWithModesParams = {
 };
 
 const useTimeScrollMouseWithModes = (
-  params: UseTimeScrollMouseWithModesParams,
+  params: UseTimeScrollMouseWithModesParams
 ) => {
   const {
     pixelToTime,
@@ -82,7 +82,7 @@ const useTimeScrollMouseWithModes = (
         if (onMouseDown) onMouseDown(e);
       }
     },
-    [pixelToTime, onMouseDown, visibleStartTimeSec, interactionMode],
+    [pixelToTime, onMouseDown, visibleStartTimeSec, interactionMode]
   );
 
   const handleMouseUp = useCallback(
@@ -141,7 +141,7 @@ const useTimeScrollMouseWithModes = (
       setCurrentTime,
       interactionMode,
       setVisibleTimeRange,
-    ],
+    ]
   );
 
   const handleMouseMove = useCallback(
@@ -193,7 +193,7 @@ const useTimeScrollMouseWithModes = (
       onMouseMove,
       interactionMode,
       panTimeseriesSelectionVisibleStartTimeSec,
-    ],
+    ]
   );
 
   const handleMouseOut = useCallback(
@@ -205,7 +205,7 @@ const useTimeScrollMouseWithModes = (
       mouseData.current.selectionEndX = null;
       if (onMouseOut) onMouseOut(e);
     },
-    [onMouseOut],
+    [onMouseOut]
   );
 
   return {

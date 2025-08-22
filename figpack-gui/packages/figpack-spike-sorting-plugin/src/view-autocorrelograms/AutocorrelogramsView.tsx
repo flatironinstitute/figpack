@@ -1,9 +1,4 @@
-import {
-  PGPlot,
-  PlotGrid,
-  Splitter,
-  VerticalScrollView,
-} from "../../../../core-views";
+import { PGPlot, PlotGrid, Splitter, VerticalScrollView } from "../core-views";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import {
@@ -11,7 +6,7 @@ import {
   INITIALIZE_UNITS,
   sortIds,
   useSelectedUnitIds,
-} from "@shared/context-unit-selection";
+} from "../context-unit-selection";
 import { getUnitColor } from "../view-units-table/unitColors";
 import {
   defaultUnitsTableBottomToolbarOptions,

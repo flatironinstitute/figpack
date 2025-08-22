@@ -14,22 +14,19 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cpy \"**/*.css\" \"dist\" --cwd=src --parents",
     "dev": "tsc --watch"
   },
   "peerDependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "@mui/material": "^7.3.1",
     "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1"
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
-  "dependencies": {
-    "@figpack/plugin-sdk": "file:../figpack-plugin-sdk"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
+    "cpy-cli": "^6.0.0",
     "typescript": "~5.8.3"
   }
 }

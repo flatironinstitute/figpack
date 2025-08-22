@@ -4,7 +4,7 @@ import { FunctionComponent, JSX, useCallback, useMemo } from "react";
 import {
   allUnitSelectionState,
   voidClickHandler,
-} from "@shared/context-unit-selection";
+} from "../context-unit-selection";
 import "./SortableTableWidget.css";
 import SortableTableWidgetContentRow from "./SortableTableWidgetContentRow";
 import SortableTableWidgetHeaderRow, {
@@ -42,11 +42,11 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
         orderedUnitIds,
         visibleUnitIds: _visibleUnitIds,
       }),
-    [selectedUnitIds, orderedUnitIds, _visibleUnitIds],
+    [selectedUnitIds, orderedUnitIds, _visibleUnitIds]
   );
   const rowSorter = useCallback(
     (colsDict: ColsDict) => sorterCallbackWrapper(rows, colsDict),
-    [rows],
+    [rows]
   );
 
   // useEffect(() => {

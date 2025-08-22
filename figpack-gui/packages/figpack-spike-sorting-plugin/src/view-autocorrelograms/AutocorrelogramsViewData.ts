@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { validateObject } from "../../core-utils";
+import { validateObject } from "../core-utils";
 import {
   isArrayOf,
   isEqualTo,
   isNumber,
   isOneOf,
   isString,
-} from "../../core-utils";
+} from "../core-utils";
 
 type AutocorrelogramData = {
   unitId: number | string;
@@ -28,7 +28,7 @@ export type AutocorrelogramsViewData = {
 };
 
 export const isAutocorrelogramsViewData = (
-  x: any,
+  x: any
 ): x is AutocorrelogramsViewData => {
   return validateObject(x, {
     type: isEqualTo("Autocorrelograms"),

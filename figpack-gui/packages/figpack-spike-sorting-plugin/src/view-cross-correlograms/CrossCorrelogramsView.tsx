@@ -1,15 +1,10 @@
-import {
-  PGPlot,
-  PlotGrid,
-  Splitter,
-  VerticalScrollView,
-} from "../../core-views";
+import { PGPlot, PlotGrid, Splitter, VerticalScrollView } from "../core-views";
 import { FunctionComponent, useMemo, useState } from "react";
 import {
   idToNum,
   sortIds,
   useSelectedUnitIds,
-} from "@shared/context-unit-selection";
+} from "../context-unit-selection";
 import { CorrelogramPlot } from "../view-autocorrelograms";
 import { getUnitColor } from "../view-units-table/unitColors";
 import { ToolbarItem, ViewToolbar } from "../ViewToolbar";

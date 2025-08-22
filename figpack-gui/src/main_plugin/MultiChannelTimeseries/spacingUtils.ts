@@ -6,7 +6,7 @@ import { join } from "./utils";
  * Computes a base spacing unit from the median inner 80th percentile range
  * across all channels in the timeseries data.
  */
-export const computeBaseSpacingUnit = async (
+const computeBaseSpacingUnit = async (
   client: MultiChannelTimeseriesClient
 ): Promise<number> => {
   try {

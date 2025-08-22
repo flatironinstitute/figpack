@@ -1,4 +1,4 @@
-import { useTimeRange } from "@shared/context-timeseries-selection";
+import { useTimeRange } from "../../shared/context-timeseries-selection";
 import { FunctionComponent, useCallback } from "react";
 
 export type InteractionMode = "pan" | "select-zoom";

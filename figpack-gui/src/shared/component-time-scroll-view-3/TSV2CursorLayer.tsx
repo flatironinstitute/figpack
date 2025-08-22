@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import BaseCanvas from "./BaseCanvas";
 
-export type TSVCursorLayerProps = {
+type TSVCursorLayerProps = {
   timeRange: [number, number];
   currentTimePixels?: number;
   currentTimeIntervalPixels?: [number, number];

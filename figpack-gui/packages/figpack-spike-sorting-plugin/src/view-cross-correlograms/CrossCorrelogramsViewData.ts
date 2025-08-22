@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { validateObject } from "../../core-utils";
+import { validateObject } from "../core-utils";
 import {
   isArrayOf,
   isBoolean,
@@ -8,7 +8,7 @@ import {
   optional,
   isOneOf,
   isString,
-} from "../../core-utils";
+} from "../core-utils";
 
 export type CrossCorrelogramData = {
   unitId1: number | string;
@@ -33,7 +33,7 @@ export type CrossCorrelogramsViewData = {
 };
 
 export const isCrossCorrelogramsViewData = (
-  x: any,
+  x: any
 ): x is CrossCorrelogramsViewData => {
   return validateObject(x, {
     type: isEqualTo("CrossCorrelograms"),

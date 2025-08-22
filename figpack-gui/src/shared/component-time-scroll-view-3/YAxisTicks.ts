@@ -8,7 +8,7 @@ type YAxisProps = {
   pixelHeight: number;
 };
 
-export type Step = {
+type Step = {
   label: string;
   dataValue: number;
   pixelValue?: number;

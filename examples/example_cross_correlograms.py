@@ -34,7 +34,7 @@ This is an example of cross-correlograms created using figpack.
 
 
 def example_cross_correlograms(
-    *, sorting: si.BaseSorting, hide_unit_selector: bool = False, height=500
+    *, sorting: si.BaseSorting, hide_unit_selector: bool = False
 ) -> vv.Splitter:
     # Create a simple units table for the left side
     columns: List[ssv.UnitsTableColumn] = [
@@ -51,11 +51,7 @@ def example_cross_correlograms(
             )
         )
 
-    units_table = ssv.UnitsTable(
-        columns=columns,
-        rows=rows,
-        height=height,
-    )
+    units_table = ssv.UnitsTable(columns=columns, rows=rows)
 
     # Create cross-correlograms for the right side
     cross_correlogram_items: List[ssv.CrossCorrelogramItem] = []
@@ -96,7 +92,6 @@ def example_cross_correlograms(
     cross_correlograms = ssv.CrossCorrelograms(
         cross_correlograms=cross_correlogram_items,
         hide_unit_selector=hide_unit_selector,
-        height=height,
     )
 
     # Create splitter with units table on left (max width 300px) and cross-correlograms on right

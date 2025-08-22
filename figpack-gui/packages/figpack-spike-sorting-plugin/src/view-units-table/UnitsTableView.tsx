@@ -16,7 +16,7 @@ import {
   UNIQUE_SELECT_NEXT,
   UNIQUE_SELECT_PREVIOUS,
   useSelectedUnitIds,
-} from "@shared/context-unit-selection";
+} from "../context-unit-selection";
 import {
   ColorPatchUnitIdLabel,
   ColorPatchUnitLabelProps,
@@ -61,11 +61,11 @@ const UnitsTableView: FunctionComponent<Props> = ({ data, width, height }) => {
       toolbarOptions.onlyShowSelected
         ? visibleUnitIds
           ? visibleUnitIds.filter((id: string | number) =>
-              selectedUnitIds.has(id),
+              selectedUnitIds.has(id)
             )
           : [...selectedUnitIds]
         : visibleUnitIds,
-    [visibleUnitIds, selectedUnitIds, toolbarOptions.onlyShowSelected],
+    [visibleUnitIds, selectedUnitIds, toolbarOptions.onlyShowSelected]
   );
 
   const columns = useMemo(() => {
@@ -97,7 +97,7 @@ const UnitsTableView: FunctionComponent<Props> = ({ data, width, height }) => {
         tooltip: "Similarity with current unit",
         sort: (
           a: { score: number | undefined; unitId: number | string },
-          b: { score: number | undefined; unitId: number | string },
+          b: { score: number | undefined; unitId: number | string }
         ) => {
           if (a.unitId === currentUnitId) return 1;
           if (b.unitId === currentUnitId) return -1;
@@ -233,7 +233,7 @@ const UnitsTableView: FunctionComponent<Props> = ({ data, width, height }) => {
       position: "relative",
       overflowY: "auto",
     }),
-    [width, height],
+    [width, height]
   );
 
   const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(
@@ -259,7 +259,7 @@ const UnitsTableView: FunctionComponent<Props> = ({ data, width, height }) => {
         return false;
       }
     },
-    [unitIdSelectionDispatch],
+    [unitIdSelectionDispatch]
   );
 
   const handleRedistributeUnitColors = useCallback(() => {

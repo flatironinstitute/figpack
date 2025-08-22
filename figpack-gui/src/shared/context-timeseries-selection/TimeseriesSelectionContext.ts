@@ -42,7 +42,7 @@ type TimeseriesSelectionAction =
       frac: number;
     };
 
-export type TimeseriesSelectionContextType = {
+type TimeseriesSelectionContextType = {
   timeseriesSelection: TimeseriesSelectionState;
   dispatch: (action: TimeseriesSelectionAction) => void;
 };

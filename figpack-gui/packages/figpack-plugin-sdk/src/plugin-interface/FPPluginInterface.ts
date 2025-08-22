@@ -38,4 +38,5 @@ export interface FPPlugin {
   registerViewComponents: (
     viewComponentRegistry: FPViewComponentRegistry
   ) => void;
+  provideAppContexts?: (node: React.ReactNode) => React.ReactNode;
 }

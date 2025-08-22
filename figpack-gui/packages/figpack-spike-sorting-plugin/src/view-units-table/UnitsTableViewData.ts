@@ -7,7 +7,7 @@ import {
   isString,
   optional,
   validateObject,
-} from "../../core-utils";
+} from "../core-utils";
 
 type UTColumn = {
   key: string;
@@ -57,8 +57,8 @@ export const isUnitsTableViewData = (x: any): x is UnitsTableViewData => {
           unitId1: isOneOf([isNumber, isString]),
           unitId2: isOneOf([isNumber, isString]),
           similarity: isNumber,
-        }),
-      ),
+        })
+      )
     ),
   });
 };

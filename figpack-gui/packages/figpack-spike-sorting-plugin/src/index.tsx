@@ -5,6 +5,8 @@ import { FPAutocorrelograms } from "./FPAutocorrelograms";
 import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
 
+import UnitSelectionProvider from "./context-unit-selection/UnitSelectionProvider";
+
 const registerViewComponents = (
   viewComponentRegistry: FPViewComponentRegistry
 ) => {
@@ -24,8 +26,13 @@ const registerViewComponents = (
   });
 };
 
+const provideAppContexts = (node: React.ReactNode) => {
+  return <UnitSelectionProvider>{node}</UnitSelectionProvider>;
+};
+
 const plugin: FPPlugin = {
   registerViewComponents,
+  provideAppContexts,
 };
 
 export default plugin;

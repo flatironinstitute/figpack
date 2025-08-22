@@ -10,7 +10,7 @@ const getDrawingContextFromCanvasRef = (
   return ctxt;
 };
 
-export interface BaseCanvasProps<T> {
+interface BaseCanvasProps<T> {
   width: number;
   height: number;
   draw: (

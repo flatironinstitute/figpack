@@ -1,6 +1,6 @@
-import TimeScrollView3 from "@shared/component-time-scroll-view-3/TimeScrollView3";
-import { useTimeScrollView3 } from "@shared/component-time-scroll-view-3/useTimeScrollView3";
-import { useTimeseriesSelection } from "@shared/context-timeseries-selection/TimeseriesSelectionContext";
+import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
+import { useTimeScrollView3 } from "../shared/component-time-scroll-view-3/useTimeScrollView3";
+import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { colorForUnitId } from "../core-utils/unit-colors";
 import { useEffect, useMemo, useState } from "react";
 import { ZarrGroup } from "@figpack/plugin-sdk";
