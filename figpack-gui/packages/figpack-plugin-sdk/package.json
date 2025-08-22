@@ -15,7 +15,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
   },
   "peerDependencies": {
     "react": "^19.1.1",

@@ -15,7 +15,8 @@
   ],
   "scripts": {
     "build": "tsc && cpy \"**/*.css\" \"dist\" --cwd=src --parents",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
   },
   "peerDependencies": {
     "@emotion/react": "^11.14.0",
@@ -24,7 +25,9 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@figpack/plugin-sdk": "*"
+  },
   "devDependencies": {
     "cpy-cli": "^6.0.0",
     "typescript": "~5.8.3"
