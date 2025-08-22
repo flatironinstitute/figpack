@@ -5,7 +5,6 @@ import { useFigpackStatus } from "./hooks/useFigpackStatus";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
 import "./localStyles.css";
-import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
 import { plugins } from "./main";
 
 function App() {
@@ -79,16 +78,14 @@ function App() {
 
   return (
     <>
-      <ProvideTimeseriesSelection>
-        {wrapWithContexts(
-          <FPView
-            zarrGroup={zarrData}
-            width={width}
-            height={adjustedHeight}
-            FPView={FPView}
-          />
-        )}
-      </ProvideTimeseriesSelection>
+      {wrapWithContexts(
+        <FPView
+          zarrGroup={zarrData}
+          width={width}
+          height={adjustedHeight}
+          FPView={FPView}
+        />
+      )}
       <StatusBar />
     </>
   );
