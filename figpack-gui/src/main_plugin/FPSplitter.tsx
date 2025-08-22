@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useRef } from "react";
-import { ZarrGroup } from "../plugin-interface/ZarrTypes";
+import { ZarrGroup } from "@figpack/plugin-sdk";
 import { FPView } from "../components/FPView";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar

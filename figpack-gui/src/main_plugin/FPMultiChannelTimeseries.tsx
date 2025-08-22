@@ -3,7 +3,7 @@ import { useTimeScrollView3 } from "@shared/component-time-scroll-view-3/useTime
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { colorForUnitId } from "../core-utils/unit-colors";
 import { useEffect, useMemo, useState } from "react";
-import { ZarrGroup } from "../plugin-interface/ZarrTypes";
+import { ZarrGroup } from "@figpack/plugin-sdk";
 import { useMultiChannelTimeseriesClient } from "./MultiChannelTimeseries/useMultiChannelTimeseriesClient";
 import {
   paintDownsampledChannelLine,

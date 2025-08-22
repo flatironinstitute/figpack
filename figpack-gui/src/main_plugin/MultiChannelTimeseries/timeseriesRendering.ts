@@ -1,4 +1,4 @@
-import { DatasetDataType } from "../../plugin-interface/ZarrTypes";
+import { DatasetDataType } from "@figpack/plugin-sdk";
 
 export const paintDownsampledChannelLine = (
   context: CanvasRenderingContext2D,

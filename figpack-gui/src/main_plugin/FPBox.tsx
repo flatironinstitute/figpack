@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ZarrGroup } from "../plugin-interface/ZarrTypes";
+import { ZarrGroup } from "@figpack/plugin-sdk";
 import { FPView } from "../components/FPView";
 
 interface LayoutItemData {

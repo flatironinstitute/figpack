@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
+// Import ZarrFile from FPPluginInterface to avoid duplication
+import { ZarrFile } from "./FPPluginInterface";
 
 export type ZarrGroup = {
-  file: RemoteZarr;
+  file: ZarrFile;
   path: string;
   subgroups: ZarrSubgroup[];
   datasets: ZarrSubdataset[];
@@ -25,7 +26,7 @@ export type ZarrSubdataset = {
 };
 
 export type ZarrDataset = {
-  file: RemoteZarr;
+  file: ZarrFile;
   name: string;
   path: string;
   shape: number[];

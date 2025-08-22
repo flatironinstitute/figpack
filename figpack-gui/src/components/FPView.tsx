@@ -1,4 +1,4 @@
-import { FPViewComponentProps } from "src/plugin-interface/FPPluginInterface";
+import { FPViewComponentProps } from "@figpack/plugin-sdk";
 import { viewComponentRegistry } from "../view-registry";
 
 export const FPView: React.FC<FPViewComponentProps> = (props) => {

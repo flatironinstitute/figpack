@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "../plugin-interface/ZarrTypes";
+import { ZarrGroup } from "@figpack/plugin-sdk";
 import CrossCorrelogramsView from "./view-cross-correlograms/CrossCorrelogramsView";
 import { CrossCorrelogramsViewData } from "./view-cross-correlograms/CrossCorrelogramsViewData";
 

@@ -1,7 +1,4 @@
-import {
-  FPPlugin,
-  FPViewComponentRegistry,
-} from "src/plugin-interface/FPPluginInterface";
+import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
 
 // Import all view components
 import { FPAutocorrelograms } from "./FPAutocorrelograms";

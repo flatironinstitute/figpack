@@ -1,4 +1,4 @@
-import { FPViewComponent } from "src/plugin-interface/FPPluginInterface";
+import { FPViewComponent } from "@figpack/plugin-sdk";
 
 class FPViewComponentRegistry {
   private viewComponents = new Map<string, FPViewComponent>();

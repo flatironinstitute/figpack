@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "../plugin-interface/ZarrTypes";
+import { ZarrGroup } from "@figpack/plugin-sdk";
 import UnitsTableView from "./view-units-table/UnitsTableView";
 import { UnitsTableViewData } from "./view-units-table/UnitsTableViewData";
 

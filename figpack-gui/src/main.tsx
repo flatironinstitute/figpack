@@ -6,7 +6,7 @@ import { viewComponentRegistry } from "./view-registry/FPViewComponentRegistry.t
 
 import mainPlugin from "./main_plugin";
 import spikeSortingPlugin from "./spike_sorting_plugin/index.ts";
-import { FPPlugin } from "./plugin-interface/FPPluginInterface.ts";
+import { FPPlugin } from "@figpack/plugin-sdk";
 
 const plugins: FPPlugin[] = [mainPlugin, spikeSortingPlugin];
 

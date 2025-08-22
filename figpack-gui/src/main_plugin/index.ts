@@ -8,10 +8,7 @@ import { FPPlotlyFigure } from "./FPPlotlyFigure";
 import { FPSplitter } from "./FPSplitter";
 import { FPTabLayout } from "./FPTabLayout";
 import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
-import {
-  FPPlugin,
-  FPViewComponentRegistry,
-} from "src/plugin-interface/FPPluginInterface";
+import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
 
 const registerViewComponents = (
   viewComponentRegistry: FPViewComponentRegistry

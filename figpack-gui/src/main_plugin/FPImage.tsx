@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ZarrGroup } from "src/plugin-interface/ZarrTypes";
+import { ZarrGroup } from "@figpack/plugin-sdk";
 
 export const FPImage: React.FC<{
   zarrGroup: ZarrGroup;
