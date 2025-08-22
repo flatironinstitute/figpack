@@ -1,4 +1,5 @@
-import { viewComponentRegistry, FPViewComponentProps } from "../view-registry";
+import { FPViewComponentProps } from "src/plugin-interface/FPPluginInterface";
+import { viewComponentRegistry } from "../view-registry";
 
 export const FPView: React.FC<FPViewComponentProps> = (props) => {
   const { zarrGroup } = props;

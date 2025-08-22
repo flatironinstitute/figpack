@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ZarrGroup } from "../../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "../../plugin-interface/ZarrTypes";
 import { MultiChannelTimeseriesClient } from "./MultiChannelTimeseriesClient";
 
 export const useMultiChannelTimeseriesClient = (zarrGroup: ZarrGroup) => {

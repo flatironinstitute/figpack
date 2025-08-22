@@ -2,7 +2,7 @@ import TimeScrollView3 from "@shared/component-time-scroll-view-3/TimeScrollView
 import { useTimeScrollView3 } from "@shared/component-time-scroll-view-3/useTimeScrollView3";
 import { useTimeseriesSelection } from "@shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { useEffect, useMemo, useState } from "react";
-import { DatasetDataType, ZarrGroup } from "../remote-zarr/RemoteZarr";
+import { DatasetDataType, ZarrGroup } from "../plugin-interface/ZarrTypes";
 
 export const FPTimeseriesGraph: React.FC<{
   zarrGroup: ZarrGroup;

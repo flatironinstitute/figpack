@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
-import { ZarrGroup } from "src/remote-zarr/RemoteZarr";
+import { ZarrGroup } from "src/plugin-interface/ZarrTypes";
 
 export const useZarrData = () => {
-  const [zarrData, setZarrData] = useState<ZarrGroup | null | undefined>(
-    null,
-  );
+  const [zarrData, setZarrData] = useState<ZarrGroup | null | undefined>(null);
   useEffect(() => {
     let canceled = false;
     const load = async () => {

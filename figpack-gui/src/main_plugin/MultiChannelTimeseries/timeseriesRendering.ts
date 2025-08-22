@@ -1,4 +1,4 @@
-import { DatasetDataType } from "../../remote-zarr/RemoteZarr";
+import { DatasetDataType } from "../../plugin-interface/ZarrTypes";
 
 export const paintDownsampledChannelLine = (
   context: CanvasRenderingContext2D,

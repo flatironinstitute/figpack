@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "../plugin-interface/ZarrTypes";
 
 // Declare global Plotly type
 declare global {

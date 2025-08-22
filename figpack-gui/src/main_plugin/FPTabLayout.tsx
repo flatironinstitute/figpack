@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "../plugin-interface/ZarrTypes";
 import { FPView } from "../components/FPView";
 
 interface TabItemData {

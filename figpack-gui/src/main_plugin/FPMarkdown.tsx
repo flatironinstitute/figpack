@@ -1,6 +1,6 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "../plugin-interface/ZarrTypes";
 
 export const FPMarkdown: React.FC<{
   zarrGroup: ZarrGroup;

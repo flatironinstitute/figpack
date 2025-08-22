@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "../plugin-interface/ZarrTypes";
 import UnitsTableView from "./view-units-table/UnitsTableView";
 import { UnitsTableViewData } from "./view-units-table/UnitsTableViewData";
 

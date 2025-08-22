@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "src/plugin-interface/ZarrTypes";
 
 export const FPImage: React.FC<{
   zarrGroup: ZarrGroup;
@@ -67,7 +67,7 @@ export const FPImage: React.FC<{
         URL.revokeObjectURL(imageUrl);
       }
     };
-  }, [zarrGroup, errorMessage, imageFormat]);
+  }, [zarrGroup, errorMessage, imageFormat, imageUrl]);
 
   if (errorMessage || error) {
     return (

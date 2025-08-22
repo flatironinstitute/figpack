@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import RemoteZarr from "./RemoteZarrImpl";
+import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
 
 export type ZarrGroup = {
   file: RemoteZarr;
@@ -42,4 +42,3 @@ export type DatasetDataType =
   | Uint8Array
   | Uint16Array
   | Uint32Array;
-

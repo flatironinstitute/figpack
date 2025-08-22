@@ -1,24 +1,24 @@
-import { FPViewComponent } from "./types";
+import { FPViewComponent } from "src/plugin-interface/FPPluginInterface";
 
 class FPViewComponentRegistry {
-  private plugins = new Map<string, FPViewComponent>();
+  private viewComponents = new Map<string, FPViewComponent>();
 
-  register(plugin: FPViewComponent) {
-    this.plugins.set(plugin.type, plugin);
+  registerViewComponent(viewComponent: FPViewComponent) {
+    this.viewComponents.set(viewComponent.type, viewComponent);
   }
 
   get(type: string) {
-    return this.plugins.get(type);
+    return this.viewComponents.get(type);
   }
 
   // Add method to check if a type exists
   hasType(type: string): boolean {
-    return this.plugins.has(type);
+    return this.viewComponents.has(type);
   }
 
   // Add method to get all registered types
   getRegisteredTypes(): string[] {
-    return Array.from(this.plugins.keys());
+    return Array.from(this.viewComponents.keys());
   }
 }
 

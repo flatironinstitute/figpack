@@ -1,4 +1,4 @@
-import { ZarrGroup } from "../../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "../../plugin-interface/ZarrTypes";
 import { join } from "./utils";
 
 export class MultiChannelTimeseriesClient {

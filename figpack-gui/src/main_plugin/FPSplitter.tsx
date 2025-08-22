@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useRef } from "react";
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
+import { ZarrGroup } from "../plugin-interface/ZarrTypes";
 import { FPView } from "../components/FPView";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar
@@ -12,8 +12,14 @@ export const FPSplitter: React.FC<{
 }> = ({ zarrGroup, width, height }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const initialSplitPos = zarrGroup.attrs["split_pos"] || 0.5;
-  const item1Metadata = zarrGroup.attrs["item1_metadata"] || {};
-  const item2Metadata = zarrGroup.attrs["item2_metadata"] || {};
+  const item1Metadata = useMemo(
+    () => zarrGroup.attrs["item1_metadata"] || {},
+    [zarrGroup]
+  );
+  const item2Metadata = useMemo(
+    () => zarrGroup.attrs["item2_metadata"] || {},
+    [zarrGroup]
+  );
 
   // Apply constraints to initial split position
   const constrainedInitialSplitPos = useMemo(() => {
