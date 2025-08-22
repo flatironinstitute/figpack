@@ -1,71 +1,18 @@
-import { ZarrGroup } from "../remote-zarr/RemoteZarr";
-import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
-import { FPMultiChannelTimeseries } from "./FPMultiChannelTimeseries";
-import { FPBox } from "./FPBox";
-import { FPSplitter } from "./FPSplitter";
-import { FPTabLayout } from "./FPTabLayout";
-import { FPAutocorrelograms } from "./spike_sorting/FPAutocorrelograms";
-import { FPCrossCorrelograms } from "./spike_sorting/FPCrossCorrelograms";
-import { FPUnitsTable } from "./spike_sorting/FPUnitsTable";
-import { FPMarkdown } from "./FPMarkdown";
-import { FPPlotlyFigure } from "./FPPlotlyFigure";
-import { FPMatplotlibFigure } from "./FPMatplotlibFigure";
-import { FPImage } from "./FPImage";
+import { viewComponentRegistry, FPViewComponentProps } from "../view-registry";
 
-export const FPView: React.FC<{
-  zarrGroup: ZarrGroup;
-  width: number;
-  height: number;
-}> = ({ zarrGroup, width, height }) => {
-  if (zarrGroup.attrs["view_type"] === "TimeseriesGraph") {
-    return (
-      <FPTimeseriesGraph zarrGroup={zarrGroup} width={width} height={height} />
-    );
-  } else if (zarrGroup.attrs["view_type"] === "MultiChannelTimeseries") {
-    return (
-      <FPMultiChannelTimeseries
-        zarrGroup={zarrGroup}
-        width={width}
-        height={height}
-      />
-    );
-  } else if (zarrGroup.attrs["view_type"] === "Box") {
-    return <FPBox zarrGroup={zarrGroup} width={width} height={height} />;
-  } else if (zarrGroup.attrs["view_type"] === "Splitter") {
-    return <FPSplitter zarrGroup={zarrGroup} width={width} height={height} />;
-  } else if (zarrGroup.attrs["view_type"] === "TabLayout") {
-    return <FPTabLayout zarrGroup={zarrGroup} width={width} height={height} />;
-  } else if (zarrGroup.attrs["view_type"] === "Autocorrelograms") {
-    return (
-      <FPAutocorrelograms zarrGroup={zarrGroup} width={width} height={height} />
-    );
-  } else if (zarrGroup.attrs["view_type"] === "CrossCorrelograms") {
-    return (
-      <FPCrossCorrelograms
-        zarrGroup={zarrGroup}
-        width={width}
-        height={height}
-      />
-    );
-  } else if (zarrGroup.attrs["view_type"] === "UnitsTable") {
-    return <FPUnitsTable zarrGroup={zarrGroup} width={width} height={height} />;
-  } else if (zarrGroup.attrs["view_type"] === "Markdown") {
-    return <FPMarkdown zarrGroup={zarrGroup} width={width} height={height} />;
-  } else if (zarrGroup.attrs["view_type"] === "PlotlyFigure") {
-    return (
-      <FPPlotlyFigure zarrGroup={zarrGroup} width={width} height={height} />
-    );
-  } else if (zarrGroup.attrs["view_type"] === "MatplotlibFigure") {
-    return (
-      <FPMatplotlibFigure zarrGroup={zarrGroup} width={width} height={height} />
-    );
-  } else if (zarrGroup.attrs["view_type"] === "Image") {
-    return <FPImage zarrGroup={zarrGroup} width={width} height={height} />;
-  } else {
+export const FPView: React.FC<FPViewComponentProps> = (props) => {
+  const { zarrGroup } = props;
+  const viewType = zarrGroup.attrs["view_type"];
+  const plugin = viewComponentRegistry.get(viewType);
+
+  if (!plugin) {
     return (
       <div>
-        <h1>Unsupported view type: {zarrGroup.attrs["view_type"]}</h1>
+        <h1>Unsupported view type: {viewType}</h1>
       </div>
     );
   }
+
+  const Component = plugin.component;
+  return <Component {...props} />;
 };

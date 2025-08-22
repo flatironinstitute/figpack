@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useRef } from "react";
 import { ZarrGroup } from "../remote-zarr/RemoteZarr";
-import { FPView } from "./FPView";
+import { FPView } from "../components/FPView";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar
 const MIN_PANE_SIZE = 50; // Minimum size for each pane
