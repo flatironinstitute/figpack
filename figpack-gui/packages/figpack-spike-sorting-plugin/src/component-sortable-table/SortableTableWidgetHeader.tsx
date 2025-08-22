@@ -44,19 +44,19 @@ const SortCaret = (ascending?: boolean) =>
   );
 
 type RowSorterCallback = (
-  colsMap: ColsDict
+  colsMap: ColsDict,
 ) => (rules: SortingRule[]) => (number | string)[];
 // eslint-disable-next-line react-refresh/only-export-components
 export const sorterCallbackWrapper = (
   rowsMap: RowsDict,
-  colsMap: ColsDict
+  colsMap: ColsDict,
 ): ((rules: SortingRule[]) => (number | string)[]) => {
   return (rules: SortingRule[]) => sortRows(rowsMap, colsMap, rules);
 };
 const sortRows = (
   rowsMap: RowsDict,
   colsMap: ColsDict,
-  rules: SortingRule[]
+  rules: SortingRule[],
 ) => {
   const _draft = Array.from(rowsMap.values());
   rules.forEach((rule) => {
@@ -81,7 +81,7 @@ const sortRows = (
 };
 
 const getColumnNameDict = (
-  columns: SortableTableWidgetColumn[]
+  columns: SortableTableWidgetColumn[],
 ): Map<string, SortableTableWidgetColumn> => {
   const map = new Map<string, SortableTableWidgetColumn>();
   columns.forEach((c) => map.set(c.columnName, c));
@@ -90,7 +90,7 @@ const getColumnNameDict = (
 
 const mapColumnsToHeaderInfo = (
   columns: SortableTableWidgetColumn[],
-  primarySortRule?: SortingRule
+  primarySortRule?: SortingRule,
 ): ColumnHeaderInfo[] => {
   return columns.map((c) => ({
     name: c.columnName,
@@ -103,7 +103,7 @@ const mapColumnsToHeaderInfo = (
 };
 
 const SortableTableWidgetHeaderRow: FunctionComponent<HeaderRowProps> = (
-  props
+  props,
 ) => {
   const {
     columns,
@@ -117,12 +117,12 @@ const SortableTableWidgetHeaderRow: FunctionComponent<HeaderRowProps> = (
   const columnsMap = useMemo(() => getColumnNameDict(columns), [columns]);
   const columnHeaders = useMemo(
     () => mapColumnsToHeaderInfo(columns, primarySortRule),
-    [columns, primarySortRule]
+    [columns, primarySortRule],
   );
 
   const toggleSelectAllCallback = useCallback(
     () => selectionDispatch({ type: TOGGLE_SELECT_ALL }),
-    [selectionDispatch]
+    [selectionDispatch],
   );
   // We don't want the headers to have to worry about the row contents, but it makes sense for sorting logic to live with
   // the columns. So we have the SortableTableWidget parent give us a memoized function that has the rows in it already.
@@ -132,7 +132,7 @@ const SortableTableWidgetHeaderRow: FunctionComponent<HeaderRowProps> = (
   // passing to the reducer.
   const sortCallback = useCallback(
     (rules: SortingRule[]) => rowSorterCallback(columnsMap)(rules),
-    [rowSorterCallback, columnsMap]
+    [rowSorterCallback, columnsMap],
   );
 
   const handleColumnClick = useCallback(
@@ -147,7 +147,7 @@ const SortableTableWidgetHeaderRow: FunctionComponent<HeaderRowProps> = (
           : undefined,
       });
     },
-    [selectionDispatch, sortCallback, selectionDisabled, columnsMap]
+    [selectionDispatch, sortCallback, selectionDisabled, columnsMap],
   );
 
   const _renderedHeaders = useMemo(() => {

@@ -35,11 +35,11 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
 
         const binEdgesSecData = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, `${crossCorrName}/bin_edges_sec`),
-          {}
+          {},
         );
         const binCountsData = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, `${crossCorrName}/bin_counts`),
-          {}
+          {},
         );
 
         if (binEdgesSecData && binCountsData) {
@@ -48,7 +48,7 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
 
           // Get unit_ids from metadata
           const metadata = crossCorrelogramMetadata.find(
-            (m) => m.name === crossCorrName
+            (m) => m.name === crossCorrName,
           );
           const unitId1 = metadata?.unit_id1 || i;
           const unitId2 = metadata?.unit_id2 || i;

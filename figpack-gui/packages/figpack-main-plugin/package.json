@@ -16,7 +16,8 @@
   "scripts": {
     "build": "tsc && cpy \"**/*.css\" \"../dist\" --cwd=src",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "peerDependencies": {
     "@emotion/react": "^11.14.0",

@@ -84,7 +84,7 @@ function App() {
           width={width}
           height={adjustedHeight}
           FPView={FPView}
-        />
+        />,
       )}
       <StatusBar />
     </>

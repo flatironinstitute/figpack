@@ -75,7 +75,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     useTimeseriesSelection();
   const timeRange = useMemo(
     () => [visibleStartTimeSec, visibleEndTimeSec] as [number, number],
-    [visibleStartTimeSec, visibleEndTimeSec]
+    [visibleStartTimeSec, visibleEndTimeSec],
   );
 
   const { margins, canvasWidth, canvasHeight } = useTimeScrollView3({
@@ -119,7 +119,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     canvasWidth,
     visibleStartTimeSec,
     visibleEndTimeSec,
-    timeToPixel
+    timeToPixel,
   );
 
   const yTicks = useYAxisTicks({
@@ -136,7 +136,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         pixelValue: yToPixel(t.dataValue),
       })),
     }),
-    [yTicks, yToPixel]
+    [yTicks, yToPixel],
   );
 
   const plotHeight = canvasHeight;
@@ -168,7 +168,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
 
   const currentTimePixels = useMemo(
     () => (currentTime !== undefined ? timeToPixel(currentTime) : undefined),
-    [currentTime, timeToPixel]
+    [currentTime, timeToPixel],
   );
 
   const cursorLayer = useMemo(() => {
@@ -236,7 +236,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       hoverTime,
       requireClickToZoom,
       isViewClicked,
-    ]
+    ],
   );
 
   const handleKeyDown: React.KeyboardEventHandler = useCallback(
@@ -252,7 +252,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       }
       if (onKeyDown) onKeyDown(e);
     },
-    [onKeyDown, zoomTimeseriesSelection, panTimeseriesSelection]
+    [onKeyDown, zoomTimeseriesSelection, panTimeseriesSelection],
   );
 
   const handleZoomToFit = useCallback(() => {

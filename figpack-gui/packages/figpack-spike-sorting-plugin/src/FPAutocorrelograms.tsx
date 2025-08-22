@@ -33,11 +33,11 @@ export const FPAutocorrelograms: FunctionComponent<Props> = ({
 
         const binEdgesSecData = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, `${autocorrName}/bin_edges_sec`),
-          {}
+          {},
         );
         const binCountsData = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, `${autocorrName}/bin_counts`),
-          {}
+          {},
         );
 
         if (binEdgesSecData && binCountsData) {
@@ -46,7 +46,7 @@ export const FPAutocorrelograms: FunctionComponent<Props> = ({
 
           // Get unit_id from metadata
           const metadata = autocorrelogramMetadata.find(
-            (m) => m.name === autocorrName
+            (m) => m.name === autocorrName,
           );
           const unitId = metadata?.unit_id || i;
 

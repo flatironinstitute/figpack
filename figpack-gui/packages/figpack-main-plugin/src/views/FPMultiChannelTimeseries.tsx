@@ -65,7 +65,7 @@ export const FPMultiChannelTimeseries: React.FC<{
         const data = await client.getVisibleData(
           visibleStartTimeSec,
           visibleEndTimeSec,
-          plotWidth
+          plotWidth,
         );
         if (!canceled) {
           setVisibleData(data);
@@ -196,7 +196,7 @@ export const FPMultiChannelTimeseries: React.FC<{
         margins.left,
         margins.top,
         canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom
+        canvasHeight - margins.top - margins.bottom,
       );
       context.clip();
 
@@ -323,7 +323,7 @@ export const FPMultiChannelTimeseries: React.FC<{
         tooltip: "Increase vertical spacing",
       },
     ],
-    [verticalSpacing, setVerticalSpacing]
+    [verticalSpacing, setVerticalSpacing],
   );
 
   return (

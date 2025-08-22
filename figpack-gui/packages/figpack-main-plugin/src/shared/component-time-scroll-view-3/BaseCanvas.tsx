@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 
 const getDrawingContextFromCanvasRef = (
-  canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+  canvasRef: React.MutableRefObject<HTMLCanvasElement | null>,
 ) => {
   if (!canvasRef || typeof canvasRef === "function") return undefined;
   const canvas = canvasRef.current;
@@ -15,7 +15,7 @@ interface BaseCanvasProps<T> {
   height: number;
   draw: (
     context: CanvasRenderingContext2D,
-    data: T
+    data: T,
   ) => void /* function that draws the data onto the canvas */;
   drawData: T;
 }

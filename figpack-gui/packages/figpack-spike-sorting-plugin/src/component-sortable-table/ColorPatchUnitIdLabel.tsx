@@ -10,7 +10,7 @@ export interface ColorPatchUnitLabelProps {
 }
 
 const ColorPatchUnitIdLabel: FunctionComponent<ColorPatchUnitLabelProps> = (
-  props: ColorPatchUnitLabelProps
+  props: ColorPatchUnitLabelProps,
 ) => {
   const { unitId, mergeGroup } = props;
   const colorPatch = getUnitColor(idToNum(unitId));
@@ -31,7 +31,7 @@ const ColorPatchUnitIdLabel: FunctionComponent<ColorPatchUnitLabelProps> = (
 // eslint-disable-next-line react-refresh/only-export-components
 export const mergeGroupForUnitId = (
   unitId: number | string,
-  curation?: SortingCuration | undefined
+  curation?: SortingCuration | undefined,
 ) => {
   const mergeGroups = (curation || {}).mergeGroups || [];
   return mergeGroups.filter((g) => g.includes(unitId))[0] || null;

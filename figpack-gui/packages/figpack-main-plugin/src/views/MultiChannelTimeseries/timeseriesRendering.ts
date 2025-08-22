@@ -13,7 +13,7 @@ export const paintDownsampledChannelLine = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  }
+  },
 ) => {
   const {
     startTimeSec,
@@ -34,11 +34,11 @@ export const paintDownsampledChannelLine = (
   // Calculate visible data range using start time and sampling frequency
   const i1 = Math.max(
     0,
-    Math.floor((visibleStartTimeSec - startTimeSec) * samplingFrequency) - 1
+    Math.floor((visibleStartTimeSec - startTimeSec) * samplingFrequency) - 1,
   );
   const i2 = Math.min(
     length - 1,
-    Math.ceil((visibleEndTimeSec - startTimeSec) * samplingFrequency) + 1
+    Math.ceil((visibleEndTimeSec - startTimeSec) * samplingFrequency) + 1,
   );
 
   if (i1 > i2) return;
@@ -74,7 +74,7 @@ export const paintOriginalChannelLine = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  }
+  },
 ) => {
   const {
     startTimeSec,
@@ -95,11 +95,11 @@ export const paintOriginalChannelLine = (
   // Calculate visible data range using start time and sampling frequency
   const i1 = Math.max(
     0,
-    Math.floor((visibleStartTimeSec - startTimeSec) * samplingFrequency) - 1
+    Math.floor((visibleStartTimeSec - startTimeSec) * samplingFrequency) - 1,
   );
   const i2 = Math.min(
     length - 1,
-    Math.ceil((visibleEndTimeSec - startTimeSec) * samplingFrequency) + 1
+    Math.ceil((visibleEndTimeSec - startTimeSec) * samplingFrequency) + 1,
   );
 
   if (i1 > i2) return;

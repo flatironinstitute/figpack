@@ -7,7 +7,7 @@ import { join } from "./utils";
  * across all channels in the timeseries data.
  */
 const computeBaseSpacingUnit = async (
-  client: MultiChannelTimeseriesClient
+  client: MultiChannelTimeseriesClient,
 ): Promise<number> => {
   try {
     // Load a representative sample of data (first 10,000 points or 10% of data, whichever is smaller)
@@ -19,7 +19,7 @@ const computeBaseSpacingUnit = async (
           [0, sampleSize],
           [0, client.nChannels],
         ],
-      }
+      },
     );
 
     if (!sampleData || sampleData.length === 0) {
@@ -28,32 +28,33 @@ const computeBaseSpacingUnit = async (
 
     // Convert to per-channel arrays and compute percentiles
     const channelRanges: number[] = [];
-    
+
     for (let ch = 0; ch < client.nChannels; ch++) {
       const channelValues: number[] = [];
       for (let i = 0; i < sampleSize; i++) {
         channelValues.push(sampleData[i * client.nChannels + ch] as number);
       }
-      
+
       // Sort values to compute percentiles
       channelValues.sort((a, b) => a - b);
-      
+
       // Compute 10th and 90th percentiles (inner 80th percentile range)
       const p10Index = Math.floor(channelValues.length * 0.1);
       const p90Index = Math.floor(channelValues.length * 0.9);
       const p10 = channelValues[p10Index];
       const p90 = channelValues[p90Index];
-      
+
       channelRanges.push(p90 - p10);
     }
-    
+
     // Compute median of all channel ranges
     channelRanges.sort((a, b) => a - b);
     const medianIndex = Math.floor(channelRanges.length / 2);
-    const medianRange = channelRanges.length % 2 === 0
-      ? (channelRanges[medianIndex - 1] + channelRanges[medianIndex]) / 2
-      : channelRanges[medianIndex];
-    
+    const medianRange =
+      channelRanges.length % 2 === 0
+        ? (channelRanges[medianIndex - 1] + channelRanges[medianIndex]) / 2
+        : channelRanges[medianIndex];
+
     return medianRange / 2;
   } catch (error) {
     console.error("Failed to compute base spacing unit:", error);
@@ -65,16 +66,18 @@ const computeBaseSpacingUnit = async (
 /**
  * Custom hook to compute and manage base spacing unit for vertical spacing
  */
-export const useBaseSpacingUnit = (client: MultiChannelTimeseriesClient | null) => {
+export const useBaseSpacingUnit = (
+  client: MultiChannelTimeseriesClient | null,
+) => {
   const [baseSpacingUnit, setBaseSpacingUnit] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!client) return;
-    
+
     let canceled = false;
     setIsLoading(true);
-    
+
     const computeSpacing = async () => {
       try {
         const baseUnit = await computeBaseSpacingUnit(client);
@@ -90,7 +93,7 @@ export const useBaseSpacingUnit = (client: MultiChannelTimeseriesClient | null) 
         }
       }
     };
-    
+
     computeSpacing();
     return () => {
       canceled = true;

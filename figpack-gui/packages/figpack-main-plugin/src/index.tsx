@@ -11,8 +11,13 @@ import { FPTabLayout } from "./views/FPTabLayout";
 import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
 import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
 
+export {
+  useTimeRange,
+  useTimeseriesSelection,
+} from "./shared/context-timeseries-selection";
+
 const registerViewComponents = (
-  viewComponentRegistry: FPViewComponentRegistry
+  viewComponentRegistry: FPViewComponentRegistry,
 ) => {
   viewComponentRegistry.registerViewComponent({
     type: "TimeseriesGraph",

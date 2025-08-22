@@ -1,5 +1,5 @@
 const suppressWheelScroll = (
-  divRef: React.MutableRefObject<HTMLDivElement | null>
+  divRef: React.MutableRefObject<HTMLDivElement | null>,
 ) => {
   if (!divRef || !divRef.current) return;
   const canvases = divRef.current.querySelectorAll("canvas");

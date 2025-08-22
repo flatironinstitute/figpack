@@ -33,7 +33,7 @@ export type CrossCorrelogramsViewData = {
 };
 
 export const isCrossCorrelogramsViewData = (
-  x: any
+  x: any,
 ): x is CrossCorrelogramsViewData => {
   return validateObject(x, {
     type: isEqualTo("CrossCorrelograms"),

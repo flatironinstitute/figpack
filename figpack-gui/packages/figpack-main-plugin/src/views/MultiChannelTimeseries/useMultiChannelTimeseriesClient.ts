@@ -4,7 +4,7 @@ import { MultiChannelTimeseriesClient } from "./MultiChannelTimeseriesClient";
 
 export const useMultiChannelTimeseriesClient = (zarrGroup: ZarrGroup) => {
   const [client, setClient] = useState<MultiChannelTimeseriesClient | null>(
-    null
+    null,
   );
 
   useEffect(() => {

@@ -57,7 +57,7 @@ export const FPTimeseriesGraph: React.FC<{
         margins.left,
         margins.top,
         canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom
+        canvasHeight - margins.top - margins.bottom,
       );
       context.clip();
       const timeToPixel = (t: number) => {
@@ -155,7 +155,7 @@ const paintLine = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  }
+  },
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel } =
     options;
@@ -208,7 +208,7 @@ const paintMarker = (
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
     valueToPixel: (v: number) => number;
-  }
+  },
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel } =
     options;
@@ -227,7 +227,7 @@ const paintMarker = (
         x - series.radius,
         y - series.radius,
         series.radius * 2,
-        series.radius * 2
+        series.radius * 2,
       );
     }
     context.fill();
@@ -241,7 +241,7 @@ const paintInterval = (
     visibleStartTimeSec: number;
     visibleEndTimeSec: number;
     timeToPixel: (t: number) => number;
-  }
+  },
 ) => {
   const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel } = options;
   context.fillStyle = series.color;
@@ -256,7 +256,7 @@ const paintInterval = (
       xStart,
       0,
       xEnd - xStart,
-      context.canvas.height // Fill the full height of the canvas
+      context.canvas.height, // Fill the full height of the canvas
     );
   }
   context.globalAlpha = 1; // Reset alpha to default
@@ -268,14 +268,14 @@ const paintLegend = (
   options: {
     margins: { left: number; top: number; right: number; bottom: number };
     canvasWidth: number;
-  }
+  },
 ) => {
   if (!client) return;
   if (client.legendOpts.hideLegend) return;
 
   // Filter series to include only those with names and exclude interval series
   const seriesToInclude = client.series.filter(
-    (s) => s.seriesType !== "interval"
+    (s) => s.seriesType !== "interval",
   );
 
   if (seriesToInclude.length === 0) return;
@@ -337,7 +337,7 @@ const paintLegend = (
     context.fillText(
       title,
       titleRect.x,
-      titleRect.y + titleRect.h / 2 + entryFontSize / 2
+      titleRect.y + titleRect.h / 2 + entryFontSize / 2,
     );
 
     if (s.seriesType === "line") {
@@ -346,7 +346,7 @@ const paintLegend = (
       context.moveTo(symbolRect.x, symbolRect.y + symbolRect.h / 2);
       context.lineTo(
         symbolRect.x + symbolRect.w,
-        symbolRect.y + symbolRect.h / 2
+        symbolRect.y + symbolRect.h / 2,
       );
       context.stroke();
       context.setLineDash([]);
@@ -367,7 +367,7 @@ const paintLegend = (
           center.x - radius,
           center.y - radius,
           radius * 2,
-          radius * 2
+          radius * 2,
         );
       }
     }
@@ -376,7 +376,7 @@ const paintLegend = (
 
 const applyLineAttributes = (
   context: CanvasRenderingContext2D,
-  series: LineSeries
+  series: LineSeries,
 ) => {
   context.strokeStyle = series.color;
   context.lineWidth = series.width;
@@ -389,7 +389,7 @@ const applyLineAttributes = (
 
 const applyMarkerAttributes = (
   context: CanvasRenderingContext2D,
-  series: MarkerSeries
+  series: MarkerSeries,
 ) => {
   context.fillStyle = series.color;
 };
@@ -443,14 +443,14 @@ class TimeseriesGraphClient {
     public limits: { tMin: number; tMax: number; yMin: number; yMax: number },
     public yLabel: string,
     public legendOpts: { location?: string; hideLegend?: boolean } = {},
-    public seriesNames: string[] = []
+    public seriesNames: string[] = [],
   ) {}
   static async create(zarrGroup: ZarrGroup) {
     const seriesNames = zarrGroup.attrs["series_names"] || [];
     const series: (LineSeries | MarkerSeries | IntervalSeries)[] = [];
     for (const name of seriesNames) {
       const seriesGroup = await zarrGroup.file.getGroup(
-        join(zarrGroup.path, name)
+        join(zarrGroup.path, name),
       );
       if (!seriesGroup) {
         console.warn(`Series group not found: ${name}`);
@@ -460,7 +460,7 @@ class TimeseriesGraphClient {
       if (attrs["series_type"] === "line") {
         const t = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t",
-          {}
+          {},
         );
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
@@ -468,7 +468,7 @@ class TimeseriesGraphClient {
         }
         const y = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/y",
-          {}
+          {},
         );
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
@@ -485,7 +485,7 @@ class TimeseriesGraphClient {
       } else if (attrs["series_type"] === "marker") {
         const t = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t",
-          {}
+          {},
         );
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
@@ -493,7 +493,7 @@ class TimeseriesGraphClient {
         }
         const y = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/y",
-          {}
+          {},
         );
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
@@ -510,7 +510,7 @@ class TimeseriesGraphClient {
       } else if (attrs["series_type"] === "interval") {
         const t_start = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t_start",
-          {}
+          {},
         );
         if (!t_start) {
           console.warn(`Dataset t_start not found for series: ${name}`);
@@ -518,7 +518,7 @@ class TimeseriesGraphClient {
         }
         const t_end = await seriesGroup.file.getDatasetData(
           seriesGroup.path + "/t_end",
-          {}
+          {},
         );
         if (!t_end) {
           console.warn(`Dataset t_end not found for series: ${name}`);
@@ -533,7 +533,7 @@ class TimeseriesGraphClient {
         });
       } else {
         console.warn(
-          `Unknown series type for ${name}: ${attrs["series_type"]}`
+          `Unknown series type for ${name}: ${attrs["series_type"]}`,
         );
         continue;
       }
@@ -578,7 +578,7 @@ class TimeseriesGraphClient {
       limits,
       yLabel,
       legendOpts,
-      seriesNames
+      seriesNames,
     );
   }
 }

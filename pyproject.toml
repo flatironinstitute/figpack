@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "zarr",
+    "zarr<3",
     "requests",
 ]
 

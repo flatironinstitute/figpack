@@ -9,7 +9,7 @@ declare global {
         div: HTMLElement,
         data: unknown[],
         layout: Record<string, unknown>,
-        config: Record<string, unknown>
+        config: Record<string, unknown>,
       ) => void;
       Plots: {
         resize: (div: HTMLElement) => void;
@@ -80,7 +80,7 @@ export const FPPlotlyFigure: React.FC<{
           responsive: true,
           displayModeBar: true,
           displaylogo: false,
-        }
+        },
       );
     } catch (plotError) {
       console.error("Failed to create plot:", plotError);

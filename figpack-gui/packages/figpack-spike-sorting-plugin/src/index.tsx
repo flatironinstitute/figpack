@@ -8,7 +8,7 @@ import { FPUnitsTable } from "./FPUnitsTable";
 import UnitSelectionProvider from "./context-unit-selection/UnitSelectionProvider";
 
 const registerViewComponents = (
-  viewComponentRegistry: FPViewComponentRegistry
+  viewComponentRegistry: FPViewComponentRegistry,
 ) => {
   viewComponentRegistry.registerViewComponent({
     type: "Autocorrelograms",

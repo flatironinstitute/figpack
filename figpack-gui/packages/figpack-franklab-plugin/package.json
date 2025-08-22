@@ -1,5 +1,5 @@
 {
-  "name": "@figpack/spike-sorting-plugin",
+  "name": "@figpack/franklab-plugin",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,7 +27,9 @@
     "react-dom": "^19.1.1"
   },
   "dependencies": {
-    "@figpack/plugin-sdk": "*"
+    "@figpack/plugin-sdk": "*",
+    "@figpack/main-plugin": "*",
+    "react-select": "^5.10.2"
   },
   "devDependencies": {
     "cpy-cli": "^6.0.0",

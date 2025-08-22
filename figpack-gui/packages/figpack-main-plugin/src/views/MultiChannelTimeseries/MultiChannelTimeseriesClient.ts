@@ -12,7 +12,7 @@ export class MultiChannelTimeseriesClient {
     public nChannels: number,
     public dataMin: number,
     public dataMax: number,
-    public downsampleFactors: number[]
+    public downsampleFactors: number[],
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
@@ -34,7 +34,7 @@ export class MultiChannelTimeseriesClient {
           [0, Math.min(1000, nTimepoints)],
           [0, nChannels],
         ],
-      }
+      },
     );
 
     let dataMin = Infinity;
@@ -58,14 +58,14 @@ export class MultiChannelTimeseriesClient {
       nChannels,
       dataMin,
       dataMax,
-      downsampleFactors
+      downsampleFactors,
     );
   }
 
   async getVisibleData(
     visibleStartTimeSec: number,
     visibleEndTimeSec: number,
-    canvasWidth: number
+    canvasWidth: number,
   ): Promise<{
     data: Float32Array[];
     isDownsampled: boolean;
@@ -78,13 +78,13 @@ export class MultiChannelTimeseriesClient {
     const visibleDuration = visibleEndTimeSec - visibleStartTimeSec;
     const totalDuration = this.endTimeSec - this.startTimeSec;
     const visibleTimepoints = Math.ceil(
-      (visibleDuration / totalDuration) * this.nTimepoints
+      (visibleDuration / totalDuration) * this.nTimepoints,
     );
 
     // Determine optimal downsample factor
     const downsampleFactor = this._selectDownsampleFactor(
       visibleTimepoints,
-      canvasWidth
+      canvasWidth,
     );
 
     if (downsampleFactor === 1) {
@@ -95,18 +95,18 @@ export class MultiChannelTimeseriesClient {
       return this._loadDownsampledData(
         downsampleFactor,
         visibleStartTimeSec,
-        visibleEndTimeSec
+        visibleEndTimeSec,
       );
     }
   }
 
   private _selectDownsampleFactor(
     visibleTimepoints: number,
-    canvasWidth: number
+    canvasWidth: number,
   ): number {
     // Find the largest downsample factor such that downsampled points > canvasWidth
     const availableFactors = [1, ...this.downsampleFactors].sort(
-      (a, b) => b - a
+      (a, b) => b - a,
     );
 
     for (const factor of availableFactors) {
@@ -120,7 +120,7 @@ export class MultiChannelTimeseriesClient {
 
   private async _loadOriginalData(
     visibleStartTimeSec: number,
-    visibleEndTimeSec: number
+    visibleEndTimeSec: number,
   ): Promise<{
     data: Float32Array[];
     isDownsampled: boolean;
@@ -133,14 +133,14 @@ export class MultiChannelTimeseriesClient {
     const startIndex = Math.max(
       0,
       Math.floor(
-        (visibleStartTimeSec - this.startTimeSec) * this.samplingFrequencyHz
-      )
+        (visibleStartTimeSec - this.startTimeSec) * this.samplingFrequencyHz,
+      ),
     );
     const endIndex = Math.min(
       this.nTimepoints - 1,
       Math.ceil(
-        (visibleEndTimeSec - this.startTimeSec) * this.samplingFrequencyHz
-      )
+        (visibleEndTimeSec - this.startTimeSec) * this.samplingFrequencyHz,
+      ),
     );
 
     const length = endIndex - startIndex + 1;
@@ -153,7 +153,7 @@ export class MultiChannelTimeseriesClient {
           [startIndex, endIndex + 1],
           [0, this.nChannels],
         ],
-      }
+      },
     );
 
     if (!rawData) {
@@ -183,7 +183,7 @@ export class MultiChannelTimeseriesClient {
   private async _loadDownsampledData(
     downsampleFactor: number,
     visibleStartTimeSec: number,
-    visibleEndTimeSec: number
+    visibleEndTimeSec: number,
   ): Promise<{
     data: Float32Array[];
     isDownsampled: boolean;
@@ -200,14 +200,14 @@ export class MultiChannelTimeseriesClient {
     const startIndex = Math.max(
       0,
       Math.floor(
-        (visibleStartTimeSec - this.startTimeSec) * downsampledSamplingFreq
-      )
+        (visibleStartTimeSec - this.startTimeSec) * downsampledSamplingFreq,
+      ),
     );
     const endIndex = Math.min(
       downsampledLength - 1,
       Math.ceil(
-        (visibleEndTimeSec - this.startTimeSec) * downsampledSamplingFreq
-      )
+        (visibleEndTimeSec - this.startTimeSec) * downsampledSamplingFreq,
+      ),
     );
 
     const length = endIndex - startIndex + 1;
@@ -221,7 +221,7 @@ export class MultiChannelTimeseriesClient {
           [0, 2],
           [0, this.nChannels],
         ],
-      }
+      },
     );
 
     if (!rawData) {

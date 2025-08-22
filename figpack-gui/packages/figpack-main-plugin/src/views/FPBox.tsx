@@ -32,7 +32,7 @@ export const FPBox: React.FC<{
   const showTitles = zarrGroup.attrs["show_titles"] || false;
   const itemsMetadata: LayoutItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
-    [zarrGroup]
+    [zarrGroup],
   );
 
   // Track collapsed state for collapsible items
@@ -57,7 +57,7 @@ export const FPBox: React.FC<{
       direction as "horizontal" | "vertical",
       itemsMetadata,
       showTitles,
-      collapsedItems
+      collapsedItems,
     );
   }, [width, height, direction, itemsMetadata, showTitles, collapsedItems]);
 
@@ -151,7 +151,7 @@ const BoxItem: React.FC<{
     const loadGroup = async () => {
       try {
         const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName)
+          join(zarrGroup.path, itemName),
         );
         if (canceled) return;
         setChildGroup(group || null);
@@ -200,7 +200,7 @@ function calculateLayout(
   direction: "horizontal" | "vertical",
   items: LayoutItemData[],
   showTitles: boolean,
-  collapsedItems: Set<string>
+  collapsedItems: Set<string>,
 ): LayoutResult[] {
   const results: LayoutResult[] = [];
 
@@ -265,7 +265,7 @@ function calculateLayout(
 function calculateSizes(
   availableSpace: number,
   items: LayoutItemData[],
-  collapsedItems: Set<string>
+  collapsedItems: Set<string>,
 ): number[] {
   const sizes: number[] = [];
   // First pass: handle fixed sizes and calculate total stretch
@@ -282,7 +282,7 @@ function calculateSizes(
       // Fixed size (min == max)
       const size = Math.min(
         item.max_size,
-        Math.max(item.min_size, item.min_size)
+        Math.max(item.min_size, item.min_size),
       );
       sizes.push(size);
     } else if (item.min_size) {

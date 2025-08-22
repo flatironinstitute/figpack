@@ -32,7 +32,7 @@ const AutocorrelogramsView: FunctionComponent<Props> = ({
 }) => {
   const [toolbarOptions, setToolbarOptions] =
     useState<UnitsTableBottomToolbarOptions>(
-      defaultUnitsTableBottomToolbarOptions
+      defaultUnitsTableBottomToolbarOptions,
     );
   const {
     selectedUnitIds,
@@ -54,7 +54,9 @@ const AutocorrelogramsView: FunctionComponent<Props> = ({
     () =>
       data.autocorrelograms
         .filter((a) =>
-          toolbarOptions.onlyShowSelected ? selectedUnitIds.has(a.unitId) : true
+          toolbarOptions.onlyShowSelected
+            ? selectedUnitIds.has(a.unitId)
+            : true,
         )
         .map((ac) => ({
           unitId: ac.unitId,
@@ -80,14 +82,14 @@ const AutocorrelogramsView: FunctionComponent<Props> = ({
       selectedUnitIds,
       showXAxis,
       plotBoxScaleFactor,
-    ]
+    ],
   );
   const plots2: PGPlot[] = useMemo(() => {
     if (orderedUnitIds && orderedUnitIds.length > 0) {
       return orderedUnitIds
         .map(
           (unitId: string | number) =>
-            plots.filter((a) => a.unitId === unitId)[0]
+            plots.filter((a) => a.unitId === unitId)[0],
         )
         .filter((p) => p !== undefined);
     } else return plots;

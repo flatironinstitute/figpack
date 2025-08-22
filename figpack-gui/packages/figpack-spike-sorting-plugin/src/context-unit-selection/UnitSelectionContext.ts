@@ -101,7 +101,7 @@ export const defaultUnitSelection = {
 
 export const unitSelectionReducer = (
   s: UnitSelection,
-  a: UnitSelectionAction
+  a: UnitSelectionAction,
 ): UnitSelection => {
   const { type } = a;
   switch (type) {
@@ -124,7 +124,7 @@ export const unitSelectionReducer = (
         };
       }
       throw Error(
-        "Attempt to initialize table ordering with no actual units passed."
+        "Attempt to initialize table ordering with no actual units passed.",
       );
     }
     case SET_SELECTION:
@@ -205,20 +205,20 @@ export const useSelectedUnitIds = () => {
   const { unitSelection, unitSelectionDispatch } = useUnitSelection();
   const checkboxClickHandlerGenerator = useMemo(
     () => getCheckboxClickHandlerGenerator(unitSelectionDispatch),
-    [unitSelectionDispatch]
+    [unitSelectionDispatch],
   );
   const plotClickHandlerGenerator = useMemo(
     () => getPlotClickHandlerGenerator(unitSelectionDispatch),
-    [unitSelectionDispatch]
+    [unitSelectionDispatch],
   );
 
   const orderedUnitIds = useMemo(
     () =>
       restrictUnitIds(
         unitSelection.orderedUnitIds,
-        unitSelection.restrictedUnitIds
+        unitSelection.restrictedUnitIds,
       ),
-    [unitSelection.orderedUnitIds, unitSelection.restrictedUnitIds]
+    [unitSelection.orderedUnitIds, unitSelection.restrictedUnitIds],
   );
 
   return {
@@ -243,7 +243,7 @@ export const useSelectedUnitIds = () => {
 
 const restrictUnitIds = (
   unitIds: (string | number)[],
-  restrictedUnitIds: (string | number)[] | undefined
+  restrictedUnitIds: (string | number)[] | undefined,
 ) => {
   if (restrictedUnitIds === undefined) return unitIds;
   const restrictedSet = new Set(restrictedUnitIds);

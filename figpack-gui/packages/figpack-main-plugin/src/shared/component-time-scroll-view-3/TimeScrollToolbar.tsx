@@ -61,7 +61,7 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
     (mode: InteractionMode) => {
       onInteractionModeChange(mode);
     },
-    [onInteractionModeChange]
+    [onInteractionModeChange],
   );
 
   return (

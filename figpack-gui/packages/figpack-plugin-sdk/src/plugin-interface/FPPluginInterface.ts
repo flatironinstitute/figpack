@@ -15,7 +15,7 @@ export interface ZarrFile {
       slice?: [number, number][];
       allowBigInt?: boolean;
       canceler?: Canceler;
-    }
+    },
   ) => Promise<DatasetDataType | undefined>;
 }
 
@@ -37,7 +37,7 @@ export interface FPViewComponentRegistry {
 
 export interface FPPlugin {
   registerViewComponents: (
-    viewComponentRegistry: FPViewComponentRegistry
+    viewComponentRegistry: FPViewComponentRegistry,
   ) => void;
   provideAppContexts?: (node: React.ReactNode) => React.ReactNode;
 }

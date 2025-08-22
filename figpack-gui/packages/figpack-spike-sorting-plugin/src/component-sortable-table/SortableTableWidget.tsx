@@ -42,11 +42,11 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
         orderedUnitIds,
         visibleUnitIds: _visibleUnitIds,
       }),
-    [selectedUnitIds, orderedUnitIds, _visibleUnitIds]
+    [selectedUnitIds, orderedUnitIds, _visibleUnitIds],
   );
   const rowSorter = useCallback(
     (colsDict: ColsDict) => sorterCallbackWrapper(rows, colsDict),
-    [rows]
+    [rows],
   );
 
   // useEffect(() => {

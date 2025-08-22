@@ -44,7 +44,7 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
     const C = data.crossCorrelograms.filter(
       (a) =>
         selectedUnitIdsArray.includes(a.unitId1) &&
-        selectedUnitIdsArray.includes(a.unitId2)
+        selectedUnitIdsArray.includes(a.unitId2),
     );
     const ret: (CrossCorrelogramData | undefined)[] = [];
     for (const i1 of selectedUnitIdsArray) {
@@ -70,7 +70,7 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
     const { plotWidth, plotHeight } = determinePlotSizeForSquareMatrixGrid(
       W,
       H,
-      nn
+      nn,
     );
     return crossCorrelogramsSorted.map((cc, ii) => ({
       key: `${ii}`,
@@ -197,11 +197,11 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
 export const determinePlotSizeForSquareMatrixGrid = (
   W: number,
   H: number,
-  nn: number
+  nn: number,
 ) => {
   const plotHeight = Math.min(
     (W - 30 - (nn - 1) * 7) / nn,
-    (H - 30 - (nn - 1) * 7) / nn
+    (H - 30 - (nn - 1) * 7) / nn,
   );
   const plotWidth = plotHeight;
   return { plotWidth, plotHeight };

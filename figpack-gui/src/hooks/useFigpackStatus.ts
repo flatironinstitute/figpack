@@ -26,7 +26,7 @@ export const useFigpackStatus = (): FigpackStatusResult => {
   const [isExpired, setIsExpired] = useState(false);
   const [expirationTime, setExpirationTime] = useState<Date | null>(null);
   const [timeUntilExpiration, setTimeUntilExpiration] = useState<string | null>(
-    null
+    null,
   );
 
   useEffect(() => {

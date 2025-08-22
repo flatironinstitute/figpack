@@ -13,7 +13,7 @@ type Props = {
 // eslint-disable-next-line react-refresh/only-export-components
 export const determineTickLocationsMsec = (
   xMin: number,
-  xMax: number
+  xMax: number,
 ): number[] => {
   const xSpan = xMax - xMin;
   let interval: number;
@@ -54,14 +54,14 @@ const CorrelogramPlot: FunctionComponent<Props> = ({
           color,
         };
       }),
-    [binCounts, binEdgesSec, color]
+    [binCounts, binEdgesSec, color],
   );
   const { xMin, xMax } = useMemo(
     () =>
       bars.length > 0
         ? { xMin: bars[0].xStart, xMax: bars[bars.length - 1].xEnd }
         : { xMin: 0, xMax: 1 },
-    [bars]
+    [bars],
   );
   const ticks: BarPlotTick[] = useMemo(() => {
     const tickLocations = determineTickLocationsMsec(xMin, xMax);

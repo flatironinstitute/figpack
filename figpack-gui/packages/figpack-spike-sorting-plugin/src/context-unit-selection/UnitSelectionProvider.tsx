@@ -9,7 +9,7 @@ const UnitSelectionProvider: FunctionComponent<{
 }> = ({ children }) => {
   const [unitSelection, unitSelectionDispatch] = useReducer(
     unitSelectionReducer,
-    defaultUnitSelection
+    defaultUnitSelection,
   );
 
   return (

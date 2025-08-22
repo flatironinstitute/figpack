@@ -28,7 +28,7 @@ export type AutocorrelogramsViewData = {
 };
 
 export const isAutocorrelogramsViewData = (
-  x: any
+  x: any,
 ): x is AutocorrelogramsViewData => {
   return validateObject(x, {
     type: isEqualTo("Autocorrelograms"),

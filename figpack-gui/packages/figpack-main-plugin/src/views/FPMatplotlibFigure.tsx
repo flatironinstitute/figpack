@@ -44,7 +44,7 @@ export const FPMatplotlibFigure: React.FC<{
           const heightValue = parseFloat(originalHeight.replace(/[^\d.]/g, ""));
           svgElement.setAttribute(
             "viewBox",
-            `0 0 ${widthValue} ${heightValue}`
+            `0 0 ${widthValue} ${heightValue}`,
           );
         }
 
