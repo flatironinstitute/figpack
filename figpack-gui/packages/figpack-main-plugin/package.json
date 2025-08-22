@@ -14,7 +14,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && cpy \"**/*.css\" \"dist\" --cwd=src --parents",
+    "build": "tsc && cpy \"**/*.css\" \"../dist\" --cwd=src",
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
