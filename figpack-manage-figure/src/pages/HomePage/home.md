@@ -7,7 +7,7 @@ A tool for creating and managing browser-based scientific figures and sharing th
 First, install the required packages:
 
 ```bash
-pip install figpack numpy
+pip install figpack numpy "zarr<3"
 ```
 
 Then you can create and display a simple visualization:
