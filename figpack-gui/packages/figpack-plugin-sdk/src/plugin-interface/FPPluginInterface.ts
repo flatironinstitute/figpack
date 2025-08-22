@@ -23,6 +23,7 @@ export interface FPViewComponentProps {
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
+  FPView: React.ComponentType<any>;
 }
 
 export interface FPViewComponent {

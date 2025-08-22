@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState } from "react";
 import { ZarrGroup } from "@figpack/plugin-sdk";
-import { FPView } from "../components/FPView";
 
 interface LayoutItemData {
   name: string;
@@ -26,7 +26,8 @@ export const FPBox: React.FC<{
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
-}> = ({ zarrGroup, width, height }) => {
+  FPView: React.ComponentType<any>;
+}> = ({ zarrGroup, width, height, FPView }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const showTitles = zarrGroup.attrs["show_titles"] || false;
   const itemsMetadata: LayoutItemData[] = useMemo(
@@ -125,6 +126,7 @@ export const FPBox: React.FC<{
                   itemName={item.name}
                   width={layout.width}
                   height={layout.height - layout.titleHeight}
+                  FPView={FPView}
                 />
               </div>
             )}
@@ -140,7 +142,8 @@ const BoxItem: React.FC<{
   itemName: string;
   width: number;
   height: number;
-}> = ({ zarrGroup, itemName, width, height }) => {
+  FPView: React.ComponentType<any>;
+}> = ({ zarrGroup, itemName, width, height, FPView }) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
@@ -181,7 +184,14 @@ const BoxItem: React.FC<{
     );
   }
 
-  return <FPView zarrGroup={childGroup} width={width} height={height} />;
+  return (
+    <FPView
+      zarrGroup={childGroup}
+      width={width}
+      height={height}
+      FPView={FPView}
+    />
+  );
 };
 
 function calculateLayout(

@@ -1,13 +1,14 @@
 // Import all view components
-import { FPBox } from "./FPBox";
-import { FPImage } from "./FPImage";
-import { FPMarkdown } from "./FPMarkdown";
-import { FPMatplotlibFigure } from "./FPMatplotlibFigure";
-import { FPMultiChannelTimeseries } from "./FPMultiChannelTimeseries";
-import { FPPlotlyFigure } from "./FPPlotlyFigure";
-import { FPSplitter } from "./FPSplitter";
-import { FPTabLayout } from "./FPTabLayout";
-import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
+import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
+import { FPBox } from "./views/FPBox";
+import { FPImage } from "./views/FPImage";
+import { FPMarkdown } from "./views/FPMarkdown";
+import { FPMatplotlibFigure } from "./views/FPMatplotlibFigure";
+import { FPMultiChannelTimeseries } from "./views/FPMultiChannelTimeseries";
+import { FPPlotlyFigure } from "./views/FPPlotlyFigure";
+import { FPSplitter } from "./views/FPSplitter";
+import { FPTabLayout } from "./views/FPTabLayout";
+import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
 import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
 
 const registerViewComponents = (
@@ -59,8 +60,14 @@ const registerViewComponents = (
   });
 };
 
+const provideAppContexts = (node: React.ReactNode) => {
+  // return <UnitSelectionProvider>{node}</UnitSelectionProvider>;
+  return <ProvideTimeseriesSelection>{node}</ProvideTimeseriesSelection>;
+};
+
 const plugin: FPPlugin = {
   registerViewComponents,
+  provideAppContexts,
 };
 
 export default plugin;

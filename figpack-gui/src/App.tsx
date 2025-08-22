@@ -1,14 +1,12 @@
-import { FPPlugin } from "@figpack/plugin-sdk";
-import spikeSortingPlugin from "@figpack/spike-sorting-plugin";
-import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
 import { useFigpackStatus } from "./hooks/useFigpackStatus";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
 import "./localStyles.css";
-import mainPlugin from "./main_plugin";
+import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
+import { plugins } from "./main";
 
 function App() {
   const zarrData = useZarrData();
@@ -26,12 +24,6 @@ function App() {
       }
     }
   }, [zarrData]);
-
-  // Get all plugins
-  const plugins: FPPlugin[] = useMemo(
-    () => [mainPlugin, spikeSortingPlugin],
-    []
-  );
 
   // Adjust height to account for status bar (30px height)
   const adjustedHeight = height - 30;
@@ -89,7 +81,12 @@ function App() {
     <>
       <ProvideTimeseriesSelection>
         {wrapWithContexts(
-          <FPView zarrGroup={zarrData} width={width} height={adjustedHeight} />
+          <FPView
+            zarrGroup={zarrData}
+            width={width}
+            height={adjustedHeight}
+            FPView={FPView}
+          />
         )}
       </ProvideTimeseriesSelection>
       <StatusBar />

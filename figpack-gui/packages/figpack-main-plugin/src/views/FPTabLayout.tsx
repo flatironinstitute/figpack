@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState } from "react";
 import { ZarrGroup } from "@figpack/plugin-sdk";
-import { FPView } from "../components/FPView";
 
 interface TabItemData {
   name: string;
@@ -13,7 +13,8 @@ export const FPTabLayout: React.FC<{
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
-}> = ({ zarrGroup, width, height }) => {
+  FPView: React.ComponentType<any>;
+}> = ({ zarrGroup, width, height, FPView }) => {
   const initialTabIndex = zarrGroup.attrs["initial_tab_index"] || 0;
   const itemsMetadata: TabItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
@@ -109,6 +110,7 @@ export const FPTabLayout: React.FC<{
             itemName={itemsMetadata[validActiveTabIndex].name}
             width={width}
             height={contentHeight}
+            FPView={FPView}
           />
         )}
       </div>
@@ -121,7 +123,8 @@ const TabContent: React.FC<{
   itemName: string;
   width: number;
   height: number;
-}> = ({ zarrGroup, itemName, width, height }) => {
+  FPView: React.ComponentType<any>;
+}> = ({ zarrGroup, itemName, width, height, FPView }) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
@@ -162,7 +165,14 @@ const TabContent: React.FC<{
     );
   }
 
-  return <FPView zarrGroup={childGroup} width={width} height={height} />;
+  return (
+    <FPView
+      zarrGroup={childGroup}
+      width={width}
+      height={height}
+      FPView={FPView}
+    />
+  );
 };
 
 const join = (path: string, name: string) => {

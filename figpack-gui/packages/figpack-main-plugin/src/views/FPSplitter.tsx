@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState, useCallback, useRef } from "react";
 import { ZarrGroup } from "@figpack/plugin-sdk";
-import { FPView } from "../components/FPView";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar
 const MIN_PANE_SIZE = 50; // Minimum size for each pane
@@ -9,7 +9,8 @@ export const FPSplitter: React.FC<{
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
-}> = ({ zarrGroup, width, height }) => {
+  FPView: React.ComponentType<any>;
+}> = ({ zarrGroup, width, height, FPView }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const initialSplitPos = zarrGroup.attrs["split_pos"] || 0.5;
   const item1Metadata = useMemo(
@@ -201,6 +202,7 @@ export const FPSplitter: React.FC<{
           itemName="item1"
           width={pane1Style.width}
           height={pane1Style.height}
+          FPView={FPView}
         />
       </div>
 
@@ -214,6 +216,7 @@ export const FPSplitter: React.FC<{
           itemName="item2"
           width={pane2Style.width}
           height={pane2Style.height}
+          FPView={FPView}
         />
       </div>
     </div>
@@ -225,7 +228,8 @@ const SplitterItem: React.FC<{
   itemName: string;
   width: number;
   height: number;
-}> = ({ zarrGroup, itemName, width, height }) => {
+  FPView: React.ComponentType<any>;
+}> = ({ zarrGroup, itemName, width, height, FPView }) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
