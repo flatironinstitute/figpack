@@ -1,12 +1,16 @@
-import { FPPlugin } from "src/plugin-interface/FPPluginInterface";
-import { viewComponentRegistry } from "../view-registry/FPViewComponentRegistry";
+import {
+  FPPlugin,
+  FPViewComponentRegistry,
+} from "src/plugin-interface/FPPluginInterface";
 
 // Import all view components
 import { FPAutocorrelograms } from "./FPAutocorrelograms";
 import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
 
-const registerViewComponents = () => {
+const registerViewComponents = (
+  viewComponentRegistry: FPViewComponentRegistry
+) => {
   viewComponentRegistry.registerViewComponent({
     type: "Autocorrelograms",
     component: FPAutocorrelograms,
@@ -22,8 +26,6 @@ const registerViewComponents = () => {
     component: FPUnitsTable,
   });
 };
-
-registerViewComponents();
 
 const plugin: FPPlugin = {
   registerViewComponents,

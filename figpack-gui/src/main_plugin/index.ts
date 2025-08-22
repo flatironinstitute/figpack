@@ -1,5 +1,3 @@
-import { viewComponentRegistry } from "../view-registry/FPViewComponentRegistry";
-
 // Import all view components
 import { FPBox } from "./FPBox";
 import { FPImage } from "./FPImage";
@@ -10,9 +8,14 @@ import { FPPlotlyFigure } from "./FPPlotlyFigure";
 import { FPSplitter } from "./FPSplitter";
 import { FPTabLayout } from "./FPTabLayout";
 import { FPTimeseriesGraph } from "./FPTimeseriesGraph";
-import { FPPlugin } from "src/plugin-interface/FPPluginInterface";
+import {
+  FPPlugin,
+  FPViewComponentRegistry,
+} from "src/plugin-interface/FPPluginInterface";
 
-const registerViewComponents = () => {
+const registerViewComponents = (
+  viewComponentRegistry: FPViewComponentRegistry
+) => {
   viewComponentRegistry.registerViewComponent({
     type: "TimeseriesGraph",
     component: FPTimeseriesGraph,
@@ -58,8 +61,6 @@ const registerViewComponents = () => {
     component: FPImage,
   });
 };
-
-registerViewComponents();
 
 const plugin: FPPlugin = {
   registerViewComponents,
