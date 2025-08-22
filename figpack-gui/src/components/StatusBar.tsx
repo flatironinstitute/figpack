@@ -78,7 +78,6 @@ export const StatusBar: React.FC = () => {
       <div className="status-bar">
         <span>Loading status...</span>
         <AboutButton title={title} description={description} />
-        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -88,7 +87,6 @@ export const StatusBar: React.FC = () => {
       <div className="status-bar error">
         <span>{error}</span>
         <AboutButton title={title} description={description} />
-        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -97,7 +95,6 @@ export const StatusBar: React.FC = () => {
     return (
       <div className="status-bar">
         <AboutButton title={title} description={description} />
-        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
