@@ -1,8 +1,12 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { validateApiKey } from '../../../lib/adminAuth';
-import connectDB, { Figure, IFigure } from '../../../lib/db';
-import { updateFigureJson } from '../../../lib/figureJsonManager';
-import { bucketBaseUrl, setCorsHeaders } from '../../../lib/config';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { validateApiKey } from "../../../lib/adminAuth";
+import connectDB, { Figure, IFigure } from "../../../lib/db";
+import { updateFigureJson } from "../../../lib/figureJsonManager";
+import {
+  bucketBaseUrl,
+  figureManagementUrl,
+  setCorsHeaders,
+} from "../../../lib/config";
 
 interface CreateFigureRequest {
   figureHash: string;
@@ -27,15 +31,15 @@ export default async function handler(
   setCorsHeaders(req, res);
 
   // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
   // Only allow POST requests
-  if (req.method !== 'POST') {
+  if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
-      message: 'Method not allowed'
+      message: "Method not allowed",
     });
   }
 
@@ -50,7 +54,7 @@ export default async function handler(
     if (!figureHash || !apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: figureHash, apiKey'
+        message: "Missing required fields: figureHash, apiKey",
       });
     }
 
@@ -58,7 +62,7 @@ export default async function handler(
     if (!/^[0-9a-f]{40}$/.test(figureHash)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid figureHash format'
+        message: "Invalid figureHash format",
       });
     }
 
@@ -67,7 +71,7 @@ export default async function handler(
     if (!authResult.isValid || !authResult.user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid API key'
+        message: "Invalid API key",
       });
     }
 
@@ -79,14 +83,16 @@ export default async function handler(
     let figureIsExistingAndCompleted = false;
     let existingFigure: IFigure | null = null;
     while (true) {
-      const candidateaFigureString = `${baseFigureString}${count > 0 ? `-${count}` : ''}`;
+      const candidateaFigureString = `${baseFigureString}${
+        count > 0 ? `-${count}` : ""
+      }`;
       const candidateFigureUrl = `${bucketBaseUrl}/figures/default/${candidateaFigureString}/index.html`;
       existingFigure = await Figure.findOne({ figureUrl: candidateFigureUrl });
       if (!existingFigure) {
         figureUrlToUse = candidateFigureUrl;
         break; // Found a unique figureString
       }
-      if (existingFigure.status === 'completed') {
+      if (existingFigure.status === "completed") {
         // Figure exists and is completed, use it
         figureUrlToUse = candidateFigureUrl;
         figureIsExistingAndCompleted = true;
@@ -96,7 +102,7 @@ export default async function handler(
       if (count > 20) {
         return res.status(500).json({
           success: false,
-          message: 'Too many attempts to find a unique figureString'
+          message: "Too many attempts to find a unique figureString",
         });
       }
     }
@@ -106,14 +112,14 @@ export default async function handler(
       if (!existingFigure) {
         return res.status(500).json({
           success: false,
-          message: 'Internal error: existing figure is null'
+          message: "Internal error: existing figure is null",
         });
       }
       // Return existing completed figure
       return res.status(200).json({
         success: true,
-        message: 'Figure already exists and is completed',
-        figure: existingFigure
+        message: "Figure already exists and is completed",
+        figure: existingFigure,
       });
     }
 
@@ -121,52 +127,52 @@ export default async function handler(
       // Figure exists, return its information (no error as per requirements)
       return res.status(200).json({
         success: true,
-        message: 'Figure already exists',
-        figure: existingFigure
+        message: "Figure already exists",
+        figure: existingFigure,
       });
     }
 
     // Create new figure document
     const now = Date.now();
-    const oneDayFromNow = now + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    const oneDayFromNow = now + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
     const newFigure = new Figure({
       figureUrl: figureUrlToUse,
-      status: 'uploading',
+      status: "uploading",
       ownerEmail: userEmail,
       uploadStarted: now,
       uploadUpdated: now,
       expiration: oneDayFromNow,
-      figpackVersion: req.body.figpackVersion || '1.0.0',
+      figpackVersion: req.body.figpackVersion || "1.0.0",
       totalFiles: req.body.totalFiles,
       totalSize: req.body.totalSize,
       title: req.body.title,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      figureManagementUrl,
     });
 
     await newFigure.save();
-    
+
     // Update figpack.json in the figure directory
     try {
       await updateFigureJson(newFigure);
     } catch (error) {
-      console.error('Error updating figpack.json:', error);
+      console.error("Error updating figpack.json:", error);
       // Continue with the request even if figpack.json update fails
     }
 
     return res.status(201).json({
       success: true,
-      message: 'Figure created successfully',
-      figure: newFigure.toObject()
+      message: "Figure created successfully",
+      figure: newFigure.toObject(),
     });
-
   } catch (error) {
-    console.error('Create figure API error:', error);
-    
+    console.error("Create figure API error:", error);
+
     return res.status(500).json({
       success: false,
-      message: `Internal server error: ${error || 'Unknown error'}`
+      message: `Internal server error: ${error || "Unknown error"}`,
     });
   }
 }

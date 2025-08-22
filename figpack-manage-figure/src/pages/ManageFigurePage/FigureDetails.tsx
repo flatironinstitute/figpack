@@ -20,6 +20,7 @@ interface FigureDetailsProps {
     uploadCompleted?: number;
     expiration: number;
     hasWriteAccess?: boolean;
+    figureManagementUrl?: string;
   };
   formatBytes: (bytes: number) => string;
   formatDate: (timestamp: number) => string;

@@ -1,8 +1,8 @@
-import { FIGPACK_API_BASE_URL } from '../../config';
+import { FIGPACK_API_BASE_URL } from "../../config";
 
 export interface FigureListItem {
   figureUrl: string;
-  status: 'uploading' | 'completed' | 'failed';
+  status: "uploading" | "completed" | "failed";
   ownerEmail: string;
   uploadStarted: number;
   uploadCompleted?: number;
@@ -20,6 +20,7 @@ export interface FigureListItem {
     pinnedTimestamp: number;
   };
   renewalTimestamp?: number;
+  figureManagementUrl?: string;
 }
 
 export interface FigureListResponse {
@@ -37,13 +38,21 @@ export interface FigureListParams {
   all?: boolean;
   page?: number;
   limit?: number;
-  status?: 'uploading' | 'completed' | 'failed';
+  status?: "uploading" | "completed" | "failed";
   search?: string;
-  sortBy?: 'createdAt' | 'updatedAt' | 'expiration' | 'figureUrl' | 'status' | 'title';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?:
+    | "createdAt"
+    | "updatedAt"
+    | "expiration"
+    | "figureUrl"
+    | "status"
+    | "title";
+  sortOrder?: "asc" | "desc";
 }
 
-export const getFigures = async (params: FigureListParams): Promise<FigureListResponse> => {
+export const getFigures = async (
+  params: FigureListParams
+): Promise<FigureListResponse> => {
   const {
     apiKey,
     all = false,
@@ -51,8 +60,8 @@ export const getFigures = async (params: FigureListParams): Promise<FigureListRe
     limit = 50,
     status,
     search,
-    sortBy = 'createdAt',
-    sortOrder = 'desc'
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = params;
 
   if (!apiKey) {
@@ -65,28 +74,31 @@ export const getFigures = async (params: FigureListParams): Promise<FigureListRe
       page: page.toString(),
       limit: limit.toString(),
       sortBy,
-      sortOrder
+      sortOrder,
     });
 
     if (all) {
-      queryParams.append('all', 'true');
+      queryParams.append("all", "true");
     }
 
     if (status) {
-      queryParams.append('status', status);
+      queryParams.append("status", status);
     }
 
     if (search && search.trim()) {
-      queryParams.append('search', search.trim());
+      queryParams.append("search", search.trim());
     }
 
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/figures/list?${queryParams}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-      },
-    });
+    const response = await fetch(
+      `${FIGPACK_API_BASE_URL}/api/figures/list?${queryParams}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
+      }
+    );
 
     const result = await response.json();
 
@@ -97,18 +109,18 @@ export const getFigures = async (params: FigureListParams): Promise<FigureListRe
         total: result.total || 0,
         page: result.page || 1,
         limit: result.limit || 50,
-        hasMore: result.hasMore || false
+        hasMore: result.hasMore || false,
       };
     } else {
       return {
         success: false,
-        message: result.message || "Failed to get figures"
+        message: result.message || "Failed to get figures",
       };
     }
   } catch (err) {
     return {
       success: false,
-      message: `Error getting figures: ${err}`
+      message: `Error getting figures: ${err}`,
     };
   }
 };

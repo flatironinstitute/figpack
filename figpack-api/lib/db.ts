@@ -1,7 +1,7 @@
-import mongoose, { Document, Model } from 'mongoose';
+import mongoose, { Document, Model } from "mongoose";
 
 if (!process.env.MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -38,27 +38,29 @@ async function connectDB() {
 
 // Figure interface
 export interface IFigure {
-  figureUrl: string;         // URL to access the figure
-  status: 'uploading' | 'completed' | 'failed';
-  ownerEmail: string;         // From API key validation
-  uploadStarted: number;      // Unix timestamp
-  uploadUpdated: number;      // Unix timestamp
-  uploadCompleted?: number;   // Unix timestamp (optional)
-  expiration: number;         // Unix timestamp
+  figureUrl: string; // URL to access the figure
+  status: "uploading" | "completed" | "failed";
+  ownerEmail: string; // From API key validation
+  uploadStarted: number; // Unix timestamp
+  uploadUpdated: number; // Unix timestamp
+  uploadCompleted?: number; // Unix timestamp (optional)
+  expiration: number; // Unix timestamp
   figpackVersion: string;
   totalFiles?: number;
   totalSize?: number;
   uploadProgress?: string;
-  createdAt: number;          // Unix timestamp
-  updatedAt: number;          // Unix timestamp
-  pinned?: boolean;           // Whether the figure is pinned
-  title?: string;             // Optional title for the figure
-  pinInfo?: {                 // Information for pinned figures
+  createdAt: number; // Unix timestamp
+  updatedAt: number; // Unix timestamp
+  pinned?: boolean; // Whether the figure is pinned
+  title?: string; // Optional title for the figure
+  pinInfo?: {
+    // Information for pinned figures
     name: string;
     figureDescription: string;
     pinnedTimestamp: number;
   };
-  renewalTimestamp?: number;  // When the figure was last renewed
+  renewalTimestamp?: number; // When the figure was last renewed
+  figureManagementUrl?: string; // e.g., https://manage.figpack.org/figure
 }
 
 export interface IFigureDocument extends IFigure, Document {}
@@ -69,70 +71,74 @@ const figureSchema = new mongoose.Schema<IFigureDocument>({
   figureUrl: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   status: {
     type: String,
-    enum: ['uploading', 'completed', 'failed'],
-    default: 'uploading'
+    enum: ["uploading", "completed", "failed"],
+    default: "uploading",
   },
   ownerEmail: {
     type: String,
-    required: true
+    required: true,
   },
   uploadStarted: {
     type: Number,
-    required: true
+    required: true,
   },
   uploadUpdated: {
     type: Number,
-    required: true
+    required: true,
   },
   uploadCompleted: {
-    type: Number
+    type: Number,
   },
   expiration: {
     type: Number,
-    required: true
+    required: true,
   },
   figpackVersion: {
     type: String,
-    required: true
+    required: true,
   },
   totalFiles: {
-    type: Number
+    type: Number,
   },
   totalSize: {
-    type: Number
+    type: Number,
   },
   uploadProgress: {
-    type: String
+    type: String,
   },
   createdAt: {
     type: Number,
-    default: Date.now
+    default: Date.now,
   },
   updatedAt: {
     type: Number,
-    default: Date.now
+    default: Date.now,
   },
   pinned: {
     type: Boolean,
-    default: false
+    default: false,
   },
   title: {
-    type: String
+    type: String,
   },
   pinInfo: {
     name: String,
     figureDescription: String,
-    pinnedTimestamp: Number
+    pinnedTimestamp: Number,
   },
-  renewalTimestamp: Number
+  renewalTimestamp: Number,
+  figureManagementUrl: {
+    type: String,
+    required: false,
+  },
 });
 
 // Update the updatedAt field on save
-figureSchema.pre('save', function(next) {
+figureSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
@@ -143,17 +149,18 @@ figureSchema.index({ ownerEmail: 1 });
 figureSchema.index({ status: 1 });
 figureSchema.index({ expiration: 1 });
 
-export const Figure: Model<IFigureDocument> = mongoose.models.Figure || mongoose.model('Figure', figureSchema);
+export const Figure: Model<IFigureDocument> =
+  mongoose.models.Figure || mongoose.model("Figure", figureSchema);
 
 // User interface
 export interface IUser {
-  email: string;              // Primary identifier (unique)
+  email: string; // Primary identifier (unique)
   name: string;
   researchDescription: string;
-  apiKey: string;             // Unique API key
+  apiKey: string; // Unique API key
   isAdmin: boolean;
-  createdAt: number;          // Unix timestamp
-  updatedAt: number;          // Unix timestamp
+  createdAt: number; // Unix timestamp
+  updatedAt: number; // Unix timestamp
 }
 
 export interface IUserDocument extends IUser, Document {}
@@ -167,48 +174,48 @@ const userSchema = new mongoose.Schema<IUserDocument>({
     lowercase: true,
     trim: true,
     validate: {
-      validator: function(email: string) {
+      validator: function (email: string) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       },
-      message: 'Invalid email format'
-    }
+      message: "Invalid email format",
+    },
   },
   name: {
     type: String,
     required: true,
     trim: true,
     minlength: 1,
-    maxlength: 100
+    maxlength: 100,
   },
   researchDescription: {
     type: String,
     required: true,
     trim: true,
-    maxlength: 1000
+    maxlength: 1000,
   },
   apiKey: {
     type: String,
     required: true,
     unique: true,
-    minlength: 32
+    minlength: 32,
   },
   isAdmin: {
     type: Boolean,
     required: true,
-    default: false
+    default: false,
   },
   createdAt: {
     type: Number,
-    default: Date.now
+    default: Date.now,
   },
   updatedAt: {
     type: Number,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // Update the updatedAt field on save
-userSchema.pre('save', function(next) {
+userSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
@@ -218,6 +225,7 @@ userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ apiKey: 1 }, { unique: true });
 userSchema.index({ isAdmin: 1 });
 
-export const User: Model<IUserDocument> = mongoose.models.User || mongoose.model('User', userSchema);
+export const User: Model<IUserDocument> =
+  mongoose.models.User || mongoose.model("User", userSchema);
 
 export default connectDB;

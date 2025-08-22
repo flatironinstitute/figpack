@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { Manifest } from './FileManifest';
-import { FIGPACK_API_BASE_URL } from '../../config';
+import { useState, useEffect, useCallback } from "react";
+import type { Manifest } from "./FileManifest";
+import { FIGPACK_API_BASE_URL } from "../../config";
 
 export interface PinInfo {
   name: string;
@@ -9,7 +9,7 @@ export interface PinInfo {
 }
 
 export interface FigpackStatus {
-  status: 'uploading' | 'completed' | 'failed';
+  status: "uploading" | "completed" | "failed";
   figureUrl: string;
   uploadStarted: number;
   uploadUpdated: number;
@@ -24,6 +24,7 @@ export interface FigpackStatus {
   hasWriteAccess?: boolean;
   pinned?: boolean;
   pin_info?: PinInfo;
+  figureManagementUrl?: string;
 }
 
 interface UseFigureResult {
@@ -40,7 +41,9 @@ interface UseFigureResult {
 }
 
 export const useFigure = (figureUrl: string): UseFigureResult => {
-  const [figpackStatus, setFigpackStatus] = useState<FigpackStatus | null>(null);
+  const [figpackStatus, setFigpackStatus] = useState<FigpackStatus | null>(
+    null
+  );
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,13 +58,13 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
 
   const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 
@@ -92,51 +95,54 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
     }
   };
 
-  const loadFigureData = useCallback(async (url: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Get API key from local storage if available
-      const apiKey = localStorage.getItem('figpack_api_key');
-
-      // Fetch figure data from new API endpoint
-      const apiUrl = new URL('/api/figures/get', FIGPACK_API_BASE_URL);
-      apiUrl.searchParams.set('figureUrl', figureUrl);
-      if (apiKey) {
-        apiUrl.searchParams.set('apiKey', apiKey);
-      }
-
-      const response = await fetch(apiUrl.toString());
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to load figure data');
-      }
-
-      const data = await response.json();
-      if (!data.success || !data.figure) {
-        throw new Error(data.message || 'Failed to load figure data');
-      }
-
-      setFigpackStatus(data.figure);
-
-      // If we have access to the manifest, fetch it
+  const loadFigureData = useCallback(
+    async (url: string) => {
       try {
-        const baseUrl = url.replace(/\/[^/]*$/, "");
-        const manifestResponse = await fetch(`${baseUrl}/manifest.json`);
-        if (manifestResponse.ok) {
-          const manifestData = await manifestResponse.json();
-          setManifest(manifestData);
+        setLoading(true);
+        setError(null);
+
+        // Get API key from local storage if available
+        const apiKey = localStorage.getItem("figpack_api_key");
+
+        // Fetch figure data from new API endpoint
+        const apiUrl = new URL("/api/figures/get", FIGPACK_API_BASE_URL);
+        apiUrl.searchParams.set("figureUrl", figureUrl);
+        if (apiKey) {
+          apiUrl.searchParams.set("apiKey", apiKey);
+        }
+
+        const response = await fetch(apiUrl.toString());
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to load figure data");
+        }
+
+        const data = await response.json();
+        if (!data.success || !data.figure) {
+          throw new Error(data.message || "Failed to load figure data");
+        }
+
+        setFigpackStatus(data.figure);
+
+        // If we have access to the manifest, fetch it
+        try {
+          const baseUrl = url.replace(/\/[^/]*$/, "");
+          const manifestResponse = await fetch(`${baseUrl}/manifest.json`);
+          if (manifestResponse.ok) {
+            const manifestData = await manifestResponse.json();
+            setManifest(manifestData);
+          }
+        } catch (err) {
+          console.warn("Could not load manifest.json:", err);
         }
       } catch (err) {
-        console.warn("Could not load manifest.json:", err);
+        setError(`Error loading figure data: ${err}`);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(`Error loading figure data: ${err}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [figureUrl]);
+    },
+    [figureUrl]
+  );
 
   useEffect(() => {
     if (figureUrl) {
@@ -157,7 +163,7 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
     getTimeUntilExpiration,
     formatBytes,
     formatDate,
-    loadFigureData
+    loadFigureData,
   };
 };
 

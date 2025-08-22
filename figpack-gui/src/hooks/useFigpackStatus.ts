@@ -7,6 +7,7 @@ interface FigpackStatus {
   expiration?: string;
   figureUrl?: string;
   totalFiles?: number;
+  figureManagementUrl?: string;
 }
 
 interface FigpackStatusResult {
@@ -25,7 +26,7 @@ export const useFigpackStatus = (): FigpackStatusResult => {
   const [isExpired, setIsExpired] = useState(false);
   const [expirationTime, setExpirationTime] = useState<Date | null>(null);
   const [timeUntilExpiration, setTimeUntilExpiration] = useState<string | null>(
-    null,
+    null
   );
 
   useEffect(() => {

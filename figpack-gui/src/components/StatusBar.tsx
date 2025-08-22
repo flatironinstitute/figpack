@@ -41,10 +41,12 @@ const AboutButton: React.FC<{ title?: string; description?: string }> = ({
   );
 };
 
-const ManageButton: React.FC = () => {
+const ManageButton: React.FC<{ figureManagementUrl: string }> = ({
+  figureManagementUrl,
+}) => {
   const handleManageClick = () => {
     const currentUrl = window.location.href;
-    const managementUrl = `https://manage.figpack.org/figure?figure_url=${encodeURIComponent(currentUrl)}`;
+    const managementUrl = `${figureManagementUrl}?figure_url=${encodeURIComponent(currentUrl)}`;
     window.open(managementUrl, "_blank");
   };
 
@@ -68,12 +70,15 @@ export const StatusBar: React.FC = () => {
   const title = zarrData?.attrs?.title;
   const description = zarrData?.attrs?.description;
 
+  const figureManagementUrl =
+    status?.figureManagementUrl || "https://manage.figpack.org/figure";
+
   if (isLoading) {
     return (
       <div className="status-bar">
         <span>Loading status...</span>
         <AboutButton title={title} description={description} />
-        <ManageButton />
+        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -83,7 +88,7 @@ export const StatusBar: React.FC = () => {
       <div className="status-bar error">
         <span>{error}</span>
         <AboutButton title={title} description={description} />
-        <ManageButton />
+        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -92,7 +97,7 @@ export const StatusBar: React.FC = () => {
     return (
       <div className="status-bar">
         <AboutButton title={title} description={description} />
-        <ManageButton />
+        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -102,7 +107,7 @@ export const StatusBar: React.FC = () => {
       <div className="status-bar warning">
         <span>Upload status: {status.status}</span>
         <AboutButton title={title} description={description} />
-        <ManageButton />
+        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -114,7 +119,7 @@ export const StatusBar: React.FC = () => {
           This figure has expired, but it may be possible to recover it.
         </span>
         <AboutButton title={title} description={description} />
-        <ManageButton />
+        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -124,7 +129,7 @@ export const StatusBar: React.FC = () => {
       <div className="status-bar">
         <span>Expires in: {timeUntilExpiration}</span>
         <AboutButton title={title} description={description} />
-        <ManageButton />
+        <ManageButton figureManagementUrl={figureManagementUrl} />
       </div>
     );
   }
@@ -133,7 +138,7 @@ export const StatusBar: React.FC = () => {
     <div className="status-bar">
       <span>Figure ready</span>
       <AboutButton title={title} description={description} />
-      <ManageButton />
+      <ManageButton figureManagementUrl={figureManagementUrl} />
     </div>
   );
 };
