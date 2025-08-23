@@ -32,6 +32,7 @@ class CrossCorrelograms(FigpackView):
         self.cross_correlograms = cross_correlograms
         self.hide_unit_selector = hide_unit_selector
 
+    @staticmethod
     def from_sorting(sorting):
         import spikeinterface as si
         import spikeinterface.widgets as sw
@@ -40,6 +41,7 @@ class CrossCorrelograms(FigpackView):
         W = sw.CrossCorrelogramsWidget(sorting)
         return CrossCorrelograms.from_spikeinterface_widget(W)
 
+    @staticmethod
     def from_spikeinterface_widget(W):
         from spikeinterface.widgets.base import to_attr
         from spikeinterface.widgets.utils_sortingview import make_serializable

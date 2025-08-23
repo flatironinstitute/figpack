@@ -30,13 +30,3 @@ class AutocorrelogramItem:
         self.unit_id = unit_id
         self.bin_edges_sec = np.array(bin_edges_sec, dtype=np.float32)
         self.bin_counts = np.array(bin_counts, dtype=np.int32)
-
-    def to_dict(self):
-        """
-        Convert the autocorrelogram item to a dictionary representation
-        """
-        return {
-            "unit_id": str(self.unit_id),
-            "bin_edges_sec": self.bin_edges_sec.tolist(),
-            "bin_counts": self.bin_counts.tolist(),
-        }

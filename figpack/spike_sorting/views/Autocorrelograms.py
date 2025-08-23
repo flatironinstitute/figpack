@@ -29,6 +29,7 @@ class Autocorrelograms(FigpackView):
         """
         self.autocorrelograms = autocorrelograms
 
+    @staticmethod
     def from_sorting(sorting):
         import spikeinterface as si
         import spikeinterface.widgets as sw
@@ -37,6 +38,7 @@ class Autocorrelograms(FigpackView):
         W = sw.plot_autocorrelograms(sorting)
         return Autocorrelograms.from_spikeinterface_widget(W)
 
+    @staticmethod
     def from_spikeinterface_widget(W):
         from spikeinterface.widgets.base import to_attr
         from spikeinterface.widgets.utils_sortingview import make_serializable

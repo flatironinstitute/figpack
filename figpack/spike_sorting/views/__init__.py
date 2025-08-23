@@ -10,6 +10,7 @@ from .UnitSimilarityScore import UnitSimilarityScore
 from .UnitsTable import UnitsTable
 from .UnitsTableColumn import UnitsTableColumn
 from .UnitsTableRow import UnitsTableRow
+from .AverageWaveforms import AverageWaveforms
 
 __all__ = [
     "AutocorrelogramItem",
@@ -20,4 +21,5 @@ __all__ = [
     "UnitsTableRow",
     "UnitSimilarityScore",
     "UnitsTable",
+    "AverageWaveforms",
 ]

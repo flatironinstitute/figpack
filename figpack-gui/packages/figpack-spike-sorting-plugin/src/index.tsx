@@ -4,6 +4,7 @@ import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
 import { FPAutocorrelograms } from "./FPAutocorrelograms";
 import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
+import { FPAverageWaveforms } from "./FPAverageWaveforms";
 
 import UnitSelectionProvider from "./context-unit-selection/UnitSelectionProvider";
 
@@ -23,6 +24,11 @@ const registerViewComponents = (
   viewComponentRegistry.registerViewComponent({
     type: "UnitsTable",
     component: FPUnitsTable,
+  });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "AverageWaveforms",
+    component: FPAverageWaveforms,
   });
 };
 
