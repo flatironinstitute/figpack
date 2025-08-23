@@ -11,6 +11,8 @@ from .UnitsTable import UnitsTable
 from .UnitsTableColumn import UnitsTableColumn
 from .UnitsTableRow import UnitsTableRow
 from .AverageWaveforms import AverageWaveforms
+from .SpikeAmplitudesItem import SpikeAmplitudesItem
+from .SpikeAmplitudes import SpikeAmplitudes
 
 __all__ = [
     "AutocorrelogramItem",
@@ -22,4 +24,6 @@ __all__ = [
     "UnitSimilarityScore",
     "UnitsTable",
     "AverageWaveforms",
+    "SpikeAmplitudesItem",
+    "SpikeAmplitudes",
 ]

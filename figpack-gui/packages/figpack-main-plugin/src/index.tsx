@@ -16,6 +16,9 @@ export {
   useTimeseriesSelection,
 } from "./shared/context-timeseries-selection";
 
+export { default as TimeScrollView3 } from "./shared/component-time-scroll-view-3/TimeScrollView3";
+export { useTimeScrollView3 } from "./shared/component-time-scroll-view-3/useTimeScrollView3";
+
 const registerViewComponents = (
   viewComponentRegistry: FPViewComponentRegistry,
 ) => {

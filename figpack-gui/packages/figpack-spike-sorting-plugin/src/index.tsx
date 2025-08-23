@@ -5,6 +5,7 @@ import { FPAutocorrelograms } from "./FPAutocorrelograms";
 import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
 import { FPAverageWaveforms } from "./FPAverageWaveforms";
+import { FPSpikeAmplitudes } from "./FPSpikeAmplitudes";
 
 import UnitSelectionProvider from "./context-unit-selection/UnitSelectionProvider";
 
@@ -29,6 +30,11 @@ const registerViewComponents = (
   viewComponentRegistry.registerViewComponent({
     type: "AverageWaveforms",
     component: FPAverageWaveforms,
+  });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "SpikeAmplitudes",
+    component: FPSpikeAmplitudes,
   });
 };
 
