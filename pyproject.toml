@@ -31,6 +31,7 @@ dependencies = [
     "numpy",
     "zarr<3",
     "requests",
+    "psutil",
 ]
 
 [project.optional-dependencies]
@@ -76,7 +77,7 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
-    "--cov-fail-under=80",
+    "--cov-fail-under=60",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

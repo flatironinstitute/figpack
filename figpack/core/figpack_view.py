@@ -22,6 +22,8 @@ class FigpackView:
         _dev: bool = False,
         title: Union[str, None] = None,
         description: Union[str, None] = None,
+        inline: Union[bool, None] = None,
+        inline_height: int = 600,
     ):
         """
         Display the visualization component
@@ -34,6 +36,8 @@ class FigpackView:
             _dev: Development mode flag
             title: Title for the browser tab and figure
             description: Description text (markdown supported) for the figure
+            inline: Whether to display inline in notebook (None=auto-detect, True=force inline, False=force browser)
+            inline_height: Height in pixels for inline iframe display (default: 600)
         """
         from ._show_view import _show_view
 
@@ -59,6 +63,8 @@ class FigpackView:
             upload=upload,
             title=title,
             description=description,
+            inline=inline,
+            inline_height=inline_height,
         )
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:

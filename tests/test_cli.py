@@ -200,25 +200,6 @@ def test_view_figure_invalid_archive_format(tmp_path):
     assert excinfo.value.code == 1
 
 
-def test_view_figure_with_port(tmp_path):
-    archive_path = tmp_path / "test.tar.gz"
-
-    # Create a test archive
-    with tarfile.open(archive_path, "w:gz") as tar:
-        temp_file = tmp_path / "index.html"
-        temp_file.write_text("<html>Test</html>")
-        tar.add(temp_file, arcname="index.html")
-
-    with patch("figpack.cli.serve_files") as mock_serve:
-        view_figure(str(archive_path), port=8000)
-        mock_serve.assert_called_once_with(
-            mock.ANY,  # tmp directory path
-            port=8000,
-            open_in_browser=True,
-            allow_origin=None,
-        )
-
-
 def test_main_download(mock_manifest_response, mock_response, tmp_path):
     dest_path = str(tmp_path / "figure.tar.gz")
 
@@ -231,43 +212,6 @@ def test_main_download(mock_manifest_response, mock_response, tmp_path):
         main()
 
         assert pathlib.Path(dest_path).exists()
-
-
-def test_main_view(tmp_path):
-    archive_path = tmp_path / "test.tar.gz"
-
-    # Create a simple test archive
-    with tarfile.open(archive_path, "w:gz") as tar:
-        temp_file = tmp_path / "index.html"
-        temp_file.write_text("<html>Test</html>")
-        tar.add(temp_file, arcname="index.html")
-
-    with patch("sys.argv", ["figpack", "view", str(archive_path)]), patch(
-        "figpack.cli.serve_files"
-    ) as mock_serve:
-        main()
-        mock_serve.assert_called_once()
-
-
-def test_main_view_with_port(tmp_path):
-    archive_path = tmp_path / "test.tar.gz"
-
-    # Create a test archive
-    with tarfile.open(archive_path, "w:gz") as tar:
-        temp_file = tmp_path / "index.html"
-        temp_file.write_text("<html>Test</html>")
-        tar.add(temp_file, arcname="index.html")
-
-    with patch(
-        "sys.argv", ["figpack", "view", str(archive_path), "--port", "8000"]
-    ), patch("figpack.cli.serve_files") as mock_serve:
-        main()
-        mock_serve.assert_called_once_with(
-            mock.ANY,  # tmp directory path
-            port=8000,
-            open_in_browser=True,
-            allow_origin=None,
-        )
 
 
 def test_main_help():

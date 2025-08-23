@@ -13,13 +13,13 @@ import threading
 import webbrowser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from typing import Dict, List, Optional, Tuple, Union
-from urllib.parse import urljoin, urlparse
+from typing import Dict, Tuple, Union
+from urllib.parse import urljoin
 
 import requests
 
 from . import __version__
-from .core._show_view import serve_files
+from .core._server_manager import CORSRequestHandler
 
 MAX_WORKERS_FOR_DOWNLOAD = 16
 
@@ -214,6 +214,63 @@ def download_figure(figure_url: str, dest_path: str) -> None:
         )
         print(f"Total size: {total_size / (1024 * 1024):.2f} MB")
         print(f"Archive saved to: {dest_path}")
+
+
+def serve_files(
+    tmpdir: str,
+    *,
+    port: Union[int, None],
+    open_in_browser: bool = False,
+    allow_origin: Union[str, None] = None,
+):
+    """
+    Serve files from a directory using a simple HTTP server.
+
+    Args:
+        tmpdir: Directory to serve
+        port: Port number for local server
+        open_in_browser: Whether to open in browser automatically
+        allow_origin: CORS allow origin header
+    """
+    # if port is None, find a free port
+    if port is None:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("", 0))
+            port = s.getsockname()[1]
+
+    tmpdir = pathlib.Path(tmpdir)
+    tmpdir = tmpdir.resolve()
+    if not tmpdir.exists() or not tmpdir.is_dir():
+        raise SystemExit(f"Directory not found: {tmpdir}")
+
+    # Configure handler with directory and allow_origin
+    def handler_factory(*args, **kwargs):
+        return CORSRequestHandler(
+            *args, directory=str(tmpdir), allow_origin=allow_origin, **kwargs
+        )
+
+    httpd = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)
+    print(f"Serving {tmpdir} at http://localhost:{port} (CORS → {allow_origin})")
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+
+    if open_in_browser:
+        webbrowser.open(f"http://localhost:{port}")
+        print(f"Opening http://localhost:{port} in your browser.")
+    else:
+        print(
+            f"Open http://localhost:{port} in your browser to view the visualization."
+        )
+
+    try:
+        input("Press Enter to stop...\n")
+    except (KeyboardInterrupt, EOFError):
+        pass
+    finally:
+        print("Shutting down server...")
+        httpd.shutdown()
+        httpd.server_close()
+        thread.join()
 
 
 def view_figure(archive_path: str, port: Union[int, None] = None) -> None:
