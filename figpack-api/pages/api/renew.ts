@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { validateApiKey } from '../../lib/adminAuth';
-import connectDB, { Figure } from '../../lib/db';
-import { updateFigureJson } from '../../lib/figureJsonManager';
-import { setCorsHeaders } from '../../lib/config';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { validateApiKey } from "../../lib/adminAuth";
+import connectDB, { Figure } from "../../lib/db";
+import { updateFigureJson } from "../../lib/figureJsonManager";
+import { setCorsHeaders } from "../../lib/config";
 
 interface RenewRequest {
   figureUrl: string;
@@ -15,7 +15,6 @@ interface RenewResponse {
   newExpiration?: string;
 }
 
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<RenewResponse>
@@ -24,15 +23,15 @@ export default async function handler(
   setCorsHeaders(req, res);
 
   // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
   // Only allow POST requests
-  if (req.method !== 'POST') {
+  if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
-      message: 'Method not allowed'
+      message: "Method not allowed",
     });
   }
 
@@ -43,14 +42,14 @@ export default async function handler(
     if (!figureUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: figureUrl'
+        message: "Missing required field: figureUrl",
       });
     }
 
     if (!apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: apiKey'
+        message: "Missing required field: apiKey",
       });
     }
 
@@ -59,7 +58,7 @@ export default async function handler(
     if (!authResult.isValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid API key'
+        message: "Invalid API key",
       });
     }
 
@@ -68,11 +67,11 @@ export default async function handler(
 
     // Find the figure
     const figure = await Figure.findOne({ figureUrl });
-    
+
     if (!figure) {
       return res.status(404).json({
         success: false,
-        message: 'Figure not found'
+        message: "Figure not found",
       });
     }
 
@@ -80,7 +79,15 @@ export default async function handler(
     if (figure.ownerEmail !== authResult.user?.email) {
       return res.status(403).json({
         success: false,
-        message: 'You can only renew figures that you own'
+        message: "You can only renew figures that you own",
+      });
+    }
+
+    // Check if figure is ephemeral
+    if (figure.isEphemeral) {
+      return res.status(400).json({
+        success: false,
+        message: "Ephemeral figures cannot be renewed",
       });
     }
 
@@ -88,18 +95,19 @@ export default async function handler(
     if (figure.pinned) {
       return res.status(400).json({
         success: false,
-        message: 'Pinned figures do not have expiration dates and cannot be renewed'
+        message:
+          "Pinned figures do not have expiration dates and cannot be renewed",
       });
     }
 
     const now = Date.now();
-    const oneWeekFromNow = now + (7 * 24 * 60 * 60 * 1000);
+    const oneWeekFromNow = now + 7 * 24 * 60 * 60 * 1000;
 
     // Check if current expiration is already more than 1 week out
     if (figure.expiration >= oneWeekFromNow) {
       return res.status(400).json({
         success: false,
-        message: 'Figure expiration is already 1 week or more in the future'
+        message: "Figure expiration is already 1 week or more in the future",
       });
     }
 
@@ -113,21 +121,20 @@ export default async function handler(
     try {
       await updateFigureJson(figure);
     } catch (error) {
-      console.error('Error updating figpack.json:', error);
+      console.error("Error updating figpack.json:", error);
       // Continue with the request even if figpack.json update fails
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Figure renewed successfully',
-      newExpiration: new Date(oneWeekFromNow).toISOString()
+      message: "Figure renewed successfully",
+      newExpiration: new Date(oneWeekFromNow).toISOString(),
     });
-
   } catch (error) {
-    console.error('Renew API error:', error);
+    console.error("Renew API error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 }

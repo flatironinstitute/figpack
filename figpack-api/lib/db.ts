@@ -61,11 +61,12 @@ export interface IFigure {
   };
   renewalTimestamp?: number; // When the figure was last renewed
   figureManagementUrl?: string; // e.g., https://manage.figpack.org/figure
+  channel?: string; // "default" or "ephemeral"
+  isEphemeral?: boolean; // Whether this is an ephemeral figure
 }
 
 export interface IFigureDocument extends IFigure, Document {}
 
-// Figure schema
 // Figure schema
 const figureSchema = new mongoose.Schema<IFigureDocument>({
   figureUrl: {
@@ -134,6 +135,15 @@ const figureSchema = new mongoose.Schema<IFigureDocument>({
   figureManagementUrl: {
     type: String,
     required: false,
+  },
+  channel: {
+    type: String,
+    enum: ["default", "ephemeral"],
+    default: "default",
+  },
+  isEphemeral: {
+    type: Boolean,
+    default: false,
   },
 });
 

@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { validateApiKey } from '../../lib/adminAuth';
-import connectDB, { Figure } from '../../lib/db';
-import { updateFigureJson } from '../../lib/figureJsonManager';
-import { setCorsHeaders } from '../../lib/config';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { validateApiKey } from "../../lib/adminAuth";
+import connectDB, { Figure } from "../../lib/db";
+import { updateFigureJson } from "../../lib/figureJsonManager";
+import { setCorsHeaders } from "../../lib/config";
 
 interface PinRequest {
   figureUrl: string;
@@ -18,31 +18,36 @@ interface PinResponse {
   message?: string;
 }
 
-function validatePinInfo(pinInfo: PinRequest['pinInfo']): { valid: boolean; errors: string[] } {
+function validatePinInfo(pinInfo: PinRequest["pinInfo"]): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   // Validate name
   if (!pinInfo.name || pinInfo.name.trim().length === 0) {
-    errors.push('Name is required');
+    errors.push("Name is required");
   } else if (pinInfo.name.length > 100) {
-    errors.push('Name must be 100 characters or less');
+    errors.push("Name must be 100 characters or less");
   }
 
   // Validate figure description
-  if (!pinInfo.figureDescription || pinInfo.figureDescription.trim().length === 0) {
-    errors.push('Figure description is required');
+  if (
+    !pinInfo.figureDescription ||
+    pinInfo.figureDescription.trim().length === 0
+  ) {
+    errors.push("Figure description is required");
   } else if (pinInfo.figureDescription.length < 10) {
-    errors.push('Figure description must be at least 10 characters');
+    errors.push("Figure description must be at least 10 characters");
   } else if (pinInfo.figureDescription.length > 300) {
-    errors.push('Figure description must be 300 characters or less');
+    errors.push("Figure description must be 300 characters or less");
   }
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   };
 }
-
 
 export default async function handler(
   req: NextApiRequest,
@@ -52,15 +57,15 @@ export default async function handler(
   setCorsHeaders(req, res);
 
   // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
   // Only allow POST requests
-  if (req.method !== 'POST') {
+  if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
-      message: 'Method not allowed'
+      message: "Method not allowed",
     });
   }
 
@@ -71,21 +76,21 @@ export default async function handler(
     if (!figureUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: figureUrl'
+        message: "Missing required field: figureUrl",
       });
     }
 
     if (!apiKey) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: apiKey'
+        message: "Missing required field: apiKey",
       });
     }
 
     if (!pinInfo) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required field: pinInfo'
+        message: "Missing required field: pinInfo",
       });
     }
 
@@ -94,7 +99,7 @@ export default async function handler(
     if (!authResult.isValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid API key'
+        message: "Invalid API key",
       });
     }
 
@@ -106,17 +111,17 @@ export default async function handler(
     if (!pinValidation.valid) {
       return res.status(400).json({
         success: false,
-        message: `Validation errors: ${pinValidation.errors.join(', ')}`
+        message: `Validation errors: ${pinValidation.errors.join(", ")}`,
       });
     }
 
     // Find the figure
     const figure = await Figure.findOne({ figureUrl });
-    
+
     if (!figure) {
       return res.status(404).json({
         success: false,
-        message: 'Figure not found'
+        message: "Figure not found",
       });
     }
 
@@ -124,7 +129,15 @@ export default async function handler(
     if (figure.ownerEmail !== authResult.user?.email) {
       return res.status(403).json({
         success: false,
-        message: 'You can only pin figures that you own'
+        message: "You can only pin figures that you own",
+      });
+    }
+
+    // Check if figure is ephemeral
+    if (figure.isEphemeral) {
+      return res.status(400).json({
+        success: false,
+        message: "Ephemeral figures cannot be pinned",
       });
     }
 
@@ -132,7 +145,7 @@ export default async function handler(
     if (figure.pinned) {
       return res.status(400).json({
         success: false,
-        message: 'Figure is already pinned'
+        message: "Figure is already pinned",
       });
     }
 
@@ -143,7 +156,7 @@ export default async function handler(
     figure.pinInfo = {
       name: pinInfo.name.trim(),
       figureDescription: pinInfo.figureDescription.trim(),
-      pinnedTimestamp: now
+      pinnedTimestamp: now,
     };
 
     await figure.save();
@@ -152,20 +165,19 @@ export default async function handler(
     try {
       await updateFigureJson(figure);
     } catch (error) {
-      console.error('Error updating figpack.json:', error);
+      console.error("Error updating figpack.json:", error);
       // Continue with the request even if figpack.json update fails
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Figure pinned successfully'
+      message: "Figure pinned successfully",
     });
-
   } catch (error) {
-    console.error('Pin API error:', error);
+    console.error("Pin API error:", error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 }

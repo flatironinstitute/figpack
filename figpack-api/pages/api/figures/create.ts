@@ -10,11 +10,12 @@ import {
 
 interface CreateFigureRequest {
   figureHash: string;
-  apiKey: string;
+  apiKey?: string; // Optional for ephemeral figures
   totalFiles?: number;
   totalSize?: number;
   figpackVersion?: string;
   title?: string;
+  ephemeral?: boolean;
 }
 
 interface CreateFigureResponse {
@@ -48,13 +49,21 @@ export default async function handler(
     await connectDB();
 
     // Parse request body
-    const { figureHash, apiKey }: CreateFigureRequest = req.body;
+    const { figureHash, apiKey, ephemeral }: CreateFigureRequest = req.body;
 
     // Validate required fields
-    if (!figureHash || !apiKey) {
+    if (!figureHash) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: figureHash, apiKey",
+        message: "Missing required field: figureHash",
+      });
+    }
+
+    // For non-ephemeral figures, API key is required
+    if (!ephemeral && !apiKey) {
+      return res.status(400).json({
+        success: false,
+        message: "API key is required for non-ephemeral figures",
       });
     }
 
@@ -66,16 +75,19 @@ export default async function handler(
       });
     }
 
-    // Authenticate with API key
-    const authResult = await validateApiKey(apiKey);
-    if (!authResult.isValid || !authResult.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid API key",
-      });
-    }
+    let userEmail = "anonymous";
 
-    const userEmail = authResult.user.email;
+    // Authenticate with API key if provided
+    if (apiKey) {
+      const authResult = await validateApiKey(apiKey);
+      if (!authResult.isValid || !authResult.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid API key",
+        });
+      }
+      userEmail = authResult.user.email;
+    }
 
     const baseFigureString = `${figureHash}`;
     let count = 0;
@@ -86,7 +98,8 @@ export default async function handler(
       const candidateaFigureString = `${baseFigureString}${
         count > 0 ? `-${count}` : ""
       }`;
-      const candidateFigureUrl = `${bucketBaseUrl}/figures/default/${candidateaFigureString}/index.html`;
+      const channel = ephemeral ? "ephemeral" : "default";
+      const candidateFigureUrl = `${bucketBaseUrl}/figures/${channel}/${candidateaFigureString}/index.html`;
       existingFigure = await Figure.findOne({ figureUrl: candidateFigureUrl });
       if (!existingFigure) {
         figureUrlToUse = candidateFigureUrl;
@@ -134,7 +147,10 @@ export default async function handler(
 
     // Create new figure document
     const now = Date.now();
-    const oneDayFromNow = now + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    // Set expiration: 6 hours for ephemeral, 24 hours for regular
+    const expirationTime = ephemeral
+      ? now + 6 * 60 * 60 * 1000 // 6 hours in milliseconds
+      : now + 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
     const newFigure = new Figure({
       figureUrl: figureUrlToUse,
@@ -142,7 +158,7 @@ export default async function handler(
       ownerEmail: userEmail,
       uploadStarted: now,
       uploadUpdated: now,
-      expiration: oneDayFromNow,
+      expiration: expirationTime,
       figpackVersion: req.body.figpackVersion || "1.0.0",
       totalFiles: req.body.totalFiles,
       totalSize: req.body.totalSize,
@@ -150,6 +166,8 @@ export default async function handler(
       createdAt: now,
       updatedAt: now,
       figureManagementUrl,
+      channel: ephemeral ? "ephemeral" : "default",
+      isEphemeral: ephemeral || false,
     });
 
     await newFigure.save();

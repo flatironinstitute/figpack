@@ -19,6 +19,7 @@ class FigpackView:
         open_in_browser: bool = False,
         allow_origin: Union[str, None] = None,
         upload: bool = False,
+        ephemeral: Union[bool, None] = None,
         _dev: bool = False,
         title: Union[str, None] = None,
         description: Union[str, None] = None,
@@ -33,13 +34,22 @@ class FigpackView:
             open_in_browser: Whether to open in browser automatically
             allow_origin: CORS allow origin header
             upload: Whether to upload the figure
+            ephemeral: Whether to upload as ephemeral figure (None=auto-detect, True=force ephemeral, False=force regular)
             _dev: Development mode flag
             title: Title for the browser tab and figure
             description: Description text (markdown supported) for the figure
             inline: Whether to display inline in notebook (None=auto-detect, True=force inline, False=force browser)
             inline_height: Height in pixels for inline iframe display (default: 600)
         """
-        from ._show_view import _show_view
+        from ._show_view import _show_view, _is_in_notebook
+
+        # Auto-detect ephemeral mode if not specified
+        if ephemeral is None:
+            ephemeral = False
+
+        # Validate ephemeral parameter
+        if ephemeral and not upload:
+            raise ValueError("ephemeral=True requires upload=True to be set")
 
         if _dev:
             if port is None:
@@ -61,6 +71,7 @@ class FigpackView:
             open_in_browser=open_in_browser,
             allow_origin=allow_origin,
             upload=upload,
+            ephemeral=ephemeral,
             title=title,
             description=description,
             inline=inline,

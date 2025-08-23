@@ -1,12 +1,12 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { validateApiKey } from '../../../lib/adminAuth';
-import connectDB, { Figure, IFigure } from '../../../lib/db';
-import { updateFigureJson } from '../../../lib/figureJsonManager';
-import { setCorsHeaders } from '../../../lib/config';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { validateApiKey } from "../../../lib/adminAuth";
+import connectDB, { Figure, IFigure } from "../../../lib/db";
+import { updateFigureJson } from "../../../lib/figureJsonManager";
+import { setCorsHeaders } from "../../../lib/config";
 
 interface FinalizeFigureRequest {
   figureUrl: string;
-  apiKey: string;
+  apiKey?: string; // Optional for ephemeral figures
 }
 
 interface FinalizeFigureResponse {
@@ -23,15 +23,15 @@ export default async function handler(
   setCorsHeaders(req, res);
 
   // Handle preflight OPTIONS request
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
   // Only allow POST requests
-  if (req.method !== 'POST') {
+  if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
-      message: 'Method not allowed'
+      message: "Method not allowed",
     });
   }
 
@@ -43,57 +43,76 @@ export default async function handler(
     const { figureUrl, apiKey }: FinalizeFigureRequest = req.body;
 
     // Validate required fields
-    if (!figureUrl || !apiKey) {
+    if (!figureUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: figureUrl, apiKey'
+        message: "Missing required field: figureUrl",
       });
     }
 
-    // Authenticate with API key
-    const authResult = await validateApiKey(apiKey);
-    if (!authResult.isValid || !authResult.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid API key'
-      });
-    }
-
-    const userEmail = authResult.user.email;
-
-    // Find the figure
+    // Find the figure first to check if it's ephemeral
     const figure = await Figure.findOne({ figureUrl });
-    
+
     if (!figure) {
       return res.status(404).json({
         success: false,
-        message: 'Figure not found'
+        message: "Figure not found",
       });
     }
 
-    // Verify ownership
-    if (figure.ownerEmail !== userEmail) {
-      return res.status(403).json({
+    let userEmail = "anonymous";
+
+    // For non-ephemeral figures, API key is required
+    if (!figure.isEphemeral && !apiKey) {
+      return res.status(400).json({
         success: false,
-        message: 'Access denied. You are not the owner of this figure.'
+        message: "API key is required for non-ephemeral figures",
       });
+    }
+
+    // Authenticate with API key if provided
+    if (apiKey) {
+      const authResult = await validateApiKey(apiKey);
+      if (!authResult.isValid || !authResult.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid API key",
+        });
+      }
+      userEmail = authResult.user.email;
+
+      // Verify ownership for authenticated users
+      if (figure.ownerEmail !== userEmail) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. You are not the owner of this figure.",
+        });
+      }
+    } else {
+      // For ephemeral figures without API key, verify it's anonymous
+      if (figure.ownerEmail !== "anonymous") {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. This figure requires authentication.",
+        });
+      }
     }
 
     // Check if figure is already completed
-    if (figure.status === 'completed') {
+    if (figure.status === "completed") {
       return res.status(200).json({
         success: true,
-        message: 'Figure is already completed',
-        figure: figure.toObject()
+        message: "Figure is already completed",
+        figure: figure.toObject(),
       });
     }
 
     // Update figure to completed status
     const now = Date.now();
     const updateData: Partial<IFigure> = {
-      status: 'completed',
+      status: "completed",
       uploadCompleted: now,
-      uploadUpdated: now
+      uploadUpdated: now,
     };
 
     // Update the figure
@@ -106,7 +125,7 @@ export default async function handler(
     if (!updatedFigure) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to update figure'
+        message: "Failed to update figure",
       });
     }
 
@@ -114,22 +133,21 @@ export default async function handler(
     try {
       await updateFigureJson(updatedFigure);
     } catch (error) {
-      console.error('Error updating figpack.json:', error);
+      console.error("Error updating figpack.json:", error);
       // Continue with the request even if figpack.json update fails
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Figure finalized successfully',
-      figure: updatedFigure.toObject()
+      message: "Figure finalized successfully",
+      figure: updatedFigure.toObject(),
     });
-
   } catch (error) {
-    console.error('Finalize figure API error:', error);
-    
+    console.error("Finalize figure API error:", error);
+
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 }

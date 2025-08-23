@@ -133,25 +133,34 @@ def _create_or_get_figure(
     total_files: int = None,
     total_size: int = None,
     title: str = None,
+    ephemeral: bool = False,
 ) -> dict:
     """
     Create a new figure or get existing figure information
 
     Args:
         figure_hash: The hash of the figure
-        api_key: The API key for authentication
+        api_key: The API key for authentication (required for non-ephemeral)
         total_files: Optional total number of files
         total_size: Optional total size of files
         title: Optional title for the figure
+        ephemeral: Whether to create an ephemeral figure
 
     Returns:
         dict: Figure information from the API
     """
+    # Validate API key requirement
+    if not ephemeral and api_key is None:
+        raise ValueError("API key is required for non-ephemeral figures")
+
     payload = {
         "figureHash": figure_hash,
-        "apiKey": api_key,
         "figpackVersion": __version__,
     }
+
+    # API key is optional for ephemeral figures
+    if api_key is not None:
+        payload["apiKey"] = api_key
 
     if total_files is not None:
         payload["totalFiles"] = total_files
@@ -159,7 +168,10 @@ def _create_or_get_figure(
         payload["totalSize"] = total_size
     if title is not None:
         payload["title"] = title
+    if ephemeral:
+        payload["ephemeral"] = True
 
+    # Use the same endpoint for both regular and ephemeral figures
     response = requests.post(f"{FIGPACK_API_BASE_URL}/api/figures/create", json=payload)
 
     if not response.ok:
@@ -212,7 +224,9 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
     return response_data
 
 
-def _upload_bundle(tmpdir: str, api_key: str, title: str = None) -> str:
+def _upload_bundle(
+    tmpdir: str, api_key: str, title: str = None, ephemeral: bool = False
+) -> str:
     """
     Upload the prepared bundle to the cloud using the new database-driven approach
     """
@@ -239,7 +253,7 @@ def _upload_bundle(tmpdir: str, api_key: str, title: str = None) -> str:
 
     # Find available figure ID and create/get figure in database with metadata
     result = _create_or_get_figure(
-        figure_hash, api_key, total_files, total_size, title=title
+        figure_hash, api_key, total_files, total_size, title=title, ephemeral=ephemeral
     )
     figure_info = result.get("figure", {})
     figure_url = figure_info.get("figureUrl")

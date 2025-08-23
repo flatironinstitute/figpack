@@ -75,6 +75,7 @@ def _show_view(
     port: Union[int, None] = None,
     allow_origin: Union[str, None] = None,
     upload: bool = False,
+    ephemeral: bool = False,
     title: Union[str, None] = None,
     description: Union[str, None] = None,
     inline: Union[bool, None] = None,
@@ -91,16 +92,18 @@ def _show_view(
         with tempfile.TemporaryDirectory(prefix="figpack_upload_") as tmpdir:
             prepare_figure_bundle(view, tmpdir, title=title, description=description)
 
-            # Check for required environment variable
+            # Check for API key - required for regular uploads, optional for ephemeral
             api_key = os.environ.get("FIGPACK_API_KEY")
-            if not api_key:
+            if not ephemeral and not api_key:
                 raise EnvironmentError(
                     "FIGPACK_API_KEY environment variable must be set to upload views."
                 )
 
             # Upload the bundle
             print("Starting upload...")
-            figure_url = _upload_bundle(tmpdir, api_key, title=title)
+            figure_url = _upload_bundle(
+                tmpdir, api_key, title=title, ephemeral=ephemeral
+            )
 
             if use_inline:
                 # For uploaded figures, display the remote URL inline and continue

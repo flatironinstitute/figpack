@@ -25,6 +25,7 @@ You can zoom and pan the graph to explore the data in more detail.
     view.show(
         open_in_browser=True,
         upload=upload,
+        ephemeral=True,
         _dev=_dev,
         title=title,
         description=description_md,

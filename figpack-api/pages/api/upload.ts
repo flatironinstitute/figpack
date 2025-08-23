@@ -122,10 +122,10 @@ export default async function handler(
     const { figureUrl, files, apiKey } = req.body as BatchUploadRequest;
 
     // Validate required fields
-    if (!figureUrl || !files || !Array.isArray(files) || !apiKey) {
+    if (!figureUrl || !files || !Array.isArray(files)) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: figureUrl, files (array), apiKey",
+        message: "Missing required fields: figureUrl, files (array)",
       });
     }
 
@@ -137,18 +137,7 @@ export default async function handler(
       });
     }
 
-    // Authenticate with API key
-    const authResult = await validateApiKey(apiKey);
-    if (!authResult.isValid || !authResult.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid API key",
-      });
-    }
-
-    const userEmail = authResult.user.email;
-
-    // Find and verify figure ownership
+    // Find the figure first to check if it's ephemeral
     const figure = await Figure.findOne({ figureUrl });
     if (!figure) {
       return res.status(404).json({
@@ -158,11 +147,42 @@ export default async function handler(
       });
     }
 
-    if (figure.ownerEmail !== userEmail) {
-      return res.status(403).json({
+    let userEmail = "anonymous";
+
+    // For non-ephemeral figures, API key is required
+    if (!figure.isEphemeral && !apiKey) {
+      return res.status(400).json({
         success: false,
-        message: "Access denied. You are not the owner of this figure.",
+        message: "API key is required for non-ephemeral figures",
       });
+    }
+
+    // Authenticate with API key if provided
+    if (apiKey) {
+      const authResult = await validateApiKey(apiKey);
+      if (!authResult.isValid || !authResult.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid API key",
+        });
+      }
+      userEmail = authResult.user.email;
+
+      // Verify figure ownership for authenticated users
+      if (figure.ownerEmail !== userEmail) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. You are not the owner of this figure.",
+        });
+      }
+    } else {
+      // For ephemeral figures without API key, verify it's anonymous
+      if (figure.ownerEmail !== "anonymous") {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. This figure requires authentication.",
+        });
+      }
     }
 
     // Validate all files and generate signed URLs
