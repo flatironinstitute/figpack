@@ -38,6 +38,19 @@ def _is_in_notebook() -> bool:
         return False
 
 
+def _is_in_colab():
+    try:
+        import google.colab  # type: ignore
+
+        return True
+    except ImportError:
+        return False
+
+
+def _is_in_jupyterhub():
+    return "JUPYTERHUB_USER" in os.environ
+
+
 def _display_inline_iframe(url: str, height: int) -> None:
     """
     Display an iframe inline in a Jupyter notebook.

@@ -41,11 +41,25 @@ class FigpackView:
             inline: Whether to display inline in notebook (None=auto-detect, True=force inline, False=force browser)
             inline_height: Height in pixels for inline iframe display (default: 600)
         """
-        from ._show_view import _show_view, _is_in_notebook
+        from ._show_view import (
+            _show_view,
+            _is_in_notebook,
+            _is_in_colab,
+            _is_in_jupyterhub,
+        )
 
-        # Auto-detect ephemeral mode if not specified
-        if ephemeral is None:
-            ephemeral = False
+        if ephemeral is None and upload is None:
+            if _is_in_notebook():
+                if _is_in_colab():
+                    # if we are in a notebook and in colab, we should show as uploaded ephemeral
+                    print("Detected Google Colab notebook environment.")
+                    upload = True
+                    ephemeral = True
+                if _is_in_jupyterhub():
+                    # if we are in a notebook and in jupyterhub, we should show as uploaded ephemeral
+                    print("Detected JupyterHub notebook environment.")
+                    upload = True
+                    ephemeral = True
 
         # Validate ephemeral parameter
         if ephemeral and not upload:
