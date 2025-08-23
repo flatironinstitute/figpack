@@ -85,7 +85,7 @@ class AverageWaveforms(FigpackView):
         average_waveform_items = []
         for i, unit_id in enumerate(sorting_analyzer.unit_ids):
             waveform = av_templates[i]
-            channel_ids = sorting_analyzer.recording.get_channel_ids()
+            channel_ids = list(sorting_analyzer.recording.get_channel_ids())
             average_waveform_items.append(
                 AverageWaveformItem(
                     unit_id=unit_id,
