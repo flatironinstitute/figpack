@@ -113,7 +113,6 @@ def _show_view(
                 )
 
             # Upload the bundle
-            print("Starting upload...")
             figure_url = _upload_bundle(
                 tmpdir, api_key, title=title, ephemeral=ephemeral
             )

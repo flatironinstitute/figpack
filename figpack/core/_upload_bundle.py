@@ -233,9 +233,7 @@ def _upload_bundle(
     tmpdir_path = pathlib.Path(tmpdir)
 
     # Compute deterministic figure ID based on file contents
-    print("Computing deterministic figure ID...")
     figure_hash = _compute_deterministic_figure_hash(tmpdir_path)
-    print(f"Figure hash: {figure_hash}")
 
     # Collect all files to upload
     all_files = []
@@ -259,10 +257,8 @@ def _upload_bundle(
     figure_url = figure_info.get("figureUrl")
 
     if figure_info["status"] == "completed":
-        print(f"Figure already exists at: {figure_url}")
+        print(f"Figure already exists. No upload needed.")
         return figure_url
-
-    print(f"Using figure URL: {figure_url}")
 
     files_to_upload = all_files
     total_files_to_upload = len(files_to_upload)
