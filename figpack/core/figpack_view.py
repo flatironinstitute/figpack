@@ -18,7 +18,7 @@ class FigpackView:
         port: Union[int, None] = None,
         open_in_browser: bool = False,
         allow_origin: Union[str, None] = None,
-        upload: bool = False,
+        upload: Union[bool, None] = None,
         ephemeral: Union[bool, None] = None,
         _dev: bool = False,
         title: Union[str, None] = None,
@@ -49,6 +49,7 @@ class FigpackView:
         )
 
         if ephemeral is None and upload is None:
+            # If we haven't specified both, then let's check if we're in a notebook in a non-local environment
             if _is_in_notebook():
                 if _is_in_colab():
                     # if we are in a notebook and in colab, we should show as uploaded ephemeral
