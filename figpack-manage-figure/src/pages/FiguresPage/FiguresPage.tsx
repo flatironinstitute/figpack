@@ -407,15 +407,6 @@ const FiguresPage: React.FC = () => {
                               color={getStatusColor(figure.status)}
                               size="small"
                             />
-                            {figure.pinned && (
-                              <Tooltip
-                                title={`Pinned: ${
-                                  figure.pinInfo?.name || "Unnamed"
-                                }`}
-                              >
-                                <PushPin color="primary" fontSize="small" />
-                              </Tooltip>
-                            )}
                           </Stack>
                         </TableCell>
 
@@ -454,6 +445,26 @@ const FiguresPage: React.FC = () => {
                               >
                                 {figure.pinInfo.name}
                               </Typography>
+                            )}
+                            {figure.pinInfo?.figureDescription && (
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                gap={0.5}
+                                sx={{ mt: 0.5 }}
+                              >
+                                <PushPin
+                                  color="primary"
+                                  sx={{ fontSize: "0.75rem" }}
+                                />
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ fontStyle: "italic" }}
+                                >
+                                  {figure.pinInfo.figureDescription}
+                                </Typography>
+                              </Box>
                             )}
                           </Box>
                         </TableCell>

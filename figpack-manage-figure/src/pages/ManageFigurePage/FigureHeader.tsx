@@ -260,7 +260,21 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
 
         {!figpackStatus?.pinned && isExpired() && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            ⚠️ This figure has expired and is no longer accessible.
+            <Typography variant="body2" gutterBottom>
+              ⚠️ This figure has expired and is no longer accessible.
+            </Typography>
+            <Button
+              variant="contained"
+              color="warning"
+              size="small"
+              onClick={handleRenew || undefined}
+              disabled={renewLoading || !handleRenew}
+              startIcon={
+                renewLoading ? <CircularProgress size={16} /> : <Schedule />
+              }
+            >
+              {renewLoading ? "Renewing..." : "Renew Figure"}
+            </Button>
           </Alert>
         )}
 
