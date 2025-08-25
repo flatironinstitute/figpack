@@ -41,7 +41,7 @@ Black is configured in `pyproject.toml` with:
 
 - Line length: 88 characters
 - Target Python version: 3.8+
-- Excludes: figpack-gui, figpack-api, figpack-manage-figure directories
+- Excludes: figpack-gui, figpack-api, figpack-manage directories
 
 ## Making Changes
 
