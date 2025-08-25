@@ -18,7 +18,7 @@ export const FPTabLayout: React.FC<{
   const initialTabIndex = zarrGroup.attrs["initial_tab_index"] || 0;
   const itemsMetadata: TabItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
-    [zarrGroup],
+    [zarrGroup]
   );
 
   const [activeTabIndex, setActiveTabIndex] = useState(initialTabIndex);
@@ -26,10 +26,27 @@ export const FPTabLayout: React.FC<{
   // Ensure active tab index is valid
   const validActiveTabIndex = Math.max(
     0,
-    Math.min(activeTabIndex, itemsMetadata.length - 1),
+    Math.min(activeTabIndex, itemsMetadata.length - 1)
   );
 
   const contentHeight = height - TAB_HEIGHT;
+
+  if (!FPView) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width,
+          height,
+          color: "#666",
+        }}
+      >
+        FPView is not defined in FPTabLayout.
+      </div>
+    );
+  }
 
   return (
     <div
@@ -132,7 +149,7 @@ const TabContent: React.FC<{
     const loadGroup = async () => {
       try {
         const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName),
+          join(zarrGroup.path, itemName)
         );
         if (canceled) return;
         setChildGroup(group || null);
@@ -161,6 +178,23 @@ const TabContent: React.FC<{
         }}
       >
         Loading...
+      </div>
+    );
+  }
+
+  if (!FPView) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width,
+          height,
+          color: "#666",
+        }}
+      >
+        FPView is not defined in TabContent.
       </div>
     );
   }

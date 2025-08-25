@@ -15,11 +15,11 @@ export const FPSplitter: React.FC<{
   const initialSplitPos = zarrGroup.attrs["split_pos"] || 0.5;
   const item1Metadata = useMemo(
     () => zarrGroup.attrs["item1_metadata"] || {},
-    [zarrGroup],
+    [zarrGroup]
   );
   const item2Metadata = useMemo(
     () => zarrGroup.attrs["item2_metadata"] || {},
-    [zarrGroup],
+    [zarrGroup]
   );
 
   // Apply constraints to initial split position
@@ -94,7 +94,7 @@ export const FPSplitter: React.FC<{
       newSplitPos = Math.max(minPos, Math.min(maxPos, newSplitPos));
       setSplitPos(newSplitPos);
     },
-    [isDragging, direction, width, height, item1Metadata, item2Metadata],
+    [isDragging, direction, width, height, item1Metadata, item2Metadata]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -185,6 +185,23 @@ export const FPSplitter: React.FC<{
     }
   }, [direction, width, height, splitPos]);
 
+  if (!FPView) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width,
+          height,
+          color: "#666",
+        }}
+      >
+        FPView is not defined in FPSplitter.
+      </div>
+    );
+  }
+
   return (
     <div
       ref={containerRef}
@@ -237,7 +254,7 @@ const SplitterItem: React.FC<{
     const loadGroup = async () => {
       try {
         const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName),
+          join(zarrGroup.path, itemName)
         );
         if (canceled) return;
         setChildGroup(group || null);
@@ -270,7 +287,14 @@ const SplitterItem: React.FC<{
     );
   }
 
-  return <FPView zarrGroup={childGroup} width={width} height={height} />;
+  return (
+    <FPView
+      zarrGroup={childGroup}
+      width={width}
+      height={height}
+      FPView={FPView}
+    />
+  );
 };
 
 const join = (path: string, name: string) => {
