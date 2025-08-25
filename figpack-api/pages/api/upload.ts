@@ -1,23 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { validateApiKey } from "../../lib/adminAuth";
-import { bucketBaseUrl, setCorsHeaders } from "../../lib/config";
-import connectDB, { Figure } from "../../lib/db";
+import { setCorsHeaders } from "../../lib/config";
+import connectDB, { Figure, Bucket as DBBucket } from "../../lib/db";
 import { Bucket, getSignedUploadUrl } from "../../lib/s3Helpers";
 import {
   BatchUploadRequest,
   BatchUploadResponse,
   ValidationError,
 } from "../../types";
-
-const bucketCredentials = process.env.BUCKET_CREDENTIALS;
-if (!bucketCredentials) {
-  throw new Error("Missing BUCKET_CREDENTIALS");
-}
-
-const bucket: Bucket = {
-  uri: "r2://figpack-figures",
-  credentials: bucketCredentials,
-};
 
 function isZarrChunk(fileName: string): boolean {
   // Check if filename consists only of numbers and dots
@@ -80,7 +70,9 @@ function getBaseFileName(path: string): string {
 
 async function generateSignedUploadUrl(
   destinationUrl: string,
-  size: number
+  size: number,
+  bucket: Bucket,
+  bucketBaseUrl: string
 ): Promise<string> {
   if (!destinationUrl.startsWith(bucketBaseUrl + "/")) {
     throw new Error(
@@ -185,11 +177,30 @@ export default async function handler(
       }
     }
 
+    // Determine which bucket to use based on the figure URL
+    const bucketName = figure.bucket || "figpack-figures";
+
+    const dbBucket = await DBBucket.findOne({ name: bucketName });
+
+    if (!dbBucket) {
+      return res.status(400).json({
+        success: false,
+        message: `Bucket "${bucketName}" not found`,
+      });
+    }
+
+    // Create S3 bucket configuration from database bucket
+    const s3Bucket: Bucket = {
+      uri: `r2://${dbBucket.name}`,
+      credentials: JSON.stringify({
+        accessKeyId: dbBucket.credentials.AWS_ACCESS_KEY_ID,
+        secretAccessKey: dbBucket.credentials.AWS_SECRET_ACCESS_KEY,
+        endpoint: dbBucket.credentials.S3_ENDPOINT,
+      }),
+    };
+
     // Validate all files and generate signed URLs
     const signedUrls = [];
-    const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
-      ? figureUrl.slice(0, -"/index.html".length)
-      : figureUrl;
 
     for (const file of files) {
       const { relativePath, size } = file;
@@ -220,9 +231,18 @@ export default async function handler(
         });
       }
 
+      const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
+        ? figureUrl.slice(0, -"/index.html".length)
+        : figureUrl;
+
       // Generate destination URL and signed URL
       const destinationUrl = `${figureUrlWithoutIndexHtml}/${relativePath}`;
-      const signedUrl = await generateSignedUploadUrl(destinationUrl, size);
+      const signedUrl = await generateSignedUploadUrl(
+        destinationUrl,
+        size,
+        s3Bucket,
+        dbBucket.bucketBaseUrl
+      );
 
       signedUrls.push({
         relativePath,

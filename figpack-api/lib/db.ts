@@ -39,6 +39,7 @@ async function connectDB() {
 // Figure interface
 export interface IFigure {
   figureUrl: string; // URL to access the figure
+  bucket?: string; // Bucket name where the figure is stored
   status: "uploading" | "completed" | "failed";
   ownerEmail: string; // From API key validation
   uploadStarted: number; // Unix timestamp
@@ -73,6 +74,10 @@ const figureSchema = new mongoose.Schema<IFigureDocument>({
     type: String,
     required: true,
     unique: true,
+  },
+  bucket: {
+    type: String,
+    required: false,
   },
   status: {
     type: String,
@@ -155,6 +160,7 @@ figureSchema.pre("save", function (next) {
 
 // Create indexes for fast lookups
 figureSchema.index({ figureUrl: 1 }, { unique: true });
+figureSchema.index({ bucket: 1 });
 figureSchema.index({ ownerEmail: 1 });
 figureSchema.index({ status: 1 });
 figureSchema.index({ expiration: 1 });
@@ -237,5 +243,144 @@ userSchema.index({ isAdmin: 1 });
 
 export const User: Model<IUserDocument> =
   mongoose.models.User || mongoose.model("User", userSchema);
+
+// Bucket interface
+export interface IBucket {
+  name: string; // Bucket name (e.g., "my-figpack-bucket")
+  provider: "cloudflare" | "aws"; // Provider type
+  description: string; // Human-readable description
+  bucketBaseUrl: string; // Base URL for accessing objects in the bucket
+  createdAt: number; // Unix timestamp
+  updatedAt: number; // Unix timestamp
+  credentials: {
+    AWS_ACCESS_KEY_ID: string;
+    AWS_SECRET_ACCESS_KEY: string;
+    S3_ENDPOINT: string;
+  };
+  authorization: {
+    isPublic: boolean; // If true, any user can upload to this bucket
+    authorizedUsers: string[]; // Array of email addresses allowed to upload (only used if isPublic is false)
+  };
+}
+
+export interface IBucketDocument extends IBucket, Document {}
+
+// Bucket schema
+const bucketSchema = new mongoose.Schema<IBucketDocument>({
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    minlength: 1,
+    maxlength: 100,
+    validate: {
+      validator: function (name: string) {
+        // Bucket names should follow S3 naming conventions
+        return /^[a-z0-9][a-z0-9\-]*[a-z0-9]$/.test(name) && name.length >= 3;
+      },
+      message:
+        "Invalid bucket name format. Must be 3-100 characters, lowercase letters, numbers, and hyphens only.",
+    },
+  },
+  provider: {
+    type: String,
+    enum: ["cloudflare", "aws"],
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 500,
+  },
+  bucketBaseUrl: {
+    type: String,
+    required: true,
+    trim: true,
+    validate: {
+      validator: function (url: string) {
+        try {
+          new URL(url);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      message: "Invalid bucket base URL format",
+    },
+  },
+  createdAt: {
+    type: Number,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Number,
+    default: Date.now,
+  },
+  credentials: {
+    AWS_ACCESS_KEY_ID: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    AWS_SECRET_ACCESS_KEY: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    S3_ENDPOINT: {
+      type: String,
+      required: true,
+      trim: true,
+      validate: {
+        validator: function (endpoint: string) {
+          try {
+            new URL(endpoint);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        message: "Invalid S3 endpoint URL format",
+      },
+    },
+  },
+  authorization: {
+    isPublic: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    authorizedUsers: {
+      type: [String],
+      required: true,
+      default: [],
+      validate: {
+        validator: function (users: string[]) {
+          // Validate that all entries are valid email addresses
+          return users.every((email) =>
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+          );
+        },
+        message: "All authorized users must be valid email addresses",
+      },
+    },
+  },
+});
+
+// Update the updatedAt field on save
+bucketSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Create indexes for fast lookups
+bucketSchema.index({ name: 1 }, { unique: true });
+bucketSchema.index({ provider: 1 });
+bucketSchema.index({ createdAt: 1 });
+
+export const Bucket: Model<IBucketDocument> =
+  mongoose.models.Bucket || mongoose.model("Bucket", bucketSchema);
 
 export default connectDB;

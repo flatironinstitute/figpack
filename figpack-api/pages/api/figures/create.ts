@@ -1,12 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { validateApiKey } from "../../../lib/adminAuth";
-import connectDB, { Figure, IFigure } from "../../../lib/db";
+import connectDB, { Figure, IFigure, Bucket } from "../../../lib/db";
 import { updateFigureJson } from "../../../lib/figureJsonManager";
-import {
-  bucketBaseUrl,
-  figureManagementUrl,
-  setCorsHeaders,
-} from "../../../lib/config";
+import { figureManagementUrl, setCorsHeaders } from "../../../lib/config";
 
 interface CreateFigureRequest {
   figureHash: string;
@@ -16,6 +12,7 @@ interface CreateFigureRequest {
   figpackVersion?: string;
   title?: string;
   ephemeral?: boolean;
+  bucket?: string; // Optional bucket name, defaults to "figpack-figures"
 }
 
 interface CreateFigureResponse {
@@ -49,21 +46,18 @@ export default async function handler(
     await connectDB();
 
     // Parse request body
-    const { figureHash, apiKey, ephemeral }: CreateFigureRequest = req.body;
+    const {
+      figureHash,
+      apiKey,
+      ephemeral,
+      bucket: bucketName,
+    }: CreateFigureRequest = req.body;
 
     // Validate required fields
     if (!figureHash) {
       return res.status(400).json({
         success: false,
         message: "Missing required field: figureHash",
-      });
-    }
-
-    // For non-ephemeral figures, API key is required
-    if (!ephemeral && !apiKey) {
-      return res.status(400).json({
-        success: false,
-        message: "API key is required for non-ephemeral figures",
       });
     }
 
@@ -75,7 +69,19 @@ export default async function handler(
       });
     }
 
+    // Get bucket information (default to "figpack-figures")
+    const targetBucketName = bucketName || "figpack-figures";
+    const targetBucket = await Bucket.findOne({ name: targetBucketName });
+
+    if (!targetBucket) {
+      return res.status(400).json({
+        success: false,
+        message: `Bucket "${targetBucketName}" not found`,
+      });
+    }
+
     let userEmail = "anonymous";
+    let isUserAuthorized = false;
 
     // Authenticate with API key if provided
     if (apiKey) {
@@ -87,6 +93,39 @@ export default async function handler(
         });
       }
       userEmail = authResult.user.email;
+
+      // Check if user is authorized for this bucket
+      isUserAuthorized =
+        authResult.isAdmin ||
+        targetBucket.authorization.isPublic ||
+        targetBucket.authorization.authorizedUsers.includes(userEmail);
+    } else {
+      // No API key provided - only allowed for public buckets
+      isUserAuthorized = targetBucket.authorization.isPublic;
+    }
+
+    // For ephemeral figures, only allow on public buckets
+    if (ephemeral && !targetBucket.authorization.isPublic) {
+      return res.status(403).json({
+        success: false,
+        message: "Ephemeral uploads are only allowed for public buckets",
+      });
+    }
+
+    // For non-ephemeral figures, API key is required
+    if (!ephemeral && !apiKey) {
+      return res.status(400).json({
+        success: false,
+        message: "API key is required for non-ephemeral figures",
+      });
+    }
+
+    // Check authorization
+    if (!isUserAuthorized) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to upload to this bucket",
+      });
     }
 
     const baseFigureString = `${figureHash}`;
@@ -99,7 +138,7 @@ export default async function handler(
         count > 0 ? `-${count}` : ""
       }`;
       const channel = ephemeral ? "ephemeral" : "default";
-      const candidateFigureUrl = `${bucketBaseUrl}/figures/${channel}/${candidateaFigureString}/index.html`;
+      const candidateFigureUrl = `${targetBucket.bucketBaseUrl}/figures/${channel}/${candidateaFigureString}/index.html`;
       existingFigure = await Figure.findOne({ figureUrl: candidateFigureUrl });
       if (!existingFigure) {
         figureUrlToUse = candidateFigureUrl;
@@ -154,6 +193,7 @@ export default async function handler(
 
     const newFigure = new Figure({
       figureUrl: figureUrlToUse,
+      bucket: targetBucket.name,
       status: "uploading",
       ownerEmail: userEmail,
       uploadStarted: now,

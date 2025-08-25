@@ -1,6 +1,3 @@
-export const bucketBaseUrl =
-  process.env.BUCKET_BASE_URL || "https://figures.figpack.org";
-
 const defaultAllowedOrigins = [
   "https://figpack.org",
   "https://manage.figpack.org",

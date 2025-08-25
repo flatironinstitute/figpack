@@ -16,12 +16,23 @@ import UsersSummary from "./UsersSummary";
 import AddUserDialog from "./AddUserDialog";
 import EditUserDialog from "./EditUserDialog";
 import { getUsers, createUser, updateUser, deleteUser } from "./adminApi";
+import type { Bucket } from "./bucketsApi";
+import {
+  getBuckets,
+  createBucket,
+  updateBucket,
+  deleteBucket,
+} from "./bucketsApi";
+import BucketsSummary from "./BucketsSummary";
+import AddBucketDialog from "./AddBucketDialog";
+import EditBucketDialog from "./EditBucketDialog";
 import { useAuth } from "../../hooks/useAuth";
 
 const AdminPage: React.FC = () => {
   const { apiKey, isLoggedIn } = useAuth();
   const [adminData, setAdminData] = useState<{
     users: User[];
+    buckets: Bucket[];
   } | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -30,8 +41,13 @@ const AdminPage: React.FC = () => {
   const [addUserDialogOpen, setAddUserDialogOpen] = useState<boolean>(false);
   const [editUserDialogOpen, setEditUserDialogOpen] = useState<boolean>(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [addBucketDialogOpen, setAddBucketDialogOpen] =
+    useState<boolean>(false);
+  const [editBucketDialogOpen, setEditBucketDialogOpen] =
+    useState<boolean>(false);
+  const [bucketToEdit, setBucketToEdit] = useState<Bucket | null>(null);
 
-  const handleLoadUsers = useMemo(
+  const handleLoadData = useMemo(
     () => async () => {
       setAdminData(null);
       if (!apiKey) {
@@ -41,17 +57,22 @@ const AdminPage: React.FC = () => {
       setError(null);
 
       try {
-        // Try to get users to verify authentication
-        const result = await getUsers(apiKey);
-        if (result.success) {
+        // Load both users and buckets
+        const [usersResult, bucketsResult] = await Promise.all([
+          getUsers(apiKey),
+          getBuckets(apiKey),
+        ]);
+
+        if (usersResult.success) {
           setAdminData({
-            users: result.users || [],
+            users: usersResult.users || [],
+            buckets: bucketsResult.success ? bucketsResult.buckets || [] : [],
           });
         } else {
-          setError(result.message || "Load users failed");
+          setError(usersResult.message || "Load data failed");
         }
       } catch (error) {
-        setError(`Load users error: ${error}`);
+        setError(`Load data error: ${error}`);
       }
 
       setLoading(false);
@@ -61,11 +82,11 @@ const AdminPage: React.FC = () => {
 
   // Load on mount if logged in
   useEffect(() => {
-    handleLoadUsers();
-  }, [handleLoadUsers]);
+    handleLoadData();
+  }, [handleLoadData]);
 
   const handleRefresh = () => {
-    handleLoadUsers();
+    handleLoadData();
   };
 
   const handleAddUser = async (userData: Omit<User, "createdAt">) => {
@@ -137,6 +158,80 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // Bucket management handlers
+  const handleAddBucket = async (
+    bucketData: Omit<Bucket, "createdAt" | "updatedAt">
+  ) => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const result = await createBucket(apiKey, bucketData);
+      if (result.success) {
+        // Refresh the data
+        handleRefresh();
+        setAddBucketDialogOpen(false);
+      } else {
+        setError(result.message || "Failed to create bucket");
+      }
+    } catch (error) {
+      setError(`Error creating bucket: ${error}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateBucket = async (
+    name: string,
+    bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>
+  ) => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const result = await updateBucket(apiKey, name, bucketData);
+      if (result.success) {
+        // Refresh the data
+        handleRefresh();
+        setEditBucketDialogOpen(false);
+      } else {
+        setError(result.message || "Failed to update bucket");
+      }
+    } catch (error) {
+      setError(`Error updating bucket: ${error}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditBucket = (bucket: Bucket) => {
+    setBucketToEdit(bucket);
+    setEditBucketDialogOpen(true);
+  };
+
+  const handleDeleteBucketFromSummary = (bucket: Bucket) => {
+    handleDeleteBucket(bucket.name);
+  };
+
+  const handleDeleteBucket = async (name: string) => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const result = await deleteBucket(apiKey, name);
+      if (result.success) {
+        // Refresh the data
+        handleRefresh();
+      } else {
+        setError(result.message || "Failed to delete bucket");
+      }
+    } catch (error) {
+      setError(`Error deleting bucket: ${error}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!adminData) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4 }}>
@@ -193,6 +288,16 @@ const AdminPage: React.FC = () => {
           />
         )}
 
+        {/* Storage Buckets Summary */}
+        {adminData && (
+          <BucketsSummary
+            buckets={adminData.buckets}
+            onEditBucket={handleEditBucket}
+            onDeleteBucket={handleDeleteBucketFromSummary}
+            onAddBucket={() => setAddBucketDialogOpen(true)}
+          />
+        )}
+
         <AdminSpecDialog
           open={specDialogOpen}
           onClose={() => setSpecDialogOpen(false)}
@@ -211,6 +316,23 @@ const AdminPage: React.FC = () => {
           onClose={() => setEditUserDialogOpen(false)}
           onUpdateUser={handleUpdateUser}
           user={userToEdit}
+          loading={saving}
+          error={error}
+        />
+
+        <AddBucketDialog
+          open={addBucketDialogOpen}
+          onClose={() => setAddBucketDialogOpen(false)}
+          onAddBucket={handleAddBucket}
+          loading={saving}
+          error={error}
+        />
+
+        <EditBucketDialog
+          open={editBucketDialogOpen}
+          onClose={() => setEditBucketDialogOpen(false)}
+          onUpdateBucket={handleUpdateBucket}
+          bucket={bucketToEdit}
           loading={saving}
           error={error}
         />

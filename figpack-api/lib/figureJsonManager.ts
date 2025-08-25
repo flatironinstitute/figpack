@@ -1,23 +1,12 @@
-import { bucketBaseUrl } from "./config";
 import { IFigure } from "./db";
-import getS3Client from "./getS3Client";
 import { Bucket, putObject } from "./s3Helpers";
-
-// Get the bucket configuration
-const bucketCredentials = process.env.BUCKET_CREDENTIALS;
-if (!bucketCredentials) {
-  throw new Error("Missing BUCKET_CREDENTIALS");
-}
-
-const bucket: Bucket = {
-  uri: "r2://figpack-figures",
-  credentials: bucketCredentials,
-};
+import { Bucket as DBBucket } from "../lib/db";
 
 export const updateFigureJson = async (figure: IFigure) => {
   // Create the JSON content based on figure data
   const jsonContent: any = {
     figureUrl: figure.figureUrl,
+    bucket: figure.bucket,
     status: figure.status,
     uploadStarted: figure.uploadStarted,
     uploadUpdated: figure.uploadUpdated,
@@ -38,6 +27,24 @@ export const updateFigureJson = async (figure: IFigure) => {
     jsonContent.pinInfo = figure.pinInfo;
   }
 
+  const bucketName = figure.bucket || "figpack-figures";
+
+  const dbBucket = await DBBucket.findOne({ name: bucketName });
+  if (!dbBucket) {
+    throw new Error(`Bucket not found: ${bucketName}`);
+  }
+  const bucketBaseUrl = dbBucket.bucketBaseUrl;
+
+  // Create S3 bucket configuration from database bucket
+  const s3Bucket: Bucket = {
+    uri: `r2://${dbBucket.name}`,
+    credentials: JSON.stringify({
+      accessKeyId: dbBucket.credentials.AWS_ACCESS_KEY_ID,
+      secretAccessKey: dbBucket.credentials.AWS_SECRET_ACCESS_KEY,
+      endpoint: dbBucket.credentials.S3_ENDPOINT,
+    }),
+  };
+
   try {
     const prefix = `${bucketBaseUrl}/`;
     if (!figure.figureUrl.startsWith(prefix)) {
@@ -49,8 +56,8 @@ export const updateFigureJson = async (figure: IFigure) => {
     const key =
       figureUrlWithoutIndexHtml.slice(prefix.length) + "/figpack.json";
     // Store the JSON file in the figure's directory
-    await putObject(bucket, {
-      Bucket: "figpack-figures",
+    await putObject(s3Bucket, {
+      Bucket: dbBucket.name,
       Key: key,
       Body: JSON.stringify(jsonContent, null, 2),
       ContentType: "application/json",

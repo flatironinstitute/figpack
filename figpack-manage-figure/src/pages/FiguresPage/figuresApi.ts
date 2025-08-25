@@ -2,6 +2,7 @@ import { FIGPACK_API_BASE_URL } from "../../config";
 
 export interface FigureListItem {
   figureUrl: string;
+  bucket?: string;
   status: "uploading" | "completed" | "failed";
   ownerEmail: string;
   uploadStarted: number;

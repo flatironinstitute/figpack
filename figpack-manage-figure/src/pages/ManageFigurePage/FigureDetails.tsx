@@ -13,6 +13,7 @@ import React from "react";
 interface FigureDetailsProps {
   figpackStatus: {
     figureUrl: string;
+    bucket?: string;
     ownerEmail?: string;
     figpackVersion: string;
     totalSize?: number;
@@ -62,6 +63,12 @@ const FigureDetails: React.FC<FigureDetailsProps> = ({
                       <TableCell>{figpackStatus.ownerEmail}</TableCell>
                     </TableRow>
                   )}
+                  <TableRow>
+                    <TableCell sx={{ color: "text.secondary" }}>
+                      Bucket
+                    </TableCell>
+                    <TableCell>{figpackStatus.bucket}</TableCell>
+                  </TableRow>
                   {figpackStatus.hasWriteAccess !== undefined && (
                     <TableRow>
                       <TableCell sx={{ color: "text.secondary" }}>

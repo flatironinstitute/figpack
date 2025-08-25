@@ -11,6 +11,7 @@ export interface PinInfo {
 export interface FigpackStatus {
   status: "uploading" | "completed" | "failed";
   figureUrl: string;
+  bucket?: string;
   uploadStarted: number;
   uploadUpdated: number;
   expiration: number;

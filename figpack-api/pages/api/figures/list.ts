@@ -7,6 +7,7 @@ import { setCorsHeaders } from "../../../lib/config";
 
 interface FigureListItem {
   figureUrl: string;
+  bucket?: string;
   status: "uploading" | "completed" | "failed";
   ownerEmail: string;
   uploadStarted: number;
@@ -184,6 +185,7 @@ export default async function handler(
     // Transform documents to response format
     const figures: FigureListItem[] = figuresDocs.map((doc) => ({
       figureUrl: doc.figureUrl,
+      bucket: doc.bucket,
       status: doc.status,
       ownerEmail: doc.ownerEmail,
       uploadStarted: doc.uploadStarted,

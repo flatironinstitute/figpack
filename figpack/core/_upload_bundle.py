@@ -11,7 +11,7 @@ import requests
 
 from .. import __version__
 
-from .config import FIGPACK_API_BASE_URL
+from .config import FIGPACK_API_BASE_URL, FIGPACK_BUCKET
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
@@ -156,6 +156,7 @@ def _create_or_get_figure(
     payload = {
         "figureHash": figure_hash,
         "figpackVersion": __version__,
+        "bucket": FIGPACK_BUCKET,
     }
 
     # API key is optional for ephemeral figures

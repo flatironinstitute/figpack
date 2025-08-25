@@ -38,6 +38,7 @@ interface FigpackStatus {
   uploadCompleted?: number;
   expiration?: number;
   figureUrl?: string;
+  bucket?: string;
   totalFiles?: number;
   totalSize?: number;
   figpackVersion?: string;
