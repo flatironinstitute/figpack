@@ -93,6 +93,7 @@ def _show_view(
     description: Union[str, None] = None,
     inline: Union[bool, None] = None,
     inline_height: int = 600,
+    _local_figure_name: Union[str, None] = None,
 ):
     # Determine if we should use inline display
     use_inline = inline
@@ -136,7 +137,9 @@ def _show_view(
         server_manager = ProcessServerManager.get_instance()
 
         # Create figure subdirectory in process temp directory
-        figure_dir = server_manager.create_figure_subdir()
+        figure_dir = server_manager.create_figure_subdir(
+            _local_figure_name=_local_figure_name
+        )
 
         # Prepare the figure bundle in the subdirectory
         prepare_figure_bundle(

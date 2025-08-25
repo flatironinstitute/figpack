@@ -13,6 +13,8 @@ from .UnitsTableRow import UnitsTableRow
 from .AverageWaveforms import AverageWaveforms
 from .SpikeAmplitudesItem import SpikeAmplitudesItem
 from .SpikeAmplitudes import SpikeAmplitudes
+from .RasterPlotItem import RasterPlotItem
+from .RasterPlot import RasterPlot
 
 __all__ = [
     "AutocorrelogramItem",
@@ -26,4 +28,6 @@ __all__ = [
     "AverageWaveforms",
     "SpikeAmplitudesItem",
     "SpikeAmplitudes",
+    "RasterPlotItem",
+    "RasterPlot",
 ]

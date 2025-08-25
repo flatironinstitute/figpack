@@ -8,6 +8,7 @@ import { FPAverageWaveforms } from "./FPAverageWaveforms";
 import { FPSpikeAmplitudes } from "./FPSpikeAmplitudes";
 
 import UnitSelectionProvider from "./context-unit-selection/UnitSelectionProvider";
+import { FPRasterPlot } from "./FPRasterPlot";
 
 const registerViewComponents = (
   viewComponentRegistry: FPViewComponentRegistry,
@@ -35,6 +36,11 @@ const registerViewComponents = (
   viewComponentRegistry.registerViewComponent({
     type: "SpikeAmplitudes",
     component: FPSpikeAmplitudes,
+  });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "RasterPlot",
+    component: FPRasterPlot,
   });
 };
 

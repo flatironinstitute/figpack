@@ -138,11 +138,17 @@ class ProcessServerManager:
             self._create_process_info_file()
         return self._temp_dir
 
-    def create_figure_subdir(self) -> pathlib.Path:
+    def create_figure_subdir(
+        self, *, _local_figure_name: Optional[str] = None
+    ) -> pathlib.Path:
         """Create a unique subdirectory for a figure within the process temp dir."""
         temp_dir = self.get_temp_dir()
-        figure_id = str(uuid.uuid4())[:8]  # Short unique ID
-        figure_dir = temp_dir / f"figure_{figure_id}"
+        local_figure_name = (
+            "figure_" + str(uuid.uuid4())[:8]
+            if _local_figure_name is None
+            else _local_figure_name
+        )
+        figure_dir = temp_dir / f"{local_figure_name}"
         figure_dir.mkdir(exist_ok=True)
         return figure_dir
 

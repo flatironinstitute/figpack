@@ -75,8 +75,15 @@ class FigpackView:
             if upload:
                 raise ValueError("Cannot upload when _dev is True.")
 
+            # make a random figure name
+            import random
+            import string
+
+            _local_figure_name = "fig_" + "".join(
+                random.choices(string.ascii_lowercase + string.digits, k=8)
+            )
             print(
-                f"For development, run figpack-gui in dev mode and use http://localhost:5173?data=http://localhost:{port}/data.zarr"
+                f"For development, run figpack-gui in dev mode and use http://localhost:5173?data=http://localhost:{port}/{_local_figure_name}/data.zarr"
             )
             open_in_browser = False
 
@@ -91,6 +98,7 @@ class FigpackView:
             description=description,
             inline=inline,
             inline_height=inline_height,
+            _local_figure_name=_local_figure_name if _dev else None,
         )
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:
