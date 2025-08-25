@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo, useState } from "react";
 import { ZarrGroup } from "@figpack/plugin-sdk";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ProvideTimeseriesSelection } from "../shared/context-timeseries-selection";
 
-interface TabItemData {
+interface TabLayoutItemData {
   name: string;
   label: string;
 }
@@ -14,22 +15,36 @@ export const FPTabLayout: React.FC<{
   width: number;
   height: number;
   FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, width, height, FPView }) => {
-  const initialTabIndex = zarrGroup.attrs["initial_tab_index"] || 0;
-  const itemsMetadata: TabItemData[] = useMemo(
+  eachItemGetsTimeseriesSelectionContext?: boolean;
+}> = ({
+  zarrGroup,
+  width,
+  height,
+  FPView,
+  eachItemGetsTimeseriesSelectionContext,
+}) => {
+  const initialItemIndex = zarrGroup.attrs["initial_item_index"] || 0;
+  const itemsMetadata: TabLayoutItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
-    [zarrGroup]
+    [zarrGroup],
   );
 
-  const [activeTabIndex, setActiveTabIndex] = useState(initialTabIndex);
+  const [activeItemIndex, setActiveItemIndex] = useState(initialItemIndex);
 
-  // Ensure active tab index is valid
-  const validActiveTabIndex = Math.max(
+  // Ensure active item index is valid
+  const validActiveItemIndex = Math.max(
     0,
-    Math.min(activeTabIndex, itemsMetadata.length - 1)
+    Math.min(activeItemIndex, itemsMetadata.length - 1),
   );
 
   const contentHeight = height - TAB_HEIGHT;
+
+  const itemNamesThatHaveBeenVisible = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    itemNamesThatHaveBeenVisible.current.add(
+      itemsMetadata[validActiveItemIndex].name,
+    );
+  }, [validActiveItemIndex, itemsMetadata]);
 
   if (!FPView) {
     return (
@@ -59,7 +74,6 @@ export const FPTabLayout: React.FC<{
         boxSizing: "border-box",
       }}
     >
-      {/* Tab Headers */}
       <div
         style={{
           position: "absolute",
@@ -80,27 +94,27 @@ export const FPTabLayout: React.FC<{
               padding: "8px 16px",
               cursor: "pointer",
               backgroundColor:
-                index === validActiveTabIndex ? "#fff" : "transparent",
+                index === validActiveItemIndex ? "#fff" : "transparent",
               borderRight: "1px solid #ddd",
               borderBottom:
-                index === validActiveTabIndex ? "1px solid #fff" : "none",
-              marginBottom: index === validActiveTabIndex ? "-1px" : "0",
+                index === validActiveItemIndex ? "1px solid #fff" : "none",
+              marginBottom: index === validActiveItemIndex ? "-1px" : "0",
               display: "flex",
               alignItems: "center",
               fontSize: "14px",
-              fontWeight: index === validActiveTabIndex ? "600" : "400",
-              color: index === validActiveTabIndex ? "#333" : "#666",
+              fontWeight: index === validActiveItemIndex ? "600" : "400",
+              color: index === validActiveItemIndex ? "#333" : "#666",
               transition: "all 0.2s ease",
-              zIndex: index === validActiveTabIndex ? 1 : 0,
+              zIndex: index === validActiveItemIndex ? 1 : 0,
             }}
-            onClick={() => setActiveTabIndex(index)}
+            onClick={() => setActiveItemIndex(index)}
             onMouseEnter={(e) => {
-              if (index !== validActiveTabIndex) {
+              if (index !== validActiveItemIndex) {
                 e.currentTarget.style.backgroundColor = "#f0f0f0";
               }
             }}
             onMouseLeave={(e) => {
-              if (index !== validActiveTabIndex) {
+              if (index !== validActiveItemIndex) {
                 e.currentTarget.style.backgroundColor = "transparent";
               }
             }}
@@ -110,38 +124,55 @@ export const FPTabLayout: React.FC<{
         ))}
       </div>
 
-      {/* Tab Content */}
-      <div
-        style={{
-          position: "absolute",
-          top: TAB_HEIGHT,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "#fff",
-        }}
-      >
-        {itemsMetadata.length > 0 && (
-          <TabContent
-            zarrGroup={zarrGroup}
-            itemName={itemsMetadata[validActiveTabIndex].name}
-            width={width}
-            height={contentHeight}
-            FPView={FPView}
-          />
-        )}
-      </div>
+      {itemsMetadata.map((item, index) => (
+        <div
+          key={item.name}
+          style={{
+            position: "absolute",
+            top: TAB_HEIGHT,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "#fff",
+            display: index === validActiveItemIndex ? "block" : "none",
+          }}
+        >
+          {index === validActiveItemIndex ||
+          itemNamesThatHaveBeenVisible.current.has(item.name) ? (
+            <TabLayoutItemContent
+              zarrGroup={zarrGroup}
+              itemName={item.name}
+              width={width}
+              height={contentHeight}
+              FPView={FPView}
+              eachItemGetsTimeseriesSelectionContext={
+                eachItemGetsTimeseriesSelectionContext
+              }
+            />
+          ) : (
+            <div>Not loaded yet...</div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
 
-const TabContent: React.FC<{
+const TabLayoutItemContent: React.FC<{
   zarrGroup: ZarrGroup;
   itemName: string;
   width: number;
   height: number;
   FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, itemName, width, height, FPView }) => {
+  eachItemGetsTimeseriesSelectionContext?: boolean;
+}> = ({
+  zarrGroup,
+  itemName,
+  width,
+  height,
+  FPView,
+  eachItemGetsTimeseriesSelectionContext,
+}) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
@@ -149,7 +180,7 @@ const TabContent: React.FC<{
     const loadGroup = async () => {
       try {
         const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName)
+          join(zarrGroup.path, itemName),
         );
         if (canceled) return;
         setChildGroup(group || null);
@@ -194,12 +225,12 @@ const TabContent: React.FC<{
           color: "#666",
         }}
       >
-        FPView is not defined in TabContent.
+        FPView is not defined in TabLayoutItemContent.
       </div>
     );
   }
 
-  return (
+  const content = (
     <FPView
       zarrGroup={childGroup}
       width={width}
@@ -207,6 +238,12 @@ const TabContent: React.FC<{
       FPView={FPView}
     />
   );
+
+  if (eachItemGetsTimeseriesSelectionContext) {
+    return <ProvideTimeseriesSelection>{content}</ProvideTimeseriesSelection>;
+  } else {
+    return content;
+  }
 };
 
 const join = (path: string, name: string) => {

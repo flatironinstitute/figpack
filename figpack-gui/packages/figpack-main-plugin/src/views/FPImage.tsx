@@ -15,12 +15,7 @@ export const FPImage: React.FC<{
   const dataSize = zarrGroup.attrs["data_size"] || 0;
 
   useEffect(() => {
-    if (errorMessage) {
-      setError(errorMessage);
-      setLoading(false);
-      return;
-    }
-
+    let imageUrl0: string | null = null;
     const loadImage = async () => {
       try {
         setLoading(true);
@@ -47,8 +42,8 @@ export const FPImage: React.FC<{
         }
 
         const blob = new Blob([uint8Array], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        setImageUrl(url);
+        imageUrl0 = URL.createObjectURL(blob);
+        setImageUrl(imageUrl0);
       } catch (err) {
         console.error("Failed to load image:", err);
         setError(
@@ -63,11 +58,11 @@ export const FPImage: React.FC<{
 
     // Cleanup function to revoke object URL
     return () => {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
+      if (imageUrl0) {
+        URL.revokeObjectURL(imageUrl0);
       }
     };
-  }, [zarrGroup, errorMessage, imageFormat, imageUrl]);
+  }, [zarrGroup, imageFormat]);
 
   if (errorMessage || error) {
     return (

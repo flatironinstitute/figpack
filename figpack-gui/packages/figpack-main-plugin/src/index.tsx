@@ -1,6 +1,7 @@
 // Import all view components
 import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
 import { FPBox } from "./views/FPBox";
+import { FPGallery } from "./views/FPGallery";
 import { FPImage } from "./views/FPImage";
 import { FPMarkdown } from "./views/FPMarkdown";
 import { FPMatplotlibFigure } from "./views/FPMatplotlibFigure";
@@ -12,11 +13,14 @@ import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
 import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
 
 export {
+  // eslint-disable-next-line react-refresh/only-export-components
   useTimeRange,
+  // eslint-disable-next-line react-refresh/only-export-components
   useTimeseriesSelection,
 } from "./shared/context-timeseries-selection";
 
 export { default as TimeScrollView3 } from "./shared/component-time-scroll-view-3/TimeScrollView3";
+// eslint-disable-next-line react-refresh/only-export-components
 export { useTimeScrollView3 } from "./shared/component-time-scroll-view-3/useTimeScrollView3";
 
 const registerViewComponents = (
@@ -45,6 +49,11 @@ const registerViewComponents = (
   viewComponentRegistry.registerViewComponent({
     type: "TabLayout",
     component: FPTabLayout,
+  });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "Gallery",
+    component: FPGallery,
   });
 
   viewComponentRegistry.registerViewComponent({
@@ -78,4 +87,5 @@ const plugin: FPPlugin = {
   provideAppContexts,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default plugin;

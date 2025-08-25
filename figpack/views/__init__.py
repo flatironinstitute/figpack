@@ -1,4 +1,6 @@
 from .Box import Box
+from .Gallery import Gallery
+from .GalleryItem import GalleryItem
 from .Image import Image
 from .LayoutItem import LayoutItem
 from .Markdown import Markdown
