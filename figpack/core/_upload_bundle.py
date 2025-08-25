@@ -69,27 +69,54 @@ def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> 
 
 
 def _upload_single_file_with_signed_url(
-    relative_path: str, file_path: pathlib.Path, signed_url: str
+    relative_path: str, file_path: pathlib.Path, signed_url: str, num_retries: int = 4
 ) -> str:
     """
-    Upload a single file using a pre-obtained signed URL
+    Upload a single file using a pre-obtained signed URL with exponential backoff retries
+
+    Args:
+        relative_path: The relative path of the file
+        file_path: The path to the file to upload
+        signed_url: The signed URL to upload to
+        num_retries: Number of retries on failure with exponential backoff (default: 4)
 
     Returns:
         str: The relative path of the uploaded file
+
+    Raises:
+        Exception: If upload fails after all retries are exhausted
     """
-    # Upload file to signed URL
     content_type = _determine_content_type(relative_path)
-    with open(file_path, "rb") as f:
-        upload_response = requests.put(
-            signed_url, data=f, headers={"Content-Type": content_type}
-        )
+    retries_remaining = num_retries
+    last_exception = None
 
-    if not upload_response.ok:
-        raise Exception(
-            f"Failed to upload {relative_path} to signed URL: HTTP {upload_response.status_code}"
-        )
+    while retries_remaining >= 0:
+        try:
+            with open(file_path, "rb") as f:
+                upload_response = requests.put(
+                    signed_url, data=f, headers={"Content-Type": content_type}
+                )
 
-    return relative_path
+            if upload_response.ok:
+                return relative_path
+
+            last_exception = Exception(
+                f"Failed to upload {relative_path} to signed URL: HTTP {upload_response.status_code}"
+            )
+        except Exception as e:
+            last_exception = e
+
+        if retries_remaining > 0:
+            backoff_seconds = 2 ** (num_retries - retries_remaining)
+            print(
+                f"Upload failed for {relative_path}, retrying in {backoff_seconds} seconds..."
+            )
+            time.sleep(backoff_seconds)
+            retries_remaining -= 1
+        else:
+            break
+
+    raise last_exception
 
 
 MAX_WORKERS_FOR_UPLOAD = 16
@@ -364,17 +391,13 @@ def _upload_bundle(
         if "manifest.json" not in signed_urls_map:
             raise Exception("No signed URL returned for manifest.json")
 
-        # Upload manifest using signed URL
-        upload_response = requests.put(
+        # Upload manifest using the same retry function
+        _upload_single_file_with_signed_url(
+            "manifest.json",
+            temp_file_path,
             signed_urls_map["manifest.json"],
-            data=manifest_content,
-            headers={"Content-Type": "application/json"},
+            num_retries=4,
         )
-
-        if not upload_response.ok:
-            raise Exception(
-                f"Failed to upload manifest.json to signed URL: HTTP {upload_response.status_code}"
-            )
     finally:
         # Clean up temporary file
         temp_file_path.unlink(missing_ok=True)
