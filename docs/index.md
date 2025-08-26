@@ -4,7 +4,13 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 ## Overview
 
-figpack enables you to create interactive scientific data visualizations that can be displayed in web browsers and easily shared with colleagues. It provides a powerful combination of Python APIs and web-based rendering.
+**figpack** is a Python package for creating interactive scientific visualizations that can be displayed directly in web browsers and easily shared. Unlike traditional plotting libraries, figpack produces **self-contained HTML bundles** that include both the rendering logic and the underlying data. This makes figures portable, reproducible, and suitable for long-term archiving (for example, uploading to Zenodo).
+
+At its core, figpack provides a flexible system of **views** (such as time series graphs, images, and domain-specific displays), organized into **layouts** that can compose complex dashboards. Different views within a layout are **synchronized**, sharing state such as the current timepoint, visible time range, or selected units, which enables coordinated exploration across multiple visualizations.
+
+Data are stored in the efficient **Zarr** format, enabling interactive exploration of very large datasets through techniques like hierarchical downsampling. Rendering is handled by **React-based web applications**, allowing custom and highly interactive views that go beyond conventional charting.
+
+Although primarily motivated by applications in **neurophysiology** (e.g., spike sorting), figpack is designed as a **general framework**. General-purpose components such as time series graphs are immediately useful in many scientific domains, and its plugin-oriented design encourages contributions of specialized views from other fields.
 
 ### Core Concepts
 
