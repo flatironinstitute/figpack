@@ -39,8 +39,8 @@ def extract_iframe_and_code_pairs(tutorial_content: str) -> List[Tuple[str, str]
         iframe_match = re.search(iframe_pattern, line)
         if iframe_match:
             src = iframe_match.group(1)
-            # Extract folder name from src like "tutorial_markdown_example/index.html?embedded=1"
-            folder_match = re.match(r"(tutorial_[^/]+)/", src)
+            # Extract folder name from src like "./tutorial_markdown_example/index.html?embedded=1"
+            folder_match = re.match(r"\./?(tutorial_[^/]+)/", src)
             if folder_match:
                 folder_name = folder_match.group(1)
 

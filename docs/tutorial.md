@@ -38,7 +38,7 @@ view.show(title="Markdown Example", open_in_browser=True)
 
 ```
 
-<iframe src="tutorial_markdown_example/index.html?embedded=1" width="100%" height="350" frameborder="0"></iframe>
+<iframe src="./tutorial_markdown_example/index.html?embedded=1" width="100%" height="350" frameborder="0"></iframe>
 
 ### 1.2 Image View
 
@@ -72,7 +72,7 @@ view = vv.Image(img_bytes.getvalue())
 view.show(title="Image Example", open_in_browser=True)
 ```
 
-<iframe src="tutorial_image_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
+<iframe src="./tutorial_image_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
 
 ---
 
@@ -104,7 +104,7 @@ graph.add_line_series(
 graph.show(title="Simple Timeseries", open_in_browser=True)
 ```
 
-<iframe src="tutorial_simple_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_simple_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
 ### 2.2 Multiple Series
 
@@ -164,7 +164,7 @@ graph.add_interval_series(
 graph.show(title="Multi-Series Plot", open_in_browser=True)
 ```
 
-<iframe src="tutorial_multi_series/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_multi_series/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
 ---
 
@@ -204,7 +204,7 @@ view = vv.MultiChannelTimeseries(
 view.show(title="Multi-Channel Data", open_in_browser=True)
 ```
 
-<iframe src="tutorial_multichannel_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_multichannel_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
 ### 3.2 Matplotlib Integration
 
@@ -244,7 +244,7 @@ view = vv.MatplotlibFigure(fig=fig)
 view.show(title="Matplotlib Example", open_in_browser=True)
 ```
 
-<iframe src="tutorial_matplotlib_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_matplotlib_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
 ### 3.3 Plotly Integration
 
@@ -279,7 +279,7 @@ view = vv.PlotlyFigure(fig=fig)
 view.show(title="Plotly Example", open_in_browser=True)
 ```
 
-<iframe src="tutorial_plotly_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_plotly_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
 ---
 
@@ -323,7 +323,7 @@ view = vv.Box(
 view.show(title="Box Layout Example", open_in_browser=True)
 ```
 
-<iframe src="tutorial_box_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_box_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
 ### 4.2 TabLayout
 
@@ -359,7 +359,7 @@ view = vv.TabLayout(
 view.show(title="Tab Layout Example", open_in_browser=True)
 ```
 
-<iframe src="tutorial_tab_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_tab_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
 ---
 
@@ -409,7 +409,7 @@ view = vv.Splitter(
 view.show(title="Splitter Layout Example", open_in_browser=True)
 ```
 
-<iframe src="tutorial_splitter_layout/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe src="./tutorial_splitter_layout/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
 
 ### 5.2 Complex Nested Layout
 
@@ -456,7 +456,7 @@ view = vv.Splitter(
 view.show(title="Complex Layout Example", open_in_browser=True)
 ```
 
-<iframe src="tutorial_complex_layout/index.html?embedded=1" width="100%" height="700" frameborder="0"></iframe>
+<iframe src="./tutorial_complex_layout/index.html?embedded=1" width="100%" height="700" frameborder="0"></iframe>
 
 ---
 
