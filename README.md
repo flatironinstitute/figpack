@@ -1,5 +1,9 @@
 # figpack
 
+[![Tests](https://github.com/flatironinstitute/figpack/actions/workflows/test.yml/badge.svg)](https://github.com/flatironinstitute/figpack/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/flatironinstitute/figpack/branch/main/graph/badge.svg)](https://codecov.io/gh/flatironinstitute/figpack)
+[![PyPI version](https://badge.fury.io/py/figpack.svg)](https://badge.fury.io/py/figpack)
+
 A Python package for creating shareable, interactive visualizations in the browser.
 
 ## Documentation
