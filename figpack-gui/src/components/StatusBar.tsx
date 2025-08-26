@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useFigpackStatus } from "../hooks/useFigpackStatus";
 import { useZarrData } from "../hooks/useZarrData";
+import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
 
 const AboutButton: React.FC<{ title?: string; description?: string }> = ({
@@ -65,6 +66,7 @@ export const StatusBar: React.FC = () => {
   const { isLoading, error, status, isExpired, timeUntilExpiration } =
     useFigpackStatus();
   const zarrData = useZarrData();
+  const { embedded } = useUrlParams();
 
   // Extract title and description from zarr data
   const title = zarrData?.attrs?.title;
@@ -104,7 +106,9 @@ export const StatusBar: React.FC = () => {
       <div className="status-bar warning">
         <span>Upload status: {status.status}</span>
         <AboutButton title={title} description={description} />
-        <ManageButton figureManagementUrl={figureManagementUrl} />
+        {!embedded && (
+          <ManageButton figureManagementUrl={figureManagementUrl} />
+        )}
       </div>
     );
   }
@@ -116,7 +120,9 @@ export const StatusBar: React.FC = () => {
           This figure has expired, but it may be possible to recover it.
         </span>
         <AboutButton title={title} description={description} />
-        <ManageButton figureManagementUrl={figureManagementUrl} />
+        {!embedded && (
+          <ManageButton figureManagementUrl={figureManagementUrl} />
+        )}
       </div>
     );
   }
@@ -126,7 +132,9 @@ export const StatusBar: React.FC = () => {
       <div className="status-bar">
         <span>Expires in: {timeUntilExpiration}</span>
         <AboutButton title={title} description={description} />
-        <ManageButton figureManagementUrl={figureManagementUrl} />
+        {!embedded && (
+          <ManageButton figureManagementUrl={figureManagementUrl} />
+        )}
       </div>
     );
   }
@@ -135,7 +143,7 @@ export const StatusBar: React.FC = () => {
     <div className="status-bar">
       <span>Figure ready</span>
       <AboutButton title={title} description={description} />
-      <ManageButton figureManagementUrl={figureManagementUrl} />
+      {!embedded && <ManageButton figureManagementUrl={figureManagementUrl} />}
     </div>
   );
 };

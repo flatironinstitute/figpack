@@ -23,21 +23,15 @@ cd figpack
 pip install -e .
 ```
 
-## Optional Dependencies
-
-For additional functionality, you can install optional dependencies:
-
-```bash
-# For testing
-pip install figpack[test]
-
-# For development
-pip install figpack[dev]
-```
-
 ## Verify Installation
 
 To verify that figpack is installed correctly, run:
+
+```bash
+figpack --version
+```
+
+or in Python:
 
 ```python
 import figpack

@@ -19,6 +19,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
+    "sphinx_copybutton",
 ]
 
 templates_path = ["_templates"]
@@ -49,6 +50,13 @@ autodoc_default_options = {
     "undoc-members": True,
     "show-inheritance": True,
 }
+
+# -- sphinx-copybutton configuration ----------------------------------------
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
+copybutton_only_copy_prompt_lines = True
+copybutton_remove_prompts = True
+copybutton_copy_empty_lines = False
 
 # -- GitHub Pages configuration ---------------------------------------------
 html_baseurl = "https://flatironinstitute.github.io/figpack/"
