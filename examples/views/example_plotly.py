@@ -23,10 +23,8 @@ Features:
 All plots are interactive with zoom, pan, and hover capabilities.
 """
 
-    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
     view.show(
         open_in_browser=True,
-        upload=upload,
         title=title,
         description=description_md,
     )

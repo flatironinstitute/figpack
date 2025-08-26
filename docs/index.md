@@ -4,7 +4,7 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 ## Overview
 
-figpack enables you to create interactive data visualizations that can be displayed in a web browser and optionally shared online. The package focuses on timeseries data visualization with support for complex, nested layouts.
+figpack enables you to create interactive data visualizations that can be displayed in a web browser and optionally shared online. The package focuses on scientific data visualization with support for complex, nested layouts.
 
 ### Key Features
 
@@ -43,6 +43,8 @@ graph.add_line_series(name="sine wave", t=t, y=y, color="blue")
 # Display the visualization
 graph.show(open_in_browser=True, title="Quick Start Example")
 ```
+
+For detailed documentation of the `show()` function and its many configuration options, see the [show() function reference](show_function.md).
 
 ## Indices and tables
 

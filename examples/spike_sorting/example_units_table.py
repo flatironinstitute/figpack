@@ -18,12 +18,8 @@ def main():
 This is an example of a units table created using figpack.
 """
 
-    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
-    _dev = os.environ.get("FIGPACK_DEV") == "1"
     view.show(
         open_in_browser=True,
-        upload=upload,
-        _dev=_dev,
         title=title,
         description=description_md,
     )

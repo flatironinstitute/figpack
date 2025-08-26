@@ -206,8 +206,6 @@ class ProcessServerManager:
         # Start directory monitoring thread
         self._start_directory_monitor()
 
-        print(f"Started figpack server at http://localhost:{port} serving {temp_dir}")
-
         return f"http://localhost:{port}", port
 
     def _stop_server(self):

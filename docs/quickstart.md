@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-This guide will help you get started with figpack quickly.
+This guide will help you get started with figpack quickly. For detailed documentation of the `show()` function and all its configuration options, see the [show() function reference](show_function.md).
 
 ## Basic Usage
 
@@ -43,6 +43,10 @@ To share visualizations online, set the `FIGPACK_API_KEY` environment variable a
 ```python
 view.show(upload=True, open_in_browser=True, title="Shared Visualization")
 ```
+
+## Display Options
+
+The `show()` function supports various display modes and configuration options. Here are some common use cases, but see the [show() function reference](show_function.md) for complete details.
 
 ## Available Views
 

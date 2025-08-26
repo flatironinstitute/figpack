@@ -12,10 +12,7 @@ def main():
 This is an example of a Splitter layout created using figpack, demonstrating nested views and complex layouts.
 """
 
-    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
-    view.show(
-        open_in_browser=True, upload=upload, title=title, description=description_md
-    )
+    view.show(open_in_browser=True, title=title, description=description_md)
 
 
 def example_splitter_layout():

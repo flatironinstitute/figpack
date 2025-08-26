@@ -21,20 +21,6 @@ class TestFigpackView:
 
         assert "Subclasses must implement _write_to_zarr_group" in str(exc_info.value)
 
-    def test_show_dev_mode_constraints(self):
-        """Test development mode constraints in show method"""
-        view = FigpackView()
-
-        # Test that allow_origin cannot be set with _dev=True
-        with pytest.raises(ValueError) as exc_info:
-            view.show(_dev=True, allow_origin="http://example.com")
-        assert "Cannot set allow_origin when _dev is True" in str(exc_info.value)
-
-        # Test that upload cannot be used with _dev=True
-        with pytest.raises(ValueError) as exc_info:
-            view.show(_dev=True, upload=True)
-        assert "Cannot upload when _dev is True" in str(exc_info.value)
-
     def test_show_with_title_and_description(self):
         """Test show method with title and description"""
         view = FigpackView()

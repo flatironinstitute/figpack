@@ -229,6 +229,4 @@ views_dict = {v["viewId"]: v for v in fig_data["views"]}
 main_box = process_layout_box(fig_data["layout"], views_dict)
 
 # Display the result
-upload = os.environ.get("FIGPACK_UPLOAD", "0") == "1"
-_dev = os.environ.get("FIGPACK_DEV", "0") == "1"
-main_box.show(open_in_browser=False, _dev=_dev, upload=upload)
+main_box.show()

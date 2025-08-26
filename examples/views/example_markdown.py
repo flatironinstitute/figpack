@@ -12,10 +12,8 @@ def main():
 This is an example of a markdown view created using figpack.
 """
 
-    upload = os.environ.get("FIGPACK_UPLOAD") == "1"
     view.show(
         open_in_browser=True,
-        upload=upload,
         title=title,
         description=description_md,
     )

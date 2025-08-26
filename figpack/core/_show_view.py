@@ -84,23 +84,18 @@ thisdir = pathlib.Path(__file__).parent.resolve()
 def _show_view(
     view: FigpackView,
     *,
-    open_in_browser: bool = False,
-    port: Union[int, None] = None,
-    allow_origin: Union[str, None] = None,
-    upload: bool = False,
-    ephemeral: bool = False,
-    title: Union[str, None] = None,
-    description: Union[str, None] = None,
-    inline: Union[bool, None] = None,
-    inline_height: int = 600,
-    _local_figure_name: Union[str, None] = None,
+    open_in_browser: bool,
+    port: Union[int, None],
+    allow_origin: Union[str, None],
+    upload: bool,
+    ephemeral: bool,
+    title: str,
+    description: Union[str, None],
+    inline: bool,
+    inline_height: int,
+    wait_for_input: bool,
+    _local_figure_name: Union[str, None],
 ):
-    # Determine if we should use inline display
-    use_inline = inline
-    if inline is None:
-        # Auto-detect: use inline if we're in a notebook
-        use_inline = _is_in_notebook()
-
     if upload:
         # Upload behavior: create temporary directory for this upload only
         with tempfile.TemporaryDirectory(prefix="figpack_upload_") as tmpdir:
@@ -118,7 +113,7 @@ def _show_view(
                 tmpdir, api_key, title=title, ephemeral=ephemeral
             )
 
-            if use_inline:
+            if inline:
                 # For uploaded figures, display the remote URL inline and continue
                 _display_inline_iframe(figure_url, inline_height)
             else:
@@ -129,8 +124,9 @@ def _show_view(
                 else:
                     print(f"View the figure at: {figure_url}")
                 # Wait until user presses Enter
-                input("Press Enter to continue...")
 
+            if wait_for_input:
+                input("Press Enter to continue...")
             return figure_url
     else:
         # Local server behavior: use process-level server manager
@@ -155,7 +151,7 @@ def _show_view(
         figure_subdir_name = figure_dir.name
         figure_url = f"{base_url}/{figure_subdir_name}"
 
-        if use_inline:
+        if inline:
             # Display inline and continue (don't block)
             _display_inline_iframe(figure_url, inline_height)
         else:
@@ -165,7 +161,7 @@ def _show_view(
                 print(f"Opening {figure_url} in browser.")
             else:
                 print(f"Open {figure_url} in your browser to view the visualization.")
-            # Wait until user presses Enter
-            input("Press Enter to continue...")
 
+        if wait_for_input:
+            input("Press Enter to continue...")
         return figure_url
