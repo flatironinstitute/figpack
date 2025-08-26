@@ -58,5 +58,14 @@ copybutton_only_copy_prompt_lines = True
 copybutton_remove_prompts = True
 copybutton_copy_empty_lines = False
 
+# -- GitHub configuration -------------------------------------------------
+html_context = {
+    "display_github": True,
+    "github_user": "magland",
+    "github_repo": "figpack",
+    "github_version": "main",
+    "conf_py_path": "docs/",
+}
+
 # -- GitHub Pages configuration ---------------------------------------------
 html_baseurl = "https://flatironinstitute.github.io/figpack/"
