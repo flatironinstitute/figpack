@@ -78,10 +78,10 @@ You can save figures to folders or archive files directly from your Python code:
 
 ```python
 # Save to a folder
-graph.save("my_figure_folder")
+graph.save("my_figure_folder", title="My Figure Title")
 
 # Save to a .tar.gz file
-graph.save("my_figure.tar.gz")
+graph.save("my_figure.tar.gz", title="My Figure Title")
 ```
 
 You can then view these saved figures using the command line interface:
