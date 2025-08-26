@@ -61,7 +61,7 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/flatironinstitute/figpack"
 Repository = "https://github.com/flatironinstitute/figpack"
-Documentation = "https://github.com/flatironinstitute/figpack#readme"
+Documentation = "https://flatironinstitute.github.io/figpack"
 "Bug Tracker" = "https://github.com/flatironinstitute/figpack/issues"
 
 [project.scripts]

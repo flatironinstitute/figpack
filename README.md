@@ -2,6 +2,8 @@
 
 A Python package for creating shareable, interactive visualizations in the browser.
 
+📖 **[Documentation](https://flatironinstitute.github.io/figpack)**
+
 ## Overview
 
 figpack enables you to create interactive data visualizations that can be displayed in a web browser and optionally shared online. The package focuses on timeseries data visualization with support for complex, nested layouts.

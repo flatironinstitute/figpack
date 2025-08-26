@@ -51,4 +51,4 @@ autodoc_default_options = {
 }
 
 # -- GitHub Pages configuration ---------------------------------------------
-html_baseurl = "https://magland.github.io/figpack/"
+html_baseurl = "https://flatironinstitute.github.io/figpack/"
