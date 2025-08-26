@@ -20,7 +20,7 @@ Let's start with the simplest figpack views that display static content.
 
 The Markdown view displays formatted text and documentation:
 
-````python
+```python
 import figpack.views as vv
 
 # Create a simple markdown view
@@ -32,15 +32,11 @@ This is a **markdown view** that supports:
 - **Bold text** and *italic text*
 - [Links](https://github.com/flatironinstitute/figpack)
 - Code blocks
-
-```python
-print("Hello figpack!")
-```
 """)
 
 view.show(title="Markdown Example", open_in_browser=True)
 
-````
+```
 
 ### 1.2 Image View
 

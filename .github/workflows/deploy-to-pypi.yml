@@ -42,6 +42,10 @@ jobs:
         run: |
           pytest --cov=figpack --cov-report=term-missing
 
+      - name: Test tutorial snippets
+        run: |
+          python devel/test_tutorial_snippets.py
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
