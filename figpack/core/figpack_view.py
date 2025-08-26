@@ -27,7 +27,7 @@ class FigpackView:
         inline_height: int = 600,
         ephemeral: Union[bool, None] = None,
         allow_origin: Union[str, None] = None,
-        wait_for_input: bool = False,
+        wait_for_input: Union[bool, None] = None,
         _dev: Union[bool, None] = None,
     ):
         """

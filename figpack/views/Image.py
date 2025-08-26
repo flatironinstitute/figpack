@@ -32,6 +32,43 @@ class Image(FigpackView):
 
         self.image_path_or_data = image_path_or_data
 
+    @staticmethod
+    def from_image_file(image_path: str) -> "Image":
+        """
+        Create an Image view from a file path
+
+        Args:
+            image_path: Path to the image file
+
+        Returns:
+            An Image view instance
+        """
+        return Image(image_path)
+
+    @staticmethod
+    def from_image_url(image_url: str) -> "Image":
+        """
+        Create an Image view from an image URL by downloading the image
+
+        Args:
+            image_url: URL of the image to download
+
+        Returns:
+            An Image view instance
+
+        Raises:
+            ValueError: If the image cannot be downloaded
+        """
+        import requests
+
+        try:
+            response = requests.get(image_url)
+            response.raise_for_status()
+            image_data = response.content
+            return Image(image_data)
+        except Exception as e:
+            raise ValueError(f"Failed to download image from URL: {str(e)}")
+
     def _write_to_zarr_group(self, group: zarr.Group) -> None:
         """
         Write the image data to a Zarr group

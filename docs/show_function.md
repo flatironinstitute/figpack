@@ -21,7 +21,7 @@ def show(
     inline_height: int = 600,
     ephemeral: Union[bool, None] = None,
     allow_origin: Union[str, None] = None,
-    wait_for_input: bool = False,
+    wait_for_input: Union[bool, None] = None,
     _dev: Union[bool, None] = None
 )
 ```
@@ -50,7 +50,7 @@ def show(
 
 - `allow_origin` (str | None, default=None): CORS allow-origin header for the local server. Typically only needed in development scenarios or when integrating with other local services.
 
-- `wait_for_input` (bool, default=False): Controls whether to pause execution until user presses Enter. By default, this is enabled outside of notebook environments to prevent scripts from terminating before users can view the visualization. Should be set to `False` in CI environments, automated testing, or any non-interactive context to prevent the script from hanging while waiting for input.
+- `wait_for_input` (bool | None, default=None): Controls whether to pause execution until user presses Enter. By default, this is enabled outside of notebook environments to prevent scripts from terminating before users can view the visualization. Should be set to `False` in CI environments, automated testing, or any non-interactive context to prevent the script from hanging while waiting for input.
 
 - `_dev` (Union[bool, None], default=None): Development mode flag for figpack developers. When enabled:
   - Uses a fixed port (3004) by default
