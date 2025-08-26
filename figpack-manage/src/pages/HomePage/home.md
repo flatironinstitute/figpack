@@ -49,5 +49,5 @@ You can then share the [generated URL](https://figures.figpack.org/figures/defau
 
 ## Resources
 
-- [Figpack Source Code](https://github.com/magland/figpack)
-- [Example Gallery](https://github.com/magland/figpack/tree/main/examples)
+- [Figpack Source Code](https://github.com/flatironinstitute/figpack)
+- [Example Gallery](https://github.com/flatironinstitute/figpack/tree/main/examples)

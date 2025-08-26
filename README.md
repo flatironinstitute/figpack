@@ -133,4 +133,4 @@ Apache-2.0
 
 ## Contributing
 
-Visit the [GitHub repository](https://github.com/magland/figpack) for issues, contributions, and the latest updates.
+Visit the [GitHub repository](https://github.com/flatironinstitute/figpack) for issues, contributions, and the latest updates.

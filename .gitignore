@@ -22,3 +22,6 @@ npm-debug.log*
 
 # GUI build output (should be rebuilt during packaging)
 figpack/figpack-gui-dist/
+
+# Documentation
+docs/_build/

@@ -50,12 +50,18 @@ dev = [
     "black>=24.0",
     "pre-commit>=3.0",
 ]
+docs = [
+    "sphinx>=7.0",
+    "myst-parser>=2.0",
+    "sphinx-rtd-theme>=2.0",
+    "sphinx-autobuild>=2021.3.14",
+]
 
 [project.urls]
-Homepage = "https://github.com/magland/figpack"
-Repository = "https://github.com/magland/figpack"
-Documentation = "https://github.com/magland/figpack#readme"
-"Bug Tracker" = "https://github.com/magland/figpack/issues"
+Homepage = "https://github.com/flatironinstitute/figpack"
+Repository = "https://github.com/flatironinstitute/figpack"
+Documentation = "https://github.com/flatironinstitute/figpack#readme"
+"Bug Tracker" = "https://github.com/flatironinstitute/figpack/issues"
 
 [project.scripts]
 figpack = "figpack.cli:main"

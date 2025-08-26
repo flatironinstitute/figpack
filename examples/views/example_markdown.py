@@ -31,7 +31,7 @@ This is a test of the markdown view in figpack.
 ## Features
 - **Bold text**
 - *Italic text*
-- [Link to figpack](https://github.com/magland/figpack)
+- [Link to figpack](https://github.com/flatironinstitute/figpack)
 
 ```python
 def hello_world():
