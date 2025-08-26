@@ -3,3 +3,7 @@ figpack - A Python package for creating shareable, interactive visualizations in
 """
 
 __version__ = "0.2.4"
+
+from .cli import view_figure
+
+__all__ = ["view_figure"]

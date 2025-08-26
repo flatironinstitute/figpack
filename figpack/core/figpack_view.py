@@ -101,6 +101,16 @@ class FigpackView:
             _local_figure_name=_local_figure_name if _dev else None,
         )
 
+    def save(self, output_path: str) -> None:
+        """
+        Save as figure either to a folder or to a .tar.gz file
+        Args:
+            output_path: Output path (destination folder or .tar.gz file path)
+        """
+        from ._save_figure import _save_figure
+
+        _save_figure(self, output_path)
+
     def _write_to_zarr_group(self, group: zarr.Group) -> None:
         """
         Write the view data to a Zarr group. Must be implemented by subclasses.
