@@ -282,23 +282,33 @@ import numpy as np
 import plotly.graph_objects as go
 import figpack.views as vv
 
-# Create plotly figure
-fig = go.Figure()
+# Create subplot figure
+from plotly.subplots import make_subplots
+fig = make_subplots(rows=1, cols=2, specs=[[{'type': 'xy'}, {'type': 'scene'}]])
 
-# Add traces
+# Add 2D traces
 x = np.linspace(0, 10, 100)
 y1 = np.sin(x)
 y2 = np.cos(x)
 
-fig.add_trace(go.Scatter(x=x, y=y1, name='sin(x)', line=dict(color='blue')))
-fig.add_trace(go.Scatter(x=x, y=y2, name='cos(x)', line=dict(color='red')))
+fig.add_trace(go.Scatter(x=x, y=y1, name='sin(x)', line=dict(color='blue')), row=1, col=1)
+fig.add_trace(go.Scatter(x=x, y=y2, name='cos(x)', line=dict(color='red')), row=1, col=1)
+
+# Add 3D spiral
+t = np.linspace(0, 10*np.pi, 100)
+x3d = np.cos(t)
+y3d = np.sin(t)
+z3d = t/10
+
+fig.add_trace(go.Scatter3d(x=x3d, y=y3d, z=z3d, name='3D Spiral',
+                          line=dict(color='green', width=4)), row=1, col=2)
 
 # Update layout
 fig.update_layout(
-    title="Interactive Plotly Example",
-    xaxis_title="X",
-    yaxis_title="Y",
-    hovermode='x unified'
+    title="2D and 3D Interactive Plots",
+    scene=dict(camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))),
+    showlegend=True,
+    width=900  # Make wider to accommodate both plots
 )
 
 # Create figpack view
