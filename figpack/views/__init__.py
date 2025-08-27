@@ -1,4 +1,5 @@
 from .Box import Box
+from .DataFrame import DataFrame
 from .Gallery import Gallery
 from .GalleryItem import GalleryItem
 from .Image import Image

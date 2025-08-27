@@ -1,6 +1,7 @@
 // Import all view components
 import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
 import { FPBox } from "./views/FPBox";
+import { FPDataFrame } from "./views/FPDataFrame";
 import { FPGallery } from "./views/FPGallery";
 import { FPImage } from "./views/FPImage";
 import { FPMarkdown } from "./views/FPMarkdown";
@@ -24,7 +25,7 @@ export { default as TimeScrollView3 } from "./shared/component-time-scroll-view-
 export { useTimeScrollView3 } from "./shared/component-time-scroll-view-3/useTimeScrollView3";
 
 const registerViewComponents = (
-  viewComponentRegistry: FPViewComponentRegistry,
+  viewComponentRegistry: FPViewComponentRegistry
 ) => {
   viewComponentRegistry.registerViewComponent({
     type: "TimeseriesGraph",
@@ -74,6 +75,11 @@ const registerViewComponents = (
   viewComponentRegistry.registerViewComponent({
     type: "Image",
     component: FPImage,
+  });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "DataFrame",
+    component: FPDataFrame,
   });
 };
 

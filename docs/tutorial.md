@@ -246,7 +246,34 @@ view.show(title="Matplotlib Example", open_in_browser=True)
 
 <iframe src="./tutorial_matplotlib_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 3.3 Plotly Integration
+### 3.3 DataFrame View
+
+Create and display interactive data tables using pandas DataFrames:
+
+```python
+import pandas as pd
+import numpy as np
+import figpack.views as vv
+
+# Create sample data
+data = {
+    'Date': pd.date_range('2023-01-01', periods=5),
+    'Value': np.random.normal(100, 10, 5).round(2),
+    'Category': ['A', 'B', 'A', 'C', 'B'],
+    'IsActive': [True, True, False, True, False]
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Create view
+view = vv.DataFrame(df)
+view.show(title="DataFrame Example", open_in_browser=True)
+```
+
+<iframe src="./tutorial_dataframe_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
+
+### 3.4 Plotly Integration
 
 Create interactive plotly visualizations:
 
