@@ -31,7 +31,7 @@ tutorial
 show_function
 api/index
 contributing
-developer_guide
+developer_guide/index
 ```
 
 ## Quick Example

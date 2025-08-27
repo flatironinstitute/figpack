@@ -38,7 +38,7 @@ pytest
 
 ## Making Changes
 
-1. Create a branch (if you haven't forked)
+1. Create a fork or branch (depending on access)
 2. Make changes
 3. Ensure tests pass
 4. Update documentation if needed
@@ -61,4 +61,4 @@ File bug reports and feature requests via GitHub Issues. Include:
 
 ## Developer Guide
 
-For detailed technical information about the project architecture and development workflow, see the [Developer Guide](./developer_guide).
+For detailed information, see the [Developer Guide](./developer_guide/index).
