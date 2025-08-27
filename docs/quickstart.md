@@ -115,9 +115,3 @@ view_figure("path/to/figure.tar.gz")
 ```
 
 When viewing figures, a local server will start and open your browser. Press Enter in the terminal to stop the server.
-
-## Next Steps
-
-- Explore the [examples](examples/index.md) to see more complex visualizations
-- Check the [API documentation](api/index.md) for detailed reference
-- Visit the [GitHub repository](https://github.com/flatironinstitute/figpack) for more information
