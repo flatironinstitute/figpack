@@ -3,6 +3,7 @@ MatplotlibFigure view for figpack - displays matplotlib figures
 """
 
 import io
+import numpy as np
 from typing import Any, Union
 
 import zarr
@@ -47,8 +48,18 @@ class MatplotlibFigure(FigpackView):
             svg_string = svg_buffer.getvalue()
             svg_buffer.close()
 
-            # Store the SVG data
-            group.attrs["svg_data"] = svg_string
+            # Convert SVG string to numpy array and store in zarr array
+            svg_bytes = svg_string.encode("utf-8")
+            svg_array = np.frombuffer(svg_bytes, dtype=np.uint8)
+            group.create_dataset(
+                "svg_data",
+                data=svg_array,
+                dtype=np.uint8,
+                chunks=True,
+                compressor=zarr.Blosc(
+                    cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE
+                ),
+            )
 
             # Store figure dimensions for reference
             fig_width, fig_height = self.fig.get_size_inches()
@@ -58,10 +69,22 @@ class MatplotlibFigure(FigpackView):
             # Store DPI for reference
             group.attrs["figure_dpi"] = float(self.fig.dpi)
 
+            # Store data size for reference
+            group.attrs["data_size"] = len(svg_bytes)
+
         except Exception as e:
             # If SVG export fails, store error information
-            group.attrs["svg_data"] = ""
+            group.create_dataset(
+                "svg_data",
+                data=np.array([], dtype=np.uint8),
+                dtype=np.uint8,
+                chunks=True,
+                compressor=zarr.Blosc(
+                    cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE
+                ),
+            )
             group.attrs["error"] = f"Failed to export matplotlib figure: {str(e)}"
             group.attrs["figure_width_inches"] = 6.0
             group.attrs["figure_height_inches"] = 4.0
             group.attrs["figure_dpi"] = 100.0
+            group.attrs["data_size"] = 0

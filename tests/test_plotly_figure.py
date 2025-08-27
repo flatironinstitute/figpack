@@ -64,14 +64,24 @@ def test_write_to_zarr_basic(sample_plotly_figure):
 
     view._write_to_zarr_group(group)
 
-    # Check basic attributes
+    # Check basic attributes and data array
     assert group.attrs["view_type"] == "PlotlyFigure"
-    assert "figure_data" in group.attrs
+    assert "figure_data" in group
+    assert "data_size" in group.attrs
 
-    # Verify figure data contains expected elements
-    figure_data = group.attrs["figure_data"]
+    # Verify array properties
+    figure_data_array = group["figure_data"]
+    assert figure_data_array.dtype == np.uint8
+    assert isinstance(figure_data_array.compressor, zarr.Blosc)
+    assert figure_data_array.compressor.cname == "zstd"
+
+    # Convert array back to string for content verification
+    figure_data = figure_data_array[:].tobytes().decode("utf-8")
     assert "Test Figure" in figure_data  # Title should be in the JSON
     assert "scatter" in figure_data.lower()  # Trace type should be in the JSON
+
+    # Verify data size
+    assert group.attrs["data_size"] == len(figure_data.encode("utf-8"))
 
 
 def test_write_to_zarr_complex_data():
@@ -96,8 +106,12 @@ def test_write_to_zarr_complex_data():
     view._write_to_zarr_group(group)
 
     # Verify data was stored
-    assert "figure_data" in group.attrs
-    figure_data = group.attrs["figure_data"]
+    assert "figure_data" in group
+    assert "data_size" in group.attrs
+
+    # Get figure data from array
+    figure_data_array = group["figure_data"]
+    figure_data = figure_data_array[:].tobytes().decode("utf-8")
 
     # Basic validation of stored JSON
     assert isinstance(figure_data, str)
@@ -106,6 +120,14 @@ def test_write_to_zarr_complex_data():
     assert '"dtype": "i4"' in figure_data  # int32 array
     # Check datetime values
     assert "2023-01-01T00:00:00" in figure_data  # Date from second trace
+
+    # Verify array properties
+    assert figure_data_array.dtype == np.uint8
+    assert isinstance(figure_data_array.compressor, zarr.Blosc)
+    assert figure_data_array.compressor.cname == "zstd"
+
+    # Verify data size
+    assert group.attrs["data_size"] == len(figure_data.encode("utf-8"))
 
 
 def test_write_to_zarr_figure_methods():

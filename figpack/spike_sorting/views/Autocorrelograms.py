@@ -77,32 +77,42 @@ class Autocorrelograms(FigpackView):
         group.attrs["view_type"] = "Autocorrelograms"
 
         # Store the number of autocorrelograms
-        group.attrs["num_autocorrelograms"] = len(self.autocorrelograms)
+        num_autocorrelograms = len(self.autocorrelograms)
+        group.attrs["num_autocorrelograms"] = num_autocorrelograms
 
-        # Store metadata for each autocorrelogram
+        if num_autocorrelograms == 0:
+            return
+
+        # Get dimensions from first autocorrelogram
+        num_bins = len(self.autocorrelograms[0].bin_counts)
+
+        # Store bin edges (same for all autocorrelograms)
+        group.create_dataset(
+            "bin_edges_sec",
+            data=self.autocorrelograms[0].bin_edges_sec,
+            dtype=np.float32,
+        )
+
+        # Create 2D array for all bin counts
+        bin_counts = np.zeros((num_autocorrelograms, num_bins), dtype=np.int32)
+
+        # Store metadata for each autocorrelogram and populate bin counts array
         autocorrelogram_metadata = []
         for i, autocorr in enumerate(self.autocorrelograms):
-            autocorr_name = f"autocorrelogram_{i}"
-
-            # Store metadata
             metadata = {
-                "name": autocorr_name,
                 "unit_id": str(autocorr.unit_id),
-                "num_bins": len(autocorr.bin_counts),
+                "index": i,  # Store index to map to bin_counts array
+                "num_bins": num_bins,
             }
             autocorrelogram_metadata.append(metadata)
+            bin_counts[i] = autocorr.bin_counts
 
-            # Create arrays for this autocorrelogram
-            group.create_dataset(
-                f"{autocorr_name}/bin_edges_sec",
-                data=autocorr.bin_edges_sec,
-                dtype=np.float32,
-            )
-            group.create_dataset(
-                f"{autocorr_name}/bin_counts",
-                data=autocorr.bin_counts,
-                dtype=np.int32,
-            )
+        # Store the bin counts as a single 2D dataset
+        group.create_dataset(
+            "bin_counts",
+            data=bin_counts,
+            dtype=np.int32,
+        )
 
         # Store the autocorrelogram metadata
         group.attrs["autocorrelograms"] = autocorrelogram_metadata

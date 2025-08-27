@@ -44,15 +44,28 @@ def test_autocorrelograms_with_si():
     assert group.attrs["view_type"] == "Autocorrelograms"
     assert group.attrs["num_autocorrelograms"] == 4
 
-    # Check each stored autocorrelogram
+    # Check bin edges dataset
+    assert "bin_edges_sec" in group
+    assert group["bin_edges_sec"].dtype == np.float32
+
+    # Check bin counts dataset
+    assert "bin_counts" in group
+    assert group["bin_counts"].dtype == np.int32
+    assert group["bin_counts"].shape[0] == 4  # num_autocorrelograms rows
+    assert group["bin_counts"].shape[1] == len(
+        view.autocorrelograms[0].bin_counts
+    )  # num_bins columns
+
+    # Check metadata
     metadata = group.attrs["autocorrelograms"]
     assert len(metadata) == 4
 
     for i, meta in enumerate(metadata):
-        name = meta["name"]
-        # Verify data arrays exist and have correct types
-        assert group[f"{name}/bin_edges_sec"].dtype == np.float32
-        assert group[f"{name}/bin_counts"].dtype == np.int32
+        assert "unit_id" in meta
+        assert "index" in meta
+        assert meta["index"] == i  # Verify indices are sequential
+        assert "num_bins" in meta
+        assert meta["num_bins"] == len(view.autocorrelograms[0].bin_counts)
 
 
 def test_cross_correlograms_with_si():
@@ -94,15 +107,29 @@ def test_cross_correlograms_with_si():
     assert group.attrs["num_cross_correlograms"] == expected_pairs
     assert "hide_unit_selector" in group.attrs
 
-    # Check each stored cross-correlogram
+    # Check bin edges dataset
+    assert "bin_edges_sec" in group
+    assert group["bin_edges_sec"].dtype == np.float32
+
+    # Check bin counts dataset
+    assert "bin_counts" in group
+    assert group["bin_counts"].dtype == np.int32
+    assert group["bin_counts"].shape[0] == expected_pairs  # num_cross_correlograms rows
+    assert group["bin_counts"].shape[1] == len(
+        view.cross_correlograms[0].bin_counts
+    )  # num_bins columns
+
+    # Check metadata
     metadata = group.attrs["cross_correlograms"]
     assert len(metadata) == expected_pairs
 
-    for meta in metadata:
-        name = meta["name"]
-        # Verify data arrays exist and have correct types
-        assert group[f"{name}/bin_edges_sec"].dtype == np.float32
-        assert group[f"{name}/bin_counts"].dtype == np.int32
+    for i, meta in enumerate(metadata):
+        assert "unit_id1" in meta
+        assert "unit_id2" in meta
+        assert "index" in meta
+        assert meta["index"] == i  # Verify indices are sequential
+        assert "num_bins" in meta
+        assert meta["num_bins"] == len(view.cross_correlograms[0].bin_counts)
 
 
 def test_cross_correlograms_from_widget():

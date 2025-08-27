@@ -9,7 +9,7 @@ declare global {
         div: HTMLElement,
         data: unknown[],
         layout: Record<string, unknown>,
-        config: Record<string, unknown>,
+        config: Record<string, unknown>
       ) => void;
       Plots: {
         resize: (div: HTMLElement) => void;
@@ -17,6 +17,14 @@ declare global {
     };
   }
 }
+
+const join = (path: string, name: string) => {
+  if (path.endsWith("/")) {
+    return path + name;
+  } else {
+    return path + "/" + name;
+  }
+};
 
 export const FPPlotlyFigure: React.FC<{
   zarrGroup: ZarrGroup;
@@ -26,16 +34,57 @@ export const FPPlotlyFigure: React.FC<{
   const plotRef = useRef<HTMLDivElement>(null);
   const [plotlyLoaded, setPlotlyLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [figureData, setFigureData] = useState<any>(null);
 
-  const figureDataStr = zarrGroup.attrs["figure_data"] || "{}";
+  // Load figure data from zarr array
+  useEffect(() => {
+    let mounted = true;
+    const loadFigureData = async () => {
+      if (!zarrGroup) return;
+      try {
+        setLoading(true);
+        setError(null);
 
-  let figureData;
-  try {
-    figureData = JSON.parse(figureDataStr);
-  } catch (parseError) {
-    console.error("Failed to parse figure data:", parseError);
-    figureData = null;
-  }
+        // Get the figure data from the zarr array
+        const data = await zarrGroup.file.getDatasetData(
+          join(zarrGroup.path, "figure_data"),
+          {}
+        );
+        if (!data || data.length === 0) {
+          throw new Error("Empty figure data");
+        }
+
+        // Convert the uint8 array back to string
+        const uint8Array = new Uint8Array(data);
+        const decoder = new TextDecoder("utf-8");
+        const jsonString = decoder.decode(uint8Array);
+
+        // Parse the JSON string
+        const parsedData = JSON.parse(jsonString);
+
+        if (mounted) {
+          setFigureData(parsedData);
+        }
+      } catch (err) {
+        console.error("Failed to load figure data:", err);
+        if (mounted) {
+          setError(
+            `Failed to load figure data: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadFigureData();
+    return () => {
+      mounted = false;
+    };
+  }, [zarrGroup]);
 
   // Load Plotly from CDN
   // because it makes the bundle way too large
@@ -80,7 +129,7 @@ export const FPPlotlyFigure: React.FC<{
           responsive: true,
           displayModeBar: true,
           displaylogo: false,
-        },
+        }
       );
     } catch (plotError) {
       console.error("Failed to create plot:", plotError);
@@ -96,55 +145,39 @@ export const FPPlotlyFigure: React.FC<{
     window.Plotly.Plots.resize(plotDiv);
   }, [width, height, plotlyLoaded, figureData]);
 
+  const commonStyles = {
+    width,
+    height,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#666",
+    backgroundColor: "#f5f5f5",
+  };
+
   if (error) {
     return (
-      <div
-        style={{
-          width,
-          height,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#666",
-        }}
-      >
-        Error: {error}
+      <div style={{ ...commonStyles, padding: "20px", textAlign: "center" }}>
+        <div>
+          <div style={{ marginBottom: "10px", fontWeight: "bold" }}>
+            Plotly Error
+          </div>
+          <div style={{ fontSize: "14px" }}>{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || !plotlyLoaded) {
+    return (
+      <div style={commonStyles}>
+        {loading ? "Loading figure data..." : "Loading Plotly..."}
       </div>
     );
   }
 
   if (!figureData) {
-    return (
-      <div
-        style={{
-          width,
-          height,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#666",
-        }}
-      >
-        Error: Invalid figure data
-      </div>
-    );
-  }
-
-  if (!plotlyLoaded) {
-    return (
-      <div
-        style={{
-          width,
-          height,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#666",
-        }}
-      >
-        Loading Plotly...
-      </div>
-    );
+    return <div style={commonStyles}>No figure data available</div>;
   }
 
   return (

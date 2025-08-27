@@ -110,7 +110,11 @@ def _show_view(
 
             # Upload the bundle
             figure_url = _upload_bundle(
-                tmpdir, api_key, title=title, ephemeral=ephemeral
+                tmpdir,
+                api_key,
+                title=title,
+                ephemeral=ephemeral,
+                use_consolidated_metadata_only=True,
             )
 
             if inline:

@@ -8,9 +8,55 @@ export const FPMatplotlibFigure: React.FC<{
 }> = ({ zarrGroup, width, height }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [svgData, setSvgData] = useState<string>("");
 
-  const svgData = zarrGroup.attrs["svg_data"] || "";
   const errorMessage = zarrGroup.attrs["error"] || null;
+
+  useEffect(() => {
+    let mounted = true;
+    const loadSvg = async () => {
+      if (!zarrGroup) return;
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get the SVG data from the zarr array
+        const data = await zarrGroup.file.getDatasetData(
+          join(zarrGroup.path, "svg_data"),
+          {}
+        );
+        if (!data || data.length === 0) {
+          throw new Error("Empty SVG data");
+        }
+
+        // Convert the uint8 array back to string
+        const uint8Array = new Uint8Array(data);
+        const decoder = new TextDecoder("utf-8");
+        const svgString = decoder.decode(uint8Array);
+
+        if (mounted) {
+          setSvgData(svgString);
+        }
+      } catch (err) {
+        console.error("Failed to load SVG:", err);
+        if (mounted) {
+          setError(
+            `Failed to load SVG: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSvg();
+    return () => {
+      mounted = false;
+    };
+  }, [zarrGroup]);
 
   useEffect(() => {
     if (!containerRef.current || !svgData) return;
@@ -44,7 +90,7 @@ export const FPMatplotlibFigure: React.FC<{
           const heightValue = parseFloat(originalHeight.replace(/[^\d.]/g, ""));
           svgElement.setAttribute(
             "viewBox",
-            `0 0 ${widthValue} ${heightValue}`,
+            `0 0 ${widthValue} ${heightValue}`
           );
         }
 
@@ -56,7 +102,7 @@ export const FPMatplotlibFigure: React.FC<{
     }
   }, [svgData, width, height]);
 
-  if (errorMessage) {
+  if (errorMessage || error) {
     return (
       <div
         style={{
@@ -68,19 +114,20 @@ export const FPMatplotlibFigure: React.FC<{
           color: "#666",
           padding: "20px",
           textAlign: "center",
+          backgroundColor: "#f5f5f5",
         }}
       >
         <div>
           <div style={{ marginBottom: "10px", fontWeight: "bold" }}>
             Matplotlib Export Error
           </div>
-          <div style={{ fontSize: "14px" }}>{errorMessage}</div>
+          <div style={{ fontSize: "14px" }}>{errorMessage || error}</div>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (loading) {
     return (
       <div
         style={{
@@ -90,9 +137,10 @@ export const FPMatplotlibFigure: React.FC<{
           alignItems: "center",
           justifyContent: "center",
           color: "#666",
+          backgroundColor: "#f5f5f5",
         }}
       >
-        Error: {error}
+        Loading matplotlib figure...
       </div>
     );
   }
@@ -107,6 +155,7 @@ export const FPMatplotlibFigure: React.FC<{
           alignItems: "center",
           justifyContent: "center",
           color: "#666",
+          backgroundColor: "#f5f5f5",
         }}
       >
         No matplotlib figure data available
@@ -128,4 +177,12 @@ export const FPMatplotlibFigure: React.FC<{
       }}
     />
   );
+};
+
+const join = (path: string, name: string) => {
+  if (path.endsWith("/")) {
+    return path + name;
+  } else {
+    return path + "/" + name;
+  }
 };

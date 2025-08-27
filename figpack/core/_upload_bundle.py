@@ -253,10 +253,22 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
 
 
 def _upload_bundle(
-    tmpdir: str, api_key: str, title: str = None, ephemeral: bool = False
+    tmpdir: str,
+    api_key: str,
+    title: str = None,
+    ephemeral: bool = False,
+    use_consolidated_metadata_only: bool = False,
 ) -> str:
     """
     Upload the prepared bundle to the cloud using the new database-driven approach
+
+    Args:
+        tmpdir: Path to the temporary directory containing the bundle
+        api_key: API key for authentication
+        title: Optional title for the figure
+        ephemeral: Whether to create an ephemeral figure
+        use_consolidated_metadata_only: If True, excludes individual zarr metadata files
+            (.zgroup, .zarray, .zattrs) since they are included in .zmetadata
     """
     tmpdir_path = pathlib.Path(tmpdir)
 
@@ -268,6 +280,10 @@ def _upload_bundle(
     for file_path in tmpdir_path.rglob("*"):
         if file_path.is_file():
             relative_path = file_path.relative_to(tmpdir_path)
+            # Skip individual zarr metadata files if using consolidated metadata only
+            if use_consolidated_metadata_only:
+                if str(relative_path).endswith((".zgroup", ".zarray", ".zattrs")):
+                    continue
             all_files.append((str(relative_path), file_path))
 
     # Calculate total files and size for metadata

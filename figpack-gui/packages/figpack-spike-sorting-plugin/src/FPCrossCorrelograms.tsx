@@ -22,55 +22,72 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
       const crossCorrelograms = [];
       const numCrossCorrelograms =
         zarrGroup.attrs["num_cross_correlograms"] || 0;
+
+      if (numCrossCorrelograms === 0) {
+        if (!canceled)
+          setData({
+            type: "CrossCorrelograms" as const,
+            crossCorrelograms: [],
+            hideUnitSelector: zarrGroup.attrs["hide_unit_selector"] || false,
+          });
+        return;
+      }
+
+      // Fetch the shared bin edges dataset
+      const binEdgesSecData = await zarrGroup.file.getDatasetData(
+        join(zarrGroup.path, "bin_edges_sec"),
+        {}
+      );
+
+      // Fetch the 2D bin counts dataset
+      const binCountsData = await zarrGroup.file.getDatasetData(
+        join(zarrGroup.path, "bin_counts"),
+        {}
+      );
+
+      if (!binEdgesSecData || !binCountsData) {
+        console.error("Failed to load cross-correlograms data");
+        return;
+      }
+
+      const binEdgesSec = Array.from(binEdgesSecData as Float32Array);
+      const binCountsArray = new Int32Array(binCountsData as ArrayBuffer);
+      const numBins = binEdgesSec.length - 1;
+
+      // Get metadata for mapping indices to unit IDs
       const crossCorrelogramMetadata = zarrGroup.attrs[
         "cross_correlograms"
       ] as Array<{
-        name: string;
         unit_id1: string | number;
         unit_id2: string | number;
+        index: number;
       }>;
 
+      // Process each row of the bin counts array
       for (let i = 0; i < numCrossCorrelograms; i++) {
-        const crossCorrName = `cross_correlogram_${i}`;
-
-        const binEdgesSecData = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, `${crossCorrName}/bin_edges_sec`),
-          {},
-        );
-        const binCountsData = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, `${crossCorrName}/bin_counts`),
-          {},
+        const metadata = crossCorrelogramMetadata[i];
+        const startIdx = i * numBins;
+        const binCounts = Array.from(
+          binCountsArray.slice(startIdx, startIdx + numBins)
         );
 
-        if (binEdgesSecData && binCountsData) {
-          const binEdgesSec = Array.from(binEdgesSecData as Float32Array);
-          const binCounts = Array.from(binCountsData as Int32Array);
-
-          // Get unit_ids from metadata
-          const metadata = crossCorrelogramMetadata.find(
-            (m) => m.name === crossCorrName,
-          );
-          const unitId1 = metadata?.unit_id1 || i;
-          const unitId2 = metadata?.unit_id2 || i;
-
-          crossCorrelograms.push({
-            unitId1,
-            unitId2,
-            binEdgesSec,
-            binCounts,
-          });
-        }
+        crossCorrelograms.push({
+          unitId1: metadata.unit_id1,
+          unitId2: metadata.unit_id2,
+          binEdgesSec,
+          binCounts,
+        });
       }
-
-      if (canceled) return;
 
       const hideUnitSelector = zarrGroup.attrs["hide_unit_selector"] || false;
 
-      setData({
-        type: "CrossCorrelograms" as const,
-        crossCorrelograms,
-        hideUnitSelector,
-      });
+      if (!canceled) {
+        setData({
+          type: "CrossCorrelograms" as const,
+          crossCorrelograms,
+          hideUnitSelector,
+        });
+      }
     };
 
     loadData();

@@ -4,6 +4,7 @@ Tests for figpack Markdown view
 
 import pytest
 import zarr
+import numpy as np
 from figpack.views import Markdown
 
 
@@ -25,7 +26,14 @@ def test_markdown_zarr_write():
     view._write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Markdown"
-    assert group.attrs["content"] == content
+
+    # Verify content is stored in array
+    content_data = group["content_data"][:]
+    decoded_content = bytes(content_data).decode("utf-8")
+    assert decoded_content == content
+
+    # Verify data size
+    assert group.attrs["data_size"] == len(content.encode("utf-8"))
 
 
 def test_markdown_empty_content():
@@ -38,7 +46,14 @@ def test_markdown_empty_content():
     view._write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Markdown"
-    assert group.attrs["content"] == ""
+
+    # Verify empty content
+    content_data = group["content_data"][:]
+    decoded_content = bytes(content_data).decode("utf-8")
+    assert decoded_content == ""
+
+    # Verify data size
+    assert group.attrs["data_size"] == 0
 
 
 def test_markdown_complex_content():
@@ -62,4 +77,26 @@ def test():
     view._write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Markdown"
-    assert group.attrs["content"] == content
+
+    # Verify complex content
+    content_data = group["content_data"][:]
+    decoded_content = bytes(content_data).decode("utf-8")
+    assert decoded_content == content
+
+    # Verify data size
+    assert group.attrs["data_size"] == len(content.encode("utf-8"))
+
+
+def test_markdown_array_properties():
+    """Test Markdown array properties"""
+    content = "Test content"
+    view = Markdown(content=content)
+
+    store = zarr.MemoryStore()
+    group = zarr.group(store=store)
+
+    view._write_to_zarr_group(group)
+
+    # Verify array properties
+    assert group["content_data"].dtype == np.uint8
+    assert group["content_data"].chunks is not None

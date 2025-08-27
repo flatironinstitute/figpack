@@ -56,5 +56,21 @@ class PlotlyFigure(FigpackView):
         # Convert the plotly figure to a dictionary
         fig_dict = self.fig.to_dict()
 
-        # Store the figure data as JSON string using custom encoder
-        group.attrs["figure_data"] = json.dumps(fig_dict, cls=CustomJSONEncoder)
+        # Convert figure data to JSON string using custom encoder
+        json_string = json.dumps(fig_dict, cls=CustomJSONEncoder)
+
+        # Convert JSON string to bytes and store in numpy array
+        json_bytes = json_string.encode("utf-8")
+        json_array = np.frombuffer(json_bytes, dtype=np.uint8)
+
+        # Store the figure data as compressed array
+        group.create_dataset(
+            "figure_data",
+            data=json_array,
+            dtype=np.uint8,
+            chunks=True,
+            compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE),
+        )
+
+        # Store data size for reference
+        group.attrs["data_size"] = len(json_bytes)

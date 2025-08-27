@@ -276,7 +276,9 @@ def test_upload_bundle(tmp_path):
         ),
         put=mock.Mock(return_value=mock_upload_response),
     ):
-        result = _upload_bundle(str(tmp_path), api_key)
+        result = _upload_bundle(
+            str(tmp_path), api_key, use_consolidated_metadata_only=True
+        )
 
         assert result == figure_url
 

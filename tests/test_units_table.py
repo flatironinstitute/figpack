@@ -1,5 +1,7 @@
+import json
 import pytest
 import zarr
+import numpy as np
 
 from figpack.spike_sorting.views.UnitsTable import UnitsTable
 from figpack.spike_sorting.views.UnitsTableColumn import UnitsTableColumn
@@ -99,18 +101,42 @@ def test_write_to_zarr(sample_columns, sample_rows, sample_similarity_scores):
     assert columns_metadata[0]["label"] == "Unit ID"
     assert columns_metadata[0]["dtype"] == "int"
 
-    # Check rows metadata
-    rows_metadata = group.attrs["rows"]
-    assert len(rows_metadata) == 3
-    assert rows_metadata[0]["unitId"] == "unit1"
-    assert rows_metadata[0]["values"]["quality"] == 0.95
+    # Check rows data is stored in array
+    rows_data = group["rows_data"][:]
+    rows_json = bytes(rows_data).decode("utf-8")
+    rows_list = json.loads(rows_json)
+    assert len(rows_list) == 3
+    assert rows_list[0]["unitId"] == "unit1"
+    assert rows_list[0]["values"]["quality"] == 0.95
+    assert group.attrs["rows_data_size"] == len(rows_json.encode("utf-8"))
 
-    # Check similarity scores metadata
-    similarity_scores_metadata = group.attrs["similarityScores"]
-    assert len(similarity_scores_metadata) == 2
-    assert similarity_scores_metadata[0]["unitId1"] == "unit1"
-    assert similarity_scores_metadata[0]["unitId2"] == "unit2"
-    assert similarity_scores_metadata[0]["similarity"] == 0.8
+    # Check rows array properties
+    assert group["rows_data"].dtype == np.uint8
+    assert group["rows_data"].chunks is not None
+    assert isinstance(group["rows_data"].compressor, zarr.Blosc)
+    assert group["rows_data"].compressor.cname == "zstd"
+    assert group["rows_data"].compressor.clevel == 3
+    assert group["rows_data"].compressor.shuffle == zarr.Blosc.SHUFFLE
+
+    # Check similarity scores data is stored in array
+    similarity_scores_data = group["similarity_scores_data"][:]
+    scores_json = bytes(similarity_scores_data).decode("utf-8")
+    scores_list = json.loads(scores_json)
+    assert len(scores_list) == 2
+    assert scores_list[0]["unitId1"] == "unit1"
+    assert scores_list[0]["unitId2"] == "unit2"
+    assert scores_list[0]["similarity"] == 0.8
+    assert group.attrs["similarity_scores_data_size"] == len(
+        scores_json.encode("utf-8")
+    )
+
+    # Check similarity scores array properties
+    assert group["similarity_scores_data"].dtype == np.uint8
+    assert group["similarity_scores_data"].chunks is not None
+    assert isinstance(group["similarity_scores_data"].compressor, zarr.Blosc)
+    assert group["similarity_scores_data"].compressor.cname == "zstd"
+    assert group["similarity_scores_data"].compressor.clevel == 3
+    assert group["similarity_scores_data"].compressor.shuffle == zarr.Blosc.SHUFFLE
 
 
 def test_column_data_types(sample_rows):
@@ -149,6 +175,15 @@ def test_column_data_types(sample_rows):
     assert columns_metadata[2]["dtype"] == "str"
     assert columns_metadata[3]["dtype"] == "bool"
 
+    # Verify row data with different types
+    rows_data = group["rows_data"][:]
+    rows_json = bytes(rows_data).decode("utf-8")
+    rows_list = json.loads(rows_json)
+    assert rows_list[0]["values"]["int_col"] == 42
+    assert rows_list[0]["values"]["float_col"] == 3.14
+    assert rows_list[0]["values"]["str_col"] == "test"
+    assert rows_list[0]["values"]["bool_col"] is True
+
 
 def test_mixed_unit_id_types():
     """Test UnitsTable with mixed string and integer unit IDs"""
@@ -167,6 +202,8 @@ def test_mixed_unit_id_types():
     table._write_to_zarr_group(group)
 
     # Verify both types of IDs were stored correctly
-    rows_metadata = group.attrs["rows"]
-    assert rows_metadata[0]["unitId"] == "str1"
-    assert rows_metadata[1]["unitId"] == 2
+    rows_data = group["rows_data"][:]
+    rows_json = bytes(rows_data).decode("utf-8")
+    rows_list = json.loads(rows_json)
+    assert rows_list[0]["unitId"] == "str1"
+    assert rows_list[1]["unitId"] == 2

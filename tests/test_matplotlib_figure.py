@@ -33,9 +33,12 @@ def test_write_to_zarr_basic(sample_figure):
 
     # Check basic attributes
     assert group.attrs["view_type"] == "MatplotlibFigure"
-    assert isinstance(group.attrs["svg_data"], str)
-    assert len(group.attrs["svg_data"]) > 0
-    assert group.attrs["svg_data"].startswith("<?xml")
+
+    # Check SVG data is stored in array
+    svg_data = group["svg_data"][:]
+    svg_string = bytes(svg_data).decode("utf-8")
+    assert len(svg_string) > 0
+    assert svg_string.startswith("<?xml")
 
     # Check figure dimensions
     assert isinstance(group.attrs["figure_width_inches"], float)
@@ -47,6 +50,11 @@ def test_write_to_zarr_basic(sample_figure):
     assert group.attrs["figure_width_inches"] == float(fig_width)
     assert group.attrs["figure_height_inches"] == float(fig_height)
     assert group.attrs["figure_dpi"] == float(sample_figure.dpi)
+
+    # Verify array properties
+    assert group["svg_data"].dtype == np.uint8
+    assert group["svg_data"].chunks is not None
+    assert isinstance(group["svg_data"].compressor, zarr.Blosc)
 
 
 def test_write_to_zarr_error_handling():
@@ -65,11 +73,12 @@ def test_write_to_zarr_error_handling():
     view._write_to_zarr_group(group)
 
     # Check error handling
-    assert group.attrs["svg_data"] == ""
+    assert len(group["svg_data"][:]) == 0
     assert "Failed to export matplotlib figure" in group.attrs["error"]
     assert group.attrs["figure_width_inches"] == 6.0
     assert group.attrs["figure_height_inches"] == 4.0
     assert group.attrs["figure_dpi"] == 100.0
+    assert group.attrs["data_size"] == 0
 
 
 def test_write_to_zarr_custom_size(sample_figure):
@@ -90,6 +99,10 @@ def test_write_to_zarr_custom_size(sample_figure):
     assert group.attrs["figure_height_inches"] == 8.0
     assert group.attrs["figure_dpi"] == 150.0
 
+    # Verify SVG data
+    svg_data = group["svg_data"][:]
+    assert len(svg_data) > 0
+
 
 def test_write_to_zarr_svg_options(sample_figure):
     """Test SVG export options are set correctly"""
@@ -109,3 +122,20 @@ def test_write_to_zarr_svg_options(sample_figure):
         assert kwargs["bbox_inches"] == "tight"
         assert kwargs["facecolor"] == "white"
         assert kwargs["edgecolor"] == "none"
+
+
+def test_write_to_zarr_compression(sample_figure):
+    """Test SVG data compression settings"""
+    view = MatplotlibFigure(sample_figure)
+    store = zarr.storage.TempStore()
+    root = zarr.group(store=store)
+    group = root.create_group("test")
+
+    view._write_to_zarr_group(group)
+
+    # Verify compression settings
+    compressor = group["svg_data"].compressor
+    assert isinstance(compressor, zarr.Blosc)
+    assert compressor.cname == "zstd"
+    assert compressor.clevel == 3
+    assert compressor.shuffle == zarr.Blosc.SHUFFLE

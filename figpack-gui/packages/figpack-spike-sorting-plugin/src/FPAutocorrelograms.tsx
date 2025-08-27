@@ -21,49 +21,66 @@ export const FPAutocorrelograms: FunctionComponent<Props> = ({
     const loadData = async () => {
       const autocorrelograms = [];
       const numAutocorrelograms = zarrGroup.attrs["num_autocorrelograms"] || 0;
+
+      if (numAutocorrelograms === 0) {
+        if (!canceled)
+          setData({
+            type: "Autocorrelograms" as const,
+            autocorrelograms: [],
+          });
+        return;
+      }
+
+      // Fetch the shared bin edges dataset
+      const binEdgesSecData = await zarrGroup.file.getDatasetData(
+        join(zarrGroup.path, "bin_edges_sec"),
+        {}
+      );
+
+      // Fetch the 2D bin counts dataset
+      const binCountsData = await zarrGroup.file.getDatasetData(
+        join(zarrGroup.path, "bin_counts"),
+        {}
+      );
+
+      if (!binEdgesSecData || !binCountsData) {
+        console.error("Failed to load autocorrelograms data");
+        return;
+      }
+
+      const binEdgesSec = Array.from(binEdgesSecData as Float32Array);
+      const binCountsArray = new Int32Array(binCountsData as ArrayBuffer);
+      const numBins = binEdgesSec.length - 1;
+
+      // Get metadata for mapping indices to unit IDs
       const autocorrelogramMetadata = zarrGroup.attrs[
         "autocorrelograms"
       ] as Array<{
-        name: string;
         unit_id: string | number;
+        index: number;
       }>;
 
+      // Process each row of the bin counts array
       for (let i = 0; i < numAutocorrelograms; i++) {
-        const autocorrName = `autocorrelogram_${i}`;
-
-        const binEdgesSecData = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, `${autocorrName}/bin_edges_sec`),
-          {},
-        );
-        const binCountsData = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, `${autocorrName}/bin_counts`),
-          {},
+        const metadata = autocorrelogramMetadata[i];
+        const startIdx = i * numBins;
+        const binCounts = Array.from(
+          binCountsArray.slice(startIdx, startIdx + numBins)
         );
 
-        if (binEdgesSecData && binCountsData) {
-          const binEdgesSec = Array.from(binEdgesSecData as Float32Array);
-          const binCounts = Array.from(binCountsData as Int32Array);
-
-          // Get unit_id from metadata
-          const metadata = autocorrelogramMetadata.find(
-            (m) => m.name === autocorrName,
-          );
-          const unitId = metadata?.unit_id || i;
-
-          autocorrelograms.push({
-            unitId,
-            binEdgesSec,
-            binCounts,
-          });
-        }
+        autocorrelograms.push({
+          unitId: metadata.unit_id,
+          binEdgesSec,
+          binCounts,
+        });
       }
 
-      if (canceled) return;
-
-      setData({
-        type: "Autocorrelograms" as const,
-        autocorrelograms,
-      });
+      if (!canceled) {
+        setData({
+          type: "Autocorrelograms" as const,
+          autocorrelograms,
+        });
+      }
     };
 
     loadData();
