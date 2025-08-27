@@ -42,7 +42,8 @@ test = [
     "spikeinterface",
     "matplotlib",
     "plotly",
-    "Pillow"
+    "Pillow",
+    "pandas"
 ]
 dev = [
     "pytest>=7.0",
