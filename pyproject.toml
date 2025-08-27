@@ -72,7 +72,7 @@ figpack = "figpack.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["figpack*"]
-exclude = ["figpack-gui*", "figpack-api*", "figpack-manage*"]
+exclude = ["figpack-figure*", "figpack-api*", "figpack-manage*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -99,7 +99,7 @@ source = ["figpack"]
 omit = [
     "*/tests/*",
     "*/test_*",
-    "figpack/figpack-gui-dist/*",
+    "figpack/figpack-figure-dist/*",
 ]
 
 [tool.coverage.report]
@@ -133,7 +133,7 @@ extend-exclude = '''
   | buck-out
   | build
   | dist
-  | figpack-gui
+  | figpack-figure
   | figpack-api
   | figpack-manage
 )/

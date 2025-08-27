@@ -32,11 +32,11 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
-          cache-dependency-path: figpack-gui/package-lock.json
+          cache-dependency-path: figpack-figure/package-lock.json
 
       - name: Install GUI dependencies and build
         run: |
-          cd figpack-gui
+          cd figpack-figure
           npm ci
           npm run build
 

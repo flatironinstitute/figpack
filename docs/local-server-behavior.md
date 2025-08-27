@@ -64,7 +64,7 @@ Development mode maintains the same behavior as before:
 1. **Fixed Port**: Uses port 3004 by default
 2. **CORS Configuration**: Automatically sets `allow_origin="http://localhost:5173"`
 3. **Upload Disabled**: Cannot be used with `upload=True`
-4. **Development URL**: Provides URL for use with figpack-gui in development mode
+4. **Development URL**: Provides URL for use with figpack-figure in development mode
 
 ## Examples
 

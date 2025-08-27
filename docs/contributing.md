@@ -6,10 +6,10 @@ figpack is a Python package for interactive browser visualizations. It consists 
 
 - Core Python package
 - Web API (figpack-api)
-- GUI interface (figpack-gui)
+- Figure GUI (figpack-figure)
 - Management interface (figpack-manage)
 
-The GUI interface is what renders the figures. The build assets are included in the Python package and get injected into the figure directories.
+The Figure GUI is what renders the figures. The build assets are included in the Python package and get injected into the figure directories.
 
 ## Setup Development Environment
 

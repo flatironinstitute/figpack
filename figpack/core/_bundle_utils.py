@@ -15,7 +15,7 @@ def prepare_figure_bundle(
     Prepare a figure bundle in the specified temporary directory.
 
     This function:
-    1. Copies all files from the figpack-gui-dist directory to tmpdir
+    1. Copies all files from the figpack-figure-dist directory to tmpdir
     2. Writes the view data to a zarr group
     3. Consolidates zarr metadata
 
@@ -25,7 +25,7 @@ def prepare_figure_bundle(
         title: Title for the figure (required)
         description: Optional description for the figure (markdown supported)
     """
-    html_dir = thisdir / ".." / "figpack-gui-dist"
+    html_dir = thisdir / ".." / "figpack-figure-dist"
     if not os.path.exists(html_dir):
         raise SystemExit(f"Error: directory not found: {html_dir}")
 

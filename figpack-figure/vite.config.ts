@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   base: "./",
   build: {
-    outDir: "../figpack/figpack-gui-dist",
+    outDir: "../figpack/figpack-figure-dist",
     emptyOutDir: true,
   },
   resolve: {
