@@ -29,6 +29,7 @@ installation
 quickstart
 tutorial
 show_function
+contributing
 api/index
 ```
 
