@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useBacklinks } from "../../hooks/useBacklinks";
 import DeleteDialog from "./DeleteDialog";
 import DownloadInstructions from "./DownloadInstructions";
 import FigureDetails from "./FigureDetails";
@@ -26,6 +27,7 @@ const ManageFigurePage: React.FC = () => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { apiKey, user } = useAuth();
+  const { backlinks } = useBacklinks();
 
   const figureUrl = useMemo(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -149,6 +151,7 @@ const ManageFigurePage: React.FC = () => {
             figpackStatus={figpackStatus}
             formatBytes={formatBytes}
             formatDate={formatDate}
+            backlinks={backlinks?.filter((b) => b.url === figureUrl)}
           />
         )}
 

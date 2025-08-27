@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Launch,
   PushPin,
   Refresh,
   Schedule,
   Search,
+  Settings,
+  Visibility,
   Warning,
 } from "@mui/icons-material";
 import {
@@ -40,6 +41,7 @@ import {
 } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useBacklinks } from "../../hooks/useBacklinks";
 import type { FigureListItem, FigureListParams } from "./figuresApi";
 import { getFigures } from "./figuresApi";
 import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
@@ -48,6 +50,7 @@ const FiguresPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { apiKey } = useAuth();
+  const { backlinks, loading: backlinksLoading } = useBacklinks();
 
   // State
   const [figures, setFigures] = useState<FigureListItem[]>([]);
@@ -220,6 +223,11 @@ const FiguresPage: React.FC = () => {
     return `/figure?figure_url=${encodeURIComponent(figureUrl)}`;
   };
 
+  const getBacklinkCount = (figureUrl: string) => {
+    if (backlinksLoading || !backlinks) return 0;
+    return backlinks.filter((backlink) => backlink.url === figureUrl).length;
+  };
+
   const totalPages = Math.ceil(total / limit);
 
   if (!apiKey) {
@@ -359,7 +367,7 @@ const FiguresPage: React.FC = () => {
                           onClick={() => handleSortChange("title")}
                           size="small"
                         >
-                          Title/URL{" "}
+                          Title{" "}
                           {sortBy === "title" &&
                             (sortOrder === "asc" ? "↑" : "↓")}
                         </Button>
@@ -412,30 +420,20 @@ const FiguresPage: React.FC = () => {
 
                         <TableCell>
                           <Box>
-                            {figure.title && (
-                              <Typography
-                                variant="body1"
-                                sx={{
-                                  fontWeight: "medium",
-                                  mb: 0.5,
-                                }}
-                              >
-                                {figure.title}
-                              </Typography>
-                            )}
                             <Link
-                              href={figure.figureUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              href={getManageUrl(figure.figureUrl)}
                               sx={{
-                                wordBreak: "break-all",
-                                fontSize: isMobile ? "0.75rem" : "inherit",
-                                color: figure.title
-                                  ? "text.secondary"
-                                  : undefined,
+                                fontWeight: "medium",
+                                mb: 0.5,
+                                textDecoration: "none",
+                                wordBreak: "break-word",
+                                display: "block",
+                                "&:hover": {
+                                  textDecoration: "underline",
+                                },
                               }}
                             >
-                              {figure.figureUrl}
+                              {figure.title || figure.figureUrl}
                             </Link>
                             {figure.pinInfo?.name && (
                               <Typography
@@ -513,6 +511,24 @@ const FiguresPage: React.FC = () => {
                                 icon={<Schedule />}
                               />
                             )}
+                            {getBacklinkCount(figure.figureUrl) > 0 && (
+                              <Tooltip
+                                title={`${getBacklinkCount(figure.figureUrl)} ${
+                                  getBacklinkCount(figure.figureUrl) === 1
+                                    ? "backlink"
+                                    : "backlinks"
+                                }`}
+                                sx={{
+                                  userSelect: "none",
+                                }}
+                              >
+                                <Chip
+                                  label={getBacklinkCount(figure.figureUrl)}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              </Tooltip>
+                            )}
                           </Box>
                         </TableCell>
 
@@ -534,16 +550,30 @@ const FiguresPage: React.FC = () => {
                         )}
 
                         <TableCell>
-                          <Tooltip title="Manage Figure">
-                            <IconButton
-                              component="a"
-                              href={getManageUrl(figure.figureUrl)}
-                              size="small"
-                              color="primary"
-                            >
-                              <Launch />
-                            </IconButton>
-                          </Tooltip>
+                          <Stack direction="row" spacing={1}>
+                            <Tooltip title="Open Figure">
+                              <IconButton
+                                component="a"
+                                href={figure.figureUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                size="small"
+                                color="secondary"
+                              >
+                                <Visibility />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Manage Figure">
+                              <IconButton
+                                component="a"
+                                href={getManageUrl(figure.figureUrl)}
+                                size="small"
+                                color="primary"
+                              >
+                                <Settings />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))}

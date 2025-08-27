@@ -2,6 +2,7 @@ import {
   Box,
   Card,
   CardContent,
+  Link,
   Table,
   TableBody,
   TableCell,
@@ -9,8 +10,10 @@ import {
   TableRow,
 } from "@mui/material";
 import React from "react";
+import type { BacklinkEntry } from "../../contexts/backlinksTypes";
 
 interface FigureDetailsProps {
+  backlinks?: BacklinkEntry[];
   figpackStatus: {
     figureUrl: string;
     bucket?: string;
@@ -31,6 +34,7 @@ const FigureDetails: React.FC<FigureDetailsProps> = ({
   figpackStatus,
   formatBytes,
   formatDate,
+  backlinks = [],
 }) => {
   return (
     <Box
@@ -51,8 +55,25 @@ const FigureDetails: React.FC<FigureDetailsProps> = ({
                     <TableCell sx={{ width: "40%", color: "text.secondary" }}>
                       Figure URL
                     </TableCell>
-                    <TableCell sx={{ fontFamily: "monospace" }}>
-                      {figpackStatus.figureUrl || "N/A"}
+                    <TableCell
+                      sx={{ fontFamily: "monospace", wordBreak: "break-word" }}
+                    >
+                      {figpackStatus.figureUrl ? (
+                        <Link
+                          href={figpackStatus.figureUrl}
+                          sx={{
+                            textDecoration: "none",
+                            color: "inherit",
+                            "&:hover": {
+                              textDecoration: "underline",
+                            },
+                          }}
+                        >
+                          {figpackStatus.figureUrl}
+                        </Link>
+                      ) : (
+                        "N/A"
+                      )}
                     </TableCell>
                   </TableRow>
                   {figpackStatus.ownerEmail && (
@@ -96,6 +117,44 @@ const FigureDetails: React.FC<FigureDetailsProps> = ({
                       </TableCell>
                       <TableCell>
                         {formatBytes(figpackStatus.totalSize)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {backlinks && (
+                    <TableRow>
+                      <TableCell sx={{ color: "text.secondary" }}>
+                        Backlinks
+                      </TableCell>
+                      <TableCell>
+                        {backlinks.length > 0 ? (
+                          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                            {backlinks.map((backlink, index) => (
+                              <li key={index}>
+                                <Box sx={{ fontWeight: "medium" }}>
+                                  {backlink.repo}
+                                </Box>
+                                <Link
+                                  href={`https://github.com/${backlink.repo}/blob/main/${backlink.file}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  sx={{
+                                    color: "text.secondary",
+                                    fontSize: "0.875em",
+                                    display: "block",
+                                    textDecoration: "none",
+                                    "&:hover": {
+                                      textDecoration: "underline",
+                                    },
+                                  }}
+                                >
+                                  {backlink.file}
+                                </Link>
+                              </li>
+                            ))}
+                          </Box>
+                        ) : (
+                          "No backlinks"
+                        )}
                       </TableCell>
                     </TableRow>
                   )}
