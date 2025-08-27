@@ -29,8 +29,9 @@ installation
 quickstart
 tutorial
 show_function
-contributing
 api/index
+contributing
+developer_guide
 ```
 
 ## Quick Example

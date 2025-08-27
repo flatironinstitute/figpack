@@ -58,3 +58,7 @@ File bug reports and feature requests via GitHub Issues. Include:
 - Steps to reproduce (for bugs)
 - Expected vs actual behavior
 - Python/package versions
+
+## Developer Guide
+
+For detailed technical information about the project architecture and development workflow, see the [Developer Guide](./developer_guide).

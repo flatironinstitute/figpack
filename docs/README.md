@@ -67,6 +67,8 @@ Documentation is automatically built and deployed to GitHub Pages when changes a
 - `quickstart.md` - Quick start guide
 - `examples/` - Examples documentation
 - `api/` - API reference documentation
+- `contributing.md` - Contribution guidelines
+- `developer_guide.md` - Developer guide
 - `_static/` - Static assets (images, CSS, etc.)
 - `_build/` - Generated documentation (ignored by git)
 
