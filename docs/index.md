@@ -14,6 +14,31 @@ Data are stored in the efficient **Zarr** format, enabling interactive explorati
 
 Although primarily motivated by applications in **neurophysiology** (e.g., spike sorting), figpack is designed as a **general framework**. General-purpose components such as time series graphs are immediately useful in many scientific domains, and its plugin-oriented design encourages contributions of specialized views from other fields.
 
+```{raw} html
+<div class="assistant-container">
+  <iframe class="assistant-iframe"></iframe>
+</div>
+<button class="assistant-toggle">Open Assistant</button>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggle = document.querySelector('.assistant-toggle');
+    const container = document.querySelector('.assistant-container');
+    const iframe = document.querySelector('.assistant-iframe');
+    let iframeLoaded = false;
+
+    toggle.addEventListener('click', function() {
+      const isShowing = container.classList.toggle('show');
+
+      // Load iframe content only when first opened
+      if (isShowing && !iframeLoaded) {
+        iframe.src = 'https://magland.github.io/figpack-assistant/chat';
+        iframeLoaded = true;
+      }
+    });
+  });
+</script>
+```
+
 ### Core Concepts
 
 - **Views**: The fundamental building blocks in figpack. Each view (like TimeseriesGraph, Image, or Markdown) represents a specific type of visualization or content.
