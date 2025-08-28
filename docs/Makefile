@@ -21,6 +21,8 @@ help:
 	@if [ "$@" = "html" ]; then \
 		echo "Generating tutorial examples..."; \
 		python devel/generate_tutorial_examples.py; \
+		echo "Generating spike sorting tutorial examples..."; \
+		python devel/generate_spike_sorting_tutorial_examples.py; \
 	fi
 
 # Custom targets for development

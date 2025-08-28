@@ -55,6 +55,7 @@ Although primarily motivated by applications in **neurophysiology** (e.g., spike
 installation
 quickstart
 tutorial
+spike_sorting_tutorial
 show_function
 api/index
 contributing
@@ -84,6 +85,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[Installation](installation.md)**: Requirements and setup instructions
 - **[Quick Start Guide](quickstart.md)**: Get up and running with basic examples
 - **[Tutorial](tutorial.md)**: Step-by-step guide to creating various types of figures
+- **[Spike Sorting Tutorial](spike_sorting_tutorial.md)**: Getting started with spike sorting visualizations
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
 - **[API Reference](api/index.md)**: Complete documentation of all components
 
