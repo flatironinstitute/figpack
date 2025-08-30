@@ -164,6 +164,7 @@ python-package
 figpack-figure
 figpack-manage
 figpack-api
+backlinks
 ```
 
 ---
