@@ -155,6 +155,10 @@ The standard development setup involves:
    - The figure data is served on port 3004 by a development file server
    - You can modify code in figpack-figure and see changes live due to hot module reloading
 
+## Backlinks System
+
+[See backlinks.md](./backlinks)
+
 ## Detailed Architecture
 
 ```{toctree}
