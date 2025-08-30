@@ -1,13 +1,18 @@
-import { AdminPanelSettings, Info, Refresh } from "@mui/icons-material";
+import { AdminPanelSettings, Autorenew, Refresh } from "@mui/icons-material";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import React from "react";
 
 interface AdminHeaderProps {
   onRefresh: () => void;
-  onOpenSpec: () => void;
+  onRenewBulk: () => void;
+  renewBulkLoading?: boolean;
 }
 
-const AdminHeader: React.FC<AdminHeaderProps> = ({ onRefresh, onOpenSpec }) => {
+const AdminHeader: React.FC<AdminHeaderProps> = ({
+  onRefresh,
+  onRenewBulk,
+  renewBulkLoading = false,
+}) => {
   return (
     <Box>
       <Box
@@ -21,10 +26,16 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onRefresh, onOpenSpec }) => {
           <Typography variant="h4">Admin</Typography>
         </Box>
         <Box display="flex" gap={1}>
-          <Tooltip title="View Specification">
-            <IconButton onClick={onOpenSpec} color="primary">
-              <Info />
-            </IconButton>
+          <Tooltip title="Renew Backlinked Figures">
+            <span>
+              <IconButton
+                onClick={onRenewBulk}
+                color="primary"
+                disabled={renewBulkLoading}
+              >
+                <Autorenew />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="Refresh Data">
             <IconButton onClick={onRefresh} color="primary">

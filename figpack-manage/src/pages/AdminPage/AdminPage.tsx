@@ -9,24 +9,30 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
-import AdminHeader from "./AdminHeader";
-import AdminSpecDialog from "./AdminSpecDialog";
-import type { User } from "./UsersSummary";
-import UsersSummary from "./UsersSummary";
+import { useAuth } from "../../hooks/useAuth";
+import AddBucketDialog from "./AddBucketDialog";
 import AddUserDialog from "./AddUserDialog";
-import EditUserDialog from "./EditUserDialog";
-import { getUsers, createUser, updateUser, deleteUser } from "./adminApi";
+import {
+  createUser,
+  deleteUser,
+  getUsers,
+  renewBulk,
+  updateUser,
+} from "./adminApi";
+import AdminHeader from "./AdminHeader";
 import type { Bucket } from "./bucketsApi";
 import {
-  getBuckets,
   createBucket,
-  updateBucket,
   deleteBucket,
+  getBuckets,
+  updateBucket,
 } from "./bucketsApi";
 import BucketsSummary from "./BucketsSummary";
-import AddBucketDialog from "./AddBucketDialog";
 import EditBucketDialog from "./EditBucketDialog";
-import { useAuth } from "../../hooks/useAuth";
+import EditUserDialog from "./EditUserDialog";
+import RenewBulkResultsDialog from "./RenewBulkResultsDialog";
+import type { User } from "./UsersSummary";
+import UsersSummary from "./UsersSummary";
 
 const AdminPage: React.FC = () => {
   const { apiKey, isLoggedIn } = useAuth();
@@ -37,7 +43,6 @@ const AdminPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [specDialogOpen, setSpecDialogOpen] = useState<boolean>(false);
   const [addUserDialogOpen, setAddUserDialogOpen] = useState<boolean>(false);
   const [editUserDialogOpen, setEditUserDialogOpen] = useState<boolean>(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
@@ -46,6 +51,13 @@ const AdminPage: React.FC = () => {
   const [editBucketDialogOpen, setEditBucketDialogOpen] =
     useState<boolean>(false);
   const [bucketToEdit, setBucketToEdit] = useState<Bucket | null>(null);
+  const [renewBulkLoading, setRenewBulkLoading] = useState<boolean>(false);
+  const [renewBulkResult, setRenewBulkResult] = useState<{
+    success: boolean;
+    message?: string;
+    renewedCount?: number;
+    errors?: Array<{ figureUrl: string; error: string }>;
+  } | null>(null);
 
   const handleLoadData = useMemo(
     () => async () => {
@@ -213,6 +225,25 @@ const AdminPage: React.FC = () => {
     handleDeleteBucket(bucket.name);
   };
 
+  const handleRenewBulk = async () => {
+    if (!apiKey) return;
+
+    setRenewBulkLoading(true);
+    setRenewBulkResult(null);
+
+    try {
+      const result = await renewBulk(apiKey);
+      setRenewBulkResult(result);
+    } catch (error) {
+      setRenewBulkResult({
+        success: false,
+        message: `Failed to renew figures: ${error}`,
+      });
+    } finally {
+      setRenewBulkLoading(false);
+    }
+  };
+
   const handleDeleteBucket = async (name: string) => {
     setSaving(true);
     setError(null);
@@ -273,7 +304,8 @@ const AdminPage: React.FC = () => {
           <CardContent>
             <AdminHeader
               onRefresh={handleRefresh}
-              onOpenSpec={() => setSpecDialogOpen(true)}
+              onRenewBulk={handleRenewBulk}
+              renewBulkLoading={renewBulkLoading}
             />
           </CardContent>
         </Card>
@@ -297,11 +329,6 @@ const AdminPage: React.FC = () => {
             onAddBucket={() => setAddBucketDialogOpen(true)}
           />
         )}
-
-        <AdminSpecDialog
-          open={specDialogOpen}
-          onClose={() => setSpecDialogOpen(false)}
-        />
 
         <AddUserDialog
           open={addUserDialogOpen}
@@ -335,6 +362,12 @@ const AdminPage: React.FC = () => {
           bucket={bucketToEdit}
           loading={saving}
           error={error}
+        />
+
+        <RenewBulkResultsDialog
+          open={!!renewBulkResult}
+          onClose={() => setRenewBulkResult(null)}
+          result={renewBulkResult || undefined}
         />
       </Stack>
     </Box>

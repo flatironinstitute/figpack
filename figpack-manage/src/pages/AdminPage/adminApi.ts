@@ -1,5 +1,5 @@
-import { FIGPACK_API_BASE_URL } from '../../config';
-import type { User } from './UsersSummary';
+import { FIGPACK_API_BASE_URL } from "../../config";
+import type { User } from "./UsersSummary";
 
 interface UserResult {
   success: boolean;
@@ -12,6 +12,40 @@ interface UsersResult {
   message?: string;
   users?: User[];
 }
+
+interface RenewBulkResult {
+  success: boolean;
+  message?: string;
+  renewedCount?: number;
+  errors?: Array<{ figureUrl: string; error: string }>;
+}
+
+// Renew all figures with backlinks
+export const renewBulk = async (apiKey: string): Promise<RenewBulkResult> => {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
+  }
+
+  try {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/renew-bulk`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        apiKey,
+      }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    return {
+      success: false,
+      message: `Error renewing figures: ${err}`,
+    };
+  }
+};
 
 // Get all users
 export const getUsers = async (apiKey: string): Promise<UsersResult> => {
@@ -33,32 +67,37 @@ export const getUsers = async (apiKey: string): Promise<UsersResult> => {
     if (result.success) {
       // Admin endpoint now only returns users array for admin users
       if (result.users) {
-        return { 
-          success: true, 
-          users: result.users
+        return {
+          success: true,
+          users: result.users,
         };
       } else {
-        return { 
-          success: false, 
-          message: "No user data received" 
+        return {
+          success: false,
+          message: "No user data received",
         };
       }
     } else {
-      return { 
-        success: false, 
-        message: result.message || "Failed to get users. Make sure you have admin permissions." 
+      return {
+        success: false,
+        message:
+          result.message ||
+          "Failed to get users. Make sure you have admin permissions.",
       };
     }
   } catch (err) {
-    return { 
-      success: false, 
-      message: `Error getting users: ${err}` 
+    return {
+      success: false,
+      message: `Error getting users: ${err}`,
     };
   }
 };
 
 // Create a new user
-export const createUser = async (apiKey: string, user: Omit<User, 'createdAt'>): Promise<UserResult> => {
+export const createUser = async (
+  apiKey: string,
+  user: Omit<User, "createdAt">
+): Promise<UserResult> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
   }
@@ -82,27 +121,31 @@ export const createUser = async (apiKey: string, user: Omit<User, 'createdAt'>):
     const result = await response.json();
 
     if (result.success) {
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: result.message || "User created successfully",
-        user: result.user
+        user: result.user,
       };
     } else {
-      return { 
-        success: false, 
-        message: result.message || "Failed to create user" 
+      return {
+        success: false,
+        message: result.message || "Failed to create user",
       };
     }
   } catch (err) {
-    return { 
-      success: false, 
-      message: `Error creating user: ${err}` 
+    return {
+      success: false,
+      message: `Error creating user: ${err}`,
     };
   }
 };
 
 // Update an existing user
-export const updateUser = async (apiKey: string, email: string, userData: Partial<Omit<User, 'email' | 'createdAt'>>): Promise<UserResult> => {
+export const updateUser = async (
+  apiKey: string,
+  email: string,
+  userData: Partial<Omit<User, "email" | "createdAt">>
+): Promise<UserResult> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
   }
@@ -127,27 +170,30 @@ export const updateUser = async (apiKey: string, email: string, userData: Partia
     const result = await response.json();
 
     if (result.success) {
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: result.message || "User updated successfully",
-        user: result.user
+        user: result.user,
       };
     } else {
-      return { 
-        success: false, 
-        message: result.message || "Failed to update user" 
+      return {
+        success: false,
+        message: result.message || "Failed to update user",
       };
     }
   } catch (err) {
-    return { 
-      success: false, 
-      message: `Error updating user: ${err}` 
+    return {
+      success: false,
+      message: `Error updating user: ${err}`,
     };
   }
 };
 
 // Delete a user
-export const deleteUser = async (apiKey: string, email: string): Promise<{ success: boolean; message?: string }> => {
+export const deleteUser = async (
+  apiKey: string,
+  email: string
+): Promise<{ success: boolean; message?: string }> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
   }
@@ -171,20 +217,20 @@ export const deleteUser = async (apiKey: string, email: string): Promise<{ succe
     const result = await response.json();
 
     if (result.success) {
-      return { 
-        success: true, 
-        message: result.message || "User deleted successfully"
+      return {
+        success: true,
+        message: result.message || "User deleted successfully",
       };
     } else {
-      return { 
-        success: false, 
-        message: result.message || "Failed to delete user" 
+      return {
+        success: false,
+        message: result.message || "Failed to delete user",
       };
     }
   } catch (err) {
-    return { 
-      success: false, 
-      message: `Error deleting user: ${err}` 
+    return {
+      success: false,
+      message: `Error deleting user: ${err}`,
     };
   }
 };
