@@ -50,6 +50,7 @@ jobs:
           cd docs
           sphinx-build -b html . _build/html
           python devel/generate_tutorial_examples.py
+          python devel/generate_spike_sorting_tutorial_examples.py
 
       - name: Setup Pages
         if: github.ref == 'refs/heads/main'
