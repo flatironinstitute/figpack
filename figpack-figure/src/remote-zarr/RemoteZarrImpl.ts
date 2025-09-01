@@ -42,7 +42,7 @@ export class ZarrFileSystemClient {
   #inProgressReads: { [key: string]: boolean } = {};
   constructor(
     private url: string,
-    private zmetadata: any,
+    private zmetadata: any
   ) {}
   async readJson(path: string): Promise<{ [key: string]: any } | undefined> {
     if (path in this.zmetadata.metadata) {
@@ -73,7 +73,7 @@ export class ZarrFileSystemClient {
       startByte?: number;
       endByte?: number;
       disableCache?: boolean;
-    },
+    }
   ): Promise<any | undefined> {
     if (o.startByte !== undefined) {
       if (o.decodeArray)
@@ -89,7 +89,7 @@ export class ZarrFileSystemClient {
       o.endByte < o.startByte
     ) {
       throw Error(
-        `endByte must be greater than or equal to startByte: ${o.startByte} ${o.endByte} for ${path}`,
+        `endByte must be greater than or equal to startByte: ${o.startByte} ${o.endByte} for ${path}`
       );
     }
     if (
@@ -146,7 +146,7 @@ export class ZarrFileSystemClient {
             zarray.dtype,
             zarray.compressor,
             zarray.filters,
-            zarray.chunks,
+            zarray.chunks
           );
         } catch (e) {
           throw Error(`Failed to decode chunk array for ${path}: ${e}`);
@@ -173,7 +173,7 @@ class RemoteZarr implements ZarrFile {
   constructor(
     public url: string,
     private zarrFileSystemClient: ZarrFileSystemClient,
-    private pathsByParentPath: { [key: string]: string[] },
+    private pathsByParentPath: { [key: string]: string[] }
   ) {}
   static async createFromZarr(url: string) {
     const zmetadataUrl = `${url}/.zmetadata`;
@@ -225,10 +225,10 @@ class RemoteZarr implements ZarrFile {
         | undefined;
     } else {
       zgroup = (await this.zarrFileSystemClient.readJson(
-        pathWithoutBeginningSlash + "/.zgroup",
+        pathWithoutBeginningSlash + "/.zgroup"
       )) as ZMetaDataZGroup | undefined;
       zattrs = (await this.zarrFileSystemClient.readJson(
-        pathWithoutBeginningSlash + "/.zattrs",
+        pathWithoutBeginningSlash + "/.zattrs"
       )) as ZMetaDataZAttrs | undefined;
     }
     if (zgroup) {
@@ -238,13 +238,13 @@ class RemoteZarr implements ZarrFile {
         this.pathsByParentPath[pathWithoutBeginningSlash] || [];
       for (const childPath of childPaths) {
         const childZgroup = await this.zarrFileSystemClient.readJson(
-          childPath + "/.zgroup",
+          childPath + "/.zgroup"
         );
         const childZarray = await this.zarrFileSystemClient.readJson(
-          childPath + "/.zarray",
+          childPath + "/.zarray"
         );
         const childZattrs = await this.zarrFileSystemClient.readJson(
-          childPath + "/.zattrs",
+          childPath + "/.zattrs"
         );
         if (childZgroup) {
           subgroups.push({
@@ -284,10 +284,10 @@ class RemoteZarr implements ZarrFile {
       ? path.slice(1)
       : path;
     const zarray = (await this.zarrFileSystemClient.readJson(
-      pathWithoutBeginningSlash + "/.zarray",
+      pathWithoutBeginningSlash + "/.zarray"
     )) as ZMetaDataZArray;
     const zattrs = (await this.zarrFileSystemClient.readJson(
-      pathWithoutBeginningSlash + "/.zattrs",
+      pathWithoutBeginningSlash + "/.zattrs"
     )) as ZMetaDataZAttrs;
     let dataset: ZarrDataset | undefined;
     if (zarray) {
@@ -311,7 +311,7 @@ class RemoteZarr implements ZarrFile {
       slice?: [number, number][];
       allowBigInt?: boolean;
       canceler?: Canceler;
-    },
+    }
   ): Promise<DatasetDataType | undefined> {
     // check for invalid slice
     if (o.slice) {
@@ -326,10 +326,10 @@ class RemoteZarr implements ZarrFile {
       console.warn(
         "Tried to slice more than three dimensions at a time",
         path,
-        o.slice,
+        o.slice
       );
       throw Error(
-        `For now, you can't slice more than three dimensions at a time. You tried to slice ${o.slice.length} dimensions for ${path}.`,
+        `For now, you can't slice more than three dimensions at a time. You tried to slice ${o.slice.length} dimensions for ${path}.`
       );
     }
 
@@ -337,7 +337,7 @@ class RemoteZarr implements ZarrFile {
       ? path.slice(1)
       : path;
     const zarray = (await this.zarrFileSystemClient.readJson(
-      pathWithoutBeginningSlash + "/.zarray",
+      pathWithoutBeginningSlash + "/.zarray"
     )) as ZMetaDataZArray | undefined;
     if (!zarray) {
       console.warn("No .zarray for", path);
@@ -376,7 +376,7 @@ class RemoteZarr implements ZarrFile {
       ? path.slice(1)
       : path;
     return (await this.zarrFileSystemClient.readJson(
-      pathWithoutBeginningSlash + "/.zarray",
+      pathWithoutBeginningSlash + "/.zarray"
     )) as ZMetaDataZArray | undefined;
   }
   getUrls() {
@@ -401,7 +401,7 @@ const fetchByteRange = async (url: string, startByte: number, size: number) => {
   });
   if (!r.ok)
     throw Error(
-      `Failed to fetch byte range ${startByte}-${startByte + size - 1} of ${url}`,
+      `Failed to fetch byte range ${startByte}-${startByte + size - 1} of ${url}`
     );
   return await r.arrayBuffer();
 };

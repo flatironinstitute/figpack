@@ -142,6 +142,23 @@ view.show(title="Spike Amplitudes Example", open_in_browser=True)
 
 <iframe src="./spike_sorting_tutorial_spike_amplitudes/index.html?embedded=1" width="100%" height="450" frameborder="0"></iframe>
 
+Or load it from a local or remote NWB file:
+
+```python
+import figpack.spike_sorting.views as ssv
+
+print(f"Loading from remote NWB file...")
+view = ssv.SpikeAmplitudes.from_nwb_units_table(
+    "https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/",
+    units_path="/units",
+    include_units_selector=True,
+)
+view.show(title="NWB Spike Amplitudes Example")
+```
+
+<!-- This is larger, so we precompute it and host it on figpack: -->
+<iframe src="https://figures.figpack.org/figures/default/49b633fced04b3d1778ebfaa2eea337215a3f107/index.html" width="100%" height="450" frameborder="0"></iframe>
+
 ---
 
 ## 2. Correlation Analysis

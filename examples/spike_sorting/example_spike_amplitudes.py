@@ -32,8 +32,6 @@ def example_spike_amplitudes(
     *,
     recording: si.BaseRecording,
     sorting: si.BaseSorting,
-    hide_unit_selector: bool = False,
-    height=500,
 ):
     rng = np.random.default_rng(2022)
     plot_items: List[ssv.SpikeAmplitudesItem] = []
@@ -58,8 +56,6 @@ def example_spike_amplitudes(
         end_time_sec=recording.get_num_frames(segment_index=0)
         / recording.get_sampling_frequency(),
         plots=plot_items,
-        hide_unit_selector=hide_unit_selector,
-        height=height,
     )
     return view
 
