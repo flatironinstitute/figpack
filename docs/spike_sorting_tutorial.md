@@ -134,7 +134,6 @@ view = ssv.SpikeAmplitudes(
     start_time_sec=0,
     end_time_sec=60,
     plots=plot_items,
-    height=400,
 )
 
 view.show(title="Spike Amplitudes Example", open_in_browser=True)
@@ -258,7 +257,6 @@ raster_plot = ssv.RasterPlot(
     start_time_sec=0,
     end_time_sec=60,
     plots=plot_items,
-    height=300,
 )
 
 # Combine in a layout

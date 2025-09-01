@@ -124,8 +124,6 @@ def test_spike_amplitudes_multiple_units():
         start_time_sec=0.0,
         end_time_sec=7.0,
         plots=[item1, item2],
-        hide_unit_selector=False,
-        height=500,
     )
 
     # Create zarr group and write data
@@ -169,8 +167,6 @@ def test_spike_amplitudes_empty_data():
         start_time_sec=0.0,
         end_time_sec=4.0,
         plots=[],
-        hide_unit_selector=False,
-        height=500,
     )
 
     # Create zarr group and write data
