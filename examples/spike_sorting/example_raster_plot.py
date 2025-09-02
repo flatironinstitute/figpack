@@ -11,7 +11,7 @@ import figpack.spike_sorting.views as ssv
 
 def main():
     recording, sorting = se.toy_example(
-        num_units=12, duration=300, seed=0, num_segments=1
+        num_units=18, duration=300, seed=0, num_segments=1
     )
     assert isinstance(recording, si.BaseRecording)
 
@@ -30,9 +30,7 @@ This is an example of a raster plot created using figpack.
     )
 
 
-def example_raster_plot(
-    *, recording: si.BaseRecording, sorting: si.BaseSorting, height=500
-):
+def example_raster_plot(*, recording: si.BaseRecording, sorting: si.BaseSorting):
     plot_items: List[ssv.RasterPlotItem] = []
     for unit_id in sorting.get_unit_ids():
         spike_times_sec = (
@@ -50,7 +48,6 @@ def example_raster_plot(
         end_time_sec=recording.get_num_frames(segment_index=0)
         / recording.get_sampling_frequency(),
         plots=plot_items,
-        height=height,
     )
     return view
 
