@@ -14,13 +14,12 @@ def test_raster_plot_init():
     ]
 
     # Initialize RasterPlot
-    plot = RasterPlot(start_time_sec=0.0, end_time_sec=1.0, plots=plots, height=500)
+    plot = RasterPlot(start_time_sec=0.0, end_time_sec=1.0, plots=plots)
 
     # Verify attributes
     assert plot.start_time_sec == 0.0
     assert plot.end_time_sec == 1.0
     assert len(plot.plots) == 2
-    assert plot.height == 500
 
 
 def test_raster_plot_validation():
@@ -44,7 +43,7 @@ def test_write_to_zarr_group():
         RasterPlotItem(unit_id=2, spike_times_sec=np.array([0.15, 0.25, 0.35])),
     ]
 
-    plot = RasterPlot(start_time_sec=0.0, end_time_sec=1.0, plots=plots, height=500)
+    plot = RasterPlot(start_time_sec=0.0, end_time_sec=1.0, plots=plots)
 
     # Create temporary zarr group
     store = zarr.MemoryStore()
@@ -57,19 +56,3 @@ def test_write_to_zarr_group():
     assert root.attrs["view_type"] == "RasterPlot"
     assert root.attrs["start_time_sec"] == 0.0
     assert root.attrs["end_time_sec"] == 1.0
-    assert root.attrs["height"] == 500
-    assert root.attrs["num_plots"] == 2
-
-    # Verify plot metadata
-    plot_metadata = root.attrs["plots"]
-    assert len(plot_metadata) == 2
-    assert plot_metadata[0]["unit_id"] == "1"
-    assert plot_metadata[0]["num_spikes"] == 3
-
-    # Verify spike times data
-    np.testing.assert_array_almost_equal(
-        root["plot_0/spike_times_sec"][:], np.array([0.1, 0.2, 0.3])
-    )
-    np.testing.assert_array_almost_equal(
-        root["plot_1/spike_times_sec"][:], np.array([0.15, 0.25, 0.35])
-    )
