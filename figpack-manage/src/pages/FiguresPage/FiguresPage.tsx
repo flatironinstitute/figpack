@@ -49,14 +49,15 @@ import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
 const FiguresPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { apiKey } = useAuth();
+  const { apiKey, user } = useAuth();
   const { backlinks, loading: backlinksLoading } = useBacklinks();
 
   // State
   const [figures, setFigures] = useState<FigureListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  const isAdmin = user?.isAdmin || false;
 
   // Pagination and filtering
   const [page, setPage] = useState(1);
@@ -79,6 +80,11 @@ const FiguresPage: React.FC = () => {
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+  }, []);
+
+  const truncateEmail = useCallback((email: string) => {
+    if (email.length <= 15) return email;
+    return `${email.slice(0, 15)}...`;
   }, []);
 
   const getTimeUntilExpiration = useCallback((expiration: number) => {
@@ -129,7 +135,8 @@ const FiguresPage: React.FC = () => {
         | "expiration"
         | "figureUrl"
         | "status"
-        | "title",
+        | "title"
+        | "ownerEmail",
       sortOrder,
     };
 
@@ -147,15 +154,6 @@ const FiguresPage: React.FC = () => {
       if (result.success) {
         setFigures(result.figures || []);
         setTotal(result.total || 0);
-
-        // Check if user is admin by trying to load all figures
-        if (!isAdmin && apiKey) {
-          const adminCheck = await getFigures({ ...params, all: true });
-          setIsAdmin(
-            adminCheck.success &&
-              (adminCheck.figures?.length || 0) > (result.figures?.length || 0)
-          );
-        }
       } else {
         setError(result.message || "Failed to load figures");
       }
@@ -164,17 +162,7 @@ const FiguresPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [
-    apiKey,
-    showAll,
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-    statusFilter,
-    search,
-    isAdmin,
-  ]);
+  }, [apiKey, page, limit, search, statusFilter, sortBy, sortOrder, showAll]);
 
   // Effects
   useEffect(() => {
@@ -373,17 +361,30 @@ const FiguresPage: React.FC = () => {
                         </Button>
                       </TableCell>
                       {!isMobile && (
-                        <TableCell>
-                          <Button
-                            variant="text"
-                            onClick={() => handleSortChange("createdAt")}
-                            size="small"
-                          >
-                            Created{" "}
-                            {sortBy === "createdAt" &&
-                              (sortOrder === "asc" ? "↑" : "↓")}
-                          </Button>
-                        </TableCell>
+                        <>
+                          <TableCell>
+                            <Button
+                              variant="text"
+                              onClick={() => handleSortChange("createdAt")}
+                              size="small"
+                            >
+                              Created{" "}
+                              {sortBy === "createdAt" &&
+                                (sortOrder === "asc" ? "↑" : "↓")}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="text"
+                              onClick={() => handleSortChange("ownerEmail")}
+                              size="small"
+                            >
+                              Owner{" "}
+                              {sortBy === "ownerEmail" &&
+                                (sortOrder === "asc" ? "↑" : "↓")}
+                            </Button>
+                          </TableCell>
+                        </>
                       )}
                       <TableCell>
                         <Button
@@ -468,11 +469,24 @@ const FiguresPage: React.FC = () => {
                         </TableCell>
 
                         {!isMobile && (
-                          <TableCell>
-                            <Typography variant="body2">
-                              {formatDate(figure.createdAt)}
-                            </Typography>
-                          </TableCell>
+                          <>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {formatDate(figure.createdAt)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Tooltip title={figure.ownerEmail}>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ userSelect: "none" }}
+                                >
+                                  {truncateEmail(figure.ownerEmail)}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                          </>
                         )}
 
                         <TableCell>

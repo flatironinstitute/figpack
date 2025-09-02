@@ -47,7 +47,8 @@ export interface FigureListParams {
     | "expiration"
     | "figureUrl"
     | "status"
-    | "title";
+    | "title"
+    | "ownerEmail";
   sortOrder?: "asc" | "desc";
 }
 

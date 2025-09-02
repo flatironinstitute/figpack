@@ -160,11 +160,12 @@ export default async function handler(
     // Build sort object
     const sortObj: Record<string, 1 | -1> = {};
     const validSortFields = [
+      "status",
+      "title",
       "createdAt",
       "updatedAt",
+      "ownerEmail",
       "expiration",
-      "figureUrl",
-      "status",
     ];
     const sortField = validSortFields.includes(sortBy as string)
       ? (sortBy as string)

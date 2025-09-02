@@ -39,14 +39,17 @@ class RasterPlot(FigpackView):
 
     @staticmethod
     def from_nwb_units_table(
-        nwb_url_or_path: str,
+        nwb_url_or_path_or_h5py,
         *,
         units_path: str,
         include_units_selector: bool = False,
     ):
-        import lindi
+        if isinstance(nwb_url_or_path_or_h5py, str):
+            import lindi
 
-        f = lindi.LindiH5pyFile.from_hdf5_file(nwb_url_or_path)
+            f = lindi.LindiH5pyFile.from_hdf5_file(nwb_url_or_path_or_h5py)
+        else:
+            f = nwb_url_or_path_or_h5py
         X = f[units_path]
         spike_times = X["spike_times"]
         spike_times_index = X["spike_times_index"]
