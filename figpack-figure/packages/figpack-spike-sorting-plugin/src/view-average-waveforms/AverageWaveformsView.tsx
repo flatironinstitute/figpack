@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PGPlot, PlotGrid, Splitter, VerticalScrollView } from "../core-views";
+import { PGPlot, PlotGrid, VerticalScrollView } from "../core-views";
 import { mean } from "mathjs";
 import {
   FunctionComponent,
@@ -30,6 +30,7 @@ import AverageWaveformPlot, {
 } from "./AverageWaveformPlot";
 import { AverageWaveformsViewData } from "./AverageWaveformsViewData";
 import { FaArrowRight, FaArrowLeft, FaRegTimesCircle } from "react-icons/fa";
+import { Splitter } from "../core-views/component-splitter";
 
 type Props = {
   data: AverageWaveformsViewData;

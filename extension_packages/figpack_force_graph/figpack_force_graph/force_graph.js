@@ -51,7 +51,7 @@
             
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/force-graph@1.43.0/dist/force-graph.min.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/force-graph@1.50.1/dist/force-graph.min.js';
                 script.onload = () => {
                     if (window.ForceGraph) {
                         resolve();

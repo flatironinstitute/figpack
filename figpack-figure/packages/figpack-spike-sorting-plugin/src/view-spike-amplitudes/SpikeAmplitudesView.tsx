@@ -10,7 +10,6 @@ import {
   sortIds,
   useSelectedUnitIds,
 } from "../context-unit-selection";
-import { Splitter } from "../core-views";
 import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import { getUnitColor } from "../view-units-table/unitColors";
 import { ViewToolbar } from "../ViewToolbar";
@@ -19,6 +18,7 @@ import {
   SpikeAmplitudesDataClient,
   SpikeAmplitudesRangeData,
 } from "./SpikeAmplitudesDataClient";
+import { Splitter } from "../core-views/component-splitter";
 
 type Props = {
   dataClient: SpikeAmplitudesDataClient;

@@ -6,9 +6,15 @@ import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
 import { FPUnitsTable } from "./FPUnitsTable";
 import { FPAverageWaveforms } from "./FPAverageWaveforms";
 import { FPSpikeAmplitudes } from "./FPSpikeAmplitudes";
+import { FPUnitMetricsGraph } from "./FPUnitMetricsGraph";
 
 import UnitSelectionProvider from "./context-unit-selection/UnitSelectionProvider";
 import { FPRasterPlot } from "./FPRasterPlot";
+import { FunctionComponent, useReducer } from "react";
+import {
+  UnitMetricSelectionContext,
+  unitMetricSelectionReducer,
+} from "./context-unit-metrics-selection";
 
 const registerViewComponents = (
   viewComponentRegistry: FPViewComponentRegistry,
@@ -42,15 +48,41 @@ const registerViewComponents = (
     type: "RasterPlot",
     component: FPRasterPlot,
   });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "UnitMetricsGraph",
+    component: FPUnitMetricsGraph,
+  });
 };
 
 const provideAppContexts = (node: React.ReactNode) => {
-  return <UnitSelectionProvider>{node}</UnitSelectionProvider>;
+  return (
+    <UnitMetricSelectionProvider>
+      <UnitSelectionProvider>{node}</UnitSelectionProvider>
+    </UnitMetricSelectionProvider>
+  );
 };
 
 const plugin: FPPlugin = {
   registerViewComponents,
   provideAppContexts,
+};
+
+const UnitMetricSelectionProvider: FunctionComponent<{
+  children: React.ReactNode;
+}> = ({ children }) => {
+  const [unitMetricSelection, unitMetricSelectionDispatch] = useReducer(
+    unitMetricSelectionReducer,
+    {},
+  );
+
+  return (
+    <UnitMetricSelectionContext.Provider
+      value={{ unitMetricSelection, unitMetricSelectionDispatch }}
+    >
+      {children}
+    </UnitMetricSelectionContext.Provider>
+  );
 };
 
 export default plugin;

@@ -18,7 +18,7 @@ const iconButtonStyle = {
   paddingTop: 1,
   paddingBottom: 1,
 };
-export const viewToolbarWidth = 26;
+export const viewToolbarWidth = 35;
 
 type ToolbarElement = {
   type: string;
@@ -51,6 +51,7 @@ const ToolbarButton: FunctionComponent<ToolbarElement> = (
           color={color}
           style={iconButtonStyle}
           disabled={props.disabled ? true : false}
+          sx={{ fontSize: 18 }} // This seems to control the icon size
         >
           {props.icon}
         </IconButton>
@@ -60,6 +61,7 @@ const ToolbarButton: FunctionComponent<ToolbarElement> = (
           onClick={props.onClick}
           key={props.elementIndex}
           disabled={props.disabled ? true : false}
+          style={{ padding: 0, margin: 0, fontSize: 10 }}
         >
           {props.text}
         </button>
@@ -96,7 +98,12 @@ const ToolbarText: FunctionComponent<ToolbarElement> = (
     {
       key: props.elementIndex,
       title: props.title,
-      style: { textAlign: "center", fontWeight: "bold", cursor: "default" },
+      style: {
+        textAlign: "left",
+        fontWeight: "bold",
+        cursor: "default",
+        fontSize: 10,
+      },
     },
     _content,
   );

@@ -5,8 +5,9 @@ import React, {
   ReactElement,
   useEffect,
   useState,
+  useCallback,
+  useRef,
 } from "react";
-import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 
 interface Props {
   width: number;
@@ -25,9 +26,6 @@ const defaultGripThickness = 10;
 const defaultGripInnerThickness = 4;
 const defaultGripMargin = 2;
 
-// see: https://github.com/react-grid-layout/react-draggable/issues/652
-const Draggable1: any = Draggable;
-
 const Splitter: FunctionComponent<
   PropsWithChildren<Props> & { ref?: React.Ref<HTMLDivElement> }
 > = React.forwardRef((props, ref) => {
@@ -45,6 +43,14 @@ const Splitter: FunctionComponent<
   // const size2 = direction === 'horizontal' ? height : width
 
   const [gripPosition, setGripPosition] = useState<number>(initialPosition);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [dragStartGripPos, setDragStartGripPos] = useState<number>(0);
+  const gripRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (gripPosition > size1 - 4) {
       setGripPosition(size1 - 4);
@@ -52,10 +58,6 @@ const Splitter: FunctionComponent<
       setGripPosition(4);
     }
   }, [gripPosition, width, size1]);
-
-  // See: https://stackoverflow.com/questions/63603902/finddomnode-is-deprecated-in-strictmode-finddomnode-was-passed-an-instance-of-d
-  // const draggableNodeRef = React.useRef(null)
-  // this was actually causing an error with Draggable
 
   if (!props.children) throw Error("Unexpected: no props.children");
 
@@ -153,18 +155,66 @@ const Splitter: FunctionComponent<
     background: "gray",
     cursor: direction === "horizontal" ? "col-resize" : "row-resize",
   };
-  //   const _handleGripDrag = () => {};
-  const _handleGripDragStop = (_evt: DraggableEvent, ui: DraggableData) => {
-    const newGripPositionFromLeft = direction === "horizontal" ? ui.x : ui.y;
-    if (newGripPositionFromLeft === gripPositionFromLeft) {
-      return;
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStartPos({ x: e.clientX, y: e.clientY });
+      setDragStartGripPos(gripPositionFromLeft);
+    },
+    [gripPositionFromLeft],
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+
+      const deltaX = e.clientX - dragStartPos.x;
+      const deltaY = e.clientY - dragStartPos.y;
+      const delta = direction === "horizontal" ? deltaX : deltaY;
+
+      let newGripPositionFromLeft = dragStartGripPos + delta;
+
+      // Apply bounds
+      const minPos = 4;
+      const maxPos = size1 - 4;
+      newGripPositionFromLeft = Math.max(
+        minPos,
+        Math.min(maxPos, newGripPositionFromLeft),
+      );
+
+      const newGripPosition = positionFromRight
+        ? size1 - newGripPositionFromLeft
+        : newGripPositionFromLeft;
+
+      setGripPosition(newGripPosition);
+      if (onChange) onChange(newGripPosition);
+    },
+    [
+      isDragging,
+      dragStartPos,
+      dragStartGripPos,
+      direction,
+      size1,
+      positionFromRight,
+      onChange,
+    ],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
     }
-    const newGripPosition = positionFromRight
-      ? size1 - newGripPositionFromLeft
-      : newGripPositionFromLeft;
-    setGripPosition(newGripPosition);
-    if (onChange) onChange(newGripPosition);
-  };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
   return (
     <div className="splitter" style={{ ...style0, position: "relative" }}>
       <div
@@ -179,33 +229,27 @@ const Splitter: FunctionComponent<
         />
       </div>
       {adjustable && (
-        <Draggable1
-          // nodeRef={draggableNodeRef} // this was actually causing an error with Draggable
+        <div
+          ref={gripRef}
           key="drag"
-          position={{
-            x:
+          style={{
+            ...styleGripOuter,
+            position: "absolute",
+            left:
               direction === "horizontal"
                 ? gripPositionFromLeft - gripThickness / 2 - gripMargin
                 : 0,
-            y:
+            top:
               direction === "horizontal"
                 ? 0
                 : gripPositionFromLeft - gripThickness / 2 - gripMargin,
           }}
-          axis={direction === "horizontal" ? "x" : "y"}
-          //   onDrag={(evt: DraggableEvent, ui: DraggableData) =>
-          //     _handleGripDrag(evt, ui)
-          //   }
-          onStop={(evt: DraggableEvent, ui: DraggableData) =>
-            _handleGripDragStop(evt, ui)
-          }
+          onMouseDown={handleMouseDown}
         >
-          <div style={{ ...styleGripOuter, position: "absolute" }}>
-            <div style={{ ...styleGrip, position: "absolute" }}>
-              <div style={{ ...styleGripInner, position: "absolute" }} />
-            </div>
+          <div style={{ ...styleGrip, position: "absolute" }}>
+            <div style={{ ...styleGripInner, position: "absolute" }} />
           </div>
-        </Draggable1>
+        </div>
       )}
 
       <div

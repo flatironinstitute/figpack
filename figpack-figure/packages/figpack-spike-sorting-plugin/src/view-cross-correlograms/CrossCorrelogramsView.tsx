@@ -1,4 +1,4 @@
-import { PGPlot, PlotGrid, Splitter, VerticalScrollView } from "../core-views";
+import { PGPlot, PlotGrid, VerticalScrollView } from "../core-views";
 import { FunctionComponent, useMemo, useState } from "react";
 import {
   idToNum,
@@ -14,6 +14,7 @@ import {
   CrossCorrelogramsViewData,
 } from "./CrossCorrelogramsViewData";
 import { UnitsTableView, UnitsTableViewData } from "../view-units-table";
+import { Splitter } from "../core-views/component-splitter";
 
 type Props = {
   data: CrossCorrelogramsViewData;

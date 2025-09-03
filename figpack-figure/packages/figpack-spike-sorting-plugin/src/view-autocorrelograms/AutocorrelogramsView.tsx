@@ -1,4 +1,4 @@
-import { PGPlot, PlotGrid, Splitter, VerticalScrollView } from "../core-views";
+import { PGPlot, PlotGrid, VerticalScrollView } from "../core-views";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import {
@@ -18,6 +18,7 @@ import {
 import { viewToolbarWidth } from "../ViewToolbar/ViewToolbar";
 import { AutocorrelogramsViewData } from "./AutocorrelogramsViewData";
 import CorrelogramPlot from "./CorrelogramPlot";
+import { Splitter } from "../core-views/component-splitter";
 
 type Props = {
   data: AutocorrelogramsViewData;
