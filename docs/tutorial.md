@@ -273,7 +273,61 @@ view.show(title="DataFrame Example", open_in_browser=True)
 
 <iframe src="./tutorial_dataframe_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
 
-### 3.4 Plotly Integration
+### 3.4 Spectrogram
+
+Visualize time-frequency data with interactive heatmaps:
+
+```python
+import numpy as np
+import figpack.views as vv
+
+# Generate synthetic spectrogram data
+duration_sec = 10.0
+sampling_freq_hz = 100.0
+n_timepoints = int(duration_sec * sampling_freq_hz)
+
+# Frequency parameters
+freq_min_hz = 10.0
+freq_max_hz = 200.0
+freq_delta_hz = 5.0
+n_frequencies = int((freq_max_hz - freq_min_hz) / freq_delta_hz) + 1
+
+# Create synthetic data with spectral features
+np.random.seed(42)
+data = np.zeros((n_timepoints, n_frequencies), dtype=np.float32)
+
+time_axis = np.linspace(0, duration_sec, n_timepoints)
+freq_axis = np.linspace(freq_min_hz, freq_max_hz, n_frequencies)
+
+for i, t in enumerate(time_axis):
+    for j, f in enumerate(freq_axis):
+        # Base noise
+        data[i, j] = 0.1 * np.random.random()
+
+        # Chirp signal (frequency sweep)
+        chirp_freq = 50 + 100 * (t / duration_sec)
+        if abs(f - chirp_freq) < 10:
+            data[i, j] += 0.8 * np.exp(-((f - chirp_freq) / 5) ** 2)
+
+        # Constant tone at 120 Hz
+        if abs(f - 120) < 5:
+            data[i, j] += 0.6
+
+# Create spectrogram view
+view = vv.Spectrogram(
+    start_time_sec=0.0,
+    sampling_frequency_hz=sampling_freq_hz,
+    frequency_min_hz=freq_min_hz,
+    frequency_delta_hz=freq_delta_hz,
+    data=data,
+)
+
+view.show(title="Spectrogram Example", open_in_browser=True)
+```
+
+<iframe src="./tutorial_spectrogram_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+
+### 3.5 Plotly Integration
 
 Create interactive plotly visualizations:
 
