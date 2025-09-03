@@ -4,7 +4,6 @@ import {
   useTimeseriesSelection,
 } from "@figpack/main-plugin";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import {
   idToNum,
   INITIALIZE_UNITS,
@@ -12,13 +11,9 @@ import {
   useSelectedUnitIds,
 } from "../context-unit-selection";
 import { Splitter } from "../core-views";
+import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import { getUnitColor } from "../view-units-table/unitColors";
-import {
-  defaultUnitsTableBottomToolbarOptions,
-  UnitsTableBottomToolbar,
-  UnitsTableBottomToolbarOptions,
-  ViewToolbar,
-} from "../ViewToolbar";
+import { ViewToolbar } from "../ViewToolbar";
 import { viewToolbarWidth } from "../ViewToolbar/ViewToolbar";
 import {
   SpikeAmplitudesDataClient,

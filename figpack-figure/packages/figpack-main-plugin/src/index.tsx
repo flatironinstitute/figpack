@@ -8,6 +8,7 @@ import { FPMarkdown } from "./views/FPMarkdown";
 import { FPMatplotlibFigure } from "./views/FPMatplotlibFigure";
 import { FPMultiChannelTimeseries } from "./views/FPMultiChannelTimeseries";
 import { FPPlotlyFigure } from "./views/FPPlotlyFigure";
+import { FPSpectrogram } from "./views/FPSpectrogram";
 import { FPSplitter } from "./views/FPSplitter";
 import { FPTabLayout } from "./views/FPTabLayout";
 import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
@@ -80,6 +81,11 @@ const registerViewComponents = (
   viewComponentRegistry.registerViewComponent({
     type: "DataFrame",
     component: FPDataFrame,
+  });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "Spectrogram",
+    component: FPSpectrogram,
   });
 };
 
