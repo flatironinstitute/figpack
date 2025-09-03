@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Automatic Tutorial Snippet Tester
+Automatic Basic Views Tutorial Snippet Tester
 
-Parses docs/tutorial.md, extracts Python code blocks, modifies them to be
+Parses docs/basic_views_tutorial.md, extracts Python code blocks, modifies them to be
 non-interactive, and tests each one by running in a subprocess.
 """
 
@@ -153,7 +153,7 @@ def main():
     print("=" * 50)
 
     # Read tutorial file
-    tutorial_path = Path(__file__).parent.parent / "docs" / "tutorial.md"
+    tutorial_path = Path(__file__).parent.parent / "docs" / "basic_views_tutorial.md"
 
     if not tutorial_path.exists():
         print(f"❌ Tutorial file not found: {tutorial_path}")
