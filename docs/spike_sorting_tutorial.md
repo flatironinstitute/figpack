@@ -86,7 +86,6 @@ view = ssv.RasterPlot(
     start_time_sec=0,
     end_time_sec=30,
     plots=plot_items,
-    height=400,
 )
 
 view.show(title="Raster Plot Example", open_in_browser=True)
