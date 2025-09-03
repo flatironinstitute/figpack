@@ -10,13 +10,7 @@ Before starting this tutorial, make sure you have figpack installed:
 pip install figpack
 ```
 
----
-
-## 1. Getting Started - Simple Content Views
-
-Let's start with the simplest figpack views that display static content.
-
-### 1.1 Markdown View
+## Markdown View
 
 The Markdown view displays formatted text and documentation:
 
@@ -40,7 +34,7 @@ view.show(title="Markdown Example", open_in_browser=True)
 
 <iframe src="./tutorial_markdown_example/index.html?embedded=1" width="100%" height="350" frameborder="0"></iframe>
 
-### 1.2 Image View
+## Image View
 
 The Image view displays images from files or generated data:
 
@@ -74,11 +68,7 @@ view.show(title="Image Example", open_in_browser=True)
 
 <iframe src="./tutorial_image_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
 
----
-
-## 2. Basic Data Visualization
-
-### 2.1 Simple TimeseriesGraph
+## Simple TimeseriesGraph
 
 Create a basic line plot:
 
@@ -106,7 +96,7 @@ graph.show(title="Simple Timeseries", open_in_browser=True)
 
 <iframe src="./tutorial_simple_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 2.2 Multiple Series
+## Multiple Series
 
 Add different types of series to one plot:
 
@@ -166,11 +156,7 @@ graph.show(title="Multi-Series Plot", open_in_browser=True)
 
 <iframe src="./tutorial_multi_series/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
----
-
-## 3. Specialized Data Views
-
-### 3.1 MultiChannelTimeseries
+## MultiChannelTimeseries
 
 For multi-channel data like sensor arrays:
 
@@ -206,7 +192,7 @@ view.show(title="Multi-Channel Data", open_in_browser=True)
 
 <iframe src="./tutorial_multichannel_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 3.2 Matplotlib Integration
+## Matplotlib Integration
 
 Embed matplotlib plots:
 
@@ -246,7 +232,7 @@ view.show(title="Matplotlib Example", open_in_browser=True)
 
 <iframe src="./tutorial_matplotlib_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 3.3 DataFrame View
+## DataFrame View
 
 Create and display interactive data tables using pandas DataFrames:
 
@@ -273,7 +259,7 @@ view.show(title="DataFrame Example", open_in_browser=True)
 
 <iframe src="./tutorial_dataframe_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
 
-### 3.4 Spectrogram
+## Spectrogram
 
 Visualize time-frequency data with interactive heatmaps:
 
@@ -327,7 +313,7 @@ view.show(title="Spectrogram Example", open_in_browser=True)
 
 <iframe src="./tutorial_spectrogram_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 3.5 Plotly Integration
+## Plotly Integration
 
 Create interactive plotly visualizations:
 
@@ -372,11 +358,7 @@ view.show(title="Plotly Example", open_in_browser=True)
 
 <iframe src="./tutorial_plotly_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
----
-
-## 4. Layout Fundamentals
-
-### 4.1 Box Layout
+## Box Layout
 
 Arrange multiple views in rows and columns:
 
@@ -416,7 +398,7 @@ view.show(title="Box Layout Example", open_in_browser=True)
 
 <iframe src="./tutorial_box_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 4.2 TabLayout
+## TabLayout
 
 Organize views in tabs:
 
@@ -452,11 +434,7 @@ view.show(title="Tab Layout Example", open_in_browser=True)
 
 <iframe src="./tutorial_tab_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
----
-
-## 5. Advanced Layout Techniques
-
-### 5.1 Splitter Layout
+## Splitter Layout
 
 Create resizable panes:
 
@@ -502,7 +480,7 @@ view.show(title="Splitter Layout Example", open_in_browser=True)
 
 <iframe src="./tutorial_splitter_layout/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
 
-### 5.2 Complex Nested Layout
+## Complex Nested Layout
 
 Combine multiple layout types:
 
@@ -548,15 +526,3 @@ view.show(title="Complex Layout Example", open_in_browser=True)
 ```
 
 <iframe src="./tutorial_complex_layout/index.html?embedded=1" width="100%" height="700" frameborder="0"></iframe>
-
----
-
-### Tips
-
-- Use `.astype(np.float32)` for time and data arrays to reduce file sizes
-- Set `open_in_browser=True` to automatically open visualizations
-- Use `legend_opts={"location": "northwest"}` to position legends
-- Combine layouts for complex dashboards
-- All views support `title` and `description` parameters
-
-This tutorial covers the essential figpack functionality. For more advanced examples, see the `examples/` directory in the figpack repository.

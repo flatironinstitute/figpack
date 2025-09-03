@@ -10,13 +10,7 @@ Before starting this tutorial, make sure you have the required packages installe
 pip install figpack spikeinterface
 ```
 
----
-
-## 1. Getting Started - Basic Spike Data
-
-Let's start with the simplest spike sorting visualizations using synthetic data.
-
-### 1.1 Units Table
+## Units Table
 
 The Units Table displays basic information about detected neural units:
 
@@ -54,7 +48,7 @@ view.show(title="Units Table Example", open_in_browser=True)
 
 <iframe src="./spike_sorting_tutorial_units_table/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 1.2 Unit Metrics Graph
+## Unit Metrics Graph
 
 The Unit Metrics Graph provides interactive visualization of unit metrics, allowing you to analyze relationships between different properties of units:
 
@@ -103,7 +97,7 @@ This creates an interactive view where you can:
 
 <iframe src="./spike_sorting_tutorial_unit_metrics_graph/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
 
-### 1.3 Raster Plot
+## Raster Plot
 
 A raster plot shows when each unit fired spikes over time:
 
@@ -142,7 +136,7 @@ view.show(title="Raster Plot Example", open_in_browser=True)
 
 <iframe src="./spike_sorting_tutorial_raster_plot/index.html?embedded=1" width="100%" height="450" frameborder="0"></iframe>
 
-### 1.3 Spike Amplitudes
+## Spike Amplitudes
 
 Visualize spike amplitudes over time to assess unit stability:
 
@@ -206,11 +200,7 @@ view.show(title="NWB Spike Amplitudes Example")
 <!-- This is larger, so we precompute it and host it on figpack: -->
 <iframe src="https://figures.figpack.org/figures/default/49b633fced04b3d1778ebfaa2eea337215a3f107/index.html" width="100%" height="450" frameborder="0"></iframe>
 
----
-
-## 2. Correlation Analysis
-
-### 2.1 Autocorrelograms
+## Autocorrelograms
 
 Autocorrelograms help assess the quality of unit isolation by showing refractory periods:
 
@@ -230,7 +220,7 @@ view.show(title="Autocorrelograms Example", open_in_browser=True)
 
 <iframe src="./spike_sorting_tutorial_autocorrelograms/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
 
-### 2.2 Cross Correlograms
+## Cross Correlograms
 
 Cross correlograms reveal temporal relationships between different units, helping identify potential synchrony or interactions:
 
@@ -250,13 +240,9 @@ view.show(title="Cross Correlograms Example", open_in_browser=True)
 
 <iframe src="./spike_sorting_tutorial_cross_correlograms/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
 
----
+## Simple Combined Layout
 
-## 3. Combined Views
-
-### 3.1 Dashboard Layout
-
-Combine multiple views to create a comprehensive analysis dashboard:
+Combine multiple views:
 
 ```python
 import numpy as np
