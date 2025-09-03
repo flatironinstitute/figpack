@@ -19,6 +19,11 @@ interface FigpackStatusResult {
   timeUntilExpiration: string | null;
 }
 
+const queryParams = new URLSearchParams(window.location.search);
+const figureUrl = queryParams.get("figure");
+
+const disableLoad = figureUrl ? true : false; // in dev mode we are not going to try to load figpack.json
+
 export const useFigpackStatus = (): FigpackStatusResult => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +36,10 @@ export const useFigpackStatus = (): FigpackStatusResult => {
 
   useEffect(() => {
     const loadFigpackStatus = async () => {
+      if (disableLoad) {
+        setIsLoading(false);
+        return;
+      }
       try {
         let figpackJsonUrl = "./figpack.json";
         const dataUrl = new URLSearchParams(window.location.search).get("data");

@@ -145,7 +145,7 @@ def _write_extension_files(extension_names: Set[str], tmpdir: str) -> None:
                 f"Extension '{extension_name}' is required but not registered"
             )
 
-        # Write the JavaScript file
+        # Write the main JavaScript file
         js_filename = extension.get_javascript_filename()
         js_path = tmpdir_path / js_filename
 
@@ -160,3 +160,21 @@ def _write_extension_files(extension_names: Set[str], tmpdir: str) -> None:
 """
 
         js_path.write_text(js_content, encoding="utf-8")
+
+        # Write additional JavaScript files
+        additional_filenames = extension.get_additional_filenames()
+        for original_name, safe_filename in additional_filenames.items():
+            additional_content = extension.additional_files[original_name]
+            additional_path = tmpdir_path / safe_filename
+
+            # Add metadata header to additional files too
+            additional_js_content = f"""/*
+ * Figpack Extension Additional File: {extension.name}/{original_name}
+ * Version: {extension.version}
+ * Generated automatically - do not edit
+ */
+
+{additional_content}
+"""
+
+            additional_path.write_text(additional_js_content, encoding="utf-8")

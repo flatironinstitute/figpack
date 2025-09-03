@@ -6,6 +6,11 @@ interface ExtensionViewInstance {
   destroy?: () => void;
 }
 
+interface ExtensionUtils {
+  loadScript: (filename: string) => Promise<void>;
+  figureUrl: string;
+}
+
 interface ExtensionAPI {
   render: (
     container: HTMLElement,
@@ -13,6 +18,7 @@ interface ExtensionAPI {
     width: number,
     height: number,
     onResize: (callback: (width: number, height: number) => void) => void,
+    utils: ExtensionUtils,
   ) => ExtensionViewInstance | void;
 }
 
@@ -105,6 +111,36 @@ export const FPExtensionView: React.FC<
         resizeCallbackRef.current = callback;
       };
 
+      // Create script loading utility
+      const loadScript = (filename: string): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          // Check if script is already loaded
+          const existingScript = document.querySelector(
+            `script[src="${figureUrl}${filename}"]`,
+          );
+          if (existingScript) {
+            resolve();
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src = figureUrl + filename;
+          script.async = true;
+
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error(`Failed to load script: ${filename}`));
+
+          document.head.appendChild(script);
+        });
+      };
+
+      // Create utils object
+      const utils: ExtensionUtils = {
+        loadScript,
+        figureUrl,
+      };
+
       // Call the extension's render method
       const instance = extension.render(
         container,
@@ -112,6 +148,7 @@ export const FPExtensionView: React.FC<
         width,
         height,
         onResize,
+        utils,
       );
       viewInstanceRef.current = instance || null;
     } catch (err) {

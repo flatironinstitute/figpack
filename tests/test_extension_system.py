@@ -141,6 +141,65 @@ class TestExtensionSystem:
             assert "Version: 2.0.0" in content
             assert "console.log('Hello from extension');" in content
 
+    def test_extension_with_additional_files(self):
+        """Test extension with additional JavaScript files"""
+        # Create extension with additional files
+        extension = FigpackExtension(
+            name="multi-file-extension",
+            javascript_code="console.log('Main extension');",
+            additional_files={
+                "utils.js": "console.log('Utility functions');",
+                "helpers.js": "console.log('Helper functions');",
+            },
+            version="1.5.0",
+        )
+        ExtensionRegistry.register(extension)
+
+        # Write to temporary directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _write_extension_files({"multi-file-extension"}, tmpdir)
+
+            # Check main file
+            main_file = pathlib.Path(tmpdir) / "extension-multi-file-extension.js"
+            assert main_file.exists()
+            main_content = main_file.read_text(encoding="utf-8")
+            assert "console.log('Main extension');" in main_content
+
+            # Check additional files
+            utils_file = (
+                pathlib.Path(tmpdir) / "extension-multi-file-extension-utils.js"
+            )
+            assert utils_file.exists()
+            utils_content = utils_file.read_text(encoding="utf-8")
+            assert "console.log('Utility functions');" in utils_content
+            assert "multi-file-extension/utils.js" in utils_content
+
+            helpers_file = (
+                pathlib.Path(tmpdir) / "extension-multi-file-extension-helpers.js"
+            )
+            assert helpers_file.exists()
+            helpers_content = helpers_file.read_text(encoding="utf-8")
+            assert "console.log('Helper functions');" in helpers_content
+            assert "multi-file-extension/helpers.js" in helpers_content
+
+    def test_extension_additional_filenames(self):
+        """Test getting additional filenames for an extension"""
+        extension = FigpackExtension(
+            name="test-ext",
+            javascript_code="console.log('test');",
+            additional_files={
+                "lib.js": "// library code",
+                "utils.js": "// utility code",
+            },
+        )
+
+        filenames = extension.get_additional_filenames()
+        expected = {
+            "lib.js": "extension-test-ext-lib.js",
+            "utils.js": "extension-test-ext-utils.js",
+        }
+        assert filenames == expected
+
     def test_write_extension_files_missing_extension(self):
         """Test that writing files for missing extension raises error"""
         with tempfile.TemporaryDirectory() as tmpdir:
