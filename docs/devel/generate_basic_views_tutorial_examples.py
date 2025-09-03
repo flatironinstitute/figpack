@@ -2,9 +2,9 @@
 """
 Tutorial Example Generator
 
-Parses docs/tutorial.md, extracts Python code blocks that precede iframe elements,
+Parses docs/basic_views_tutorial.md, extracts Python code blocks that precede iframe elements,
 modifies them to save HTML files instead of showing interactively, and executes
-them to generate the tutorial example HTML files in docs/_build/html/tutorial_*/
+them to generate the tutorial example HTML files in docs/_build/html/basic_views_tutorial_*/
 """
 
 import re
@@ -176,7 +176,7 @@ def main():
     print("=" * 50)
 
     # Read tutorial file
-    tutorial_path = Path(__file__).parent.parent / "tutorial.md"
+    tutorial_path = Path(__file__).parent.parent / "basic_views_tutorial.md"
 
     if not tutorial_path.exists():
         print(f"❌ Tutorial file not found: {tutorial_path}")

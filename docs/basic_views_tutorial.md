@@ -1,6 +1,6 @@
-# Figpack Tutorial
+# Basic Views Tutorial
 
-This tutorial will guide you through creating various types of figures using figpack.
+This tutorial will guide you through creating some basic figures using figpack.
 
 ## Prerequisites
 

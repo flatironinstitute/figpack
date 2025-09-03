@@ -19,8 +19,8 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	@if [ "$@" = "html" ]; then \
-		echo "Generating tutorial examples..."; \
-		python devel/generate_tutorial_examples.py; \
+		echo "Generating basic views tutorial examples..."; \
+		python devel/generate_basic_views_tutorial_examples.py; \
 		echo "Generating spike sorting tutorial examples..."; \
 		python devel/generate_spike_sorting_tutorial_examples.py; \
 	fi

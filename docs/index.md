@@ -74,7 +74,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 
 - **[Installation](installation.md)**: Requirements and setup instructions
 - **[Creating figures](creating_figures.md)**: Getting started with building visualizations
-- **[Tutorial](tutorial.md)**: Step-by-step guide to creating various types of figures
+- **[Basic Views Tutorial](basic_views_tutorial.md)**: Step-by-step guide to creating various types of figures
 - **[Spike Sorting Tutorial](spike_sorting_tutorial.md)**: Getting started with spike sorting visualizations
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
 - **[API Reference](api/index.md)**: Complete documentation of all components
@@ -99,7 +99,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 
 installation
 creating_figures
-tutorial
+basic_views_tutorial
 spike_sorting_tutorial
 show_function
 api/index
