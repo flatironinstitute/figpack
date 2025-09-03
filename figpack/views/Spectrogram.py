@@ -21,9 +21,10 @@ class Spectrogram(FigpackView):
         *,
         start_time_sec: float,
         sampling_frequency_hz: float,
-        frequency_min_hz: float,
-        frequency_delta_hz: float,
         data: np.ndarray,
+        frequency_min_hz: Optional[float] = None,
+        frequency_delta_hz: Optional[float] = None,
+        frequencies: Optional[np.ndarray] = None,
     ):
         """
         Initialize a Spectrogram view
@@ -31,19 +32,48 @@ class Spectrogram(FigpackView):
         Args:
             start_time_sec: Starting time in seconds
             sampling_frequency_hz: Sampling rate in Hz
-            frequency_min_hz: Minimum frequency in Hz
-            frequency_delta_hz: Frequency bin spacing in Hz
             data: N×M numpy array where N is timepoints and M is frequency bins
+            frequency_min_hz: Minimum frequency in Hz (for uniform bins)
+            frequency_delta_hz: Frequency bin spacing in Hz (for uniform bins)
+            frequencies: Array of frequency values (for non-uniform bins)
         """
         assert data.ndim == 2, "Data must be a 2D array (timepoints × frequencies)"
         assert sampling_frequency_hz > 0, "Sampling frequency must be positive"
-        assert frequency_delta_hz > 0, "Frequency delta must be positive"
+
+        # Validate frequency specification - exactly one method must be provided
+        uniform_specified = (
+            frequency_min_hz is not None and frequency_delta_hz is not None
+        )
+        nonuniform_specified = frequencies is not None
+
+        if uniform_specified and nonuniform_specified:
+            raise ValueError(
+                "Cannot specify both uniform (freq_min_hz, frequency_delta_hz) and non-uniform (frequencies) frequency parameters"
+            )
+        if not uniform_specified and not nonuniform_specified:
+            raise ValueError(
+                "Must specify either uniform (freq_min_hz, frequency_delta_hz) or non-uniform (frequencies) frequency parameters"
+            )
 
         self.start_time_sec = start_time_sec
         self.sampling_frequency_hz = sampling_frequency_hz
-        self.frequency_min_hz = frequency_min_hz
-        self.frequency_delta_hz = frequency_delta_hz
         self.data = data.astype(np.float32)  # Ensure float32 for efficiency
+
+        # Store frequency information
+        if uniform_specified:
+            assert frequency_delta_hz > 0, "Frequency delta must be positive"
+            self.uniform_frequencies = True
+            self.frequency_min_hz = frequency_min_hz
+            self.frequency_delta_hz = frequency_delta_hz
+            self.frequencies = None
+        else:
+            assert (
+                len(frequencies) == data.shape[1]
+            ), f"Number of frequencies ({len(frequencies)}) must match data frequency dimension ({data.shape[1]})"
+            self.uniform_frequencies = False
+            self.frequency_min_hz = None
+            self.frequency_delta_hz = None
+            self.frequencies = np.array(frequencies, dtype=np.float32)
 
         n_timepoints, n_frequencies = data.shape
         self.n_timepoints = n_timepoints
@@ -167,12 +197,24 @@ class Spectrogram(FigpackView):
         # Store metadata
         group.attrs["start_time_sec"] = self.start_time_sec
         group.attrs["sampling_frequency_hz"] = self.sampling_frequency_hz
-        group.attrs["frequency_min_hz"] = self.frequency_min_hz
-        group.attrs["frequency_delta_hz"] = self.frequency_delta_hz
+        group.attrs["uniform_frequencies"] = self.uniform_frequencies
         group.attrs["n_timepoints"] = self.n_timepoints
         group.attrs["n_frequencies"] = self.n_frequencies
         group.attrs["data_min"] = self.data_min
         group.attrs["data_max"] = self.data_max
+
+        # Store frequency information based on type
+        if self.uniform_frequencies:
+            group.attrs["frequency_min_hz"] = self.frequency_min_hz
+            group.attrs["frequency_delta_hz"] = self.frequency_delta_hz
+        else:
+            # Store frequencies as a dataset for non-uniform case
+            group.create_dataset(
+                "frequencies",
+                data=self.frequencies,
+                compression="blosc",
+                compression_opts={"cname": "lz4", "clevel": 5, "shuffle": 1},
+            )
 
         # Store original data with optimal chunking
         original_chunks = self._calculate_optimal_chunk_size(self.data.shape)

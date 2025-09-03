@@ -6,6 +6,7 @@ import { ZarrGroup } from "@figpack/plugin-sdk";
 import { useSpectrogramClient } from "./Spectrogram/useSpectrogramClient";
 import {
   paintSpectrogramHeatmap,
+  paintSpectrogramNonUniform,
   calculateVisibleMaxValue,
 } from "./Spectrogram/spectrogramRendering";
 
@@ -169,23 +170,45 @@ export const FPSpectrogram: React.FC<{
         brightness,
       );
 
-      // Draw the spectrogram heatmap
-      paintSpectrogramHeatmap(context, {
-        data: visibleData.data,
-        length: visibleData.length,
-        nFrequencies: visibleData.nFrequencies,
-        startTimeSec: visibleData.startTimeSec,
-        samplingFrequency: visibleData.samplingFrequency,
-        visibleStartTimeSec,
-        visibleEndTimeSec,
-        visibleMaxValue,
-        timeToPixel,
-        frequencyToPixel,
-        plotWidth: canvasWidth - margins.left - margins.right,
-        plotHeight: canvasHeight - margins.top - margins.bottom,
-        plotLeft: margins.left,
-        plotTop: margins.top,
-      });
+      // Draw the spectrogram using appropriate rendering method
+      if (client.uniformFrequencies) {
+        // Use bitmap rendering for uniform frequencies
+        paintSpectrogramHeatmap(context, {
+          data: visibleData.data,
+          length: visibleData.length,
+          nFrequencies: visibleData.nFrequencies,
+          startTimeSec: visibleData.startTimeSec,
+          samplingFrequency: visibleData.samplingFrequency,
+          visibleStartTimeSec,
+          visibleEndTimeSec,
+          visibleMaxValue,
+          timeToPixel,
+          frequencyToPixel,
+          plotWidth: canvasWidth - margins.left - margins.right,
+          plotHeight: canvasHeight - margins.top - margins.bottom,
+          plotLeft: margins.left,
+          plotTop: margins.top,
+        });
+      } else {
+        // Use rectangle rendering for non-uniform frequencies
+        paintSpectrogramNonUniform(context, {
+          data: visibleData.data,
+          length: visibleData.length,
+          nFrequencies: visibleData.nFrequencies,
+          startTimeSec: visibleData.startTimeSec,
+          samplingFrequency: visibleData.samplingFrequency,
+          visibleStartTimeSec,
+          visibleEndTimeSec,
+          visibleMaxValue,
+          timeToPixel,
+          frequencyToPixel,
+          frequencies: client.frequencyBins,
+          plotWidth: canvasWidth - margins.left - margins.right,
+          plotHeight: canvasHeight - margins.top - margins.bottom,
+          plotLeft: margins.left,
+          plotTop: margins.top,
+        });
+      }
 
       // Restore canvas state (removes clipping)
       context.restore();

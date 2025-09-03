@@ -147,6 +147,101 @@ export const paintSpectrogramHeatmap = (
   context.putImageData(imageData, plotLeft, plotTop);
 };
 
+export const paintSpectrogramNonUniform = (
+  context: CanvasRenderingContext2D,
+  options: {
+    data: Float32Array;
+    length: number;
+    nFrequencies: number;
+    startTimeSec: number;
+    samplingFrequency: number;
+    visibleStartTimeSec: number;
+    visibleEndTimeSec: number;
+    visibleMaxValue: number;
+    timeToPixel: (t: number) => number;
+    frequencyToPixel: (f: number) => number;
+    frequencies: Float32Array;
+    plotWidth: number;
+    plotHeight: number;
+    plotLeft: number;
+    plotTop: number;
+  },
+) => {
+  const {
+    data,
+    length,
+    nFrequencies,
+    startTimeSec,
+    samplingFrequency,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    visibleMaxValue,
+    timeToPixel,
+    frequencyToPixel,
+    frequencies,
+    plotLeft,
+    plotTop,
+  } = options;
+
+  // Calculate visible time range in data indices
+  const startIndex = Math.max(
+    0,
+    Math.floor((visibleStartTimeSec - startTimeSec) * samplingFrequency),
+  );
+  const endIndex = Math.min(
+    length - 1,
+    Math.ceil((visibleEndTimeSec - startTimeSec) * samplingFrequency),
+  );
+
+  if (startIndex > endIndex) return;
+
+  // Draw rectangles for each time-frequency bin
+  for (let timeIndex = startIndex; timeIndex <= endIndex; timeIndex++) {
+    // const relativeTimeIndex = timeIndex - startIndex;
+    const pixelStartX =
+      timeToPixel(startTimeSec + timeIndex / samplingFrequency) - plotLeft;
+    const pixelEndX =
+      timeToPixel(startTimeSec + (timeIndex + 1) / samplingFrequency) -
+      plotLeft +
+      1;
+
+    for (let freqIndex = 0; freqIndex < nFrequencies - 1; freqIndex++) {
+      // Get the data value (data is stored as [time][freq])
+      const dataValue = data[timeIndex * nFrequencies + freqIndex];
+
+      // Normalize to 0-1 range based on visible max
+      const normalizedValue =
+        visibleMaxValue > 0 ? dataValue / visibleMaxValue : 0;
+
+      // Get color for this value
+      const [r, g, b] = interpolateColor(normalizedValue);
+
+      // Calculate pixel range for this frequency bin
+      // Note: We use freqIndex and freqIndex + 1 to define the frequency range
+      // The last frequency bin (freqIndex === nFrequencies - 1) won't be displayed
+      // as mentioned in the requirements
+      const freqStart = frequencies[freqIndex];
+      const freqEnd = frequencies[freqIndex + 1];
+
+      const pixelStartY = frequencyToPixel(freqEnd) - plotTop;
+      const pixelEndY = frequencyToPixel(freqStart) - plotTop + 1;
+
+      // Draw the rectangle
+      context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      context.fillRect(
+        plotLeft + pixelStartX,
+        plotTop + pixelStartY,
+        pixelEndX - pixelStartX,
+        pixelEndY - pixelStartY,
+      );
+    }
+  }
+
+  // Note: The top frequency value (frequencies[nFrequencies - 1]) is not displayed
+  // as there's no frequency bin above it to define the rectangle height.
+  // This is expected behavior as mentioned in the requirements.
+};
+
 export const calculateVisibleMaxValue = (
   data: Float32Array,
   length: number,

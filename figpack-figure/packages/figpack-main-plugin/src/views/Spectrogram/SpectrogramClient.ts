@@ -7,8 +7,10 @@ export class SpectrogramClient {
     public startTimeSec: number,
     public endTimeSec: number,
     public samplingFrequencyHz: number,
-    public frequencyMinHz: number,
-    public frequencyDeltaHz: number,
+    public uniformFrequencies: boolean,
+    public frequencyMinHz: number | null,
+    public frequencyDeltaHz: number | null,
+    public frequencies: Float32Array | null,
     public nTimepoints: number,
     public nFrequencies: number,
     public dataMin: number,
@@ -21,11 +23,29 @@ export class SpectrogramClient {
     const nTimepoints = zarrGroup.attrs["n_timepoints"] || 0;
     const startTimeSec = zarrGroup.attrs["start_time_sec"] || 0;
     const samplingFrequencyHz = zarrGroup.attrs["sampling_frequency_hz"] || 1;
-    const frequencyMinHz = zarrGroup.attrs["frequency_min_hz"] || 0;
-    const frequencyDeltaHz = zarrGroup.attrs["frequency_delta_hz"] || 1;
+    const uniformFrequencies = zarrGroup.attrs["uniform_frequencies"] ?? true; // Default to true for backward compatibility
     const dataMin = zarrGroup.attrs["data_min"] || 0;
     const dataMax = zarrGroup.attrs["data_max"] || 1;
     const downsampleFactors = zarrGroup.attrs["downsample_factors"] || [];
+
+    let frequencyMinHz: number | null = null;
+    let frequencyDeltaHz: number | null = null;
+    let frequencies: Float32Array | null = null;
+
+    if (uniformFrequencies) {
+      // Load uniform frequency parameters
+      frequencyMinHz = zarrGroup.attrs["frequency_min_hz"] || 0;
+      frequencyDeltaHz = zarrGroup.attrs["frequency_delta_hz"] || 1;
+    } else {
+      // Load non-uniform frequencies dataset
+      const frequenciesData = await zarrGroup.file.getDatasetData(
+        join(zarrGroup.path, "frequencies"),
+        {},
+      );
+      if (frequenciesData) {
+        frequencies = new Float32Array(frequenciesData as ArrayLike<number>);
+      }
+    }
 
     // Calculate end time from start time, number of timepoints, and sampling frequency
     const endTimeSec = startTimeSec + (nTimepoints - 1) / samplingFrequencyHz;
@@ -35,8 +55,10 @@ export class SpectrogramClient {
       startTimeSec,
       endTimeSec,
       samplingFrequencyHz,
+      uniformFrequencies,
       frequencyMinHz,
       frequencyDeltaHz,
+      frequencies,
       nTimepoints,
       nFrequencies,
       dataMin,
@@ -222,10 +244,16 @@ export class SpectrogramClient {
   }
 
   get frequencyBins(): Float32Array {
-    const bins = new Float32Array(this.nFrequencies);
-    for (let i = 0; i < this.nFrequencies; i++) {
-      bins[i] = this.frequencyMinHz + i * this.frequencyDeltaHz;
+    if (this.uniformFrequencies) {
+      // Generate uniform frequency bins
+      const bins = new Float32Array(this.nFrequencies);
+      for (let i = 0; i < this.nFrequencies; i++) {
+        bins[i] = this.frequencyMinHz! + i * this.frequencyDeltaHz!;
+      }
+      return bins;
+    } else {
+      // Return the non-uniform frequencies
+      return this.frequencies || new Float32Array(0);
     }
-    return bins;
   }
 }
