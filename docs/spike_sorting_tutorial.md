@@ -54,7 +54,56 @@ view.show(title="Units Table Example", open_in_browser=True)
 
 <iframe src="./spike_sorting_tutorial_units_table/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
-### 1.2 Raster Plot
+### 1.2 Unit Metrics Graph
+
+The Unit Metrics Graph provides interactive visualization of unit metrics, allowing you to analyze relationships between different properties of units:
+
+```python
+import spikeinterface.extractors as se
+import figpack.spike_sorting.views as ssv
+
+# Generate synthetic spike data
+recording, sorting = se.toy_example(
+    num_units=12, duration=300, seed=0, num_segments=1
+)
+
+# Define metrics to analyze
+metrics = [
+    ssv.UnitMetricsGraphMetric(key="numEvents", label="Num. events", dtype="int"),
+    ssv.UnitMetricsGraphMetric(key="firingRateHz", label="Firing rate (Hz)", dtype="float"),
+]
+
+# Calculate metrics for each unit
+units = []
+for unit_id in sorting.get_unit_ids():
+    spike_train = sorting.get_unit_spike_train(segment_index=0, unit_id=unit_id)
+    units.append(
+        ssv.UnitMetricsGraphUnit(
+            unit_id=unit_id,
+            values={
+                "numEvents": len(spike_train),
+                "firingRateHz": len(spike_train) / (recording.get_num_frames(segment_index=0) / recording.get_sampling_frequency())
+            }
+        )
+    )
+
+# Create and show the view
+view = ssv.UnitMetricsGraph(units=units, metrics=metrics, height=500)
+view.show(title="Unit Metrics Graph Example", open_in_browser=True)
+```
+
+This creates an interactive view where you can:
+
+- View histograms of individual metrics
+- Compare metrics in scatter plots
+- Select which metrics to display
+- Adjust histogram bin sizes
+- Zoom into regions of interest
+- Select and highlight units
+
+<iframe src="./spike_sorting_tutorial_unit_metrics_graph/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+
+### 1.3 Raster Plot
 
 A raster plot shows when each unit fired spikes over time:
 
