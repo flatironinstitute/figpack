@@ -313,6 +313,8 @@ view.show(title="Spectrogram Example", open_in_browser=True)
 
 <iframe src="./tutorial_spectrogram_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
+It is also possible to specify non-uniform frequencies in the spectrogram view. See the examples folder for details.
+
 ## Plotly Integration
 
 Create interactive plotly visualizations:
