@@ -1,4 +1,4 @@
-# Figpack Tutorial: Step-by-Step Guide to Creating Interactive Visualizations
+# Figpack Tutorial
 
 This tutorial will guide you through creating various types of figures using figpack.
 

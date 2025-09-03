@@ -1,4 +1,4 @@
-# Spike Sorting Tutorial: Getting Started with Spike Sorting Visualizations
+# Spike Sorting Tutorial
 
 This tutorial will guide you through creating spike sorting visualizations using figpack's specialized spike sorting views.
 

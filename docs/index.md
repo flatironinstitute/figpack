@@ -10,6 +10,8 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 At its core, figpack provides a flexible system of **views** (such as time series graphs, images, and domain-specific displays), organized into **layouts** that can compose complex dashboards. Different views within a layout are **synchronized**, sharing state such as the current timepoint, visible time range, or selected units, which enables coordinated exploration across multiple visualizations.
 
+Figures can be stored either locally or in the cloud. Local figures are stored on your machine and are great for development and testing. By setting `upload=True` when showing a figure (or using the `FIGPACK_UPLOAD=1` environment variable), you can upload the figure to the figpack cloud service, making it shareable and accessible from anywhere. Cloud storage is particularly useful for sharing results with collaborators, using figures on headless systems, or ensuring long-term archival access.
+
 Data are stored in the efficient **Zarr** format, enabling interactive exploration of very large datasets through techniques like hierarchical downsampling. Rendering is handled by **React-based web applications**, allowing custom and highly interactive views that go beyond conventional charting.
 
 Although primarily motivated by applications in **neurophysiology** (e.g., spike sorting), figpack is designed as a **general framework**. General-purpose components such as time series graphs are immediately useful in many scientific domains, and its plugin-oriented design encourages contributions of specialized views from other fields.
@@ -47,22 +49,6 @@ Although primarily motivated by applications in **neurophysiology** (e.g., spike
 - **Storage Format**: Uses Zarr for efficient handling of numerical arrays, ensuring smooth performance even with large datasets.
 - **Extensions**: A system for creating custom views with specialized JavaScript visualizations, enabling integration of external libraries and custom rendering logic.
 
-## Getting Started
-
-```{toctree}
-:maxdepth: 2
-:caption: Contents:
-
-installation
-quickstart
-tutorial
-spike_sorting_tutorial
-show_function
-api/index
-contributing
-developer_guide/index
-```
-
 ## Quick Example
 
 ```python
@@ -77,18 +63,23 @@ t = np.linspace(0, 10, 1000)
 y = np.sin(2 * np.pi * t)
 graph.add_line_series(name="sine wave", t=t, y=y, color="blue")
 
-# Display the visualization
+# Display the visualization locally
 graph.show(open_in_browser=True, title="Quick Start Example")
+
+# Or upload to cloud to share with others
+# graph.show(upload=True, title="Quick Start Example")
 ```
 
 ## Documentation Structure
 
 - **[Installation](installation.md)**: Requirements and setup instructions
-- **[Quick Start Guide](quickstart.md)**: Get up and running with basic examples
+- **[Creating figures](creating_figures.md)**: Getting started with building visualizations
 - **[Tutorial](tutorial.md)**: Step-by-step guide to creating various types of figures
 - **[Spike Sorting Tutorial](spike_sorting_tutorial.md)**: Getting started with spike sorting visualizations
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
 - **[API Reference](api/index.md)**: Complete documentation of all components
+- **[Contributing](contributing.md)**: How to contribute to figpack
+- **[Developer Guide](developer_guide/index.md)**: In-depth information for extending figpack
 
 ## Development and Support
 
@@ -99,3 +90,19 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 
 - {ref}`genindex`
 - {ref}`modindex`
+
+## Getting Started
+
+```{toctree}
+:maxdepth: 2
+:caption: Contents:
+
+installation
+creating_figures
+tutorial
+spike_sorting_tutorial
+show_function
+api/index
+contributing
+developer_guide/index
+```

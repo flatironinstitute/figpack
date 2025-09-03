@@ -1,4 +1,4 @@
-# Quick Start Guide
+# Creating Figures
 
 This guide will help you get started with figpack quickly. For detailed documentation of the `show()` function and all its configuration options, see the [show() function reference](show_function.md).
 
