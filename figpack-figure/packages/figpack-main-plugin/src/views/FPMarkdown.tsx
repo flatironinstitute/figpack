@@ -20,7 +20,7 @@ export const FPMarkdown: React.FC<{
         // Get the markdown content from the zarr array
         const data = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, "content_data"),
-          {}
+          {},
         );
         if (!data || data.length === 0) {
           throw new Error("Empty markdown content");
@@ -34,7 +34,7 @@ export const FPMarkdown: React.FC<{
       } catch (err) {
         console.error("Failed to load markdown:", err);
         setError(
-          `Failed to load markdown: ${err instanceof Error ? err.message : String(err)}`
+          `Failed to load markdown: ${err instanceof Error ? err.message : String(err)}`,
         );
       } finally {
         setLoading(false);

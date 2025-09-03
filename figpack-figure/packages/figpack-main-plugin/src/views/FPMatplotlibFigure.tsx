@@ -24,7 +24,7 @@ export const FPMatplotlibFigure: React.FC<{
         // Get the SVG data from the zarr array
         const data = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, "svg_data"),
-          {}
+          {},
         );
         if (!data || data.length === 0) {
           throw new Error("Empty SVG data");
@@ -42,7 +42,7 @@ export const FPMatplotlibFigure: React.FC<{
         console.error("Failed to load SVG:", err);
         if (mounted) {
           setError(
-            `Failed to load SVG: ${err instanceof Error ? err.message : String(err)}`
+            `Failed to load SVG: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
       } finally {
@@ -90,7 +90,7 @@ export const FPMatplotlibFigure: React.FC<{
           const heightValue = parseFloat(originalHeight.replace(/[^\d.]/g, ""));
           svgElement.setAttribute(
             "viewBox",
-            `0 0 ${widthValue} ${heightValue}`
+            `0 0 ${widthValue} ${heightValue}`,
           );
         }
 

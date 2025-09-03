@@ -31,7 +31,7 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
         // Get rows from zarr array
         const rowsData = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, "rows_data"),
-          {}
+          {},
         );
         if (!rowsData || rowsData.length === 0) {
           throw new Error("Empty rows data");
@@ -45,7 +45,7 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
         try {
           const scoresData = await zarrGroup.file.getDatasetData(
             join(zarrGroup.path, "similarity_scores_data"),
-            {}
+            {},
           );
           if (scoresData && scoresData.length > 0) {
             const scoresArray = new Uint8Array(scoresData);
@@ -70,7 +70,7 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
         setError(
           `Failed to load units table data: ${
             err instanceof Error ? err.message : String(err)
-          }`
+          }`,
         );
       } finally {
         setLoading(false);

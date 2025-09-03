@@ -32,7 +32,7 @@ export class RasterPlotDataClient {
     private referenceTimes: DatasetDataType,
     private referenceIndices: DatasetDataType,
     private counts2dArray: number[][],
-    private binEdges: number[]
+    private binEdges: number[],
   ) {
     this.zarrGroup = zarrGroup;
     this.file = zarrGroup.file as ZarrFile;
@@ -47,16 +47,16 @@ export class RasterPlotDataClient {
     };
     const referenceTimes = await zarrGroup.file.getDatasetData(
       join(zarrGroup.path, "reference_times"),
-      {}
+      {},
     );
     const referenceIndices = await zarrGroup.file.getDatasetData(
       join(zarrGroup.path, "reference_indices"),
-      {}
+      {},
     );
 
     if (!referenceTimes || !referenceIndices) {
       throw new Error(
-        `Reference arrays not found in Zarr group: ${zarrGroup.path}`
+        `Reference arrays not found in Zarr group: ${zarrGroup.path}`,
       );
     }
 
@@ -67,7 +67,7 @@ export class RasterPlotDataClient {
 
     if (!spikeCountsData) {
       throw new Error(
-        `Spike counts data not found in Zarr group: ${zarrGroup.path}`
+        `Spike counts data not found in Zarr group: ${zarrGroup.path}`,
       );
     }
 
@@ -98,7 +98,7 @@ export class RasterPlotDataClient {
       referenceTimes,
       referenceIndices,
       counts2dArray,
-      binEdges
+      binEdges,
     );
 
     return client;
@@ -109,12 +109,12 @@ export class RasterPlotDataClient {
     const startIndex = this.findStartIndex(
       this.referenceTimes,
       this.referenceIndices,
-      params.startTimeSec
+      params.startTimeSec,
     );
     const endIndex = this.findEndIndex(
       this.referenceTimes,
       this.referenceIndices,
-      params.endTimeSec
+      params.endTimeSec,
     );
 
     if (startIndex >= endIndex) {
@@ -128,11 +128,11 @@ export class RasterPlotDataClient {
 
     const timestampsData = await this.file.getDatasetData(
       join(this.zarrGroup.path, `timestamps`),
-      { slice: [[startIndex, endIndex]] }
+      { slice: [[startIndex, endIndex]] },
     );
     const unitIndicesData = await this.file.getDatasetData(
       join(this.zarrGroup.path, `unit_indices`),
-      { slice: [[startIndex, endIndex]] }
+      { slice: [[startIndex, endIndex]] },
     );
 
     const rangeData = {
@@ -146,7 +146,7 @@ export class RasterPlotDataClient {
   private findStartIndex(
     referenceTimes: DatasetDataType,
     referenceIndices: DatasetDataType,
-    startTime: number
+    startTime: number,
   ): number {
     let i = 0;
     while (i + 1 < referenceTimes.length && referenceTimes[i + 1] < startTime) {
@@ -200,9 +200,9 @@ export class RasterPlotDataClient {
           binEdges[
             Math.min(
               binEdges.length - 1,
-              dsBinEdges.length * downsamplingFactor
+              dsBinEdges.length * downsamplingFactor,
             )
-          ]
+          ],
         );
       }
 
@@ -216,7 +216,7 @@ export class RasterPlotDataClient {
   private findEndIndex(
     referenceTimes: DatasetDataType,
     referenceIndices: DatasetDataType,
-    endTime: number
+    endTime: number,
   ): number {
     let i = referenceTimes.length - 1;
     while (i - 1 >= 0 && referenceTimes[i - 1] > endTime) {

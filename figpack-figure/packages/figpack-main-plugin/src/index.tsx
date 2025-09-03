@@ -25,7 +25,7 @@ export { default as TimeScrollView3 } from "./shared/component-time-scroll-view-
 export { useTimeScrollView3 } from "./shared/component-time-scroll-view-3/useTimeScrollView3";
 
 const registerViewComponents = (
-  viewComponentRegistry: FPViewComponentRegistry
+  viewComponentRegistry: FPViewComponentRegistry,
 ) => {
   viewComponentRegistry.registerViewComponent({
     type: "TimeseriesGraph",

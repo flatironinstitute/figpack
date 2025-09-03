@@ -4,6 +4,7 @@ import {
   useTimeseriesSelection,
 } from "@figpack/main-plugin";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import {
   idToNum,
   INITIALIZE_UNITS,
@@ -35,10 +36,6 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
   width,
   height,
 }) => {
-  const [toolbarOptions, setToolbarOptions] =
-    useState<UnitsTableBottomToolbarOptions>(
-      defaultUnitsTableBottomToolbarOptions
-    );
   const { selectedUnitIds, unitIdSelectionDispatch } = useSelectedUnitIds();
 
   const {
@@ -49,18 +46,19 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
 
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [rangeData, setRangeData] = useState<SpikeAmplitudesRangeData | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const leftMargin = 100;
-  const bottomToolbarHeight = 30;
   const TOOLBAR_WIDTH = viewToolbarWidth;
+
+  const { onlyShowSelected, customToolbarActions } = useOnlyShowSelected();
 
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width: width - TOOLBAR_WIDTH,
-    height: height - bottomToolbarHeight,
+    height,
     leftMargin,
   });
 
@@ -105,7 +103,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
             },
             {
               maxNumEvents: maxEvents,
-            }
+            },
           );
           if (canceled) return;
           if (data) {
@@ -155,7 +153,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
     // Only consider amplitudes for selected/visible units
     for (let i = 0; i < rangeData.amplitudes.length; i++) {
       const unitId = metadata.unitIds[rangeData.unitIndices[i]];
-      const shouldInclude = toolbarOptions.onlyShowSelected
+      const shouldInclude = onlyShowSelected
         ? selectedUnitIds.has(unitId)
         : true;
 
@@ -175,7 +173,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
       yMin: yMin - padding,
       yMax: yMax + padding,
     };
-  }, [rangeData, metadata, toolbarOptions.onlyShowSelected, selectedUnitIds]);
+  }, [rangeData, metadata, onlyShowSelected, selectedUnitIds]);
 
   // Canvas drawing effect
   useEffect(() => {
@@ -218,7 +216,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
         margins.left,
         margins.top,
         canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom
+        canvasHeight - margins.top - margins.bottom,
       );
       context.clip();
 
@@ -250,7 +248,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
         if (time < visibleStartTimeSec || time > visibleEndTimeSec) continue;
 
         // Skip if unit should not be shown
-        const shouldShow = toolbarOptions.onlyShowSelected
+        const shouldShow = onlyShowSelected
           ? selectedUnitIds.has(unitId)
           : true;
         if (!shouldShow) continue;
@@ -280,7 +278,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
         context.fillText(
           `Subsampled ${rangeData.subsampleFactor}x`,
           margins.left + 10,
-          margins.top + 20
+          margins.top + 20,
         );
       }
 
@@ -302,7 +300,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
     margins,
     yRange,
     selectedUnitIds,
-    toolbarOptions.onlyShowSelected,
+    onlyShowSelected,
     isLoading,
     error,
   ]);
@@ -324,14 +322,14 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
     <div>
       <Splitter
         width={width}
-        height={height - bottomToolbarHeight}
+        height={height}
         initialPosition={TOOLBAR_WIDTH}
         adjustable={false}
       >
         <ViewToolbar width={TOOLBAR_WIDTH} height={height} />
         <TimeScrollView3
           width={width - TOOLBAR_WIDTH}
-          height={height - bottomToolbarHeight}
+          height={height}
           onCanvasElement={(canvas) => {
             if (!canvas) return;
             const ctx = canvas.getContext("2d");
@@ -339,21 +337,9 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
           }}
           yAxisInfo={yAxisInfo}
           leftMargin={leftMargin}
+          customToolbarActions={customToolbarActions}
         />
       </Splitter>
-      <div
-        style={{
-          position: "absolute",
-          top: height - bottomToolbarHeight,
-          height: bottomToolbarHeight,
-          overflow: "hidden",
-        }}
-      >
-        <UnitsTableBottomToolbar
-          options={toolbarOptions}
-          setOptions={setToolbarOptions}
-        />
-      </div>
     </div>
   );
 };

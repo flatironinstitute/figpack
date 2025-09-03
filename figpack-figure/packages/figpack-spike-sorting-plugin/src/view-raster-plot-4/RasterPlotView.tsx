@@ -14,7 +14,11 @@ import {
 } from "react";
 import { colorForUnitId } from "../core-utils";
 import { idToNum, useSelectedUnitIds } from "../context-unit-selection";
+import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import { RasterPlotDataClient } from "./RasterPlotDataClient";
+
+// Minimum height required per unit to show labels without overlap
+const MIN_UNIT_LABEL_HEIGHT = 15; // 15px minimum to prevent label overlap with 12px font
 
 type Props = {
   dataClient: RasterPlotDataClient;
@@ -63,6 +67,8 @@ const RasterPlotView: FunctionComponent<Props> = ({
     const duration = visibleEndTimeSec - visibleStartTimeSec;
     return duration > 120 ? "heatmap" : "raster";
   }, [visibleStartTimeSec, visibleEndTimeSec]);
+
+  const unitIds = dataClient.metadata.unitIds;
 
   // Initialize time selection when metadata is loaded
   useEffect(() => {
@@ -122,7 +128,10 @@ const RasterPlotView: FunctionComponent<Props> = ({
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width,
     height,
+    hasCustomActions: true,
   });
+
+  const { onlyShowSelected, customToolbarActions } = useOnlyShowSelected();
 
   const drawHeatmap = useCallback(() => {
     const canvas = canvasRef.current;
@@ -154,23 +163,47 @@ const RasterPlotView: FunctionComponent<Props> = ({
       return;
     }
 
-    const timeRange = visibleEndTimeSec - visibleStartTimeSec;
     const plotHeight = canvasHeight - margins.top - margins.bottom;
     const plotWidth = canvasWidth - margins.left - margins.right;
-    const unitIds = dataClient.metadata.unitIds;
-    const unitHeight = plotHeight / unitIds.length;
+    const timeRange = visibleEndTimeSec - visibleStartTimeSec;
 
-    let maxCount = 1;
-    spikeCounts.counts.forEach((binCounts) => {
-      binCounts.forEach((count) => {
-        if (count > maxCount) maxCount = count;
+    const unitPlacesByUnitIndex: { [key: number]: number } = {};
+    let numPlaces: number;
+    if (onlyShowSelected) {
+      let place = 0;
+      unitIds.forEach((unitId, index) => {
+        if (selectedUnitIds.has(unitId)) {
+          unitPlacesByUnitIndex[index] = place;
+          place++;
+        }
       });
-    });
+      numPlaces = place;
+    } else {
+      unitIds.forEach((_unitId, index) => {
+        unitPlacesByUnitIndex[index] = index;
+      });
+      numPlaces = unitIds.length;
+    }
+    const unitHeight = plotHeight / (numPlaces || 1); // Avoid division by zero
 
     context.save();
     context.beginPath();
     context.rect(margins.left, margins.top, plotWidth, plotHeight);
     context.clip();
+
+    let maxCount = 1;
+    spikeCounts.counts.forEach((binCounts) => {
+      if (onlyShowSelected) {
+        selectedUnitIndicesList.forEach((unitIndex) => {
+          const count = binCounts[unitIndex];
+          if (count > maxCount) maxCount = count;
+        });
+      } else {
+        binCounts.forEach((count) => {
+          if (count > maxCount) maxCount = count;
+        });
+      }
+    });
 
     // Draw heatmap cells
     spikeCounts.counts.forEach((binCounts, binIndex) => {
@@ -180,28 +213,45 @@ const RasterPlotView: FunctionComponent<Props> = ({
         margins.left + ((t1 - visibleStartTimeSec) / timeRange) * plotWidth;
       const x2 =
         margins.left + ((t2 - visibleStartTimeSec) / timeRange) * plotWidth;
-      binCounts.forEach((count, unitIndex) => {
-        const val = count / maxCount;
-        const y = margins.top + (unitIds.length - 1 - unitIndex) * unitHeight;
-        const color = heatmapColor(val);
-        context.fillStyle = color;
-        context.fillRect(x1, y, x2 - x1 + 0.5, unitHeight);
-      });
+      if (onlyShowSelected) {
+        for (let i = 0; i < selectedUnitIndicesList.length; i++) {
+          const unitIndex = selectedUnitIndicesList[i];
+          const count = binCounts[unitIndex];
+          const val = count / maxCount;
+          const y =
+            margins.top + (selectedUnitIndicesList.length - 1 - i) * unitHeight;
+          const color = heatmapColor(val);
+          context.fillStyle = color;
+          context.fillRect(x1, y, x2 - x1 + 0.5, unitHeight);
+        }
+      } else {
+        binCounts.forEach((count, unitIndex) => {
+          const val = count / maxCount;
+          const y = margins.top + (unitIds.length - 1 - unitIndex) * unitHeight;
+          const color = heatmapColor(val);
+          context.fillStyle = color;
+          context.fillRect(x1, y, x2 - x1 + 0.5, unitHeight);
+        });
+      }
     });
 
     context.restore();
 
-    // Draw unit labels
-    context.globalAlpha = 1;
-    unitIds.forEach((unitId, index) => {
-      const y = margins.top + (unitIds.length - 1 - index) * unitHeight;
-      const centerY = y + unitHeight / 2; // Center vertically in the bin
-      const color = colorForUnitId(idToNum(unitId));
-      context.fillStyle = color;
-      context.font = "12px Arial";
-      context.textAlign = "right";
-      context.fillText(`Unit ${unitId}`, margins.left - 5, centerY);
-    });
+    // Draw unit labels if there's enough space
+    if (unitHeight >= MIN_UNIT_LABEL_HEIGHT) {
+      context.globalAlpha = 1;
+      const unitIdsToLabel = onlyShowSelected ? selectedUnitIdsList : unitIds;
+      unitIdsToLabel.forEach((unitId, index) => {
+        const y =
+          margins.top + (unitIdsToLabel.length - 1 - index) * unitHeight;
+        const centerY = y + unitHeight / 2; // Center vertically in the bin
+        const color = colorForUnitId(idToNum(unitId));
+        context.fillStyle = color;
+        context.font = "12px Arial";
+        context.textAlign = "right";
+        context.fillText(`Unit ${unitId}`, margins.left - 5, centerY);
+      });
+    }
   }, [
     canvasWidth,
     canvasHeight,
@@ -213,7 +263,27 @@ const RasterPlotView: FunctionComponent<Props> = ({
     isLoading,
     error,
     context,
+    selectedUnitIds,
+    onlyShowSelected,
   ]);
+
+  const selectedUnitIndicesList = useMemo(() => {
+    const list: number[] = [];
+    if (onlyShowSelected) {
+      unitIds.forEach((unitId, index) => {
+        if (selectedUnitIds.has(unitId)) {
+          list.push(index);
+        }
+      });
+    }
+    return list;
+  }, [onlyShowSelected, selectedUnitIds, unitIds]);
+
+  const selectedUnitIdsList = useMemo(() => {
+    return selectedUnitIndicesList.map((index) => unitIds[index]);
+  }, [selectedUnitIndicesList, unitIds]);
+
+  console.log(selectedUnitIds, selectedUnitIndicesList, selectedUnitIdsList);
 
   const drawRasterPlot = useCallback(() => {
     const canvas = canvasRef.current;
@@ -250,7 +320,22 @@ const RasterPlotView: FunctionComponent<Props> = ({
     const plotWidth = canvasWidth - margins.left - margins.right;
     const timeRange = visibleEndTimeSec - visibleStartTimeSec;
     const unitIds = dataClient.metadata.unitIds;
-    const unitHeight = plotHeight / unitIds.length;
+
+    const unitPlacesByUnitIndex: { [key: number]: number } = {};
+    let numPlaces: number;
+    if (onlyShowSelected) {
+      for (let i = 0; i < selectedUnitIndicesList.length; i++) {
+        const unitIndex = selectedUnitIndicesList[i];
+        unitPlacesByUnitIndex[unitIndex] = i;
+      }
+      numPlaces = selectedUnitIndicesList.length;
+    } else {
+      unitIds.forEach((_unitId, index) => {
+        unitPlacesByUnitIndex[index] = index;
+      });
+      numPlaces = unitIds.length;
+    }
+    const unitHeight = plotHeight / (numPlaces || 1); // Avoid division by zero
 
     context.save();
     context.beginPath();
@@ -260,12 +345,11 @@ const RasterPlotView: FunctionComponent<Props> = ({
     // Draw each unit's spikes
     for (let i = 0; i < rangeData.timestamps.length; i++) {
       const time = rangeData.timestamps[i];
+      const unitPlace = unitPlacesByUnitIndex[rangeData.unitIndices[i]];
+      if (unitPlace === undefined) continue; // Skip if unit is not in selected set
       const unitId = unitIds[rangeData.unitIndices[i]];
-      const unitIndex = unitIds.indexOf(unitId);
       const y =
-        margins.top +
-        (unitIds.length - 1 - unitIndex) * unitHeight +
-        unitHeight / 2; // Centered in bin
+        margins.top + (numPlaces - 1 - unitPlace) * unitHeight + unitHeight / 2; // Centered in bin
       const color = colorForUnitId(idToNum(unitId));
 
       // Set line style based on hover/selection state
@@ -286,17 +370,21 @@ const RasterPlotView: FunctionComponent<Props> = ({
 
     context.restore();
 
-    // Draw unit labels
-    context.globalAlpha = 1;
-    unitIds.forEach((unitId, index) => {
-      const y = margins.top + (unitIds.length - 1 - index) * unitHeight;
-      const centerY = y + unitHeight / 2; // Center vertically in the bin
-      const color = colorForUnitId(idToNum(unitId));
-      context.fillStyle = color;
-      context.font = "12px Arial";
-      context.textAlign = "right";
-      context.fillText(`Unit ${unitId}`, margins.left - 5, centerY);
-    });
+    // Draw unit labels if there's enough space
+    if (unitHeight >= MIN_UNIT_LABEL_HEIGHT) {
+      context.globalAlpha = 1;
+      const unitIdsToLabel = onlyShowSelected ? selectedUnitIdsList : unitIds;
+      unitIdsToLabel.forEach((unitId, index) => {
+        const y =
+          margins.top + (unitIdsToLabel.length - 1 - index) * unitHeight;
+        const centerY = y + unitHeight / 2; // Center vertically in the bin
+        const color = colorForUnitId(idToNum(unitId));
+        context.fillStyle = color;
+        context.font = "12px Arial";
+        context.textAlign = "right";
+        context.fillText(`Unit ${unitId}`, margins.left - 5, centerY);
+      });
+    }
   }, [
     canvasWidth,
     canvasHeight,
@@ -305,11 +393,12 @@ const RasterPlotView: FunctionComponent<Props> = ({
     visibleStartTimeSec,
     visibleEndTimeSec,
     hoveredUnitId,
-    selectedUnitIds,
     dataClient.metadata,
     isLoading,
     error,
     context,
+    selectedUnitIds,
+    onlyShowSelected,
   ]);
 
   useEffect(() => {
@@ -334,7 +423,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
         return unitIds[index];
       } else return undefined;
     },
-    [canvasHeight, margins, dataClient.metadata]
+    [canvasHeight, margins, dataClient.metadata],
   );
 
   const handleMouseDown = useCallback(
@@ -351,7 +440,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
         unitIdSelectionDispatch({ type: "UNIQUE_SELECT", targetUnit: unitId });
       }
     },
-    [pixelToUnitId, unitIdSelectionDispatch]
+    [pixelToUnitId, unitIdSelectionDispatch],
   );
 
   const handleMouseMove = useCallback(
@@ -366,7 +455,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
         setHoveredUnitId(unitId);
       }
     },
-    [pixelToUnitId]
+    [pixelToUnitId],
   );
 
   const handleMouseOut = useCallback(() => {
@@ -381,6 +470,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
     <TimeScrollView3
       width={width}
       height={height}
+      customToolbarActions={customToolbarActions}
       onCanvasElement={(canvas) => {
         canvasRef.current = canvas;
         const ctx = canvas?.getContext("2d");

@@ -34,13 +34,13 @@ export const FPAutocorrelograms: FunctionComponent<Props> = ({
       // Fetch the shared bin edges dataset
       const binEdgesSecData = await zarrGroup.file.getDatasetData(
         join(zarrGroup.path, "bin_edges_sec"),
-        {}
+        {},
       );
 
       // Fetch the 2D bin counts dataset
       const binCountsData = await zarrGroup.file.getDatasetData(
         join(zarrGroup.path, "bin_counts"),
-        {}
+        {},
       );
 
       if (!binEdgesSecData || !binCountsData) {
@@ -65,7 +65,7 @@ export const FPAutocorrelograms: FunctionComponent<Props> = ({
         const metadata = autocorrelogramMetadata[i];
         const startIdx = i * numBins;
         const binCounts = Array.from(
-          binCountsArray.slice(startIdx, startIdx + numBins)
+          binCountsArray.slice(startIdx, startIdx + numBins),
         );
 
         autocorrelograms.push({

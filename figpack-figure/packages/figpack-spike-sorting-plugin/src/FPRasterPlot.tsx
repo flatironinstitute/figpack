@@ -27,7 +27,7 @@ export const FPRasterPlot: FunctionComponent<Props> = ({
 
 const useDataClient = (zarrGroup: ZarrGroup) => {
   const [dataClient, setDataClient] = useState<RasterPlotDataClient | null>(
-    null
+    null,
   );
 
   useEffect(() => {

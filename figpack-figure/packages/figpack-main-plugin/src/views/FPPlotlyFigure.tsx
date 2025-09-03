@@ -9,7 +9,7 @@ declare global {
         div: HTMLElement,
         data: unknown[],
         layout: Record<string, unknown>,
-        config: Record<string, unknown>
+        config: Record<string, unknown>,
       ) => void;
       Plots: {
         resize: (div: HTMLElement) => void;
@@ -49,7 +49,7 @@ export const FPPlotlyFigure: React.FC<{
         // Get the figure data from the zarr array
         const data = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, "figure_data"),
-          {}
+          {},
         );
         if (!data || data.length === 0) {
           throw new Error("Empty figure data");
@@ -70,7 +70,7 @@ export const FPPlotlyFigure: React.FC<{
         console.error("Failed to load figure data:", err);
         if (mounted) {
           setError(
-            `Failed to load figure data: ${err instanceof Error ? err.message : String(err)}`
+            `Failed to load figure data: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
       } finally {
@@ -129,7 +129,7 @@ export const FPPlotlyFigure: React.FC<{
           responsive: true,
           displayModeBar: true,
           displaylogo: false,
-        }
+        },
       );
     } catch (plotError) {
       console.error("Failed to create plot:", plotError);

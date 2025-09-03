@@ -29,14 +29,14 @@ export class SpikeAmplitudesDataClient {
       [factor: number]: SpikeAmplitudesDataClient;
     } = {},
     private referenceTimes: DatasetDataType,
-    private referenceIndices: DatasetDataType
+    private referenceIndices: DatasetDataType,
   ) {
     this.zarrGroup = zarrGroup;
     this.file = zarrGroup.file as ZarrFile;
   }
 
   static async create(
-    zarrGroup: ZarrGroup
+    zarrGroup: ZarrGroup,
   ): Promise<SpikeAmplitudesDataClient> {
     const metadata: SpikeAmplitudesMetadata = {
       startTimeSec: zarrGroup.attrs["start_time_sec"],
@@ -47,26 +47,26 @@ export class SpikeAmplitudesDataClient {
     const subsampleClients: { [factor: number]: SpikeAmplitudesDataClient } =
       {};
     const subsampledDataGroup = zarrGroup.subgroups.find(
-      (g) => g.name === "subsampled_data"
+      (g) => g.name === "subsampled_data",
     );
     const referenceTimes = await zarrGroup.file.getDatasetData(
       join(zarrGroup.path, "reference_times"),
-      {}
+      {},
     );
     const referenceIndices = await zarrGroup.file.getDatasetData(
       join(zarrGroup.path, "reference_indices"),
-      {}
+      {},
     );
     if (!referenceTimes || !referenceIndices) {
       throw new Error(
-        `Reference arrays not found in Zarr group: ${zarrGroup.path}`
+        `Reference arrays not found in Zarr group: ${zarrGroup.path}`,
       );
     }
     if (subsampledDataGroup) {
       const g = await zarrGroup.file.getGroup(subsampledDataGroup.path);
       if (!g) {
         throw new Error(
-          `Failed to load subsampled_data group at ${subsampledDataGroup.path}`
+          `Failed to load subsampled_data group at ${subsampledDataGroup.path}`,
         );
       }
       let f = 4;
@@ -90,7 +90,7 @@ export class SpikeAmplitudesDataClient {
       metadata,
       subsampleClients,
       referenceTimes,
-      referenceIndices
+      referenceIndices,
     );
   }
 
@@ -98,18 +98,18 @@ export class SpikeAmplitudesDataClient {
     params: DataRangeParams,
     o: {
       maxNumEvents: number;
-    }
+    },
   ): Promise<SpikeAmplitudesRangeData> {
     // Find start and end indices using reference arrays
     const startIndex = this.findStartIndex(
       this.referenceTimes,
       this.referenceIndices,
-      params.startTimeSec
+      params.startTimeSec,
     );
     const endIndex = this.findEndIndex(
       this.referenceTimes,
       this.referenceIndices,
-      params.endTimeSec
+      params.endTimeSec,
     );
 
     if (startIndex >= endIndex) {
@@ -144,15 +144,15 @@ export class SpikeAmplitudesDataClient {
 
     const timestampsData = await this.file.getDatasetData(
       join(this.zarrGroup.path, `timestamps`),
-      { slice: [[startIndex, endIndex]] }
+      { slice: [[startIndex, endIndex]] },
     );
     const unitIndicesData = await this.file.getDatasetData(
       join(this.zarrGroup.path, `unit_indices`),
-      { slice: [[startIndex, endIndex]] }
+      { slice: [[startIndex, endIndex]] },
     );
     const amplitudesData = await this.file.getDatasetData(
       join(this.zarrGroup.path, `amplitudes`),
-      { slice: [[startIndex, endIndex]] }
+      { slice: [[startIndex, endIndex]] },
     );
 
     const rangeData = {
@@ -168,7 +168,7 @@ export class SpikeAmplitudesDataClient {
   private findStartIndex(
     referenceTimes: DatasetDataType,
     referenceIndices: DatasetDataType,
-    startTime: number
+    startTime: number,
   ): number {
     let i = 0;
     while (i + 1 < referenceTimes.length && referenceTimes[i + 1] < startTime) {
@@ -180,7 +180,7 @@ export class SpikeAmplitudesDataClient {
   private findEndIndex(
     referenceTimes: DatasetDataType,
     referenceIndices: DatasetDataType,
-    endTime: number
+    endTime: number,
   ): number {
     let i = referenceTimes.length - 1;
     while (i - 1 >= 0 && referenceTimes[i - 1] > endTime) {

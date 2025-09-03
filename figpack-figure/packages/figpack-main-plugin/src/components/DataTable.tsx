@@ -21,12 +21,12 @@ interface DataTableProps {
 const sortData = (
   data: string[][],
   sortConfig: SortConfig,
-  columnInfo: ColumnInfo[]
+  columnInfo: ColumnInfo[],
 ): string[][] => {
   if (!sortConfig.column) return data;
 
   const columnIndex = columnInfo.findIndex(
-    (col) => col.name === sortConfig.column
+    (col) => col.name === sortConfig.column,
   );
   if (columnIndex === -1) return data;
 
@@ -111,7 +111,7 @@ export const DataTable: React.FC<DataTableProps> = ({
     const headerLength = columnInfo[columnIndex]?.name.length || 0;
     const maxContentLength = Math.max(
       headerLength,
-      ...sortedData.slice(0, 100).map((row) => (row[columnIndex] || "").length)
+      ...sortedData.slice(0, 100).map((row) => (row[columnIndex] || "").length),
     );
     return Math.max(80, Math.min(200, maxContentLength * 8 + 20));
   };

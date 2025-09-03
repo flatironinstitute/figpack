@@ -71,7 +71,7 @@ export const FPDataFrame: React.FC<{
         // Get the CSV data from the zarr array
         const data = await zarrGroup.file.getDatasetData(
           join(zarrGroup.path, "csv_data"),
-          {}
+          {},
         );
         if (!data || data.length === 0) {
           throw new Error("Empty CSV data");
@@ -97,7 +97,7 @@ export const FPDataFrame: React.FC<{
         console.error("Failed to load DataFrame data:", err);
         if (mounted) {
           setError(
-            `Failed to load DataFrame data: ${err instanceof Error ? err.message : String(err)}`
+            `Failed to load DataFrame data: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
       } finally {
