@@ -121,7 +121,7 @@ class FigpackView:
             )
             print("** Development mode **")
             print(
-                f"For development, run figpack-figure in dev mode and use http://localhost:5173?data=http://localhost:{port}/{_local_figure_name}/data.zarr"
+                f"For development, run figpack-figure in dev mode and use http://localhost:5173?figure=http://localhost:{port}/{_local_figure_name}/"
             )
             print("")
 
