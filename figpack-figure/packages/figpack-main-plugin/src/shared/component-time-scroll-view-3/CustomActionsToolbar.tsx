@@ -32,40 +32,49 @@ const CustomActionsToolbar: FunctionComponent<Props> = ({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {customActions.map((action) => (
-          <button
-            key={action.id}
-            onClick={action.onClick}
-            style={{
-              padding: "4px 8px",
-              border: "1px solid #ced4da",
-              borderRadius: "4px",
-              backgroundColor: action.isActive ? "#007bff" : "#ffffff",
-              color: action.isActive ? "#ffffff" : "#495057",
-              cursor: action.onClick ? "pointer" : "default",
-              fontSize: "12px",
-              fontWeight: "500",
-              transition: "all 0.15s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-            title={action.tooltip || action.label}
-            onMouseEnter={(e) => {
-              if (!action.isActive && action.onClick) {
-                e.currentTarget.style.backgroundColor = "#e9ecef";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!action.isActive && action.onClick) {
-                e.currentTarget.style.backgroundColor = "#ffffff";
-              }
-            }}
-          >
-            {action.icon && <span>{action.icon}</span>}
-            {action.label}
-          </button>
-        ))}
+        {customActions.map((action) =>
+          action.component ? (
+            <div
+              key={action.id}
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              {action.component}
+            </div>
+          ) : (
+            <button
+              key={action.id}
+              onClick={action.onClick}
+              style={{
+                padding: "4px 8px",
+                border: "1px solid #ced4da",
+                borderRadius: "4px",
+                backgroundColor: action.isActive ? "#007bff" : "#ffffff",
+                color: action.isActive ? "#ffffff" : "#495057",
+                cursor: action.onClick ? "pointer" : "default",
+                fontSize: "12px",
+                fontWeight: "500",
+                transition: "all 0.15s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+              title={action.tooltip || action.label}
+              onMouseEnter={(e) => {
+                if (!action.isActive && action.onClick) {
+                  e.currentTarget.style.backgroundColor = "#e9ecef";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!action.isActive && action.onClick) {
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                }
+              }}
+            >
+              {action.icon && <span>{action.icon}</span>}
+              {action.label}
+            </button>
+          ),
+        )}
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ export type CustomToolbarAction = {
   onClick?: () => void;
   isActive?: boolean;
   tooltip?: string;
+  component?: React.ReactNode; // Add support for custom React components
 };
 
 type Props = {

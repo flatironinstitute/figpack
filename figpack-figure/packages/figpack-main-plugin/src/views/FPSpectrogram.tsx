@@ -21,16 +21,14 @@ export const FPSpectrogram: React.FC<{
   } = useTimeseriesSelection();
 
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
-  const [frequencyScale, setFrequencyScale] = useState<"linear" | "log">(
-    "linear",
-  );
+  const [brightness, setBrightness] = useState<number>(50); // Default brightness 50
 
   const leftMargin = 100;
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width,
     height,
     leftMargin,
-    hasCustomActions: true, // We'll have frequency scale toggle
+    hasCustomActions: true,
   });
 
   const client = useSpectrogramClient(zarrGroup);
@@ -110,21 +108,11 @@ export const FPSpectrogram: React.FC<{
     const minFreq = frequencyBins[0];
     const maxFreq = frequencyBins[frequencyBins.length - 1];
 
-    if (frequencyScale === "linear") {
-      setYRange({
-        yMin: minFreq,
-        yMax: maxFreq,
-      });
-    } else {
-      // Log scale
-      const logMinFreq = Math.log10(Math.max(minFreq, 0.1)); // Avoid log(0)
-      const logMaxFreq = Math.log10(maxFreq);
-      setYRange({
-        yMin: logMinFreq,
-        yMax: logMaxFreq,
-      });
-    }
-  }, [client, frequencyScale]);
+    setYRange({
+      yMin: minFreq,
+      yMax: maxFreq,
+    });
+  }, [client]);
 
   useEffect(() => {
     if (!context) return;
@@ -160,10 +148,7 @@ export const FPSpectrogram: React.FC<{
 
       const frequencyToPixel = (f: number) => {
         if (!yRange) return 0;
-        let scaledF = f;
-        if (frequencyScale === "log") {
-          scaledF = Math.log10(Math.max(f, 0.1));
-        }
+        const scaledF = f;
         return (
           canvasHeight -
           margins.bottom -
@@ -181,6 +166,7 @@ export const FPSpectrogram: React.FC<{
         visibleData.samplingFrequency,
         visibleStartTimeSec,
         visibleEndTimeSec,
+        brightness,
       );
 
       // Draw the spectrogram heatmap
@@ -219,7 +205,7 @@ export const FPSpectrogram: React.FC<{
     canvasHeight,
     margins,
     yRange,
-    frequencyScale,
+    brightness,
   ]);
 
   const yAxisInfo = useMemo(() => {
@@ -227,22 +213,36 @@ export const FPSpectrogram: React.FC<{
       showTicks: true,
       yMin: yRange ? yRange.yMin : 0,
       yMax: yRange ? yRange.yMax : 100,
-      yLabel:
-        frequencyScale === "linear" ? "Frequency (Hz)" : "log₁₀(Frequency)",
+      yLabel: "Frequency (Hz)",
     };
-  }, [yRange, frequencyScale]);
+  }, [yRange]);
+
+  const BrightnessSlider = useMemo(() => {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ fontSize: "12px", color: "#495057" }}>Brightness:</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={brightness}
+          onChange={(e) => setBrightness(Number(e.target.value))}
+          style={{ width: "100px" }}
+          title={`Brightness: ${brightness}`}
+        />
+      </div>
+    );
+  }, [brightness]);
 
   const customToolbarActions = useMemo(
     () => [
       {
-        id: "frequency-scale-toggle",
-        label: frequencyScale === "linear" ? "Lin" : "Log",
-        onClick: () =>
-          setFrequencyScale((prev) => (prev === "linear" ? "log" : "linear")),
-        tooltip: `Switch to ${frequencyScale === "linear" ? "logarithmic" : "linear"} frequency scale`,
+        id: "brightness-slider",
+        label: "", // Empty label since we're using a custom component
+        component: BrightnessSlider,
       },
     ],
-    [frequencyScale, setFrequencyScale],
+    [BrightnessSlider],
   );
 
   return (

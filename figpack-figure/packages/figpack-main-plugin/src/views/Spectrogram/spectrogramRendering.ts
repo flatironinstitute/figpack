@@ -155,6 +155,7 @@ export const calculateVisibleMaxValue = (
   samplingFrequency: number,
   visibleStartTimeSec: number,
   visibleEndTimeSec: number,
+  brightness?: number, // 0 to 100, default 50
 ): number => {
   // Calculate visible time range in data indices
   const startIndex = Math.max(
@@ -178,5 +179,16 @@ export const calculateVisibleMaxValue = (
     }
   }
 
-  return maxValue || 1; // Avoid division by zero
+  maxValue = maxValue || 1; // Avoid division by zero
+
+  // Apply brightness adjustment
+  // brightness of 50 => stays the same
+  // brightness of 100 => divides maxValue by 6
+  // brightness of 0 => multiplies maxValue by 6
+  if (brightness !== undefined) {
+    const factor = Math.pow(6, (50 - brightness) / 50);
+    maxValue = maxValue * factor;
+  }
+
+  return maxValue;
 };
