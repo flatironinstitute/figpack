@@ -45,6 +45,7 @@ Although primarily motivated by applications in **neurophysiology** (e.g., spike
 - **Layouts**: Composite views that organize and arrange other views (Box, Splitter, TabLayout) to create complex visualization dashboards.
 - **Display System**: The `show()` function intelligently handles visualization display across different environments (scripts, notebooks, cloud platforms).
 - **Storage Format**: Uses Zarr for efficient handling of numerical arrays, ensuring smooth performance even with large datasets.
+- **Extensions**: A system for creating custom views with specialized JavaScript visualizations, enabling integration of external libraries and custom rendering logic.
 
 ## Getting Started
 

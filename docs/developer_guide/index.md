@@ -136,6 +136,16 @@ Every view type in figpack requires a corresponding frontend implementation in f
 - Renders the view's content appropriately
 - Manages interactive features
 
+## Extensions
+
+The extension system allows developers to create custom views with specialized JavaScript rendering code:
+
+- Extensions combine Python data handling with custom JavaScript visualization
+- Extensions can load additional JavaScript files for modular code organization
+- Each extension provides its own JavaScript implementation and optional utilities
+- Extensions are registered globally and can be reused across multiple views
+- Built-in support for external library integration and dependency management
+
 ## Viewing Figures in Development Mode
 
 When implementing a new view type or modifying an existing view type, it is helpful to be able to run the figpack-figure frontend in develop mode with hot module loading and point it to the data of a test figure. This can be achieved in either of two ways:
@@ -169,6 +179,7 @@ figpack-figure
 figpack-manage
 figpack-api
 backlinks
+extensions
 ```
 
 ---

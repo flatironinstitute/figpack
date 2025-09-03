@@ -36,26 +36,6 @@ def test_spectrogram_creation():
     assert view.data.dtype == np.float32
 
 
-def test_spectrogram_frequency_bins():
-    """Test frequency bin calculation"""
-    n_timepoints = 100
-    n_frequencies = 10
-    data = np.random.random((n_timepoints, n_frequencies)).astype(np.float32)
-
-    view = Spectrogram(
-        start_time_sec=0.0,
-        sampling_frequency_hz=100.0,
-        frequency_min_hz=10.0,
-        frequency_delta_hz=5.0,
-        data=data,
-    )
-
-    expected_bins = np.array(
-        [10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0]
-    )
-    np.testing.assert_array_almost_equal(view.frequency_bins, expected_bins)
-
-
 def test_spectrogram_downsampling():
     """Test downsampling computation"""
     # Create larger dataset to trigger downsampling
@@ -172,14 +152,10 @@ def test_spectrogram_zarr_serialization():
 
         # Check that datasets were created
         assert "data" in root
-        assert "frequency_bins" in root
 
         # Check data integrity
         stored_data = root["data"][:]
         np.testing.assert_array_equal(stored_data, data)
-
-        stored_freq_bins = root["frequency_bins"][:]
-        np.testing.assert_array_equal(stored_freq_bins, view.frequency_bins)
 
 
 if __name__ == "__main__":

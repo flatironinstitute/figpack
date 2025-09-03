@@ -13,7 +13,6 @@ export class SpectrogramClient {
     public nFrequencies: number,
     public dataMin: number,
     public dataMax: number,
-    public frequencyBins: Float32Array,
     public downsampleFactors: number[],
   ) {}
 
@@ -31,14 +30,6 @@ export class SpectrogramClient {
     // Calculate end time from start time, number of timepoints, and sampling frequency
     const endTimeSec = startTimeSec + (nTimepoints - 1) / samplingFrequencyHz;
 
-    // Load frequency bins
-    const frequencyBinsData = await zarrGroup.file.getDatasetData(
-      join(zarrGroup.path, "frequency_bins"),
-      {},
-    );
-
-    const frequencyBins = new Float32Array(frequencyBinsData || []);
-
     return new SpectrogramClient(
       zarrGroup,
       startTimeSec,
@@ -50,7 +41,6 @@ export class SpectrogramClient {
       nFrequencies,
       dataMin,
       dataMax,
-      frequencyBins,
       downsampleFactors,
     );
   }
@@ -229,5 +219,13 @@ export class SpectrogramClient {
       length,
       nFrequencies: this.nFrequencies,
     };
+  }
+
+  get frequencyBins(): Float32Array {
+    const bins = new Float32Array(this.nFrequencies);
+    for (let i = 0; i < this.nFrequencies; i++) {
+      bins[i] = this.frequencyMinHz + i * this.frequencyDeltaHz;
+    }
+    return bins;
   }
 }

@@ -49,11 +49,6 @@ class Spectrogram(FigpackView):
         self.n_timepoints = n_timepoints
         self.n_frequencies = n_frequencies
 
-        # Calculate frequency bins
-        self.frequency_bins = (
-            frequency_min_hz + np.arange(n_frequencies) * frequency_delta_hz
-        )
-
         # Calculate data range for color scaling
         self.data_min = float(np.nanmin(data))
         self.data_max = float(np.nanmax(data))
@@ -178,14 +173,6 @@ class Spectrogram(FigpackView):
         group.attrs["n_frequencies"] = self.n_frequencies
         group.attrs["data_min"] = self.data_min
         group.attrs["data_max"] = self.data_max
-
-        # Store frequency bins
-        group.create_dataset(
-            "frequency_bins",
-            data=self.frequency_bins.astype(np.float32),
-            compression="blosc",
-            compression_opts={"cname": "lz4", "clevel": 5, "shuffle": 1},
-        )
 
         # Store original data with optimal chunking
         original_chunks = self._calculate_optimal_chunk_size(self.data.shape)
