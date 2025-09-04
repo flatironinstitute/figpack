@@ -47,6 +47,7 @@ jobs:
           pip install -e .[docs,test]
       
       - name: Install extension packages
+        run: |
           cd extension_packages/figpack_force_graph
           pip install -e .
 
