@@ -21,6 +21,7 @@ class Box(FigpackView):
         direction: Literal["horizontal", "vertical"] = "vertical",
         show_titles: bool = True,
         items: List[LayoutItem],
+        title: Optional[str] = None,
     ):
         """
         Initialize a Box layout view
@@ -29,6 +30,7 @@ class Box(FigpackView):
             direction: Layout direction - "horizontal" or "vertical"
             show_titles: Whether to show titles for layout items
             items: List of LayoutItem objects containing the child views
+            title: Optional title to display at the top of the box
 
         Raises:
             ValueError: If direction is not "horizontal" or "vertical"
@@ -39,6 +41,7 @@ class Box(FigpackView):
         self.direction = direction
         self.show_titles = show_titles
         self.items = items
+        self.title = title
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:
         """
@@ -53,6 +56,7 @@ class Box(FigpackView):
         # Set layout properties
         group.attrs["direction"] = self.direction
         group.attrs["show_titles"] = self.show_titles
+        group.attrs["title"] = self.title
 
         # Create a list to store item metadata
         items_metadata = []

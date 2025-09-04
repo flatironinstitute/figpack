@@ -25,15 +25,17 @@ def example_box_layout():
     graph3 = create_sample_graph("Graph 3", color="green")
     graph4 = create_sample_graph("Graph 4", color="purple")
 
-    # Create a nested box layout
+    # Create a nested box layout with a title
     view = vv.Box(
         direction="vertical",
         show_titles=True,
+        title="Main Dashboard",  # New title parameter for the Box
         items=[
             vv.LayoutItem(
                 vv.Box(
                     direction="horizontal",
                     show_titles=True,
+                    title="Top Section",  # Title for nested box
                     items=[
                         vv.LayoutItem(graph1, stretch=1, title="Left Graph"),
                         vv.LayoutItem(

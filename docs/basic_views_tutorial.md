@@ -362,7 +362,7 @@ view.show(title="Plotly Example", open_in_browser=True)
 
 ## Box Layout
 
-Arrange multiple views in rows and columns:
+Arrange multiple views in rows and columns. Box layouts can have their own title that appears at the top:
 
 ```python
 import numpy as np
@@ -385,9 +385,10 @@ graph1 = create_simple_graph("1 Hz", "blue", 1)
 graph2 = create_simple_graph("2 Hz", "red", 2)
 graph3 = create_simple_graph("3 Hz", "green", 3)
 
-# Create horizontal layout
+# Create horizontal layout with a title
 view = vv.Box(
     direction="horizontal",
+    title="Signal Comparison Dashboard",  # Box title appears at the top
     items=[
         vv.LayoutItem(graph1, title="Graph 1"),
         vv.LayoutItem(graph2, title="Graph 2"),

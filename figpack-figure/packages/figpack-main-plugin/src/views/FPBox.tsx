@@ -30,6 +30,7 @@ export const FPBox: React.FC<{
 }> = ({ zarrGroup, width, height, FPView }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const showTitles = zarrGroup.attrs["show_titles"] || false;
+  const boxTitle = zarrGroup.attrs["title"] || null;
   const itemsMetadata: LayoutItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
     [zarrGroup],
@@ -50,19 +51,43 @@ export const FPBox: React.FC<{
     });
   };
 
+  const boxTitleHeight = boxTitle ? TITLE_BAR_HEIGHT : 0;
+  const availableHeight = height - boxTitleHeight;
+
   const layoutResults = useMemo(() => {
     return calculateLayout(
       width,
-      height,
+      availableHeight,
       direction as "horizontal" | "vertical",
       itemsMetadata,
       showTitles,
       collapsedItems,
     );
-  }, [width, height, direction, itemsMetadata, showTitles, collapsedItems]);
+  }, [width, availableHeight, direction, itemsMetadata, showTitles, collapsedItems]);
 
   return (
     <div style={{ position: "relative", width, height, overflow: "hidden" }}>
+      {boxTitle && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: boxTitleHeight,
+            backgroundColor: "#f5f5f5",
+            borderBottom: "1px solid #ddd",
+            display: "flex",
+            alignItems: "center",
+            paddingLeft: 8,
+            fontSize: "14px",
+            fontWeight: "bold",
+            zIndex: 1,
+          }}
+        >
+          {boxTitle}
+        </div>
+      )}
       {itemsMetadata.map((item, index) => {
         const layout = layoutResults[index];
         const isCollapsed = collapsedItems.has(item.name);
@@ -73,7 +98,7 @@ export const FPBox: React.FC<{
             style={{
               position: "absolute",
               left: layout.x,
-              top: layout.y,
+              top: layout.y + boxTitleHeight,
               width: layout.width,
               height: layout.height,
               border: "1px solid #ddd",
