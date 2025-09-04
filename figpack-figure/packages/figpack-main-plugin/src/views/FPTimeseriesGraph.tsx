@@ -36,7 +36,8 @@ export const FPTimeseriesGraph: React.FC<{
       initialVisibleStartTimeSec: client.limits.tMin,
       initialVisibleEndTimeSec: client.limits.tMax,
     });
-    setYRange({ yMin: client.limits.yMin, yMax: client.limits.yMax });
+    // Y-range will be calculated dynamically from loaded data
+    setYRange({ yMin: 0, yMax: 10 }); // Default fallback
   }, [initializeTimeseriesSelection, client]);
 
   useEffect(() => {
@@ -50,6 +51,86 @@ export const FPTimeseriesGraph: React.FC<{
       if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
         return;
 
+      // Collect y-limits from all loaded series data
+      let globalYMin: number | undefined = undefined;
+      let globalYMax: number | undefined = undefined;
+
+      // Helper function to update global y-limits
+      const updateYLimits = (values: number[]) => {
+        for (const value of values) {
+          if (!isNaN(value) && isFinite(value)) {
+            if (globalYMin === undefined || value < globalYMin) globalYMin = value;
+            if (globalYMax === undefined || value > globalYMax) globalYMax = value;
+          }
+        }
+      };
+
+      // Load data and collect y-limits for each series
+      const loadedSeriesData: Array<{
+        series: LineSeries | MarkerSeries | IntervalSeries | UniformSeries;
+        data?: any;
+      }> = [];
+
+      for (const s of client.series) {
+        if (s.seriesType === "line" || s.seriesType === "marker") {
+          // Extract visible y values
+          const visibleYValues: number[] = [];
+          for (let i = 0; i < s.t.length; i++) {
+            const time = s.t[i] as number;
+            if (time >= visibleStartTimeSec && time <= visibleEndTimeSec) {
+              visibleYValues.push(s.y[i] as number);
+            }
+          }
+          updateYLimits(visibleYValues);
+          loadedSeriesData.push({ series: s });
+        } else if (s.seriesType === "interval") {
+          // Interval series don't contribute to y-limits
+          loadedSeriesData.push({ series: s });
+        } else if (s.seriesType === "uniform") {
+          try {
+            // Calculate visible timepoints and downsample factor
+            const visibleDuration = visibleEndTimeSec - visibleStartTimeSec;
+            const totalDuration = (s.nTimepoints - 1) / s.samplingFrequencyHz;
+            const visibleTimepoints = Math.ceil((visibleDuration / totalDuration) * s.nTimepoints);
+            const downsampleFactor = selectDownsampleFactor(visibleTimepoints, canvasWidth - margins.left - margins.right, s.downsampleFactors);
+            
+            let uniformData;
+            if (downsampleFactor === 1) {
+              uniformData = await loadOriginalData(s, visibleStartTimeSec, visibleEndTimeSec);
+              // Collect y-limits from all channels
+              for (const channelData of uniformData.data) {
+                updateYLimits(Array.from(channelData));
+              }
+            } else {
+              uniformData = await loadDownsampledData(s, downsampleFactor, visibleStartTimeSec, visibleEndTimeSec);
+              // Collect y-limits from min/max values of all channels
+              for (const channelMinMaxData of uniformData.data) {
+                updateYLimits(Array.from(channelMinMaxData));
+              }
+            }
+            loadedSeriesData.push({ series: s, data: uniformData });
+          } catch (error) {
+            console.error("Failed to load uniform series data for y-limits:", error);
+            loadedSeriesData.push({ series: s });
+          }
+        }
+      }
+
+      if (globalYMin === undefined || globalYMax === undefined) {
+        // If we don't have valid y-limits, we can't update the range
+        return;
+      }
+
+      // Add small padding (5% of range)
+      const range = globalYMax - globalYMin;
+      const padding = range * 0.05;
+      const newYRange = {
+        yMin: globalYMin - padding,
+        yMax: globalYMax + padding,
+      };
+      
+      setYRange(newYRange);
+
       // Set clipping region to graph area
       context.save();
       context.beginPath();
@@ -60,6 +141,7 @@ export const FPTimeseriesGraph: React.FC<{
         canvasHeight - margins.top - margins.bottom,
       );
       context.clip();
+      
       const timeToPixel = (t: number) => {
         return (
           margins.left +
@@ -72,13 +154,14 @@ export const FPTimeseriesGraph: React.FC<{
         return (
           canvasHeight -
           margins.bottom -
-          ((v - (yRange ? yRange.yMin : 0)) /
-            ((yRange ? yRange.yMax : 10) - (yRange ? yRange.yMin : 0))) *
+          ((v - (newYRange ? newYRange.yMin : 0)) /
+            ((newYRange ? newYRange.yMax : 10) - (newYRange ? newYRange.yMin : 0))) *
             (canvasHeight - margins.top - margins.bottom)
         );
       };
 
-      for (const s of client.series) {
+      // Render all series using loaded data
+      for (const { series: s, data } of loadedSeriesData) {
         if (s.seriesType === "line") {
           paintLine(context, s, {
             visibleStartTimeSec,
@@ -98,6 +181,11 @@ export const FPTimeseriesGraph: React.FC<{
             visibleStartTimeSec,
             visibleEndTimeSec,
             timeToPixel,
+          });
+        } else if (s.seriesType === "uniform" && data) {
+          paintUniformWithData(context, s, data, {
+            timeToPixel,
+            valueToPixel,
           });
         }
       }
@@ -119,8 +207,7 @@ export const FPTimeseriesGraph: React.FC<{
     visibleEndTimeSec,
     canvasWidth,
     canvasHeight,
-    margins,
-    yRange,
+    margins
   ]);
 
   const yAxisInfo = useMemo(() => {
@@ -262,6 +349,265 @@ const paintInterval = (
   context.globalAlpha = 1; // Reset alpha to default
 };
 
+const paintUniform = async (
+  context: CanvasRenderingContext2D,
+  series: UniformSeries,
+  options: {
+    visibleStartTimeSec: number;
+    visibleEndTimeSec: number;
+    timeToPixel: (t: number) => number;
+    valueToPixel: (v: number) => number;
+    canvasWidth: number;
+  },
+) => {
+  const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel, canvasWidth } = options;
+  
+  // Calculate visible timepoints
+  const visibleDuration = visibleEndTimeSec - visibleStartTimeSec;
+  const totalDuration = (series.nTimepoints - 1) / series.samplingFrequencyHz;
+  const visibleTimepoints = Math.ceil((visibleDuration / totalDuration) * series.nTimepoints);
+  
+  // Determine optimal downsample factor
+  const downsampleFactor = selectDownsampleFactor(visibleTimepoints, canvasWidth, series.downsampleFactors);
+  
+  try {
+    if (downsampleFactor === 1) {
+      // Load original data for visible range
+      const visibleData = await loadOriginalData(series, visibleStartTimeSec, visibleEndTimeSec);
+      paintOriginalChannels(context, visibleData, series, { timeToPixel, valueToPixel });
+    } else {
+      // Load downsampled data for visible range
+      const visibleData = await loadDownsampledData(series, downsampleFactor, visibleStartTimeSec, visibleEndTimeSec);
+      paintDownsampledChannels(context, visibleData, series, { timeToPixel, valueToPixel });
+    }
+  } catch (error) {
+    console.error("Failed to paint uniform series:", error);
+  }
+};
+
+const paintUniformWithData = (
+  context: CanvasRenderingContext2D,
+  series: UniformSeries,
+  data: {
+    data: Float32Array[];
+    startTimeSec: number;
+    samplingFrequency: number;
+    length: number;
+    isDownsampled?: boolean;
+  },
+  options: {
+    timeToPixel: (t: number) => number;
+    valueToPixel: (v: number) => number;
+  },
+) => {
+  if (data.isDownsampled) {
+    paintDownsampledChannels(context, data, series, options);
+  } else {
+    paintOriginalChannels(context, data, series, options);
+  }
+};
+
+const selectDownsampleFactor = (visibleTimepoints: number, canvasWidth: number, downsampleFactors: number[]): number => {
+  // Find the largest downsample factor such that downsampled points > canvasWidth
+  const availableFactors = [1, ...downsampleFactors].sort((a, b) => b - a);
+  
+  for (const factor of availableFactors) {
+    if (visibleTimepoints / factor > canvasWidth) {
+      return factor;
+    }
+  }
+  
+  return availableFactors[availableFactors.length - 1] || 1;
+};
+
+const loadOriginalData = async (
+  series: UniformSeries,
+  visibleStartTimeSec: number,
+  visibleEndTimeSec: number,
+): Promise<{
+  data: Float32Array[];
+  startTimeSec: number;
+  samplingFrequency: number;
+  length: number;
+}> => {
+  // Calculate time indices for visible range
+  const startIndex = Math.max(
+    0,
+    Math.floor((visibleStartTimeSec - series.startTimeSec) * series.samplingFrequencyHz),
+  );
+  const endIndex = Math.min(
+    series.nTimepoints - 1,
+    Math.ceil((visibleEndTimeSec - series.startTimeSec) * series.samplingFrequencyHz),
+  );
+  
+  const length = endIndex - startIndex + 1;
+  
+  // Load visible chunk of original data
+  const rawData = await series.zarrGroup.file.getDatasetData(
+    join(series.zarrGroup.path, "data"),
+    {
+      slice: [
+        [startIndex, endIndex + 1],
+        [0, series.nChannels],
+      ],
+    },
+  );
+  
+  if (!rawData) {
+    throw new Error("Failed to load original data");
+  }
+  
+  // Convert to per-channel arrays
+  const channelData: Float32Array[] = [];
+  for (let ch = 0; ch < series.nChannels; ch++) {
+    const channelArray = new Float32Array(length);
+    for (let i = 0; i < length; i++) {
+      channelArray[i] = rawData[i * series.nChannels + ch] as number;
+    }
+    channelData.push(channelArray);
+  }
+  
+  return {
+    data: channelData,
+    startTimeSec: series.startTimeSec + startIndex / series.samplingFrequencyHz,
+    samplingFrequency: series.samplingFrequencyHz,
+    length,
+  };
+};
+
+const loadDownsampledData = async (
+  series: UniformSeries,
+  downsampleFactor: number,
+  visibleStartTimeSec: number,
+  visibleEndTimeSec: number,
+): Promise<{
+  data: Float32Array[];
+  startTimeSec: number;
+  samplingFrequency: number;
+  length: number;
+  isDownsampled: boolean;
+}> => {
+  const datasetName = `data_ds_${downsampleFactor}`;
+  const downsampledLength = Math.ceil(series.nTimepoints / downsampleFactor);
+  const downsampledSamplingFreq = series.samplingFrequencyHz / downsampleFactor;
+  
+  // Calculate downsampled indices for visible range
+  const startIndex = Math.max(
+    0,
+    Math.floor((visibleStartTimeSec - series.startTimeSec) * downsampledSamplingFreq),
+  );
+  const endIndex = Math.min(
+    downsampledLength - 1,
+    Math.ceil((visibleEndTimeSec - series.startTimeSec) * downsampledSamplingFreq),
+  );
+  
+  const length = endIndex - startIndex + 1;
+  
+  // Load visible chunk of downsampled data (shape: [length, 2, nChannels])
+  const rawData = await series.zarrGroup.file.getDatasetData(
+    join(series.zarrGroup.path, datasetName),
+    {
+      slice: [
+        [startIndex, endIndex + 1],
+        [0, 2],
+        [0, series.nChannels],
+      ],
+    },
+  );
+  
+  if (!rawData) {
+    throw new Error(`Failed to load downsampled data: ${datasetName}`);
+  }
+  
+  // Convert to per-channel min/max arrays
+  const channelData: Float32Array[] = [];
+  for (let ch = 0; ch < series.nChannels; ch++) {
+    const channelArray = new Float32Array(length * 2); // min/max pairs
+    for (let i = 0; i < length; i++) {
+      // Data layout: [timepoint][min/max][channel]
+      const minValue = rawData[i * 2 * series.nChannels + 0 * series.nChannels + ch] as number;
+      const maxValue = rawData[i * 2 * series.nChannels + 1 * series.nChannels + ch] as number;
+      channelArray[i * 2] = minValue;
+      channelArray[i * 2 + 1] = maxValue;
+    }
+    channelData.push(channelArray);
+  }
+  
+  return {
+    data: channelData,
+    startTimeSec: series.startTimeSec + startIndex / downsampledSamplingFreq,
+    samplingFrequency: downsampledSamplingFreq,
+    length,
+    isDownsampled: true,
+  };
+};
+
+const paintOriginalChannels = (
+  context: CanvasRenderingContext2D,
+  visibleData: { data: Float32Array[]; startTimeSec: number; samplingFrequency: number; length: number },
+  series: UniformSeries,
+  options: { timeToPixel: (t: number) => number; valueToPixel: (v: number) => number },
+) => {
+  const { timeToPixel, valueToPixel } = options;
+  
+  for (let channelIndex = 0; channelIndex < series.nChannels; channelIndex++) {
+    const color = series.colors[channelIndex] || "blue";
+    const dataArray = visibleData.data[channelIndex];
+    
+    context.strokeStyle = color;
+    context.lineWidth = series.width;
+    context.setLineDash([]);
+    
+    context.beginPath();
+    for (let i = 0; i < visibleData.length; i++) {
+      const time = visibleData.startTimeSec + i / visibleData.samplingFrequency;
+      const value = dataArray[i];
+      const x = timeToPixel(time);
+      const y = valueToPixel(value);
+      
+      if (i === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+    }
+    context.stroke();
+  }
+};
+
+const paintDownsampledChannels = (
+  context: CanvasRenderingContext2D,
+  visibleData: { data: Float32Array[]; startTimeSec: number; samplingFrequency: number; length: number },
+  series: UniformSeries,
+  options: { timeToPixel: (t: number) => number; valueToPixel: (v: number) => number },
+) => {
+  const { timeToPixel, valueToPixel } = options;
+  
+  for (let channelIndex = 0; channelIndex < series.nChannels; channelIndex++) {
+    const color = series.colors[channelIndex] || "blue";
+    const minMaxData = visibleData.data[channelIndex];
+    
+    context.strokeStyle = color;
+    context.lineWidth = series.width;
+    context.setLineDash([]);
+    
+    context.beginPath();
+    for (let i = 0; i < visibleData.length; i++) {
+      const time = visibleData.startTimeSec + i / visibleData.samplingFrequency;
+      const minValue = minMaxData[i * 2];
+      const maxValue = minMaxData[i * 2 + 1];
+      const x = timeToPixel(time);
+      const yMin = valueToPixel(minValue);
+      const yMax = valueToPixel(maxValue);
+      
+      // Draw vertical line from min to max
+      context.moveTo(x, yMin);
+      context.lineTo(x, yMax);
+    }
+    context.stroke();
+  }
+};
+
 const paintLegend = (
   context: CanvasRenderingContext2D,
   client: TimeseriesGraphClient,
@@ -273,12 +619,54 @@ const paintLegend = (
   if (!client) return;
   if (client.legendOpts.hideLegend) return;
 
-  // Filter series to include only those with names and exclude interval series
-  const seriesToInclude = client.series.filter(
-    (s) => s.seriesType !== "interval",
-  );
+  // Build legend entries, expanding uniform series into individual channels
+  const legendEntries: Array<{
+    name: string;
+    color: string;
+    seriesType: string;
+    width?: number;
+    radius?: number;
+    shape?: string;
+  }> = [];
 
-  if (seriesToInclude.length === 0) return;
+  for (const s of client.series) {
+    if (s.seriesType === "interval") continue; // Skip interval series
+
+    if (s.seriesType === "uniform") {
+      // Add each channel as a separate legend entry
+      for (let i = 0; i < s.nChannels; i++) {
+        legendEntries.push({
+          name: s.channelNames[i] || `Channel ${i}`,
+          color: s.colors[i] || "blue",
+          seriesType: "line",
+          width: s.width,
+        });
+      }
+    } else {
+      // Regular series
+      const seriesIndex = client.series.indexOf(s);
+      const name = client.seriesNames?.[seriesIndex] || "untitled";
+      
+      if (s.seriesType === "line") {
+        legendEntries.push({
+          name,
+          color: s.color,
+          seriesType: "line",
+          width: s.width,
+        });
+      } else if (s.seriesType === "marker") {
+        legendEntries.push({
+          name,
+          color: s.color,
+          seriesType: "marker",
+          radius: s.radius,
+          shape: s.shape,
+        });
+      }
+    }
+  }
+
+  if (legendEntries.length === 0) return;
 
   const { location } = client.legendOpts;
   const entryHeight = 18;
@@ -286,7 +674,7 @@ const paintLegend = (
   const symbolWidth = 50;
   const legendWidth = 200;
   const margin = 10;
-  const legendHeight = 20 + seriesToInclude.length * entryHeight;
+  const legendHeight = 20 + legendEntries.length * entryHeight;
 
   const R =
     location === "northwest"
@@ -313,7 +701,7 @@ const paintLegend = (
   context.fillRect(R.x, R.y, R.w, R.h);
   context.strokeRect(R.x, R.y, R.w, R.h);
 
-  seriesToInclude.forEach((s, i) => {
+  legendEntries.forEach((entry, i) => {
     const y0 = R.y + margin + i * entryHeight;
     const symbolRect = {
       x: R.x + margin,
@@ -328,20 +716,18 @@ const paintLegend = (
       h: entryHeight,
     };
 
-    // Get the series name from the series names stored in the client
-    const seriesIndex = client.series.indexOf(s);
-    const title = client.seriesNames?.[seriesIndex] || "untitled";
-
     context.fillStyle = "black";
     context.font = `${entryFontSize}px Arial`;
     context.fillText(
-      title,
+      entry.name,
       titleRect.x,
       titleRect.y + titleRect.h / 2 + entryFontSize / 2,
     );
 
-    if (s.seriesType === "line") {
-      applyLineAttributes(context, s);
+    if (entry.seriesType === "line") {
+      context.strokeStyle = entry.color;
+      context.lineWidth = entry.width || 1;
+      context.setLineDash([]);
       context.beginPath();
       context.moveTo(symbolRect.x, symbolRect.y + symbolRect.h / 2);
       context.lineTo(
@@ -349,11 +735,10 @@ const paintLegend = (
         symbolRect.y + symbolRect.h / 2,
       );
       context.stroke();
-      context.setLineDash([]);
-    } else if (s.seriesType === "marker") {
-      applyMarkerAttributes(context, s);
+    } else if (entry.seriesType === "marker") {
+      context.fillStyle = entry.color;
       const radius = entryHeight * 0.3;
-      const shape = s.shape ?? "circle";
+      const shape = entry.shape ?? "circle";
       const center = {
         x: symbolRect.x + symbolRect.w / 2,
         y: symbolRect.y + symbolRect.h / 2,
@@ -374,25 +759,25 @@ const paintLegend = (
   });
 };
 
-const applyLineAttributes = (
-  context: CanvasRenderingContext2D,
-  series: LineSeries,
-) => {
-  context.strokeStyle = series.color;
-  context.lineWidth = series.width;
-  if (series.dash) {
-    context.setLineDash(series.dash);
-  } else {
-    context.setLineDash([]);
-  }
-};
+// const applyLineAttributes = (
+//   context: CanvasRenderingContext2D,
+//   series: LineSeries,
+// ) => {
+//   context.strokeStyle = series.color;
+//   context.lineWidth = series.width;
+//   if (series.dash) {
+//     context.setLineDash(series.dash);
+//   } else {
+//     context.setLineDash([]);
+//   }
+// };
 
-const applyMarkerAttributes = (
-  context: CanvasRenderingContext2D,
-  series: MarkerSeries,
-) => {
-  context.fillStyle = series.color;
-};
+// const applyMarkerAttributes = (
+//   context: CanvasRenderingContext2D,
+//   series: MarkerSeries,
+// ) => {
+//   context.fillStyle = series.color;
+// };
 
 type LineSeries = {
   seriesType: "line";
@@ -420,6 +805,19 @@ type IntervalSeries = {
   t_end: DatasetDataType;
 };
 
+type UniformSeries = {
+  seriesType: "uniform";
+  startTimeSec: number;
+  samplingFrequencyHz: number;
+  channelNames: string[];
+  colors: string[];
+  width: number;
+  nTimepoints: number;
+  nChannels: number;
+  downsampleFactors: number[];
+  zarrGroup: ZarrGroup;
+};
+
 const useTimeseriesGraphClient = (zarrGroup: ZarrGroup) => {
   const [client, setClient] = useState<TimeseriesGraphClient | null>(null);
   useEffect(() => {
@@ -439,15 +837,15 @@ const useTimeseriesGraphClient = (zarrGroup: ZarrGroup) => {
 
 class TimeseriesGraphClient {
   constructor(
-    public series: (LineSeries | MarkerSeries | IntervalSeries)[],
-    public limits: { tMin: number; tMax: number; yMin: number; yMax: number },
+    public series: (LineSeries | MarkerSeries | IntervalSeries | UniformSeries)[],
+    public limits: { tMin: number; tMax: number },
     public yLabel: string,
     public legendOpts: { location?: string; hideLegend?: boolean } = {},
     public seriesNames: string[] = [],
   ) {}
   static async create(zarrGroup: ZarrGroup) {
     const seriesNames = zarrGroup.attrs["series_names"] || [];
-    const series: (LineSeries | MarkerSeries | IntervalSeries)[] = [];
+    const series: (LineSeries | MarkerSeries | IntervalSeries | UniformSeries)[] = [];
     for (const name of seriesNames) {
       const seriesGroup = await zarrGroup.file.getGroup(
         join(zarrGroup.path, name),
@@ -531,6 +929,19 @@ class TimeseriesGraphClient {
           t_start,
           t_end,
         });
+      } else if (attrs["series_type"] === "uniform") {
+        series.push({
+          seriesType: "uniform",
+          startTimeSec: attrs["start_time_sec"] || 0,
+          samplingFrequencyHz: attrs["sampling_frequency_hz"] || 1,
+          channelNames: attrs["channel_names"] || [],
+          colors: attrs["colors"] || [],
+          width: attrs["width"] || 1,
+          nTimepoints: attrs["n_timepoints"] || 0,
+          nChannels: attrs["n_channels"] || 0,
+          downsampleFactors: attrs["downsample_factors"] || [],
+          zarrGroup: seriesGroup,
+        });
       } else {
         console.warn(
           `Unknown series type for ${name}: ${attrs["series_type"]}`,
@@ -540,17 +951,12 @@ class TimeseriesGraphClient {
     }
     let tMin: number | undefined = undefined;
     let tMax: number | undefined = undefined;
-    let yMin: number | undefined = undefined;
-    let yMax: number | undefined = undefined;
     for (const s of series) {
       if (s.seriesType === "line" || s.seriesType === "marker") {
         for (let i = 0; i < s.t.length; i++) {
           const t = s.t[i] as number;
-          const y = s.y[i] as number;
           if (tMin === undefined || t < tMin) tMin = t;
           if (tMax === undefined || t > tMax) tMax = t;
-          if (yMin === undefined || y < yMin) yMin = y;
-          if (yMax === undefined || y > yMax) yMax = y;
         }
       } else if (s.seriesType === "interval") {
         for (let i = 0; i < s.t_start.length; i++) {
@@ -559,17 +965,17 @@ class TimeseriesGraphClient {
           if (tMin === undefined || t_start < tMin) tMin = t_start;
           if (tMax === undefined || t_end > tMax) tMax = t_end;
         }
+      } else if (s.seriesType === "uniform") {
+        const endTime = s.startTimeSec + (s.nTimepoints - 1) / s.samplingFrequencyHz;
+        if (tMin === undefined || s.startTimeSec < tMin) tMin = s.startTimeSec;
+        if (tMax === undefined || endTime > tMax) tMax = endTime;
       }
     }
     if (tMin === undefined) tMin = 0;
     if (tMax === undefined) tMax = 100;
-    if (yMin === undefined) yMin = 0;
-    if (yMax === undefined) yMax = 10;
     const limits = {
       tMin,
       tMax,
-      yMin,
-      yMax,
     };
     const yLabel = zarrGroup.attrs["y_label"] || "";
     const legendOpts = zarrGroup.attrs["legend_opts"] || {};
