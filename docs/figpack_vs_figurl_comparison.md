@@ -30,6 +30,10 @@ When you open a figurl link, the figurl.org web application downloads the specif
 
 Each figpack figure is a complete, standalone web application that includes both the data and the code needed to visualize it.
 
+### Data Handling
+
+Whereas figurl primarily uses JSON with base64 encoded binary data for storage, figpack employs the Zarr format for efficient storage and retrieval of large numerical arrays. This allows figpack to handle much larger datasets interactively, leveraging hierarchical downsampling and chunked data access.
+
 ## Issues Solved by figpack's Approach
 
 ### Eliminating Coordination Dependencies
