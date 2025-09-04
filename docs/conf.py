@@ -32,6 +32,9 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_css_files = ["custom.css", "figpack_assistant.css"]
 
+# Copy additional files to the build directory
+html_extra_path = ["doc-pages.json"]
+
 # -- MyST configuration -----------------------------------------------------
 myst_enable_extensions = [
     "colon_fence",
