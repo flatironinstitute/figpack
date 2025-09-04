@@ -6,11 +6,6 @@ interface ExtensionViewInstance {
   destroy?: () => void;
 }
 
-interface ExtensionUtils {
-  loadScript: (filename: string) => Promise<void>;
-  figureUrl: string;
-}
-
 interface ExtensionAPI {
   render: (
     container: HTMLElement,
@@ -18,7 +13,6 @@ interface ExtensionAPI {
     width: number,
     height: number,
     onResize: (callback: (width: number, height: number) => void) => void,
-    utils: ExtensionUtils,
   ) => ExtensionViewInstance | void;
 }
 
@@ -28,9 +22,14 @@ declare global {
   }
 }
 
+const extensionsLoading: Record<string, Promise<void>> = {};
+
 export const FPExtensionView: React.FC<
-  FPViewComponentProps & { extensionName: string }
-> = ({ zarrGroup, width, height, extensionName }) => {
+  FPViewComponentProps & {
+    extensionName: string;
+    additionalScriptNames: string[];
+  }
+> = ({ zarrGroup, width, height, extensionName, additionalScriptNames }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,46 +51,71 @@ export const FPExtensionView: React.FC<
           return;
         }
 
-        // Generate the script filename (must match the Python side)
         const safeName = extensionName.replace(/[^a-zA-Z0-9\-_]/g, "");
-        const scriptSrc = figureUrl + `extension-${safeName}.js`;
 
-        // Load the script
-        const script = document.createElement("script");
-        script.src = scriptSrc;
-        script.async = true;
+        const scriptUrlsToLoad = [figureUrl + `extension-${safeName}.js`];
+        for (const additionalScriptName of additionalScriptNames) {
+          scriptUrlsToLoad.push(
+            figureUrl + `extension-${safeName}-${additionalScriptName}`,
+          );
+        }
 
-        script.onload = () => {
-          // Check if the extension registered itself
+        for (const scriptSrc of scriptUrlsToLoad) {
+          // Load the script
+          const script = document.createElement("script");
+          script.src = scriptSrc;
+          script.async = true;
+
+          document.head.appendChild(script);
+
+          await new Promise<void>((resolve, reject) => {
+            script.onload = () => resolve();
+            script.onerror = () =>
+              reject(new Error(`Failed to load script: ${scriptSrc}`));
+          });
+        }
+      } catch (err) {
+        setError(`Error loading extension: ${err}`);
+      }
+
+      // check that it has been registered
+      if (window.figpackExtensions?.[extensionName]) {
+        extensionRef.current = window.figpackExtensions[extensionName];
+        setIsLoaded(true);
+      } else {
+        console.info(window.figpackExtensions);
+        setError(
+          `Extension '${extensionName}' did not register itself properly`,
+        );
+      }
+    };
+
+    if (extensionName in extensionsLoading) {
+      // If already loading, wait for it
+      extensionsLoading[extensionName]
+        .then(() => {
           if (window.figpackExtensions?.[extensionName]) {
             extensionRef.current = window.figpackExtensions[extensionName];
             setIsLoaded(true);
           } else {
+            console.info(window.figpackExtensions);
             setError(
               `Extension '${extensionName}' did not register itself properly`,
             );
           }
-        };
-
-        script.onerror = () => {
-          setError(`Failed to load extension script: ${scriptSrc}`);
-        };
-
-        document.head.appendChild(script);
-
-        // Cleanup function to remove script
-        return () => {
-          if (document.head.contains(script)) {
-            document.head.removeChild(script);
-          }
-        };
-      } catch (err) {
-        setError(`Error loading extension: ${err}`);
-      }
-    };
-
-    loadExtension();
-  }, [extensionName]);
+        })
+        .catch((err) => {
+          setError(`Error loading extension: ${err}`);
+        });
+    } else {
+      // Start loading
+      const loadPromise = loadExtension();
+      extensionsLoading[extensionName] = loadPromise;
+      loadPromise.finally(() => {
+        delete extensionsLoading[extensionName];
+      });
+    }
+  }, [extensionName, additionalScriptNames, figureUrl]);
 
   // Render the extension when loaded
   useEffect(() => {
@@ -111,36 +135,6 @@ export const FPExtensionView: React.FC<
         resizeCallbackRef.current = callback;
       };
 
-      // Create script loading utility
-      const loadScript = (filename: string): Promise<void> => {
-        return new Promise((resolve, reject) => {
-          // Check if script is already loaded
-          const existingScript = document.querySelector(
-            `script[src="${figureUrl}${filename}"]`,
-          );
-          if (existingScript) {
-            resolve();
-            return;
-          }
-
-          const script = document.createElement("script");
-          script.src = figureUrl + filename;
-          script.async = true;
-
-          script.onload = () => resolve();
-          script.onerror = () =>
-            reject(new Error(`Failed to load script: ${filename}`));
-
-          document.head.appendChild(script);
-        });
-      };
-
-      // Create utils object
-      const utils: ExtensionUtils = {
-        loadScript,
-        figureUrl,
-      };
-
       // Call the extension's render method
       const instance = extension.render(
         container,
@@ -148,7 +142,6 @@ export const FPExtensionView: React.FC<
         width,
         height,
         onResize,
-        utils,
       );
       viewInstanceRef.current = instance || null;
     } catch (err) {
@@ -167,7 +160,8 @@ export const FPExtensionView: React.FC<
       viewInstanceRef.current = null;
       resizeCallbackRef.current = null;
     };
-  }, [isLoaded, zarrGroup]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, zarrGroup]); // we intentionally do not include width/height here
 
   // Handle resize by calling the registered callback
   useEffect(() => {

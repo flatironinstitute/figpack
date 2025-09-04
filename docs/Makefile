@@ -23,6 +23,8 @@ help:
 		python devel/generate_basic_views_tutorial_examples.py; \
 		echo "Generating spike sorting tutorial examples..."; \
 		python devel/generate_spike_sorting_tutorial_examples.py; \
+		echo "Generating extensions tutorial examples..."; \
+		python devel/generate_extensions_tutorial_examples.py; \
 	fi
 
 # Custom targets for development

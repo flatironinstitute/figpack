@@ -7,18 +7,16 @@
     window.figpackExtensions = window.figpackExtensions || {};
     
     window.figpackExtensions['force-graph'] = {
-        render: async function(container, zarrGroup, width, height, onResize, utils) {
+        render: async function(container, zarrGroup, width, height, onResize) {
             container.innerHTML = '';
             
             try {
-                // Load force-graph library from CDN
-                await this.loadForceGraphLibrary();
-                
                 // Load graph data from zarr
                 const graphData = await this.loadGraphData(zarrGroup);
+                const config = JSON.parse(zarrGroup.attrs.config || "{}");
                 
                 // Create and configure the force graph
-                const graph = await this.createForceGraph(container, graphData, width, height);
+                const graph = await this.createForceGraph(container, graphData, config, width, height);
                 
                 // Handle resize events
                 onResize((newWidth, newHeight) => {
@@ -41,27 +39,6 @@
                 this.renderError(container, width, height, error.message);
                 return { destroy: () => {} };
             }
-        },
-        
-        loadForceGraphLibrary: async function() {
-            // Check if ForceGraph is already loaded
-            if (window.ForceGraph) {
-                return;
-            }
-            
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/force-graph@1.50.1/dist/force-graph.min.js';
-                script.onload = () => {
-                    if (window.ForceGraph) {
-                        resolve();
-                    } else {
-                        reject(new Error('ForceGraph library failed to load'));
-                    }
-                };
-                script.onerror = () => reject(new Error('Failed to load ForceGraph library from CDN'));
-                document.head.appendChild(script);
-            });
         },
         
         loadGraphData: async function(zarrGroup) {
@@ -92,23 +69,12 @@
             }
         },
         
-        createForceGraph: async function(container, graphData, width, height) {
+        createForceGraph: async function(container, graphData, config, width, height) {
             // Create the force graph instance
             const graph = window.ForceGraph()(container)
                 .width(width)
                 .height(height)
                 .graphData(graphData);
-            
-            // Configure basic styling from zarr attributes if available
-            const attrs = container.closest('[data-zarr-attrs]')?.dataset.zarrAttrs;
-            let config = {};
-            if (attrs) {
-                try {
-                    config = JSON.parse(attrs);
-                } catch (e) {
-                    console.warn('Could not parse zarr attributes:', e);
-                }
-            }
             
             // Apply configuration
             if (config.backgroundColor) {

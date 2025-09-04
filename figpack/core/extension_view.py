@@ -30,6 +30,7 @@ class ExtensionView(FigpackView):
                 f"Extension '{extension_name}' is not registered. "
                 f"Make sure to register the extension before creating views that use it."
             )
+        self.extension = extension
 
     def _write_to_zarr_group(self, group: zarr.Group) -> None:
         """
@@ -45,6 +46,11 @@ class ExtensionView(FigpackView):
 
         # Store the extension name so the frontend knows which extension to use
         group.attrs["extension_name"] = self.extension_name
+
+        # Store additional script names
+        group.attrs["additional_script_names"] = list(
+            self.extension.get_additional_filenames().keys()
+        )
 
         # Store extension metadata for debugging/compatibility
         registry = ExtensionRegistry.get_instance()

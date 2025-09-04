@@ -105,7 +105,7 @@ def create_simple_graph():
         nodes=nodes,
         links=links,
         background_color="#f8f9fa",
-        highlight_connected=True,
+        highlight_connected=False,
         cooldown_ticks=100,
     )
 
@@ -191,7 +191,7 @@ def create_network_graph():
         nodes=nodes,
         links=links,
         background_color="#ffffff",
-        highlight_connected=True,
+        highlight_connected=False,
         cooldown_ticks=200,
         warmup_ticks=50,
     )
@@ -263,8 +263,8 @@ def create_random_graph():
     graph = ForceGraphView(
         nodes=nodes,
         links=links,
-        background_color="#f8f9fa",
-        highlight_connected=True,
+        background_color="#afeeee",
+        highlight_connected=False,
         cooldown_ticks=200,
         warmup_ticks=50,
     )

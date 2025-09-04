@@ -5,6 +5,8 @@ ForceGraphView - Interactive force-directed graph visualization for figpack
 import json
 import numpy as np
 import zarr
+import urllib.request
+import urllib.error
 from typing import List, Dict, Any, Optional, Union
 
 try:
@@ -31,6 +33,16 @@ class CustomJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
+def _download_force_graph_library():
+    """Download the force-graph library from CDN"""
+    url = "https://cdn.jsdelivr.net/npm/force-graph@1.50.1/dist/force-graph.min.js"
+    try:
+        with urllib.request.urlopen(url) as response:
+            return response.read().decode("utf-8")
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"Failed to download force-graph library from {url}: {e}")
+
+
 def _load_javascript_code():
     """Load the JavaScript code from the force_graph.js file"""
     import os
@@ -46,9 +58,21 @@ def _load_javascript_code():
         )
 
 
+# Download the force-graph library and create the extension with additional files
+try:
+    force_graph_lib_js = _download_force_graph_library()
+    additional_files = {"force-graph.min.js": force_graph_lib_js}
+except Exception as e:
+    print(f"Warning: Could not download force-graph library: {e}")
+    print("Extension will fall back to CDN loading")
+    additional_files = {}
+
 # Create and register the force graph extension
 _force_graph_extension = FigpackExtension(
-    name="force-graph", javascript_code=_load_javascript_code(), version="1.0.0"
+    name="force-graph",
+    javascript_code=_load_javascript_code(),
+    additional_files=additional_files,
+    version="1.0.0",
 )
 
 ExtensionRegistry.register(_force_graph_extension)

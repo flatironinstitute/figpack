@@ -22,7 +22,7 @@ my_extension = FigpackExtension(
         window.figpackExtensions = window.figpackExtensions || {};
 
         window.figpackExtensions['my-extension'] = {
-            render: function(container, zarrGroup, width, height, onResize, utils) {
+            render: function(container, zarrGroup, width, height, onResize) {
                 // Implement rendering logic here
             }
         };
@@ -68,29 +68,7 @@ my_extension = FigpackExtension(
 )
 ```
 
-The files will be made available to the extension and can be loaded using the utils object provided to the render function:
-
-```javascript
-window.figpackExtensions["advanced-extension"] = {
-  render: async function (
-    container,
-    zarrGroup,
-    width,
-    height,
-    onResize,
-    utils
-  ) {
-    // Load additional files in order
-    await utils.loadScript("extension-advanced-extension-utils.js");
-    await utils.loadScript("extension-advanced-extension-rendering.js");
-    await utils.loadScript("extension-advanced-extension-lib/d3.min.js");
-
-    // Now use the loaded code
-    const svg = window.D3Utils.createSVG(container);
-    // ...
-  },
-};
-```
+The files will be made available to the extension.
 
 ## Extension API Reference
 

@@ -76,6 +76,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[Creating figures](creating_figures.md)**: Getting started with building visualizations
 - **[Basic Views Tutorial](basic_views_tutorial.md)**: Step-by-step guide to creating various types of figures
 - **[Spike Sorting Tutorial](spike_sorting_tutorial.md)**: Getting started with spike sorting visualizations
+- **[Extensions Tutorial](extensions_tutorial.md)**: Learn how to create views defined in figpack extensions
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
 - **[API Reference](api/index.md)**: Complete documentation of all components
 - **[Contributing](contributing.md)**: How to contribute to figpack
@@ -101,6 +102,7 @@ installation
 creating_figures
 basic_views_tutorial
 spike_sorting_tutorial
+extensions_tutorial
 show_function
 api/index
 contributing

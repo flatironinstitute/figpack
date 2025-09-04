@@ -33,12 +33,10 @@ main_extension_js = """
     window.figpackExtensions = window.figpackExtensions || {};
     
     window.figpackExtensions['advanced-chart'] = {
-        render: async function(container, zarrGroup, width, height, onResize, utils) {
+        render: async function(container, zarrGroup, width, height, onResize) {
             container.innerHTML = '';
             
             try {
-                await utils.loadScript('extension-advanced-chart-chart-utils.js');
-                
                 const svg = window.ChartUtils.createSVG(container, width, height);
                 await this.renderChart(svg, zarrGroup, width, height);
                 
