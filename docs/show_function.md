@@ -42,7 +42,7 @@ def show(
 
 - `upload` (bool | None, default=None): Determines whether to upload the figure to figpack servers. The default behavior is controlled by the `FIGPACK_UPLOAD` environment variable. When running in cloud notebook environments like Google Colab or JupyterHub, this may be automatically set to `True` with `ephemeral=True` to ensure the visualization is accessible.
 
-- `inline` (bool | None, default=None): Controls whether to display the visualization inline (e.g., in a Jupyter notebook cell). By default, this is automatically enabled in notebook environments and disabled elsewhere. Can be forced on/off regardless of environment.
+- `inline` (bool | None, default=None): Controls whether to display the visualization inline (e.g., in a Jupyter notebook cell). By default, this is automatically enabled in notebook environments (unless upload=True) and disabled elsewhere. Can be forced on/off regardless of environment.
 
 - `inline_height` (int, default=600): Height in pixels for inline iframe display. Only relevant when displaying inline in notebooks. Adjust based on the complexity and size of your visualization.
 
