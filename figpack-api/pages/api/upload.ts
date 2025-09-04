@@ -37,6 +37,11 @@ function validateFilePath(path: string): { valid: boolean } {
     return { valid: true };
   }
 
+  // extension .js files
+  if (path.startsWith("extension-") && path.endsWith(".js")) {
+    return { valid: true };
+  }
+
   // Check data.zarr directory
   if (path.startsWith("data.zarr/")) {
     const fileBaseName = path.split("/").pop() || "";

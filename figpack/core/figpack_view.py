@@ -70,7 +70,12 @@ class FigpackView:
 
         # determine inline
         if inline is None:
-            inline = _is_in_notebook() or os.environ.get("FIGPACK_INLINE") == "1"
+            if os.environ.get("FIGPACK_INLINE") == "1":
+                inline = True
+            elif os.environ.get("FIGPACK_INLINE") == "0":
+                inline = False
+            elif _is_in_notebook() and not upload:
+                inline = True
 
         # determine open_in_browser
         if open_in_browser is None:

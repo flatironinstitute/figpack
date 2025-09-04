@@ -76,7 +76,7 @@ The server manages files efficiently:
 
 Display behavior depends on the environment:
 
-- In notebooks: Shows figures inline using iframes
+- In notebooks: Shows figures inline using iframes (unless upload=True)
 - Outside notebooks: Opens in browser tab or provides URL
 - Can be overridden with `inline=True/False` parameter
 
