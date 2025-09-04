@@ -12,9 +12,9 @@ At its core, figpack provides a flexible system of **views** (such as time serie
 
 Figures can be stored either locally or in the cloud. Local figures are stored on your machine and are great for development and testing. By setting `upload=True` when showing a figure (or using the `FIGPACK_UPLOAD=1` environment variable), you can upload the figure to the figpack cloud service, making it shareable and accessible from anywhere. Cloud storage is particularly useful for sharing results with collaborators, using figures on headless systems, or ensuring long-term archival access.
 
-Data are stored in the efficient **Zarr** format, enabling interactive exploration of very large datasets through techniques like hierarchical downsampling. Rendering is handled by **React-based web applications**, allowing custom and highly interactive views that go beyond conventional charting.
+Data are stored in the efficient **Zarr** format, enabling interactive exploration of very large datasets through techniques like hierarchical downsampling.
 
-Although primarily motivated by applications in **neurophysiology** (e.g., spike sorting), figpack is designed as a **general framework**. General-purpose components such as time series graphs are immediately useful in many scientific domains, and its plugin-oriented design encourages contributions of specialized views from other fields.
+Although primarily motivated by applications in **neurophysiology** (e.g., spike sorting), figpack is designed as a **general framework** for scientific applications.
 
 ```{raw} html
 <div class="assistant-container">
