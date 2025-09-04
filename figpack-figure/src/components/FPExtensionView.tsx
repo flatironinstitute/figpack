@@ -222,6 +222,7 @@ export const FPExtensionView: React.FC<
 
   return (
     <div
+      className="fp-extension-view-container"
       ref={containerRef}
       style={{
         width,

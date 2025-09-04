@@ -2,42 +2,10 @@ import numpy as np
 import plotly.graph_objects as go
 import pytest
 import zarr
-from datetime import datetime, date
+from datetime import datetime
 from unittest.mock import MagicMock
 
-from figpack.views.PlotlyFigure import PlotlyFigure, CustomJSONEncoder
-
-
-def test_custom_json_encoder():
-    """Test CustomJSONEncoder handles various data types correctly"""
-    encoder = CustomJSONEncoder()
-
-    # Test numpy array
-    arr = np.array([1, 2, 3])
-    assert encoder.default(arr) == [1, 2, 3]
-
-    # Test numpy scalar types
-    assert encoder.default(np.int32(5)) == 5
-    assert encoder.default(np.float64(3.14)) == 3.14
-
-    # Test datetime objects
-    dt = datetime(2023, 1, 1, 12, 0)
-    assert encoder.default(dt) == "2023-01-01T12:00:00"
-
-    # Test date objects
-    d = date(2023, 1, 1)
-    assert encoder.default(d) == "2023-01-01"
-
-    # Test numpy datetime64
-    dt64 = np.datetime64("2023-01-01")
-    assert encoder.default(dt64) == "2023-01-01"
-
-    # Test handling of unsupported types
-    class UnsupportedType:
-        pass
-
-    with pytest.raises(TypeError):
-        encoder.default(UnsupportedType())
+from figpack.views import PlotlyFigure
 
 
 @pytest.fixture
@@ -65,7 +33,7 @@ def test_write_to_zarr_basic(sample_plotly_figure):
     view._write_to_zarr_group(group)
 
     # Check basic attributes and data array
-    assert group.attrs["view_type"] == "PlotlyFigure"
+    assert group.attrs["view_type"] == "ExtensionView"
     assert "figure_data" in group
     assert "data_size" in group.attrs
 

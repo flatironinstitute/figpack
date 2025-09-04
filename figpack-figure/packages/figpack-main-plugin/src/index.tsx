@@ -7,7 +7,6 @@ import { FPImage } from "./views/FPImage";
 import { FPMarkdown } from "./views/FPMarkdown";
 import { FPMatplotlibFigure } from "./views/FPMatplotlibFigure";
 import { FPMultiChannelTimeseries } from "./views/FPMultiChannelTimeseries";
-import { FPPlotlyFigure } from "./views/FPPlotlyFigure";
 import { FPSpectrogram } from "./views/FPSpectrogram";
 import { FPSplitter } from "./views/FPSplitter";
 import { FPTabLayout } from "./views/FPTabLayout";
@@ -61,11 +60,6 @@ const registerViewComponents = (
   viewComponentRegistry.registerViewComponent({
     type: "Markdown",
     component: FPMarkdown,
-  });
-
-  viewComponentRegistry.registerViewComponent({
-    type: "PlotlyFigure",
-    component: FPPlotlyFigure,
   });
 
   viewComponentRegistry.registerViewComponent({

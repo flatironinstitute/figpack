@@ -7,9 +7,9 @@ from .LayoutItem import LayoutItem
 from .Markdown import Markdown
 from .MatplotlibFigure import MatplotlibFigure
 from .MultiChannelTimeseries import MultiChannelTimeseries
-from .PlotlyFigure import PlotlyFigure
 from .Spectrogram import Spectrogram
 from .Splitter import Splitter
 from .TabLayout import TabLayout
 from .TabLayoutItem import TabLayoutItem
 from .TimeseriesGraph import TimeseriesGraph
+from .PlotlyExtension import PlotlyFigure

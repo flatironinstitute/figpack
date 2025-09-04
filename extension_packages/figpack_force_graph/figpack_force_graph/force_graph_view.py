@@ -9,15 +9,8 @@ import urllib.request
 import urllib.error
 from typing import List, Dict, Any, Optional, Union
 
-try:
-    from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
-except ImportError:
-    # Fallback for development/testing
-    import sys
-    import os
 
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-    from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
+from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
 
 
 class CustomJSONEncoder(json.JSONEncoder):

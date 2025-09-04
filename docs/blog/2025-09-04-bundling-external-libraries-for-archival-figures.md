@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Bundling External Libraries for Archival Figures"
-date: 2025-01-04 10:00:00 -0500
+date: 2025-09-04
 categories: [technical, architecture]
 tags: [figpack, archival, reproducibility]
 author: figpack team
@@ -19,4 +19,4 @@ Many web applications load libraries dynamically from CDNs like jsdelivr. While 
 
 ## figpack's Solution: Bundle Everything
 
-Instead of loading libraries dynamically, figpack downloads and bundles them directly into figure files during creation. For example, our force graph extension uses the force-graph library from https://cdn.jsdelivr.net/npm/force-graph@1.50.1/dist/force-graph.min.js. Rather than loading this at runtime, figpack downloads the exact version during figure creation and includes it in the bundle.
+Instead of loading libraries dynamically, figpack downloads and bundles them directly into figure files during creation. For example, our plotly extension uses the plotly library from https://cdn.plot.ly/plotly-2.35.2.min.js and our force graph extension uses the force-graph library from https://cdn.jsdelivr.net/npm/force-graph@1.50.1/dist/force-graph.min.js. Rather than loading this at runtime, figpack downloads the exact version during figure creation and includes it in the bundle.
