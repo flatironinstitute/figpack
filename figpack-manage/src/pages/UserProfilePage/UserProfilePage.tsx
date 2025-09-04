@@ -1,4 +1,4 @@
-import { AccountCircle, Refresh, Save } from "@mui/icons-material";
+import { AccountCircle, Refresh, Save, BarChart } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -15,10 +15,30 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ApiKeyField from "../../components/ApiKeyField";
-import { updateUserProfile, regenerateUserApiKey } from "./userProfileApi";
+import { updateUserProfile, regenerateUserApiKey, getUserUsageStats } from "./userProfileApi";
 import { useAuth } from "../../hooks/useAuth";
+import { formatBytes, formatNumber } from "../../utils/formatUtils";
+
+interface UsageStats {
+  userEmail: string;
+  pinned: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+  unpinned: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+  total: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+}
 
 const UserProfilePage: React.FC = () => {
   const { apiKey, isLoggedIn, user, loading, login, refreshUser } = useAuth();
@@ -27,6 +47,11 @@ const UserProfilePage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [regenerateDialogOpen, setRegenerateDialogOpen] =
     useState<boolean>(false);
+
+  // Usage stats state
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+  const [usageStatsLoading, setUsageStatsLoading] = useState<boolean>(false);
+  const [usageStatsError, setUsageStatsError] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -43,6 +68,31 @@ const UserProfilePage: React.FC = () => {
       });
     }
   }, [user]);
+
+  // Load usage statistics when user is loaded
+  useEffect(() => {
+    const loadUsageStats = async () => {
+      if (!user || !apiKey) return;
+
+      setUsageStatsLoading(true);
+      setUsageStatsError(null);
+
+      try {
+        const result = await getUserUsageStats(apiKey);
+        if (result.success && result.stats) {
+          setUsageStats(result.stats);
+        } else {
+          setUsageStatsError(result.message || "Failed to load usage statistics");
+        }
+      } catch (error) {
+        setUsageStatsError(`Error loading usage statistics: ${error}`);
+      } finally {
+        setUsageStatsLoading(false);
+      }
+    };
+
+    loadUsageStats();
+  }, [user, apiKey]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -225,6 +275,108 @@ const UserProfilePage: React.FC = () => {
                   )}
                 </Box>
               </Stack>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Usage Statistics */}
+        {user && (
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={2} mb={3}>
+                <BarChart color="primary" />
+                <Typography variant="h6">Usage Statistics</Typography>
+              </Box>
+
+              {usageStatsLoading && (
+                <Box display="flex" justifyContent="center" py={2}>
+                  <CircularProgress />
+                </Box>
+              )}
+
+              {usageStatsError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {usageStatsError}
+                </Alert>
+              )}
+
+              {usageStats && (
+                <Stack spacing={3}>
+                  {/* Total Statistics */}
+                  <Box>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                      Total Usage
+                    </Typography>
+                    <Box display="flex" gap={2} flexWrap="wrap">
+                      <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="grey.50" borderRadius={1}>
+                        <Typography variant="h4" color="primary">
+                          {formatNumber(usageStats.total.figureCount)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Figures
+                        </Typography>
+                      </Box>
+                      <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="grey.50" borderRadius={1}>
+                        <Typography variant="h4" color="primary">
+                          {formatNumber(usageStats.total.totalFiles)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Files
+                        </Typography>
+                      </Box>
+                      <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="grey.50" borderRadius={1}>
+                        <Typography variant="h4" color="primary">
+                          {formatBytes(usageStats.total.totalSize)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Total Size
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Pinned Usage */}
+                  {usageStats.total.figureCount > 0 && (
+                    <Box>
+                      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Pinned Usage
+                      </Typography>
+                      <Box display="flex" gap={2} flexWrap="wrap">
+                        <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="success.50" borderRadius={1}>
+                          <Typography variant="h4" color="success.main">
+                            {formatNumber(usageStats.pinned.figureCount)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Pinned Figures
+                          </Typography>
+                        </Box>
+                        <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="success.50" borderRadius={1}>
+                          <Typography variant="h4" color="success.main">
+                            {formatNumber(usageStats.pinned.totalFiles)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Pinned Files
+                          </Typography>
+                        </Box>
+                        <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="success.50" borderRadius={1}>
+                          <Typography variant="h4" color="success.main">
+                            {formatBytes(usageStats.pinned.totalSize)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Pinned Size
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {usageStats.total.figureCount === 0 && (
+                    <Alert severity="info">
+                      You haven't uploaded any completed figures yet. Upload your first figure to see usage statistics here.
+                    </Alert>
+                  )}
+                </Stack>
+              )}
             </CardContent>
           </Card>
         )}

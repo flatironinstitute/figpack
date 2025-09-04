@@ -18,7 +18,9 @@ import {
   getUsers,
   renewBulk,
   updateUser,
+  getAllUsersUsageStats,
 } from "./adminApi";
+import type { UserUsageStats } from "./adminApi";
 import AdminHeader from "./AdminHeader";
 import type { Bucket } from "./bucketsApi";
 import {
@@ -58,6 +60,11 @@ const AdminPage: React.FC = () => {
     renewedCount?: number;
     errors?: Array<{ figureUrl: string; error: string }>;
   } | null>(null);
+
+  // Usage statistics state
+  const [usageStats, setUsageStats] = useState<UserUsageStats | null>(null);
+  const [usageStatsLoading, setUsageStatsLoading] = useState<boolean>(false);
+  const [usageStatsError, setUsageStatsError] = useState<string | null>(null);
 
   const handleLoadData = useMemo(
     () => async () => {
@@ -263,6 +270,27 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // Usage statistics handler
+  const handleLoadUsageStats = async () => {
+    if (!apiKey || !adminData?.users) return;
+
+    setUsageStatsLoading(true);
+    setUsageStatsError(null);
+
+    try {
+      const result = await getAllUsersUsageStats(apiKey, adminData.users);
+      if (result.success) {
+        setUsageStats(result.usageStats || {});
+      } else {
+        setUsageStatsError(result.message || "Failed to load usage statistics");
+      }
+    } catch (error) {
+      setUsageStatsError(`Error loading usage statistics: ${error}`);
+    } finally {
+      setUsageStatsLoading(false);
+    }
+  };
+
   if (!adminData) {
     return (
       <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4 }}>
@@ -317,6 +345,10 @@ const AdminPage: React.FC = () => {
             onEditUser={handleEditUser}
             onDeleteUser={handleDeleteUserFromSummary}
             onAddUser={() => setAddUserDialogOpen(true)}
+            usageStats={usageStats}
+            onLoadUsageStats={handleLoadUsageStats}
+            usageStatsLoading={usageStatsLoading}
+            usageStatsError={usageStatsError}
           />
         )}
 

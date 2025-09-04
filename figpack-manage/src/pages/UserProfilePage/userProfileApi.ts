@@ -9,11 +9,36 @@ interface User {
   createdAt: string;
 }
 
+interface UsageStats {
+  userEmail: string;
+  pinned: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+  unpinned: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+  total: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+}
+
 interface ApiResponse {
   success: boolean;
   message?: string;
   user?: User;
   users?: User[];
+}
+
+interface UsageStatsResponse {
+  success: boolean;
+  message?: string;
+  stats?: UsageStats;
 }
 
 /**
@@ -90,6 +115,35 @@ export async function regenerateUserApiKey(apiKey: string): Promise<ApiResponse>
     return data;
   } catch (error) {
     console.error('Error regenerating API key:', error);
+    return {
+      success: false,
+      message: `Network error: ${error}`,
+    };
+  }
+}
+
+/**
+ * Get user usage statistics
+ */
+export async function getUserUsageStats(apiKey: string, email?: string): Promise<UsageStatsResponse> {
+  try {
+    const url = new URL(`${FIGPACK_API_BASE_URL}/api/user/usage-stats`);
+    if (email) {
+      url.searchParams.append('email', email);
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error getting usage statistics:', error);
     return {
       success: false,
       message: `Network error: ${error}`,

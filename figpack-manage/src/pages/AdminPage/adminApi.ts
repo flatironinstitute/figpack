@@ -20,6 +20,35 @@ interface RenewBulkResult {
   errors?: Array<{ figureUrl: string; error: string }>;
 }
 
+interface UsageStats {
+  userEmail: string;
+  pinned: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+  unpinned: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+  total: {
+    totalFiles: number;
+    totalSize: number;
+    figureCount: number;
+  };
+}
+
+interface UsageStatsResult {
+  success: boolean;
+  message?: string;
+  stats?: UsageStats;
+}
+
+export interface UserUsageStats {
+  [email: string]: UsageStats;
+}
+
 // Renew all figures with backlinks
 export const renewBulk = async (apiKey: string): Promise<RenewBulkResult> => {
   if (!apiKey) {
@@ -231,6 +260,71 @@ export const deleteUser = async (
     return {
       success: false,
       message: `Error deleting user: ${err}`,
+    };
+  }
+};
+
+// Get usage statistics for all users
+export const getAllUsersUsageStats = async (
+  apiKey: string,
+  users: User[]
+): Promise<{ success: boolean; message?: string; usageStats?: UserUsageStats }> => {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
+  }
+
+  if (!users || users.length === 0) {
+    return { success: true, usageStats: {} };
+  }
+
+  try {
+    // Fetch usage stats for each user in parallel
+    const promises = users.map(async (user) => {
+      try {
+        const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user/usage-stats?email=${encodeURIComponent(user.email)}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+          },
+        });
+
+        const result: UsageStatsResult = await response.json();
+        
+        if (result.success && result.stats) {
+          return { email: user.email, stats: result.stats };
+        } else {
+          console.warn(`Failed to get usage stats for ${user.email}:`, result.message);
+          return null;
+        }
+      } catch (error) {
+        console.warn(`Error fetching usage stats for ${user.email}:`, error);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(promises);
+    
+    // Build the usage stats object
+    const usageStats: UserUsageStats = {};
+    let successCount = 0;
+    
+    results.forEach((result) => {
+      if (result) {
+        usageStats[result.email] = result.stats;
+        successCount++;
+      }
+    });
+
+    return {
+      success: true,
+      message: `Successfully loaded usage statistics for ${successCount} of ${users.length} users`,
+      usageStats,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: `Error getting usage statistics: ${err}`,
     };
   }
 };

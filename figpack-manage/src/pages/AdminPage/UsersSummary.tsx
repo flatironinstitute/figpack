@@ -17,8 +17,12 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
+import { Edit, Delete, BarChart } from "@mui/icons-material";
+import { formatBytes, formatNumber } from "../../utils/formatUtils";
+import type { UserUsageStats } from "./adminApi";
 
 export interface User {
   email: string;
@@ -34,6 +38,10 @@ interface UsersSummaryProps {
   onEditUser?: (user: User) => void;
   onDeleteUser?: (user: User) => void;
   onAddUser?: () => void;
+  usageStats?: UserUsageStats | null;
+  onLoadUsageStats?: () => void;
+  usageStatsLoading?: boolean;
+  usageStatsError?: string | null;
 }
 
 const UsersSummary: React.FC<UsersSummaryProps> = ({
@@ -41,6 +49,10 @@ const UsersSummary: React.FC<UsersSummaryProps> = ({
   onEditUser,
   onDeleteUser,
   onAddUser,
+  usageStats,
+  onLoadUsageStats,
+  usageStatsLoading,
+  usageStatsError,
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -75,12 +87,31 @@ const UsersSummary: React.FC<UsersSummaryProps> = ({
         }}
       >
         <Typography variant="h6">Users ({users.length})</Typography>
-        {onAddUser && (
-          <Button variant="contained" size="small" onClick={onAddUser}>
-            Add User
-          </Button>
-        )}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {onLoadUsageStats && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={onLoadUsageStats}
+              disabled={usageStatsLoading}
+              startIcon={usageStatsLoading ? <CircularProgress size={16} /> : <BarChart />}
+            >
+              {usageStatsLoading ? "Loading..." : "Load Usage Stats"}
+            </Button>
+          )}
+          {onAddUser && (
+            <Button variant="contained" size="small" onClick={onAddUser}>
+              Add User
+            </Button>
+          )}
+        </Box>
       </Box>
+
+      {usageStatsError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {usageStatsError}
+        </Alert>
+      )}
       <TableContainer>
         <Table size="small">
           <TableHead>
@@ -90,6 +121,14 @@ const UsersSummary: React.FC<UsersSummaryProps> = ({
               <TableCell>Research Description</TableCell>
               <TableCell>API Key</TableCell>
               <TableCell>Created</TableCell>
+              {usageStats && (
+                <>
+                  <TableCell align="center">Total Figures</TableCell>
+                  <TableCell align="center">Total Size</TableCell>
+                  <TableCell align="center">Pinned Figures</TableCell>
+                  <TableCell align="center">Pinned Size</TableCell>
+                </>
+              )}
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -145,6 +184,30 @@ const UsersSummary: React.FC<UsersSummaryProps> = ({
                     {new Date(user.createdAt).toLocaleDateString()}
                   </Typography>
                 </TableCell>
+                {usageStats && (
+                  <>
+                    <TableCell align="center">
+                      <Typography variant="body2">
+                        {usageStats[user.email] ? formatNumber(usageStats[user.email].total.figureCount) : '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">
+                        {usageStats[user.email] ? formatBytes(usageStats[user.email].total.totalSize) : '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" color="success.main">
+                        {usageStats[user.email] ? formatNumber(usageStats[user.email].pinned.figureCount) : '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" color="success.main">
+                        {usageStats[user.email] ? formatBytes(usageStats[user.email].pinned.totalSize) : '-'}
+                      </Typography>
+                    </TableCell>
+                  </>
+                )}
                 <TableCell align="right">
                   <Box
                     sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}

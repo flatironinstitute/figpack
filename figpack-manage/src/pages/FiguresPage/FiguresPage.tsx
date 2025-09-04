@@ -72,7 +72,7 @@ const FiguresPage: React.FC = () => {
 
   // Format functions
   const formatDate = useCallback((timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString();
+    return new Date(timestamp).toLocaleString();
   }, []);
 
   const formatBytes = useCallback((bytes?: number) => {
