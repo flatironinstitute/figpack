@@ -156,6 +156,51 @@ graph.show(title="Multi-Series Plot", open_in_browser=True)
 
 <iframe src="./tutorial_multi_series/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
 
+## Uniform Timeseries
+
+For large datasets with regular sampling intervals, use uniform series for efficient visualization:
+
+```python
+import numpy as np
+import figpack.views as vv
+
+# Create graph for uniform series
+graph = vv.TimeseriesGraph(
+    y_label="Amplitude",
+    legend_opts={"location": "northwest"}
+)
+
+# Generate large uniform dataset (100k points)
+n_timepoints = 1_000_000
+sampling_freq_hz = 1000.0  # 1 kHz
+start_time_sec = 0.0
+
+# Create 3 channels with different signals and offsets
+t = np.linspace(0, n_timepoints / sampling_freq_hz, n_timepoints)
+
+# Channel data with vertical offsets for clarity
+channel_0 = 1.5 * np.sin(2 * np.pi * 2 * t) + 4    # 2 Hz sine, offset +4
+channel_1 = 2.0 * np.sin(2 * np.pi * 5 * t) + 0    # 5 Hz sine, offset 0
+channel_2 = 1.0 * np.sin(2 * np.pi * 10 * t) - 4   # 10 Hz sine, offset -4
+
+# Combine into 2D array (timepoints × channels)
+uniform_data = np.column_stack([channel_0, channel_1, channel_2]).astype(np.float32)
+
+# Add uniform series (automatically handles downsampling for performance)
+graph.add_uniform_series(
+    name="Multi-channel Signal",
+    start_time_sec=start_time_sec,
+    sampling_frequency_hz=sampling_freq_hz,
+    data=uniform_data,
+    channel_names=["2 Hz Signal", "5 Hz Signal", "10 Hz Signal"],
+    colors=["blue", "red", "green"]
+)
+
+graph.show(title="Uniform Timeseries Example", open_in_browser=True)
+```
+
+<iframe src="./tutorial_uniform_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+
 ## MultiChannelTimeseries
 
 For multi-channel data like sensor arrays:

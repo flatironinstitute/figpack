@@ -349,42 +349,6 @@ const paintInterval = (
   context.globalAlpha = 1; // Reset alpha to default
 };
 
-const paintUniform = async (
-  context: CanvasRenderingContext2D,
-  series: UniformSeries,
-  options: {
-    visibleStartTimeSec: number;
-    visibleEndTimeSec: number;
-    timeToPixel: (t: number) => number;
-    valueToPixel: (v: number) => number;
-    canvasWidth: number;
-  },
-) => {
-  const { visibleStartTimeSec, visibleEndTimeSec, timeToPixel, valueToPixel, canvasWidth } = options;
-  
-  // Calculate visible timepoints
-  const visibleDuration = visibleEndTimeSec - visibleStartTimeSec;
-  const totalDuration = (series.nTimepoints - 1) / series.samplingFrequencyHz;
-  const visibleTimepoints = Math.ceil((visibleDuration / totalDuration) * series.nTimepoints);
-  
-  // Determine optimal downsample factor
-  const downsampleFactor = selectDownsampleFactor(visibleTimepoints, canvasWidth, series.downsampleFactors);
-  
-  try {
-    if (downsampleFactor === 1) {
-      // Load original data for visible range
-      const visibleData = await loadOriginalData(series, visibleStartTimeSec, visibleEndTimeSec);
-      paintOriginalChannels(context, visibleData, series, { timeToPixel, valueToPixel });
-    } else {
-      // Load downsampled data for visible range
-      const visibleData = await loadDownsampledData(series, downsampleFactor, visibleStartTimeSec, visibleEndTimeSec);
-      paintDownsampledChannels(context, visibleData, series, { timeToPixel, valueToPixel });
-    }
-  } catch (error) {
-    console.error("Failed to paint uniform series:", error);
-  }
-};
-
 const paintUniformWithData = (
   context: CanvasRenderingContext2D,
   series: UniformSeries,
