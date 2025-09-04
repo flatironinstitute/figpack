@@ -78,6 +78,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[Spike Sorting Tutorial](spike_sorting_tutorial.md)**: Getting started with spike sorting visualizations
 - **[Extensions Tutorial](extensions_tutorial.md)**: Learn how to create views defined in figpack extensions
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
+- **[Figpack vs Figurl Comparison](figpack_vs_figurl_comparison.md)**: Comparison of approaches between figpack and figurl
 - **[API Reference](api/index.md)**: Complete documentation of all components
 - **[Contributing](contributing.md)**: How to contribute to figpack
 - **[Developer Guide](developer_guide/index.md)**: In-depth information for extending figpack
@@ -104,6 +105,7 @@ basic_views_tutorial
 spike_sorting_tutorial
 extensions_tutorial
 show_function
+figpack_vs_figurl_comparison
 api/index
 contributing
 developer_guide/index
