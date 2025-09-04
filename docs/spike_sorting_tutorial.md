@@ -200,6 +200,42 @@ view.show(title="NWB Spike Amplitudes Example")
 <!-- This is larger, so we precompute it and host it on figpack: -->
 <iframe src="https://figures.figpack.org/figures/default/49b633fced04b3d1778ebfaa2eea337215a3f107/index.html" width="100%" height="450" frameborder="0"></iframe>
 
+## Average Waveforms
+
+Average waveforms show the average spike shape for each unit:
+
+```python
+import spikeinterface as si
+import spikeinterface.extractors as se
+import figpack.spike_sorting.views as ssv
+
+# Generate synthetic data with ground truth
+recording, sorting = si.generate_ground_truth_recording(
+    durations=[120],
+    num_units=8,
+    seed=0,
+    num_channels=6,
+    noise_kwargs={"noise_levels": 50},
+)
+
+# Create sorting analyzer to compute waveforms
+sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+
+# Create average waveforms view
+view = ssv.AverageWaveforms.from_sorting_analyzer(sorting_analyzer)
+view.show(title="Average Waveforms Example", open_in_browser=True)
+```
+
+This visualization allows you to:
+
+- View the average spike waveform for each unit
+- See waveforms across all recording channels
+- Assess the spatial extent and amplitude of each unit
+- Identify the primary channel for each unit
+- Compare waveform shapes between units
+
+<iframe src="./spike_sorting_tutorial_average_waveforms/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+
 ## Autocorrelograms
 
 Autocorrelograms help assess the quality of unit isolation by showing refractory periods:
