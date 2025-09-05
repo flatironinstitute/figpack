@@ -25,12 +25,39 @@ export const FPMultiChannelTimeseries: React.FC<{
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [verticalSpacing, setVerticalSpacing] = useState<number>(3); // Now represents multiplier (0-10)
 
+  const customToolbarActions = useMemo(
+    () => [
+      {
+        id: "decrease-spacing",
+        label: "−",
+        onClick: () => setVerticalSpacing((prev) => Math.max(0, prev - 1)),
+        tooltip: "Decrease vertical spacing",
+      },
+      {
+        id: "spacing-display",
+        label: `${verticalSpacing}`,
+        onClick: () => {},
+        tooltip:
+          verticalSpacing === 0
+            ? "No spacing"
+            : `Spacing: ${verticalSpacing}x base unit`,
+      },
+      {
+        id: "increase-spacing",
+        label: "+",
+        onClick: () => setVerticalSpacing((prev) => Math.min(10, prev + 1)),
+        tooltip: "Increase vertical spacing",
+      },
+    ],
+    [verticalSpacing, setVerticalSpacing],
+  );
+
   const leftMargin = 100;
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width,
     height,
     leftMargin,
-    hasCustomActions: true, // We'll have vertical spacing control
+    customToolbarActions,
   });
 
   const client = useMultiChannelTimeseriesClient(zarrGroup);
@@ -298,33 +325,6 @@ export const FPMultiChannelTimeseries: React.FC<{
       yLabel: "Value",
     };
   }, [yRange]);
-
-  const customToolbarActions = useMemo(
-    () => [
-      {
-        id: "decrease-spacing",
-        label: "−",
-        onClick: () => setVerticalSpacing((prev) => Math.max(0, prev - 1)),
-        tooltip: "Decrease vertical spacing",
-      },
-      {
-        id: "spacing-display",
-        label: `${verticalSpacing}`,
-        onClick: () => {},
-        tooltip:
-          verticalSpacing === 0
-            ? "No spacing"
-            : `Spacing: ${verticalSpacing}x base unit`,
-      },
-      {
-        id: "increase-spacing",
-        label: "+",
-        onClick: () => setVerticalSpacing((prev) => Math.min(10, prev + 1)),
-        tooltip: "Increase vertical spacing",
-      },
-    ],
-    [verticalSpacing, setVerticalSpacing],
-  );
 
   return (
     <TimeScrollView3

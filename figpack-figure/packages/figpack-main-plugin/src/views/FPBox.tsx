@@ -63,7 +63,14 @@ export const FPBox: React.FC<{
       showTitles,
       collapsedItems,
     );
-  }, [width, availableHeight, direction, itemsMetadata, showTitles, collapsedItems]);
+  }, [
+    width,
+    availableHeight,
+    direction,
+    itemsMetadata,
+    showTitles,
+    collapsedItems,
+  ]);
 
   return (
     <div style={{ position: "relative", width, height, overflow: "hidden" }}>

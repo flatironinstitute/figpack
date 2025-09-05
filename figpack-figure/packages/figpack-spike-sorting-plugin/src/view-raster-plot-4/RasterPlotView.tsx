@@ -125,13 +125,13 @@ const RasterPlotView: FunctionComponent<Props> = ({
     };
   }, [dataClient, visibleStartTimeSec, visibleEndTimeSec, viewMode]);
 
+  const { onlyShowSelected, customToolbarActions } = useOnlyShowSelected();
+
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width,
     height,
-    hasCustomActions: true,
+    customToolbarActions,
   });
-
-  const { onlyShowSelected, customToolbarActions } = useOnlyShowSelected();
 
   const drawHeatmap = useCallback(() => {
     const canvas = canvasRef.current;
