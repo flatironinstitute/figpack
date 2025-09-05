@@ -45,6 +45,8 @@ type Props = {
   leftMargin?: number;
   customToolbarActions?: CustomToolbarAction[];
   onCanvasClick?: (x: number, y: number) => void;
+  hideNavToolbar?: boolean;
+  hideTimeAxisLabels?: boolean;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -63,6 +65,8 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   leftMargin,
   customToolbarActions,
   onCanvasClick,
+  hideNavToolbar = false,
+  hideTimeAxisLabels = false,
 }) => {
   const {
     visibleStartTimeSec,
@@ -82,7 +86,8 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     width,
     height,
     leftMargin,
-    hasCustomActions: customToolbarActions && customToolbarActions.length > 0,
+    customToolbarActions,
+    hideNavToolbar,
   });
 
   const timeToPixel = useMemo(() => {
@@ -152,6 +157,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         yTickSet={yAxisInfo?.showTicks ? yTickSet : undefined}
         yLabel={yAxisInfo?.yLabel}
         gridlineOpts={gridlineOpts}
+        hideTimeAxisLabels={hideTimeAxisLabels}
       />
     );
   }, [
@@ -356,10 +362,12 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       style={{ position: "absolute", width, height, background: "white" }}
     >
       {content}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
-        {timeScrollToolbar}
-        {customActionsToolbar}
-      </div>
+      {!hideNavToolbar && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
+          {timeScrollToolbar}
+          {customActionsToolbar}
+        </div>
+      )}
     </div>
   );
 };

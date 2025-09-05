@@ -20,10 +20,18 @@ def example_box_layout():
     Create an example Box layout with nested TimeseriesGraph views
     """
     # Create some sample timeseries graphs
-    graph1 = create_sample_graph("Graph 1", color="blue")
-    graph2 = create_sample_graph("Graph 2", color="red")
-    graph3 = create_sample_graph("Graph 3", color="green")
-    graph4 = create_sample_graph("Graph 4", color="purple")
+    graph1 = create_sample_graph(
+        "Graph 1", color="blue", hide_nav_toolbar=True, hide_time_axis_labels=True
+    )
+    graph2 = create_sample_graph(
+        "Graph 2", color="red", hide_nav_toolbar=True, hide_time_axis_labels=True
+    )
+    graph3 = create_sample_graph(
+        "Graph 3", color="green", hide_nav_toolbar=False, hide_time_axis_labels=False
+    )
+    graph4 = create_sample_graph(
+        "Graph 4", color="purple", hide_nav_toolbar=False, hide_time_axis_labels=False
+    )
 
     # Create a nested box layout with a title
     view = vv.Box(
@@ -76,7 +84,9 @@ def example_box_layout():
     return view
 
 
-def create_sample_graph(name: str, color: str = "blue"):
+def create_sample_graph(
+    name: str, color: str = "blue", hide_nav_toolbar=False, hide_time_axis_labels=False
+):
     """
     Create a sample TimeseriesGraph for testing
     """
@@ -85,6 +95,8 @@ def create_sample_graph(name: str, color: str = "blue"):
         y_range=[-10, 10],
         hide_x_gridlines=False,
         hide_y_gridlines=True,
+        hide_nav_toolbar=hide_nav_toolbar,
+        hide_time_axis_labels=hide_time_axis_labels,
     )
 
     # Generate sample data

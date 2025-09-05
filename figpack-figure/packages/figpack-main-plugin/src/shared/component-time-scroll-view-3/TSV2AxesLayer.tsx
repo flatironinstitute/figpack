@@ -13,6 +13,7 @@ export type TSV2AxesLayerProps = {
   yLabel?: string;
   width: number;
   height: number;
+  hideTimeAxisLabels?: boolean;
 };
 
 const emptyDrawData = {};
