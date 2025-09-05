@@ -1,43 +1,45 @@
 import { useMemo } from "react";
-
-const DefaultToolbarWidth = 18;
-
-const defaultMargins = {
-  left: 50,
-  right: 20,
-  top: 20,
-  bottom: 40,
-};
+import { CustomToolbarAction } from "./TimeScrollToolbar";
 
 export const useTimeScrollView3 = ({
   width,
   height,
-  hideToolbar,
   leftMargin,
-  hasCustomActions,
+  customToolbarActions,
+  hideTimeAxisLabels,
+  hideNavToolbar,
 }: {
   width: number;
   height: number;
-  hideToolbar?: boolean;
   leftMargin?: number;
-  hasCustomActions?: boolean;
+  customToolbarActions?: CustomToolbarAction[];
+  hideTimeAxisLabels?: boolean;
+  hideNavToolbar?: boolean;
 }) => {
+  const hasCustomActions =
+    customToolbarActions && customToolbarActions.length > 0;
   const margins = useMemo(
     () => ({
-      ...defaultMargins,
-      left: leftMargin || defaultMargins.left,
+      left: leftMargin || 80,
+      right: 20,
+      top: 10,
+      bottom: hideTimeAxisLabels ? 10 : 30,
     }),
-    [leftMargin],
+    [leftMargin, hideTimeAxisLabels],
   );
-  const toolbarWidth = hideToolbar ? 0 : DefaultToolbarWidth;
   // Calculate bottom toolbar height: 40px for main toolbar + 40px for custom actions (if present)
-  const bottomToolbarHeight = hasCustomActions ? 80 : 40;
-  const canvasWidth = width - toolbarWidth;
+  let bottomToolbarHeight = 0;
+  if (!hideNavToolbar) {
+    bottomToolbarHeight += 40; // Main toolbar height
+  }
+  if (hasCustomActions) {
+    bottomToolbarHeight += 40; // Custom actions height
+  }
+  const canvasWidth = width;
   const canvasHeight = height - bottomToolbarHeight;
   return {
     margins,
     canvasWidth,
     canvasHeight,
-    toolbarWidth,
   };
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeScrollView3 } from "../shared/component-time-scroll-view-3/useTimeScrollView3";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
@@ -15,14 +16,17 @@ export const FPTimeseriesGraph: React.FC<{
     visibleEndTimeSec,
   } = useTimeseriesSelection();
 
+  const client = useTimeseriesGraphClient(zarrGroup);
+
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
-  const leftMargin = 100;
+  const leftMargin = 50;
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width,
     height,
     leftMargin,
+    hideNavToolbar: client?.hideNavToolbar ?? false,
+    hideTimeAxisLabels: client?.hideTimeAxisLabels ?? false,
   });
-  const client = useTimeseriesGraphClient(zarrGroup);
 
   const [yRange, setYRange] = useState<
     { yMin: number; yMax: number } | undefined
@@ -59,8 +63,10 @@ export const FPTimeseriesGraph: React.FC<{
       const updateYLimits = (values: number[]) => {
         for (const value of values) {
           if (!isNaN(value) && isFinite(value)) {
-            if (globalYMin === undefined || value < globalYMin) globalYMin = value;
-            if (globalYMax === undefined || value > globalYMax) globalYMax = value;
+            if (globalYMin === undefined || value < globalYMin)
+              globalYMin = value;
+            if (globalYMax === undefined || value > globalYMax)
+              globalYMax = value;
           }
         }
       };
@@ -91,18 +97,33 @@ export const FPTimeseriesGraph: React.FC<{
             // Calculate visible timepoints and downsample factor
             const visibleDuration = visibleEndTimeSec - visibleStartTimeSec;
             const totalDuration = (s.nTimepoints - 1) / s.samplingFrequencyHz;
-            const visibleTimepoints = Math.ceil((visibleDuration / totalDuration) * s.nTimepoints);
-            const downsampleFactor = selectDownsampleFactor(visibleTimepoints, canvasWidth - margins.left - margins.right, s.downsampleFactors);
-            
+            const visibleTimepoints = Math.ceil(
+              (visibleDuration / totalDuration) * s.nTimepoints,
+            );
+            const downsampleFactor = selectDownsampleFactor(
+              visibleTimepoints,
+              canvasWidth - margins.left - margins.right,
+              s.downsampleFactors,
+            );
+
             let uniformData;
             if (downsampleFactor === 1) {
-              uniformData = await loadOriginalData(s, visibleStartTimeSec, visibleEndTimeSec);
+              uniformData = await loadOriginalData(
+                s,
+                visibleStartTimeSec,
+                visibleEndTimeSec,
+              );
               // Collect y-limits from all channels
               for (const channelData of uniformData.data) {
                 updateYLimits(Array.from(channelData));
               }
             } else {
-              uniformData = await loadDownsampledData(s, downsampleFactor, visibleStartTimeSec, visibleEndTimeSec);
+              uniformData = await loadDownsampledData(
+                s,
+                downsampleFactor,
+                visibleStartTimeSec,
+                visibleEndTimeSec,
+              );
               // Collect y-limits from min/max values of all channels
               for (const channelMinMaxData of uniformData.data) {
                 updateYLimits(Array.from(channelMinMaxData));
@@ -110,7 +131,10 @@ export const FPTimeseriesGraph: React.FC<{
             }
             loadedSeriesData.push({ series: s, data: uniformData });
           } catch (error) {
-            console.error("Failed to load uniform series data for y-limits:", error);
+            console.error(
+              "Failed to load uniform series data for y-limits:",
+              error,
+            );
             loadedSeriesData.push({ series: s });
           }
         }
@@ -128,7 +152,7 @@ export const FPTimeseriesGraph: React.FC<{
         yMin: globalYMin - padding,
         yMax: globalYMax + padding,
       };
-      
+
       setYRange(newYRange);
 
       // Set clipping region to graph area
@@ -141,7 +165,7 @@ export const FPTimeseriesGraph: React.FC<{
         canvasHeight - margins.top - margins.bottom,
       );
       context.clip();
-      
+
       const timeToPixel = (t: number) => {
         return (
           margins.left +
@@ -155,7 +179,8 @@ export const FPTimeseriesGraph: React.FC<{
           canvasHeight -
           margins.bottom -
           ((v - (newYRange ? newYRange.yMin : 0)) /
-            ((newYRange ? newYRange.yMax : 10) - (newYRange ? newYRange.yMin : 0))) *
+            ((newYRange ? newYRange.yMax : 10) -
+              (newYRange ? newYRange.yMin : 0))) *
             (canvasHeight - margins.top - margins.bottom)
         );
       };
@@ -207,7 +232,7 @@ export const FPTimeseriesGraph: React.FC<{
     visibleEndTimeSec,
     canvasWidth,
     canvasHeight,
-    margins
+    margins,
   ]);
 
   const yAxisInfo = useMemo(() => {
@@ -230,6 +255,8 @@ export const FPTimeseriesGraph: React.FC<{
       }}
       yAxisInfo={yAxisInfo}
       leftMargin={leftMargin}
+      hideNavToolbar={client?.hideNavToolbar ?? false}
+      hideTimeAxisLabels={client?.hideTimeAxisLabels ?? false}
     />
   );
 };
@@ -371,16 +398,20 @@ const paintUniformWithData = (
   }
 };
 
-const selectDownsampleFactor = (visibleTimepoints: number, canvasWidth: number, downsampleFactors: number[]): number => {
+const selectDownsampleFactor = (
+  visibleTimepoints: number,
+  canvasWidth: number,
+  downsampleFactors: number[],
+): number => {
   // Find the largest downsample factor such that downsampled points > canvasWidth
   const availableFactors = [1, ...downsampleFactors].sort((a, b) => b - a);
-  
+
   for (const factor of availableFactors) {
     if (visibleTimepoints / factor > canvasWidth) {
       return factor;
     }
   }
-  
+
   return availableFactors[availableFactors.length - 1] || 1;
 };
 
@@ -397,15 +428,19 @@ const loadOriginalData = async (
   // Calculate time indices for visible range
   const startIndex = Math.max(
     0,
-    Math.floor((visibleStartTimeSec - series.startTimeSec) * series.samplingFrequencyHz),
+    Math.floor(
+      (visibleStartTimeSec - series.startTimeSec) * series.samplingFrequencyHz,
+    ),
   );
   const endIndex = Math.min(
     series.nTimepoints - 1,
-    Math.ceil((visibleEndTimeSec - series.startTimeSec) * series.samplingFrequencyHz),
+    Math.ceil(
+      (visibleEndTimeSec - series.startTimeSec) * series.samplingFrequencyHz,
+    ),
   );
-  
+
   const length = endIndex - startIndex + 1;
-  
+
   // Load visible chunk of original data
   const rawData = await series.zarrGroup.file.getDatasetData(
     join(series.zarrGroup.path, "data"),
@@ -416,11 +451,11 @@ const loadOriginalData = async (
       ],
     },
   );
-  
+
   if (!rawData) {
     throw new Error("Failed to load original data");
   }
-  
+
   // Convert to per-channel arrays
   const channelData: Float32Array[] = [];
   for (let ch = 0; ch < series.nChannels; ch++) {
@@ -430,7 +465,7 @@ const loadOriginalData = async (
     }
     channelData.push(channelArray);
   }
-  
+
   return {
     data: channelData,
     startTimeSec: series.startTimeSec + startIndex / series.samplingFrequencyHz,
@@ -454,19 +489,23 @@ const loadDownsampledData = async (
   const datasetName = `data_ds_${downsampleFactor}`;
   const downsampledLength = Math.ceil(series.nTimepoints / downsampleFactor);
   const downsampledSamplingFreq = series.samplingFrequencyHz / downsampleFactor;
-  
+
   // Calculate downsampled indices for visible range
   const startIndex = Math.max(
     0,
-    Math.floor((visibleStartTimeSec - series.startTimeSec) * downsampledSamplingFreq),
+    Math.floor(
+      (visibleStartTimeSec - series.startTimeSec) * downsampledSamplingFreq,
+    ),
   );
   const endIndex = Math.min(
     downsampledLength - 1,
-    Math.ceil((visibleEndTimeSec - series.startTimeSec) * downsampledSamplingFreq),
+    Math.ceil(
+      (visibleEndTimeSec - series.startTimeSec) * downsampledSamplingFreq,
+    ),
   );
-  
+
   const length = endIndex - startIndex + 1;
-  
+
   // Load visible chunk of downsampled data (shape: [length, 2, nChannels])
   const rawData = await series.zarrGroup.file.getDatasetData(
     join(series.zarrGroup.path, datasetName),
@@ -478,25 +517,29 @@ const loadDownsampledData = async (
       ],
     },
   );
-  
+
   if (!rawData) {
     throw new Error(`Failed to load downsampled data: ${datasetName}`);
   }
-  
+
   // Convert to per-channel min/max arrays
   const channelData: Float32Array[] = [];
   for (let ch = 0; ch < series.nChannels; ch++) {
     const channelArray = new Float32Array(length * 2); // min/max pairs
     for (let i = 0; i < length; i++) {
       // Data layout: [timepoint][min/max][channel]
-      const minValue = rawData[i * 2 * series.nChannels + 0 * series.nChannels + ch] as number;
-      const maxValue = rawData[i * 2 * series.nChannels + 1 * series.nChannels + ch] as number;
+      const minValue = rawData[
+        i * 2 * series.nChannels + 0 * series.nChannels + ch
+      ] as number;
+      const maxValue = rawData[
+        i * 2 * series.nChannels + 1 * series.nChannels + ch
+      ] as number;
       channelArray[i * 2] = minValue;
       channelArray[i * 2 + 1] = maxValue;
     }
     channelData.push(channelArray);
   }
-  
+
   return {
     data: channelData,
     startTimeSec: series.startTimeSec + startIndex / downsampledSamplingFreq,
@@ -508,27 +551,35 @@ const loadDownsampledData = async (
 
 const paintOriginalChannels = (
   context: CanvasRenderingContext2D,
-  visibleData: { data: Float32Array[]; startTimeSec: number; samplingFrequency: number; length: number },
+  visibleData: {
+    data: Float32Array[];
+    startTimeSec: number;
+    samplingFrequency: number;
+    length: number;
+  },
   series: UniformSeries,
-  options: { timeToPixel: (t: number) => number; valueToPixel: (v: number) => number },
+  options: {
+    timeToPixel: (t: number) => number;
+    valueToPixel: (v: number) => number;
+  },
 ) => {
   const { timeToPixel, valueToPixel } = options;
-  
+
   for (let channelIndex = 0; channelIndex < series.nChannels; channelIndex++) {
     const color = series.colors[channelIndex] || "blue";
     const dataArray = visibleData.data[channelIndex];
-    
+
     context.strokeStyle = color;
     context.lineWidth = series.width;
     context.setLineDash([]);
-    
+
     context.beginPath();
     for (let i = 0; i < visibleData.length; i++) {
       const time = visibleData.startTimeSec + i / visibleData.samplingFrequency;
       const value = dataArray[i];
       const x = timeToPixel(time);
       const y = valueToPixel(value);
-      
+
       if (i === 0) {
         context.moveTo(x, y);
       } else {
@@ -541,20 +592,28 @@ const paintOriginalChannels = (
 
 const paintDownsampledChannels = (
   context: CanvasRenderingContext2D,
-  visibleData: { data: Float32Array[]; startTimeSec: number; samplingFrequency: number; length: number },
+  visibleData: {
+    data: Float32Array[];
+    startTimeSec: number;
+    samplingFrequency: number;
+    length: number;
+  },
   series: UniformSeries,
-  options: { timeToPixel: (t: number) => number; valueToPixel: (v: number) => number },
+  options: {
+    timeToPixel: (t: number) => number;
+    valueToPixel: (v: number) => number;
+  },
 ) => {
   const { timeToPixel, valueToPixel } = options;
-  
+
   for (let channelIndex = 0; channelIndex < series.nChannels; channelIndex++) {
     const color = series.colors[channelIndex] || "blue";
     const minMaxData = visibleData.data[channelIndex];
-    
+
     context.strokeStyle = color;
     context.lineWidth = series.width;
     context.setLineDash([]);
-    
+
     context.beginPath();
     for (let i = 0; i < visibleData.length; i++) {
       const time = visibleData.startTimeSec + i / visibleData.samplingFrequency;
@@ -563,7 +622,7 @@ const paintDownsampledChannels = (
       const x = timeToPixel(time);
       const yMin = valueToPixel(minValue);
       const yMax = valueToPixel(maxValue);
-      
+
       // Draw vertical line from min to max
       context.moveTo(x, yMin);
       context.lineTo(x, yMax);
@@ -610,7 +669,7 @@ const paintLegend = (
       // Regular series
       const seriesIndex = client.series.indexOf(s);
       const name = client.seriesNames?.[seriesIndex] || "untitled";
-      
+
       if (s.seriesType === "line") {
         legendEntries.push({
           name,
@@ -801,15 +860,27 @@ const useTimeseriesGraphClient = (zarrGroup: ZarrGroup) => {
 
 class TimeseriesGraphClient {
   constructor(
-    public series: (LineSeries | MarkerSeries | IntervalSeries | UniformSeries)[],
+    public series: (
+      | LineSeries
+      | MarkerSeries
+      | IntervalSeries
+      | UniformSeries
+    )[],
     public limits: { tMin: number; tMax: number },
     public yLabel: string,
     public legendOpts: { location?: string; hideLegend?: boolean } = {},
     public seriesNames: string[] = [],
+    public hideNavToolbar: boolean = false,
+    public hideTimeAxisLabels: boolean = false,
   ) {}
   static async create(zarrGroup: ZarrGroup) {
     const seriesNames = zarrGroup.attrs["series_names"] || [];
-    const series: (LineSeries | MarkerSeries | IntervalSeries | UniformSeries)[] = [];
+    const series: (
+      | LineSeries
+      | MarkerSeries
+      | IntervalSeries
+      | UniformSeries
+    )[] = [];
     for (const name of seriesNames) {
       const seriesGroup = await zarrGroup.file.getGroup(
         join(zarrGroup.path, name),
@@ -930,7 +1001,8 @@ class TimeseriesGraphClient {
           if (tMax === undefined || t_end > tMax) tMax = t_end;
         }
       } else if (s.seriesType === "uniform") {
-        const endTime = s.startTimeSec + (s.nTimepoints - 1) / s.samplingFrequencyHz;
+        const endTime =
+          s.startTimeSec + (s.nTimepoints - 1) / s.samplingFrequencyHz;
         if (tMin === undefined || s.startTimeSec < tMin) tMin = s.startTimeSec;
         if (tMax === undefined || endTime > tMax) tMax = endTime;
       }
@@ -943,12 +1015,17 @@ class TimeseriesGraphClient {
     };
     const yLabel = zarrGroup.attrs["y_label"] || "";
     const legendOpts = zarrGroup.attrs["legend_opts"] || {};
+    const hideNavToolbar = zarrGroup.attrs["hide_nav_toolbar"] || false;
+    const hideTimeAxisLabels =
+      zarrGroup.attrs["hide_time_axis_labels"] || false;
     return new TimeseriesGraphClient(
       series,
       limits,
       yLabel,
       legendOpts,
       seriesNames,
+      hideNavToolbar,
+      hideTimeAxisLabels,
     );
   }
 }

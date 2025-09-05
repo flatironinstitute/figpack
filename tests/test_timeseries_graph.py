@@ -39,6 +39,21 @@ def test_init_with_options():
     assert graph.y_label == "Value"
 
 
+def test_init_with_nav_and_labels_options():
+    """Test initialization with nav toolbar and time axis labels options"""
+    graph = TimeseriesGraph(
+        hide_nav_toolbar=True,
+        hide_time_axis_labels=True,
+    )
+    assert graph.hide_nav_toolbar
+    assert graph.hide_time_axis_labels
+
+    # Test default values
+    graph2 = TimeseriesGraph()
+    assert not graph2.hide_nav_toolbar
+    assert not graph2.hide_time_axis_labels
+
+
 def test_line_series():
     """Test adding and storing line series"""
     graph = TimeseriesGraph()
@@ -224,6 +239,8 @@ def test_zarr_storage():
         legend_opts={"location": "northwest"},
         y_range=[-1.0, 1.0],
         y_label="Value",
+        hide_nav_toolbar=True,
+        hide_time_axis_labels=True,
     )
 
     # Add different types of series
@@ -250,6 +267,8 @@ def test_zarr_storage():
     assert group.attrs["legend_opts"] == {"location": "northwest"}
     assert group.attrs["y_range"] == [-1.0, 1.0]
     assert group.attrs["y_label"] == "Value"
+    assert group.attrs["hide_nav_toolbar"] is True
+    assert group.attrs["hide_time_axis_labels"] is True
     assert set(group.attrs["series_names"]) == {"line", "markers", "intervals"}
 
     # Verify line series

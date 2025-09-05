@@ -170,7 +170,7 @@ graph = vv.TimeseriesGraph(
     legend_opts={"location": "northwest"}
 )
 
-# Generate large uniform dataset (100k points)
+# Generate large uniform dataset (1M points)
 n_timepoints = 1_000_000
 sampling_freq_hz = 1000.0  # 1 kHz
 start_time_sec = 0.0
@@ -414,8 +414,12 @@ import numpy as np
 import figpack.views as vv
 
 # Create some simple graphs
-def create_simple_graph(name, color, freq):
-    graph = vv.TimeseriesGraph(y_label="Amplitude")
+def create_simple_graph(name, color, freq, *, hide_nav=False, hide_time_labels=False):
+    graph = vv.TimeseriesGraph(
+        y_label="Amplitude",
+        hide_nav_toolbar=hide_nav,
+        hide_time_axis_labels=hide_time_labels
+    )
     t = np.linspace(0, 5, 200)
     y = np.sin(2 * np.pi * freq * t)
     graph.add_line_series(
@@ -426,13 +430,13 @@ def create_simple_graph(name, color, freq):
     )
     return graph
 
-graph1 = create_simple_graph("1 Hz", "blue", 1)
-graph2 = create_simple_graph("2 Hz", "red", 2)
-graph3 = create_simple_graph("3 Hz", "green", 3)
+graph1 = create_simple_graph("1 Hz", "blue", 1, hide_nav=True, hide_time_labels=True)
+graph2 = create_simple_graph("2 Hz", "red", 2, hide_nav=True, hide_time_labels=True)
+graph3 = create_simple_graph("3 Hz", "green", 3)  # Bottom graph shows navigation and labels
 
-# Create horizontal layout with a title
+# Create vertical layout with a title
 view = vv.Box(
-    direction="horizontal",
+    direction="vertical",
     title="Signal Comparison Dashboard",  # Box title appears at the top
     items=[
         vv.LayoutItem(graph1, title="Graph 1"),
@@ -444,7 +448,7 @@ view = vv.Box(
 view.show(title="Box Layout Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_box_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe src="./tutorial_box_layout/index.html?embedded=1" width="100%" height="700" frameborder="0"></iframe>
 
 ## TabLayout
 

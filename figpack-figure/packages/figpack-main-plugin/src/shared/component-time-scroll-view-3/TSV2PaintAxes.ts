@@ -11,9 +11,16 @@ export const paintAxes = (
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
   const xAxisVerticalPosition = height - margins.bottom;
-  paintTimeTicks(context, timeTicks, xAxisVerticalPosition, margins.top, {
-    hideGridlines: gridlineOpts?.hideX,
-  });
+  paintTimeTicks(
+    context,
+    timeTicks,
+    xAxisVerticalPosition,
+    margins.top,
+    {
+      hideGridlines: gridlineOpts?.hideX,
+    },
+    props.hideTimeAxisLabels,
+  );
   context.strokeStyle = "lightgray";
   drawLine(
     context,
@@ -51,8 +58,9 @@ const paintTimeTicks = (
   xAxisPixelHeight: number,
   plotTopPixelHeight: number,
   o: { hideGridlines?: boolean },
+  hideTimeAxisLabels?: boolean,
 ) => {
-  const hideTimeAxis = false;
+  const hideTimeAxis = hideTimeAxisLabels || false;
   if (!timeTicks || timeTicks.length === 0) return;
   // Grid line length: if time axis is shown, grid lines extends 5 pixels below it. Otherwise they should stop at the edge of the plotting space.
   const labelOffsetFromGridline = 2;

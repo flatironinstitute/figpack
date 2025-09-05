@@ -24,12 +24,40 @@ export const FPSpectrogram: React.FC<{
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [brightness, setBrightness] = useState<number>(50); // Default brightness 50
 
+  const BrightnessSlider = useMemo(() => {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ fontSize: "12px", color: "#495057" }}>Brightness:</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={brightness}
+          onChange={(e) => setBrightness(Number(e.target.value))}
+          style={{ width: "100px" }}
+          title={`Brightness: ${brightness}`}
+        />
+      </div>
+    );
+  }, [brightness]);
+
+  const customToolbarActions = useMemo(
+    () => [
+      {
+        id: "brightness-slider",
+        label: "", // Empty label since we're using a custom component
+        component: BrightnessSlider,
+      },
+    ],
+    [BrightnessSlider],
+  );
+
   const leftMargin = 100;
   const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
     width,
     height,
     leftMargin,
-    hasCustomActions: true,
+    customToolbarActions,
   });
 
   const client = useSpectrogramClient(zarrGroup);
@@ -239,34 +267,6 @@ export const FPSpectrogram: React.FC<{
       yLabel: "Frequency (Hz)",
     };
   }, [yRange]);
-
-  const BrightnessSlider = useMemo(() => {
-    return (
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <span style={{ fontSize: "12px", color: "#495057" }}>Brightness:</span>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={brightness}
-          onChange={(e) => setBrightness(Number(e.target.value))}
-          style={{ width: "100px" }}
-          title={`Brightness: ${brightness}`}
-        />
-      </div>
-    );
-  }, [brightness]);
-
-  const customToolbarActions = useMemo(
-    () => [
-      {
-        id: "brightness-slider",
-        label: "", // Empty label since we're using a custom component
-        component: BrightnessSlider,
-      },
-    ],
-    [BrightnessSlider],
-  );
 
   return (
     <TimeScrollView3
