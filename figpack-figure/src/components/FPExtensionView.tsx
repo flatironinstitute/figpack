@@ -1,6 +1,7 @@
 import { FPViewComponentProps, ZarrGroup } from "@figpack/plugin-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useFigureUrl } from "../hooks/useFigureUrl";
+import { useExtensionDevUrls } from "../hooks/useExtensionDevUrls";
 
 interface ExtensionViewInstance {
   destroy?: () => void;
@@ -39,6 +40,7 @@ export const FPExtensionView: React.FC<
     ((width: number, height: number) => void) | null
   >(null);
   const figureUrl = useFigureUrl();
+  const extensionDevUrls = useExtensionDevUrls();
 
   // Load the extension script
   useEffect(() => {
@@ -53,11 +55,24 @@ export const FPExtensionView: React.FC<
 
         const safeName = extensionName.replace(/[^a-zA-Z0-9\-_]/g, "");
 
-        const scriptUrlsToLoad = [figureUrl + `extension-${safeName}.js`];
-        for (const additionalScriptName of additionalScriptNames) {
-          scriptUrlsToLoad.push(
-            figureUrl + `extension-${safeName}-${additionalScriptName}`,
+        // Check if we have a dev URL for this extension
+        const devUrl = extensionDevUrls[extensionName];
+        let scriptUrlsToLoad: string[];
+
+        if (devUrl) {
+          // Use dev URL for main script, ignore additional scripts in dev mode
+          console.log(
+            `Loading extension '${extensionName}' from dev server: ${devUrl}`,
           );
+          scriptUrlsToLoad = [devUrl];
+        } else {
+          // Use bundled files
+          scriptUrlsToLoad = [figureUrl + `extension-${safeName}.js`];
+          for (const additionalScriptName of additionalScriptNames) {
+            scriptUrlsToLoad.push(
+              figureUrl + `extension-${safeName}-${additionalScriptName}`,
+            );
+          }
         }
 
         for (const scriptSrc of scriptUrlsToLoad) {
@@ -115,7 +130,7 @@ export const FPExtensionView: React.FC<
         delete extensionsLoading[extensionName];
       });
     }
-  }, [extensionName, additionalScriptNames, figureUrl]);
+  }, [extensionName, additionalScriptNames, figureUrl, extensionDevUrls]);
 
   // Render the extension when loaded
   useEffect(() => {
