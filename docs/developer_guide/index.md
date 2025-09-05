@@ -180,6 +180,7 @@ figpack-manage
 figpack-api
 backlinks
 extensions
+extension_hmr_workflow
 ```
 
 ---
