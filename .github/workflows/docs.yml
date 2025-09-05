@@ -50,6 +50,10 @@ jobs:
         run: |
           cd extension_packages/figpack_force_graph
           pip install -e .
+          cd ../figpack_3d
+          npm install
+          npm run build
+          pip install -e .
 
       - name: Build documentation
         run: |

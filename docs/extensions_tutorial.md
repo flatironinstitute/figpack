@@ -2,13 +2,11 @@
 
 This tutorial shows how to create views defined in figpack extensions. Extensions are separate packages that can be installed to add new types of visualizations to figpack.
 
-## Currently Available Extensions
-
-### figpack_force_graph
+## figpack_force_graph
 
 The figpack_force_graph extension provides visualizations of graphs using the [force-graph](https://github.com/vasturiano/force-graph) library.
 
-#### Installation
+### Installation
 
 First, clone the repository and install the extension:
 
@@ -18,7 +16,7 @@ cd figpack/extension_packages/figpack_force_graph
 pip install -e .
 ```
 
-#### Basic Usage
+### Basic Usage
 
 Here's a simple example showing how to create a force-directed graph:
 
@@ -60,7 +58,7 @@ graph.show(title="Force Graph Example", open_in_browser=True)
 
 <iframe src="./tutorial_force_graph_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
 
-## Node Properties
+### Node Properties
 
 Each node in the graph can have the following properties:
 
@@ -69,7 +67,7 @@ Each node in the graph can have the following properties:
 - `val` (optional): Numeric value affecting node size
 - `color` (optional): Color of the node (CSS color string)
 
-## Link Properties
+### Link Properties
 
 Each link in the graph can have the following properties:
 
@@ -78,7 +76,7 @@ Each link in the graph can have the following properties:
 - `color` (optional): Color of the link (CSS color string)
 - `width` (optional): Width of the link line
 
-## View Configuration
+### View Configuration
 
 The ForceGraphView accepts several configuration options:
 
@@ -89,3 +87,61 @@ The ForceGraphView accepts several configuration options:
 - `enable_node_hover`: Enable/disable node hover interactions
 
 For more advanced usage and additional configuration options, please refer to the [extension documentation](https://github.com/flatironinstitute/figpack/tree/main/extension_packages/figpack_force_graph).
+
+## figpack_3d
+
+The figpack_3d extension provides interactive 3D visualizations using the [Three.js](https://threejs.org/) library.
+
+### Installation
+
+First, clone the repository and install the extension:
+
+```bash
+git clone https://github.com/flatironinstitute/figpack.git
+cd figpack/extension_packages/figpack_3d
+npm install
+npm run build
+pip install -e .
+```
+
+### Basic Usage
+
+Here's a simple example showing how to create a 3D scene:
+
+```python
+from figpack_3d import ThreeDView
+import numpy as np
+
+def create_3d_scene():
+    """Create a basic 3D scene with geometric objects"""
+    view = ThreeDView(background_color="#222222")
+    
+    # Add a red cube at the center
+    view.add_cube(position=(0, 0, 0), color="#ff4444")
+    
+    # Add blue spheres around the cube
+    for i in range(4):
+        angle = i * np.pi / 2
+        x = 3 * np.cos(angle)
+        z = 3 * np.sin(angle)
+        view.add_sphere(position=(x, 0, z), color="#4444ff")
+    
+    # Add a wireframe cylinder
+    view.add_cylinder(
+        position=(0, 2, 0), 
+        color="#44ff44", 
+        wireframe=True
+    )
+    
+    return view
+
+# Create and display the 3D scene
+scene = create_3d_scene()
+scene.show(title="3D Scene Example", open_in_browser=True)
+```
+
+<iframe src="./tutorial_3d_scene_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+
+The figpack_3d extension supports cubes, spheres, and cylinders with customizable positions, colors, rotations, and scales. Mouse controls allow rotation (drag) and zooming (mouse wheel).
+
+For more advanced usage, please refer to the [extension documentation](https://github.com/flatironinstitute/figpack/tree/main/extension_packages/figpack_3d).
