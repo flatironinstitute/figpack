@@ -1,8 +1,4 @@
-import {
-  TimeScrollView3,
-  useTimeScrollView3,
-  useTimeseriesSelection,
-} from "@figpack/main-plugin";
+import { TimeScrollView3, useTimeseriesSelection } from "@figpack/main-plugin";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   idToNum,
@@ -10,6 +6,7 @@ import {
   sortIds,
   useSelectedUnitIds,
 } from "../context-unit-selection";
+import { Splitter } from "../core-views/component-splitter";
 import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import { getUnitColor } from "../view-units-table/unitColors";
 import { ViewToolbar } from "../ViewToolbar";
@@ -18,7 +15,6 @@ import {
   SpikeAmplitudesDataClient,
   SpikeAmplitudesRangeData,
 } from "./SpikeAmplitudesDataClient";
-import { Splitter } from "../core-views/component-splitter";
 
 type Props = {
   dataClient: SpikeAmplitudesDataClient;
@@ -46,16 +42,18 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const leftMargin = 100;
   const TOOLBAR_WIDTH = viewToolbarWidth;
 
   const { onlyShowSelected, customToolbarActions } = useOnlyShowSelected();
 
-  const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
-    width: width - TOOLBAR_WIDTH,
-    height,
-    leftMargin,
-  });
+  const [canvasWidth, setCanvasWidth] = useState<number>(width);
+  const [canvasHeight, setCanvasHeight] = useState<number>(height);
+  const [margins, setMargins] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  } | null>(null);
 
   const metadata = dataClient.metadata;
 
@@ -173,6 +171,7 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
   // Canvas drawing effect
   useEffect(() => {
     if (!context || !rangeData || !metadata) return;
+    if (!margins) return;
     if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
       return;
 
@@ -325,13 +324,15 @@ const SpikeAmplitudesView: FunctionComponent<Props> = ({
         <TimeScrollView3
           width={width - TOOLBAR_WIDTH}
           height={height}
-          onCanvasElement={(canvas) => {
+          onCanvasElement={(canvas, canvasWidth, canvasHeight, margins) => {
             if (!canvas) return;
             const ctx = canvas.getContext("2d");
             setContext(ctx);
+            setCanvasWidth(canvasWidth);
+            setCanvasHeight(canvasHeight);
+            setMargins(margins);
           }}
           yAxisInfo={yAxisInfo}
-          leftMargin={leftMargin}
           customToolbarActions={customToolbarActions}
         />
       </Splitter>

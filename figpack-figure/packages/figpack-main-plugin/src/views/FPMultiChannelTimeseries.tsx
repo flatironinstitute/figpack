@@ -1,5 +1,4 @@
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
-import { useTimeScrollView3 } from "../shared/component-time-scroll-view-3/useTimeScrollView3";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { colorForUnitId } from "../core-utils/unit-colors";
 import { useEffect, useMemo, useState } from "react";
@@ -52,14 +51,6 @@ export const FPMultiChannelTimeseries: React.FC<{
     [verticalSpacing, setVerticalSpacing],
   );
 
-  const leftMargin = 100;
-  const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
-    width,
-    height,
-    leftMargin,
-    customToolbarActions,
-  });
-
   const client = useMultiChannelTimeseriesClient(zarrGroup);
   const { baseSpacingUnit } = useBaseSpacingUnit(client);
 
@@ -76,9 +67,19 @@ export const FPMultiChannelTimeseries: React.FC<{
     length: number;
   } | null>(null);
 
+  const [canvasWidth, setCanvasWidth] = useState<number>(width);
+  const [canvasHeight, setCanvasHeight] = useState<number>(height);
+  const [margins, setMargins] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  } | null>(null);
+
   useEffect(() => {
     if (
       !client ||
+      !margins ||
       visibleStartTimeSec === undefined ||
       visibleEndTimeSec === undefined
     ) {
@@ -109,14 +110,7 @@ export const FPMultiChannelTimeseries: React.FC<{
     return () => {
       canceled = true;
     };
-  }, [
-    client,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    canvasWidth,
-    margins.left,
-    margins.right,
-  ]);
+  }, [client, visibleStartTimeSec, visibleEndTimeSec, canvasWidth, margins]);
 
   const [yRange, setYRange] = useState<
     { yMin: number; yMax: number } | undefined
@@ -206,6 +200,7 @@ export const FPMultiChannelTimeseries: React.FC<{
 
   useEffect(() => {
     if (!context) return;
+    if (!margins) return;
     if (!visibleData || !client) return;
     let canceled = false;
 
@@ -330,13 +325,15 @@ export const FPMultiChannelTimeseries: React.FC<{
     <TimeScrollView3
       width={width}
       height={height}
-      onCanvasElement={(canvas) => {
+      onCanvasElement={(canvas, canvasWidth, canvasHeight, margins) => {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         setContext(ctx);
+        setCanvasWidth(canvasWidth);
+        setCanvasHeight(canvasHeight);
+        setMargins(margins);
       }}
       yAxisInfo={yAxisInfo}
-      leftMargin={leftMargin}
       customToolbarActions={customToolbarActions}
     />
   );

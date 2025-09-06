@@ -42,6 +42,8 @@ def example_timeseries_graph_uniform(*, height=500):
         hide_x_gridlines=False,
         hide_y_gridlines=True,
         y_label="Amplitude",
+        # hide_nav_toolbar=True,
+        hide_time_axis_labels=True,
     )
 
     # Parameters for the uniform series

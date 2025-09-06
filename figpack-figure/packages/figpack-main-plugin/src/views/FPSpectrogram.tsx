@@ -1,14 +1,13 @@
-import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
-import { useTimeScrollView3 } from "../shared/component-time-scroll-view-3/useTimeScrollView3";
-import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
-import { useEffect, useMemo, useState } from "react";
 import { ZarrGroup } from "@figpack/plugin-sdk";
-import { useSpectrogramClient } from "./Spectrogram/useSpectrogramClient";
+import { useEffect, useMemo, useState } from "react";
+import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
+import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import {
+  calculateVisibleMaxValue,
   paintSpectrogramHeatmap,
   paintSpectrogramNonUniform,
-  calculateVisibleMaxValue,
 } from "./Spectrogram/spectrogramRendering";
+import { useSpectrogramClient } from "./Spectrogram/useSpectrogramClient";
 
 export const FPSpectrogram: React.FC<{
   zarrGroup: ZarrGroup;
@@ -52,13 +51,14 @@ export const FPSpectrogram: React.FC<{
     [BrightnessSlider],
   );
 
-  const leftMargin = 100;
-  const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
-    width,
-    height,
-    leftMargin,
-    customToolbarActions,
-  });
+  const [canvasWidth, setCanvasWidth] = useState<number>(width);
+  const [canvasHeight, setCanvasHeight] = useState<number>(height);
+  const [margins, setMargins] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  } | null>(null);
 
   const client = useSpectrogramClient(zarrGroup);
 
@@ -76,6 +76,7 @@ export const FPSpectrogram: React.FC<{
   useEffect(() => {
     if (
       !client ||
+      !margins ||
       visibleStartTimeSec === undefined ||
       visibleEndTimeSec === undefined
     ) {
@@ -106,14 +107,7 @@ export const FPSpectrogram: React.FC<{
     return () => {
       canceled = true;
     };
-  }, [
-    client,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    canvasWidth,
-    margins.left,
-    margins.right,
-  ]);
+  }, [client, visibleStartTimeSec, visibleEndTimeSec, canvasWidth, margins]);
 
   const [yRange, setYRange] = useState<
     { yMin: number; yMax: number } | undefined
@@ -145,6 +139,7 @@ export const FPSpectrogram: React.FC<{
 
   useEffect(() => {
     if (!context) return;
+    if (!margins) return;
     if (!visibleData || !client) return;
     let canceled = false;
 
@@ -272,13 +267,15 @@ export const FPSpectrogram: React.FC<{
     <TimeScrollView3
       width={width}
       height={height}
-      onCanvasElement={(canvas) => {
+      onCanvasElement={(canvas, canvasWidth, canvasHeight, margins) => {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         setContext(ctx);
+        setCanvasWidth(canvasWidth);
+        setCanvasHeight(canvasHeight);
+        setMargins(margins);
       }}
       yAxisInfo={yAxisInfo}
-      leftMargin={leftMargin}
       customToolbarActions={customToolbarActions}
     />
   );

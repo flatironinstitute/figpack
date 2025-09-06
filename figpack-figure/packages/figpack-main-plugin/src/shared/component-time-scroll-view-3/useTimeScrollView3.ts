@@ -20,7 +20,7 @@ export const useTimeScrollView3 = ({
     customToolbarActions && customToolbarActions.length > 0;
   const margins = useMemo(
     () => ({
-      left: leftMargin || 80,
+      left: leftMargin || 60,
       right: 20,
       top: 10,
       bottom: hideTimeAxisLabels ? 10 : 30,

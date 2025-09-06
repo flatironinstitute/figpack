@@ -27,7 +27,12 @@ import suppressWheelScroll from "./supressWheelScroll";
 type Props = {
   width: number;
   height: number;
-  onCanvasElement: (elmt: HTMLCanvasElement) => void;
+  onCanvasElement: (
+    elmt: HTMLCanvasElement,
+    canvasWidth: number,
+    canvasHeight: number,
+    margins: { top: number; bottom: number; left: number; right: number },
+  ) => void;
   gridlineOpts?: { hideX: boolean; hideY: boolean };
   onKeyDown?: (e: React.KeyboardEvent) => void;
   onMouseDown?: (e: React.MouseEvent) => void;
@@ -277,6 +282,14 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     );
   }, [canvasWidth, plotHeight, selectionRect]);
 
+  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!canvasElement) return;
+    onCanvasElement(canvasElement, canvasWidth, canvasHeight, margins);
+  }, [canvasElement, canvasWidth, canvasHeight, margins]);
+
   const content = useMemo(() => {
     return (
       <div
@@ -301,7 +314,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
             width: canvasWidth,
             height: plotHeight,
           }}
-          ref={onCanvasElement}
+          ref={(elmt) => setCanvasElement(elmt)}
           width={canvasWidth}
           height={plotHeight}
         />
