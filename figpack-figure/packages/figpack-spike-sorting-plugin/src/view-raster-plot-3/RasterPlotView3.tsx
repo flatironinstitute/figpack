@@ -1,4 +1,8 @@
-import { colorForUnitId } from "../core-utils";
+import {
+  TimeScrollView3,
+  useTimeRange,
+  useTimeseriesSelection,
+} from "@figpack/main-plugin";
 import {
   FunctionComponent,
   useCallback,
@@ -7,13 +11,8 @@ import {
   useState,
 } from "react";
 import { idToNum, useSelectedUnitIds } from "../context-unit-selection";
+import { colorForUnitId } from "../core-utils";
 import { RasterPlotView3Data } from "./RasterPlotView3Data";
-import {
-  TimeScrollView3,
-  useTimeRange,
-  useTimeScrollView3,
-  useTimeseriesSelection,
-} from "@figpack/main-plugin";
 
 type Props = {
   data: RasterPlotView3Data;
@@ -51,14 +50,19 @@ const RasterPlotView3: FunctionComponent<Props> = ({ data, width, height }) => {
     });
   }, [initializeTimeseriesSelection, startTimeSec, endTimeSec]);
 
-  const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
-    width,
-    height,
-  });
+  const [canvasWidth, setCanvasWidth] = useState<number>(width);
+  const [canvasHeight, setCanvasHeight] = useState<number>(height);
+  const [margins, setMargins] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  } | null>(null);
 
   const drawRasterPlot = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    if (!margins) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
@@ -126,6 +130,7 @@ const RasterPlotView3: FunctionComponent<Props> = ({ data, width, height }) => {
 
   const pixelToUnitId = useCallback(
     (p: { x: number; y: number }) => {
+      if (!margins) return undefined;
       const frac =
         1 - (p.y - margins.top) / (canvasHeight - margins.top - margins.bottom);
       const index = Math.round(frac * numUnits - 0.5);
@@ -176,8 +181,11 @@ const RasterPlotView3: FunctionComponent<Props> = ({ data, width, height }) => {
     <TimeScrollView3
       width={width}
       height={height}
-      onCanvasElement={(canvas) => {
+      onCanvasElement={(canvas, canvasWidth, canvasHeight, margins) => {
         canvasRef.current = canvas;
+        setCanvasWidth(canvasWidth);
+        setCanvasHeight(canvasHeight);
+        setMargins(margins);
         drawRasterPlot();
       }}
       gridlineOpts={gridlineOpts}

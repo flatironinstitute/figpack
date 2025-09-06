@@ -1,7 +1,6 @@
 import {
   TimeScrollView3,
   useTimeRange,
-  useTimeScrollView3,
   useTimeseriesSelection,
 } from "@figpack/main-plugin";
 import {
@@ -127,13 +126,17 @@ const RasterPlotView: FunctionComponent<Props> = ({
 
   const { onlyShowSelected, customToolbarActions } = useOnlyShowSelected();
 
-  const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
-    width,
-    height,
-    customToolbarActions,
-  });
+  const [canvasWidth, setCanvasWidth] = useState<number>(width);
+  const [canvasHeight, setCanvasHeight] = useState<number>(height);
+  const [margins, setMargins] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  } | null>(null);
 
   const drawHeatmap = useCallback(() => {
+    if (!margins) return;
     const canvas = canvasRef.current;
     if (!canvas || !context || !spikeCounts || !dataClient.metadata) return;
     if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
@@ -286,6 +289,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
   console.log(selectedUnitIds, selectedUnitIndicesList, selectedUnitIdsList);
 
   const drawRasterPlot = useCallback(() => {
+    if (!margins) return;
     const canvas = canvasRef.current;
     if (!canvas || !context || !rangeData || !dataClient.metadata) return;
     if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
@@ -413,6 +417,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
 
   const pixelToUnitId = useCallback(
     (p: { x: number; y: number }) => {
+      if (!margins) return undefined;
       if (!dataClient.metadata) return undefined;
       const unitIds = dataClient.metadata.unitIds;
       const numUnits = unitIds.length;
@@ -471,10 +476,13 @@ const RasterPlotView: FunctionComponent<Props> = ({
       width={width}
       height={height}
       customToolbarActions={customToolbarActions}
-      onCanvasElement={(canvas) => {
+      onCanvasElement={(canvas, canvasWidth, canvasHeight, margins) => {
         canvasRef.current = canvas;
         const ctx = canvas?.getContext("2d");
         setContext(ctx);
+        setCanvasWidth(canvasWidth);
+        setCanvasHeight(canvasHeight);
+        setMargins(margins);
       }}
       gridlineOpts={gridlineOpts}
       onKeyDown={handleKeyDown}

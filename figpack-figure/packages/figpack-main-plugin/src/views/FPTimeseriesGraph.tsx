@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
-import { useTimeScrollView3 } from "../shared/component-time-scroll-view-3/useTimeScrollView3";
-import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
-import { useEffect, useMemo, useState } from "react";
 import { DatasetDataType, ZarrGroup } from "@figpack/plugin-sdk";
+import { useEffect, useMemo, useState } from "react";
+import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
+import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 
 export const FPTimeseriesGraph: React.FC<{
   zarrGroup: ZarrGroup;
@@ -19,14 +18,14 @@ export const FPTimeseriesGraph: React.FC<{
   const client = useTimeseriesGraphClient(zarrGroup);
 
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
-  const leftMargin = 50;
-  const { canvasWidth, canvasHeight, margins } = useTimeScrollView3({
-    width,
-    height,
-    leftMargin,
-    hideNavToolbar: client?.hideNavToolbar ?? false,
-    hideTimeAxisLabels: client?.hideTimeAxisLabels ?? false,
-  });
+  const [canvasWidth, setCanvasWidth] = useState<number>(width);
+  const [canvasHeight, setCanvasHeight] = useState<number>(height);
+  const [margins, setMargins] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  } | null>(null);
 
   const [yRange, setYRange] = useState<
     { yMin: number; yMax: number } | undefined
@@ -47,6 +46,7 @@ export const FPTimeseriesGraph: React.FC<{
   useEffect(() => {
     if (!context) return;
     if (!client) return;
+    if (!margins) return;
     let canceled = false;
     const draw = async () => {
       if (canceled) return;
@@ -248,13 +248,15 @@ export const FPTimeseriesGraph: React.FC<{
     <TimeScrollView3
       width={width}
       height={height}
-      onCanvasElement={(canvas) => {
+      onCanvasElement={(canvas, canvasWidth, canvasHeight, margins) => {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         setContext(ctx);
+        setCanvasWidth(canvasWidth);
+        setCanvasHeight(canvasHeight);
+        setMargins(margins);
       }}
       yAxisInfo={yAxisInfo}
-      leftMargin={leftMargin}
       hideNavToolbar={client?.hideNavToolbar ?? false}
       hideTimeAxisLabels={client?.hideTimeAxisLabels ?? false}
     />
