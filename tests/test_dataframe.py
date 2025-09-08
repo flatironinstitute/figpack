@@ -89,8 +89,6 @@ def test_write_to_zarr_basic(sample_dataframe):
     # Verify array properties
     csv_data_array = group["csv_data"]
     assert csv_data_array.dtype == np.uint8
-    assert isinstance(csv_data_array.compressor, zarr.Blosc)
-    assert csv_data_array.compressor.cname == "zstd"
 
     # Check metadata
     assert group.attrs["row_count"] == len(sample_dataframe)
@@ -313,4 +311,3 @@ def test_large_dataframe():
     # Verify compression worked
     csv_data_array = group["csv_data"]
     assert csv_data_array.dtype == np.uint8
-    assert isinstance(csv_data_array.compressor, zarr.Blosc)

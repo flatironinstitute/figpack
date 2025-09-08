@@ -113,10 +113,6 @@ def test_write_to_zarr(sample_columns, sample_rows, sample_similarity_scores):
     # Check rows array properties
     assert group["rows_data"].dtype == np.uint8
     assert group["rows_data"].chunks is not None
-    assert isinstance(group["rows_data"].compressor, zarr.Blosc)
-    assert group["rows_data"].compressor.cname == "zstd"
-    assert group["rows_data"].compressor.clevel == 3
-    assert group["rows_data"].compressor.shuffle == zarr.Blosc.SHUFFLE
 
     # Check similarity scores data is stored in array
     similarity_scores_data = group["similarity_scores_data"][:]
@@ -133,10 +129,6 @@ def test_write_to_zarr(sample_columns, sample_rows, sample_similarity_scores):
     # Check similarity scores array properties
     assert group["similarity_scores_data"].dtype == np.uint8
     assert group["similarity_scores_data"].chunks is not None
-    assert isinstance(group["similarity_scores_data"].compressor, zarr.Blosc)
-    assert group["similarity_scores_data"].compressor.cname == "zstd"
-    assert group["similarity_scores_data"].compressor.clevel == 3
-    assert group["similarity_scores_data"].compressor.shuffle == zarr.Blosc.SHUFFLE
 
 
 def test_column_data_types(sample_rows):

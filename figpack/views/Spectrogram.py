@@ -9,6 +9,7 @@ import numpy as np
 import zarr
 
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 
 
 class Spectrogram(FigpackView):
@@ -185,7 +186,7 @@ class Spectrogram(FigpackView):
 
         return (chunk_timepoints, n_frequencies)
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the spectrogram data to a Zarr group
 
@@ -212,8 +213,6 @@ class Spectrogram(FigpackView):
             group.create_dataset(
                 "frequencies",
                 data=self.frequencies,
-                compression="blosc",
-                compression_opts={"cname": "lz4", "clevel": 5, "shuffle": 1},
             )
 
         # Store original data with optimal chunking
@@ -222,8 +221,6 @@ class Spectrogram(FigpackView):
             "data",
             data=self.data,
             chunks=original_chunks,
-            compression="blosc",
-            compression_opts={"cname": "lz4", "clevel": 5, "shuffle": 1},
         )
 
         # Store downsampled data arrays
@@ -240,8 +237,6 @@ class Spectrogram(FigpackView):
                 dataset_name,
                 data=downsampled_array,
                 chunks=ds_chunks,
-                compression="blosc",
-                compression_opts={"cname": "lz4", "clevel": 5, "shuffle": 1},
             )
 
         print(f"Stored Spectrogram with {len(downsample_factors)} downsampled levels:")

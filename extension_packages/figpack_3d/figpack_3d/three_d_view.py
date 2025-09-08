@@ -5,9 +5,9 @@ ThreeDView - Interactive 3D visualization for figpack using Three.js
 import json
 import numpy as np
 import zarr
-from typing import List, Dict, Any, Optional, Tuple, Union
+from typing import List, Dict, Any, Optional, Tuple
 
-from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
+import figpack
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -39,16 +39,16 @@ def _load_javascript_code():
 
 
 # Create and register the 3D extension
-_three_d_extension = FigpackExtension(
+_three_d_extension = figpack.FigpackExtension(
     name="figpack-3d",
     javascript_code=_load_javascript_code(),
     version="1.0.0",
 )
 
-ExtensionRegistry.register(_three_d_extension)
+figpack.ExtensionRegistry.register(_three_d_extension)
 
 
-class ThreeDView(ExtensionView):
+class ThreeDView(figpack.ExtensionView):
     """
     A 3D visualization view using Three.js.
 
@@ -219,7 +219,7 @@ class ThreeDView(ExtensionView):
 
         self.objects.append(obj)
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the 3D scene data to a Zarr group.
 
@@ -243,9 +243,6 @@ class ThreeDView(ExtensionView):
         group.create_dataset(
             "scene_data",
             data=json_array,
-            dtype=np.uint8,
-            chunks=True,
-            compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE),
         )
 
         # Store configuration as attributes

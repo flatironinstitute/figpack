@@ -5,9 +5,9 @@ SpikeAmplitudes view for figpack - displays spike amplitudes over time
 from typing import List
 
 import numpy as np
-import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 from .SpikeAmplitudesItem import SpikeAmplitudesItem
 from .UnitsTable import UnitsTable, UnitsTableColumn, UnitsTableRow
 from ...views.Box import Box, LayoutItem
@@ -112,7 +112,7 @@ class SpikeAmplitudes(FigpackView):
         else:
             return view
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the SpikeAmplitudes data to a Zarr group using unified storage format
 
@@ -151,31 +151,26 @@ class SpikeAmplitudes(FigpackView):
         group.create_dataset(
             "timestamps",
             data=unified_data["timestamps"],
-            dtype=np.float32,
             chunks=chunks,
         )
         group.create_dataset(
             "unit_indices",
             data=unified_data["unit_indices"],
-            dtype=np.uint16,
             chunks=chunks,
         )
         group.create_dataset(
             "amplitudes",
             data=unified_data["amplitudes"],
-            dtype=np.float32,
             chunks=chunks,
         )
         group.create_dataset(
             "reference_times",
             data=unified_data["reference_times"],
-            dtype=np.float32,
             chunks=(len(unified_data["reference_times"]),),
         )
         group.create_dataset(
             "reference_indices",
             data=unified_data["reference_indices"],
-            dtype=np.uint32,
             chunks=(len(unified_data["reference_indices"]),),
         )
 
@@ -202,31 +197,26 @@ class SpikeAmplitudes(FigpackView):
                 factor_group.create_dataset(
                     "timestamps",
                     data=data["timestamps"],
-                    dtype=np.float32,
                     chunks=chunks,
                 )
                 factor_group.create_dataset(
                     "unit_indices",
                     data=data["unit_indices"],
-                    dtype=np.uint16,
                     chunks=chunks,
                 )
                 factor_group.create_dataset(
                     "amplitudes",
                     data=data["amplitudes"],
-                    dtype=np.float32,
                     chunks=chunks,
                 )
                 factor_group.create_dataset(
                     "reference_times",
                     data=data["reference_times"],
-                    dtype=np.float32,
                     chunks=(len(data["reference_times"]),),
                 )
                 factor_group.create_dataset(
                     "reference_indices",
                     data=data["reference_indices"],
-                    dtype=np.uint32,
                     chunks=(len(data["reference_indices"]),),
                 )
 

@@ -7,6 +7,7 @@ import numpy as np
 import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 from .RasterPlotItem import RasterPlotItem
 from .UnitsTable import UnitsTable, UnitsTableColumn, UnitsTableRow
 from ...views.Box import Box, LayoutItem
@@ -105,7 +106,7 @@ class RasterPlot(FigpackView):
         else:
             return view
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Args:
             group: Zarr group to write data into
@@ -141,25 +142,21 @@ class RasterPlot(FigpackView):
         group.create_dataset(
             "timestamps",
             data=unified_data["timestamps"],
-            dtype=np.float32,
             chunks=chunks,
         )
         group.create_dataset(
             "unit_indices",
             data=unified_data["unit_indices"],
-            dtype=np.uint16,
             chunks=chunks,
         )
         group.create_dataset(
             "reference_times",
             data=unified_data["reference_times"],
-            dtype=np.float32,
             chunks=(len(unified_data["reference_times"]),),
         )
         group.create_dataset(
             "reference_indices",
             data=unified_data["reference_indices"],
-            dtype=np.uint32,
             chunks=(len(unified_data["reference_indices"]),),
         )
 
@@ -188,7 +185,6 @@ class RasterPlot(FigpackView):
         group.create_dataset(
             "spike_counts_1sec",
             data=spike_counts,
-            dtype=np.uint16,
             chunks=(min(num_bins, 10000), min(num_units, 500)),
         )
 

@@ -8,6 +8,7 @@ import numpy as np
 import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 from .CrossCorrelogramItem import CrossCorrelogramItem
 
 
@@ -75,7 +76,7 @@ class CrossCorrelograms(FigpackView):
         view = CrossCorrelograms(cross_correlograms=cc_items, hide_unit_selector=False)
         return view
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the CrossCorrelograms data to a Zarr group
 
@@ -103,7 +104,6 @@ class CrossCorrelograms(FigpackView):
         group.create_dataset(
             "bin_edges_sec",
             data=self.cross_correlograms[0].bin_edges_sec,
-            dtype=np.float32,
         )
 
         # Create 2D array for all bin counts
@@ -125,7 +125,6 @@ class CrossCorrelograms(FigpackView):
         group.create_dataset(
             "bin_counts",
             data=bin_counts,
-            dtype=np.int32,
         )
 
         # Store the cross-correlogram metadata

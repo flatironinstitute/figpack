@@ -4,9 +4,8 @@ TabLayout view for figpack - a tabbed layout container that handles other views
 
 from typing import Any, Dict, List, Optional
 
-import zarr
-
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 from .TabLayoutItem import TabLayoutItem
 
 
@@ -33,7 +32,7 @@ class TabLayout(FigpackView):
             max(0, min(initial_tab_index, len(items) - 1)) if items else 0
         )
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the TabLayout data to a Zarr group
 

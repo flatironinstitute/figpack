@@ -6,6 +6,7 @@ __version__ = "0.2.15"
 
 from .cli import view_figure
 from .core import FigpackView, FigpackExtension, ExtensionRegistry, ExtensionView
+from .core.zarr import Group
 
 __all__ = [
     "view_figure",
@@ -13,4 +14,5 @@ __all__ = [
     "FigpackExtension",
     "ExtensionRegistry",
     "ExtensionView",
+    "Group",
 ]

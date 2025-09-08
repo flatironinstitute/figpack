@@ -4,9 +4,8 @@ Box view for figpack - a layout container that handles other views
 
 from typing import Any, Dict, List, Literal, Optional
 
-import zarr
-
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 from .LayoutItem import LayoutItem
 
 
@@ -43,7 +42,7 @@ class Box(FigpackView):
         self.items = items
         self.title = title
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the Box layout data to a Zarr group
 

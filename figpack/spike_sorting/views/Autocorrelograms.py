@@ -8,6 +8,7 @@ import numpy as np
 import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 from .AutocorrelogramItem import AutocorrelogramItem
 
 
@@ -66,7 +67,7 @@ class Autocorrelograms(FigpackView):
         view = Autocorrelograms(autocorrelograms=ac_items)
         return view
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the Autocorrelograms data to a Zarr group
 
@@ -90,7 +91,6 @@ class Autocorrelograms(FigpackView):
         group.create_dataset(
             "bin_edges_sec",
             data=self.autocorrelograms[0].bin_edges_sec,
-            dtype=np.float32,
         )
 
         # Create 2D array for all bin counts
@@ -111,7 +111,6 @@ class Autocorrelograms(FigpackView):
         group.create_dataset(
             "bin_counts",
             data=bin_counts,
-            dtype=np.int32,
         )
 
         # Store the autocorrelogram metadata

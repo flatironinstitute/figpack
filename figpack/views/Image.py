@@ -8,6 +8,7 @@ import numpy as np
 import zarr
 
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 
 
 class Image(FigpackView):
@@ -69,7 +70,7 @@ class Image(FigpackView):
         except Exception as e:
             raise ValueError(f"Failed to download image from URL: {str(e)}")
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the image data to a Zarr group
 
@@ -98,11 +99,6 @@ class Image(FigpackView):
             group.create_dataset(
                 "image_data",
                 data=image_array,
-                dtype=np.uint8,
-                chunks=True,
-                compressor=zarr.Blosc(
-                    cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE
-                ),
             )
 
             # Try to determine format from file signature
@@ -124,6 +120,4 @@ class Image(FigpackView):
             group.attrs["image_format"] = "Unknown"
             group.attrs["data_size"] = 0
             # Create empty array as placeholder
-            group.create_dataset(
-                "image_data", data=np.array([], dtype=np.uint8), dtype=np.uint8
-            )
+            group.create_dataset("image_data", data=np.array([], dtype=np.uint8))

@@ -42,7 +42,7 @@ class FigpackView:
     def save(self, output_path: str, *, title: str):
         """Save as figure bundle"""
 
-    def _write_to_zarr_group(self, group: zarr.Group):
+    def _write_to_zarr_group(self, group: figpack.Group):
         """Serialize data - implemented by subclasses"""
         raise NotImplementedError
 ```
@@ -82,7 +82,7 @@ else:
 Every view must implement `_write_to_zarr_group()` to serialize its data:
 
 ```python
-def _write_to_zarr_group(self, group: zarr.Group) -> None:
+def _write_to_zarr_group(self, group: figpack.Group) -> None:
     # 1. Set view type for frontend routing
     group.attrs["view_type"] = "TimeseriesGraph"
 
@@ -115,10 +115,9 @@ def _write_to_zarr_group(self, group: zarr.Group) -> None:
 
 ```python
 import numpy as np
-import zarr
-from figpack.core.figpack_view import FigpackView
+import figpack
 
-class BarChart(FigpackView):
+class BarChart(figpack.FigpackView):
     def __init__(self, categories, values, colors=None, title=""):
         self.categories = list(categories)
         self.values = np.asarray(values, dtype=np.float32)
@@ -129,7 +128,7 @@ class BarChart(FigpackView):
         if len(self.categories) != len(self.values):
             raise ValueError("Categories and values must have same length")
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         group.attrs["view_type"] = "BarChart"
         group.attrs["title"] = self.title
         group.attrs["categories"] = self.categories
@@ -161,7 +160,7 @@ class TimeseriesGraph(FigpackView):
         series = TGLineSeries(name=name, t=t, y=y, color=color, **kwargs)
         self._series.append(series)
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         group.attrs["view_type"] = "TimeseriesGraph"
         group.attrs["series_names"] = [s.name for s in self._series]
 
@@ -180,6 +179,7 @@ For domain-specific functionality, create separate modules:
 ```python
 # figpack/neuroscience/__init__.py
 from .views import SpikeRaster, Spectrogram
+import figpack
 
 # figpack/neuroscience/views/spike_raster.py
 class SpikeRaster(FigpackView):
@@ -188,7 +188,7 @@ class SpikeRaster(FigpackView):
         self.unit_ids = unit_ids
         # Domain-specific processing
 
-    def _write_to_zarr_group(self, group: zarr.Group):
+    def _write_to_zarr_group(self, group: figpack.Group):
         group.attrs["view_type"] = "SpikeRaster"
         # Serialize spike data efficiently
 ```
@@ -250,29 +250,12 @@ pytest tests/
 export FIGPACK_DEV=1
 ```
 
-## Performance Considerations
-
-### Data Optimization
-
-**Use appropriate dtypes**: `np.float32` vs `np.float64` can halve file sizes
-**Chunking**: For large arrays, consider Zarr chunking strategies
-**Compression**: Enable compression for large datasets
-
-```python
-# Example with compression
-group.create_dataset(
-    "large_data",
-    data=data,
-    compressor=zarr.Blosc(cname='zstd', clevel=3)
-)
-```
-
 ## Error Handling
 
 ### Robust Implementation
 
 ```python
-def _write_to_zarr_group(self, group: zarr.Group) -> None:
+def _write_to_zarr_group(self, group: figpack.Group) -> None:
     try:
         # Validate data
         if self.data is None:

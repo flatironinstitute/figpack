@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 from datetime import date, datetime
 
-from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
+import figpack
 
 
 def _download_plotly_library():
@@ -42,17 +42,17 @@ except Exception as e:
     additional_files = {}
 
 # Create and register the plotly extension
-_plotly_extension = FigpackExtension(
+_plotly_extension = figpack.FigpackExtension(
     name="figpack_plotly",
     javascript_code=_load_javascript_code(),
     additional_files=additional_files,
     version="1.0.0",
 )
 
-ExtensionRegistry.register(_plotly_extension)
+figpack.ExtensionRegistry.register(_plotly_extension)
 
 
-class PlotlyFigure(ExtensionView):
+class PlotlyFigure(figpack.ExtensionView):
     """
     A Plotly graph visualization view using the plotly library.
 
@@ -67,12 +67,12 @@ class PlotlyFigure(ExtensionView):
             fig: The plotly figure object
         """
         # for some reason, we need to reregister here to avoid issues with pytest
-        ExtensionRegistry.register(_plotly_extension)
+        figpack.ExtensionRegistry.register(_plotly_extension)
         super().__init__(extension_name="figpack_plotly")
 
         self.fig = fig
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the plotly figure data to a Zarr group
 
@@ -92,13 +92,7 @@ class PlotlyFigure(ExtensionView):
         json_array = np.frombuffer(json_bytes, dtype=np.uint8)
 
         # Store the figure data as compressed array
-        group.create_dataset(
-            "figure_data",
-            data=json_array,
-            dtype=np.uint8,
-            chunks=True,
-            compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE),
-        )
+        group.create_dataset("figure_data", data=json_array)
 
         # Store data size for reference
         group.attrs["data_size"] = len(json_bytes)

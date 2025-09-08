@@ -48,6 +48,7 @@ def main():
     dataframe_view.show(
         title="Employee Data Table",
         description="Interactive table showing employee information with sortable columns and resizable headers.",
+        open_in_browser=True,
     )
 
 

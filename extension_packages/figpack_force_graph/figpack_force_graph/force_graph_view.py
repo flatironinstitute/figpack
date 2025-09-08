@@ -9,8 +9,7 @@ import urllib.request
 import urllib.error
 from typing import List, Dict, Any, Optional, Union
 
-
-from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
+import figpack
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -61,17 +60,17 @@ except Exception as e:
     additional_files = {}
 
 # Create and register the force graph extension
-_force_graph_extension = FigpackExtension(
+_force_graph_extension = figpack.FigpackExtension(
     name="force-graph",
     javascript_code=_load_javascript_code(),
     additional_files=additional_files,
     version="1.0.0",
 )
 
-ExtensionRegistry.register(_force_graph_extension)
+figpack.ExtensionRegistry.register(_force_graph_extension)
 
 
-class ForceGraphView(ExtensionView):
+class ForceGraphView(figpack.ExtensionView):
     """
     A force-directed graph visualization view using the force-graph library.
 
@@ -220,7 +219,7 @@ class ForceGraphView(ExtensionView):
 
         self.links.append(link)
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the force graph data to a Zarr group.
 
@@ -244,9 +243,6 @@ class ForceGraphView(ExtensionView):
         group.create_dataset(
             "graph_data",
             data=json_array,
-            dtype=np.uint8,
-            chunks=True,
-            compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE),
         )
 
         # Store configuration as attributes

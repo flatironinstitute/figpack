@@ -8,6 +8,7 @@ import numpy as np
 import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 
 
 class TrackAnimation(FigpackView):
@@ -116,7 +117,7 @@ class TrackAnimation(FigpackView):
         self.track_bin_height = track_bin_height
         self.track_bin_width = track_bin_width
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the track animation data to a Zarr group
 
