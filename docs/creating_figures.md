@@ -29,7 +29,7 @@ Behind the scenes, when you run this code:
 
    - Creates a temporary directory for your visualization
    - Copies the necessary web viewer files (HTML, JavaScript, CSS) into this directory
-   - Saves your data into a [Zarr](https://zarr.readthedocs.io/) group format, which efficiently handles numerical arrays
+   - Saves your data into a [Zarr](https://zarr.readthedocs.io/) group format, which efficiently handles numerical arrays. figpack is compatible with both Zarr v2 and v3, working seamlessly with whichever version you have installed. However, note that figure data is always stored in v2 format for compatibility with the frontend visualization components.
    - Launches a local web server to serve these files
    - Opens your default web browser to display the visualization
 
