@@ -1,6 +1,5 @@
+import pytest
 import numpy as np
-import spikeinterface.extractors as se
-import spikeinterface.widgets as sw
 import zarr
 import zarr.storage
 
@@ -9,8 +8,11 @@ from figpack.spike_sorting.views.Autocorrelograms import Autocorrelograms
 from figpack.spike_sorting.views.CrossCorrelograms import CrossCorrelograms
 
 
+@pytest.mark.spikeinterface
 def test_autocorrelograms_with_si():
     """Test Autocorrelograms with real spikeinterface data"""
+    import spikeinterface.extractors as se
+
     # Create toy example data
     recording, sorting = se.toy_example(
         num_units=4,  # Use fewer units for faster tests
@@ -68,8 +70,11 @@ def test_autocorrelograms_with_si():
         assert meta["num_bins"] == len(view.autocorrelograms[0].bin_counts)
 
 
+@pytest.mark.spikeinterface
 def test_cross_correlograms_with_si():
     """Test CrossCorrelograms with real spikeinterface data"""
+    import spikeinterface.extractors as se
+
     # Create toy example data
     recording, sorting = se.toy_example(
         num_units=4,  # Use fewer units for faster tests
@@ -132,8 +137,12 @@ def test_cross_correlograms_with_si():
         assert meta["num_bins"] == len(view.cross_correlograms[0].bin_counts)
 
 
+@pytest.mark.spikeinterface
 def test_cross_correlograms_from_widget():
     """Test creating CrossCorrelograms directly from widget"""
+    import spikeinterface.extractors as se
+    import spikeinterface.widgets as sw
+
     # Create toy example data
     recording, sorting = se.toy_example(
         num_units=4, duration=10, seed=0, num_segments=1

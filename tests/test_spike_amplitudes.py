@@ -12,6 +12,7 @@ from figpack.spike_sorting.views.SpikeAmplitudes import SpikeAmplitudes
 from figpack.spike_sorting.views.SpikeAmplitudesItem import SpikeAmplitudesItem
 
 
+@pytest.mark.spikeinterface
 def test_spike_amplitudes_initialization():
     # Create sample data
     spike_times1 = np.array([1.0, 2.0, 3.0], dtype=np.float32)
@@ -44,6 +45,7 @@ def test_spike_amplitudes_initialization():
     assert len(view.plots) == 2
 
 
+@pytest.mark.spikeinterface
 def test_spike_amplitudes_multiple_units():
     # Create sample data for multiple units
     spike_times1 = np.array([1.0, 3.0, 5.0], dtype=np.float32)
@@ -105,6 +107,7 @@ def test_spike_amplitudes_multiple_units():
     np.testing.assert_array_equal(amplitudes, expected_amplitudes)
 
 
+@pytest.mark.spikeinterface
 def test_spike_amplitudes_validation():
     # Test invalid spike times/amplitudes lengths
     with pytest.raises(AssertionError):

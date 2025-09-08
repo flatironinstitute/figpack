@@ -2,10 +2,9 @@
 Autocorrelograms view for figpack - displays multiple autocorrelograms
 """
 
-from typing import List, Optional
+from typing import List
 
 import numpy as np
-import zarr
 
 from ...core.figpack_view import FigpackView
 from ...core.zarr import Group
