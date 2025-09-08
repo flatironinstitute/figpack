@@ -7,7 +7,7 @@ import random
 import string
 from typing import Union
 
-import zarr
+from .zarr import Group
 
 
 class FigpackView:
@@ -155,7 +155,7 @@ class FigpackView:
 
         _save_figure(self, output_path, title=title)
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the view data to a Zarr group. Must be implemented by subclasses.
 

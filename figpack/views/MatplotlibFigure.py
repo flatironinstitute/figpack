@@ -9,6 +9,7 @@ from typing import Any, Union
 import zarr
 
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 
 
 class MatplotlibFigure(FigpackView):
@@ -25,7 +26,7 @@ class MatplotlibFigure(FigpackView):
         """
         self.fig = fig
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the matplotlib figure data to a Zarr group
 
@@ -54,11 +55,6 @@ class MatplotlibFigure(FigpackView):
             group.create_dataset(
                 "svg_data",
                 data=svg_array,
-                dtype=np.uint8,
-                chunks=True,
-                compressor=zarr.Blosc(
-                    cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE
-                ),
             )
 
             # Store figure dimensions for reference
@@ -77,11 +73,6 @@ class MatplotlibFigure(FigpackView):
             group.create_dataset(
                 "svg_data",
                 data=np.array([], dtype=np.uint8),
-                dtype=np.uint8,
-                chunks=True,
-                compressor=zarr.Blosc(
-                    cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE
-                ),
             )
             group.attrs["error"] = f"Failed to export matplotlib figure: {str(e)}"
             group.attrs["figure_width_inches"] = 6.0

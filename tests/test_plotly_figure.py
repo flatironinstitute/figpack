@@ -40,8 +40,6 @@ def test_write_to_zarr_basic(sample_plotly_figure):
     # Verify array properties
     figure_data_array = group["figure_data"]
     assert figure_data_array.dtype == np.uint8
-    assert isinstance(figure_data_array.compressor, zarr.Blosc)
-    assert figure_data_array.compressor.cname == "zstd"
 
     # Convert array back to string for content verification
     figure_data = figure_data_array[:].tobytes().decode("utf-8")
@@ -91,8 +89,6 @@ def test_write_to_zarr_complex_data():
 
     # Verify array properties
     assert figure_data_array.dtype == np.uint8
-    assert isinstance(figure_data_array.compressor, zarr.Blosc)
-    assert figure_data_array.compressor.cname == "zstd"
 
     # Verify data size
     assert group.attrs["data_size"] == len(figure_data.encode("utf-8"))

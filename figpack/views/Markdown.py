@@ -6,6 +6,7 @@ import numpy as np
 import zarr
 
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 
 
 class Markdown(FigpackView):
@@ -22,7 +23,7 @@ class Markdown(FigpackView):
         """
         self.content = content
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the markdown data to a Zarr group
 
@@ -37,9 +38,7 @@ class Markdown(FigpackView):
         content_array = np.frombuffer(content_bytes, dtype=np.uint8)
 
         # Store the markdown content as a zarr array
-        group.create_dataset(
-            "content_data", data=content_array, dtype=np.uint8, chunks=True
-        )
+        group.create_dataset("content_data", data=content_array, chunks=True)
 
         # Store content size in attrs
         group.attrs["data_size"] = len(content_bytes)

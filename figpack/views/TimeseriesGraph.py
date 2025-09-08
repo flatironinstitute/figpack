@@ -6,9 +6,9 @@ import math
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-import zarr
 
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 
 
 class TimeseriesGraph(FigpackView):
@@ -160,7 +160,7 @@ class TimeseriesGraph(FigpackView):
             )
         )
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the graph data to a Zarr group
 
@@ -217,7 +217,7 @@ class TGLineSeries:
 
     def _write_to_zarr_group(
         self,
-        group: zarr.Group,
+        group: Group,
     ) -> None:
         group.attrs["series_type"] = "line"
         group.attrs["color"] = self.color
@@ -248,7 +248,7 @@ class TGMarkerSeries:
         self.radius = radius
         self.shape = shape
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the marker series data to a Zarr dataset
 
@@ -287,7 +287,7 @@ class TGIntervalSeries:
         self.color = color
         self.alpha = alpha
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the interval series data to a Zarr dataset
 
@@ -492,7 +492,7 @@ class TGUniformSeries:
         else:  # len(shape) == 3
             return (chunk_timepoints, 2, n_channels)
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the uniform series data to a Zarr group
 
@@ -518,8 +518,6 @@ class TGUniformSeries:
             "data",
             data=self.data,
             chunks=original_chunks,
-            compression="blosc",
-            compression_opts={"cname": "lz4", "clevel": 5, "shuffle": 1},
         )
 
         # Store downsampled data arrays
@@ -536,6 +534,4 @@ class TGUniformSeries:
                 dataset_name,
                 data=downsampled_array,
                 chunks=ds_chunks,
-                compression="blosc",
-                compression_opts={"cname": "lz4", "clevel": 5, "shuffle": 1},
             )

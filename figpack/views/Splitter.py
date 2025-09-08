@@ -4,9 +4,8 @@ Splitter view for figpack - a resizable split layout container
 
 from typing import Literal
 
-import zarr
-
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 from .LayoutItem import LayoutItem
 
 
@@ -37,7 +36,7 @@ class Splitter(FigpackView):
         self.item2 = item2
         self.split_pos = max(0.1, min(0.9, split_pos))  # Clamp between 0.1 and 0.9
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the Splitter layout data to a Zarr group
 

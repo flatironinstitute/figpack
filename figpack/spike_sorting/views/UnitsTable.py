@@ -9,6 +9,7 @@ import numpy as np
 import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 from .UnitSimilarityScore import UnitSimilarityScore
 from .UnitsTableColumn import UnitsTableColumn
 from .UnitsTableRow import UnitsTableRow
@@ -41,7 +42,7 @@ class UnitsTable(FigpackView):
         self.similarity_scores = similarity_scores or []
         self.height = height
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the UnitsTable data to a Zarr group
 
@@ -66,9 +67,6 @@ class UnitsTable(FigpackView):
         group.create_dataset(
             "rows_data",
             data=rows_array,
-            dtype=np.uint8,
-            chunks=True,
-            compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE),
         )
         group.attrs["rows_data_size"] = len(rows_json)
 
@@ -80,10 +78,5 @@ class UnitsTable(FigpackView):
             group.create_dataset(
                 "similarity_scores_data",
                 data=scores_array,
-                dtype=np.uint8,
-                chunks=True,
-                compressor=zarr.Blosc(
-                    cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE
-                ),
             )
             group.attrs["similarity_scores_data_size"] = len(scores_json)

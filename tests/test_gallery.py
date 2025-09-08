@@ -4,10 +4,9 @@ Tests for the Gallery view
 
 from unittest.mock import MagicMock
 
-import pytest
 import zarr
-import numpy as np
 
+import figpack
 from figpack.views.Gallery import Gallery
 from figpack.views.GalleryItem import GalleryItem
 from figpack.core.figpack_view import FigpackView
@@ -16,7 +15,7 @@ from figpack.core.figpack_view import FigpackView
 class DummyView(FigpackView):
     """Dummy view for testing"""
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         group.attrs["view_type"] = "DummyView"
         group.attrs["test_value"] = 42
 

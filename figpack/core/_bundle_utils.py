@@ -7,6 +7,7 @@ import zarr
 from .figpack_view import FigpackView
 from .figpack_extension import ExtensionRegistry
 from .extension_view import ExtensionView
+from .zarr import Group, _check_zarr_version
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
@@ -45,24 +46,32 @@ def prepare_figure_bundle(
                 target_sub = target / subitem.name
                 target_sub.write_bytes(subitem.read_bytes())
 
-    # Write the view data to the Zarr group
-    zarr_group = zarr.open_group(
-        pathlib.Path(tmpdir) / "data.zarr",
-        mode="w",
-        synchronizer=zarr.ThreadSynchronizer(),
-    )
-    view._write_to_zarr_group(zarr_group)
+    # If we are using zarr 3, then we set the default zarr format to 2 temporarily
+    # because we only support version 2 on the frontend right now.
 
-    # Add title and description as attributes on the top-level zarr group
-    zarr_group.attrs["title"] = title
-    if description is not None:
-        zarr_group.attrs["description"] = description
+    if _check_zarr_version() == 3:
+        old_default_zarr_format = zarr.config.get("default_zarr_format")
+        zarr.config.set({"default_zarr_format": 2})
 
-    # Discover and write extension JavaScript files
-    required_extensions = _discover_required_extensions(view)
-    _write_extension_files(required_extensions, tmpdir)
+    try:
+        # Write the view data to the Zarr group
+        zarr_group = zarr.open_group(pathlib.Path(tmpdir) / "data.zarr", mode="w")
+        zarr_group = Group(zarr_group)
+        view._write_to_zarr_group(zarr_group)
 
-    zarr.consolidate_metadata(zarr_group.store)
+        # Add title and description as attributes on the top-level zarr group
+        zarr_group.attrs["title"] = title
+        if description is not None:
+            zarr_group.attrs["description"] = description
+
+        # Discover and write extension JavaScript files
+        required_extensions = _discover_required_extensions(view)
+        _write_extension_files(required_extensions, tmpdir)
+
+        zarr.consolidate_metadata(zarr_group._zarr_group.store)
+    finally:
+        if _check_zarr_version() == 3:
+            zarr.config.set({"default_zarr_format": old_default_zarr_format})
 
 
 def _discover_required_extensions(view: FigpackView) -> Set[str]:

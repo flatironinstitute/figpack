@@ -8,6 +8,7 @@ import numpy as np
 import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 
 
 class AverageWaveformItem:
@@ -97,7 +98,7 @@ class AverageWaveforms(FigpackView):
         view = AverageWaveforms(average_waveforms=average_waveform_items)
         return view
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the AverageWaveforms data to a Zarr group
 
@@ -127,13 +128,11 @@ class AverageWaveforms(FigpackView):
             group.create_dataset(
                 f"{waveform_name}/waveform",
                 data=waveform.waveform,
-                dtype=waveform.waveform.dtype,
             )
             if waveform.waveform_std_dev is not None:
                 group.create_dataset(
                     f"{waveform_name}/waveform_std_dev",
                     data=waveform.waveform_std_dev,
-                    dtype=waveform.waveform_std_dev.dtype,
                 )
             if waveform.waveform_percentiles is not None:
                 for j, p in enumerate(waveform.waveform_percentiles):

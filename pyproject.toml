@@ -29,9 +29,9 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "zarr<3",
+    "zarr",
     "requests",
-    "psutil",
+    "psutil"
 ]
 
 [project.optional-dependencies]

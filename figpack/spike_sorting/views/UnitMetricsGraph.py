@@ -9,6 +9,7 @@ import numpy as np
 import zarr
 
 from ...core.figpack_view import FigpackView
+from ...core.zarr import Group
 
 
 class UnitMetricsGraphMetric:
@@ -97,7 +98,7 @@ class UnitMetricsGraph(FigpackView):
         self.metrics = metrics
         self.height = height
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the UnitMetricsGraph data to a Zarr group
 
@@ -122,8 +123,5 @@ class UnitMetricsGraph(FigpackView):
         group.create_dataset(
             "units_data",
             data=units_array,
-            dtype=np.uint8,
-            chunks=True,
-            compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE),
         )
         group.attrs["units_data_size"] = len(units_json)

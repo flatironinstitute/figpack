@@ -53,8 +53,6 @@ def test_write_to_zarr_basic(sample_figure):
 
     # Verify array properties
     assert group["svg_data"].dtype == np.uint8
-    assert group["svg_data"].chunks is not None
-    assert isinstance(group["svg_data"].compressor, zarr.Blosc)
 
 
 def test_write_to_zarr_error_handling():
@@ -132,10 +130,3 @@ def test_write_to_zarr_compression(sample_figure):
     group = root.create_group("test")
 
     view._write_to_zarr_group(group)
-
-    # Verify compression settings
-    compressor = group["svg_data"].compressor
-    assert isinstance(compressor, zarr.Blosc)
-    assert compressor.cname == "zstd"
-    assert compressor.clevel == 3
-    assert compressor.shuffle == zarr.Blosc.SHUFFLE

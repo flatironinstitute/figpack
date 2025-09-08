@@ -93,7 +93,7 @@ class FigpackExtension:
 ```python
 class ExtensionView(FigpackView):
     def __init__(self, *, extension_name: str)
-    def _write_to_zarr_group(self, group: zarr.Group) -> None
+    def _write_to_zarr_group(self, group: figpack.Group) -> None
 ```
 
 ### JavaScript API

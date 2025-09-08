@@ -4,9 +4,8 @@ Gallery view for figpack - a gallery layout container that handles other views w
 
 from typing import Any, Dict, List, Optional
 
-import zarr
-
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 from .GalleryItem import GalleryItem
 
 
@@ -45,7 +44,7 @@ class Gallery(FigpackView):
             max(0, min(initial_item_index, len(items) - 1)) if items else 0
         )
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the Gallery data to a Zarr group
 

@@ -3,13 +3,12 @@ DataFrame view for figpack - displays pandas DataFrames as interactive tables
 """
 
 import json
-from typing import Any, Dict, Union
 
 import numpy as np
-import pandas as pd
 import zarr
 
 from ..core.figpack_view import FigpackView
+from ..core.zarr import Group
 
 
 class DataFrame(FigpackView):
@@ -17,7 +16,7 @@ class DataFrame(FigpackView):
     A DataFrame visualization component for displaying pandas DataFrames as interactive tables
     """
 
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df):
         """
         Initialize a DataFrame view
 
@@ -27,12 +26,14 @@ class DataFrame(FigpackView):
         Raises:
             ValueError: If df is not a pandas DataFrame
         """
+        import pandas as pd
+
         if not isinstance(df, pd.DataFrame):
             raise ValueError("df must be a pandas DataFrame")
 
         self.df = df
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the DataFrame data to a Zarr group
 
@@ -54,11 +55,6 @@ class DataFrame(FigpackView):
             group.create_dataset(
                 "csv_data",
                 data=csv_array,
-                dtype=np.uint8,
-                chunks=True,
-                compressor=zarr.Blosc(
-                    cname="zstd", clevel=3, shuffle=zarr.Blosc.SHUFFLE
-                ),
             )
 
             # Store metadata about the DataFrame
@@ -104,6 +100,4 @@ class DataFrame(FigpackView):
             group.attrs["data_size"] = 0
             group.attrs["column_info"] = "[]"
             # Create empty array as placeholder
-            group.create_dataset(
-                "csv_data", data=np.array([], dtype=np.uint8), dtype=np.uint8
-            )
+            group.create_dataset("csv_data", data=np.array([], dtype=np.uint8))

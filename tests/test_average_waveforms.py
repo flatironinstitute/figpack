@@ -1,8 +1,6 @@
 import numpy as np
-import pytest
 import spikeinterface as si
 import spikeinterface.extractors as se
-import spikeinterface.preprocessing as spre
 import zarr
 
 from figpack.spike_sorting.views.AverageWaveforms import (

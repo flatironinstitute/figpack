@@ -2,9 +2,9 @@
 Base class for views that use figpack extensions
 """
 
-import zarr
 from .figpack_view import FigpackView
 from .figpack_extension import ExtensionRegistry
+from ..core.zarr import Group
 
 
 class ExtensionView(FigpackView):
@@ -32,7 +32,7 @@ class ExtensionView(FigpackView):
             )
         self.extension = extension
 
-    def _write_to_zarr_group(self, group: zarr.Group) -> None:
+    def _write_to_zarr_group(self, group: Group) -> None:
         """
         Write the extension view metadata to a Zarr group.
         Subclasses should call super()._write_to_zarr_group(group) first,
