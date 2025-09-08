@@ -44,7 +44,11 @@ jobs:
 
       - name: Run tests with pytest
         run: |
-          pytest --cov=figpack --cov-report=xml --cov-report=term-missing
+          if [ "${{ matrix.zarr-version }}" = "zarr3" ]; then
+            pytest -m "not spikeinterface" --cov=figpack --cov-report=xml --cov-report=term-missing
+          else
+            pytest --cov=figpack --cov-report=xml --cov-report=term-missing
+          fi
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

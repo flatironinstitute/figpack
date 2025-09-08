@@ -1,6 +1,5 @@
+import pytest
 import numpy as np
-import spikeinterface as si
-import spikeinterface.extractors as se
 import zarr
 import zarr.storage
 
@@ -11,8 +10,12 @@ from figpack.spike_sorting.views.AverageWaveforms import (
 )
 
 
+@pytest.mark.spikeinterface
 def test_average_waveforms_with_si():
     """Test AverageWaveforms with real spikeinterface data"""
+    import spikeinterface as si
+    import spikeinterface.extractors as se
+
     # Create toy example data
     recording, sorting = se.toy_example(
         num_units=4,  # Use fewer units for faster tests

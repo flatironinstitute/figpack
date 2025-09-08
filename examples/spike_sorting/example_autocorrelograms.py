@@ -1,16 +1,13 @@
-import os
 from typing import List
-
-import spikeinterface as si
-import spikeinterface.extractors as se
 
 import figpack.spike_sorting.views as ssv
 import figpack.views as vv
 
-from helpers.compute_correlogram_data import compute_correlogram_data
-
 
 def main():
+    import spikeinterface as si
+    import spikeinterface.extractors as se
+
     recording, sorting = se.toy_example(
         num_units=18, duration=300, seed=0, num_segments=1
     )
@@ -29,9 +26,9 @@ This is an example of autocorrelograms created using figpack.
     )
 
 
-def example_autocorrelograms(
-    *, recording: si.BaseRecording, sorting: si.BaseSorting
-) -> vv.Splitter:
+def example_autocorrelograms(*, recording, sorting) -> vv.Splitter:
+    from helpers.compute_correlogram_data import compute_correlogram_data
+
     # Create a simple units table for the left side
     columns: List[ssv.UnitsTableColumn] = [
         ssv.UnitsTableColumn(key="unitId", label="Unit", dtype="int"),

@@ -7,6 +7,7 @@ import figpack
 from figpack.spike_sorting.views import RasterPlot, RasterPlotItem
 
 
+@pytest.mark.spikeinterface
 def test_raster_plot_init():
     """Test RasterPlot initialization with valid parameters"""
     # Create test data
@@ -24,6 +25,7 @@ def test_raster_plot_init():
     assert len(plot.plots) == 2
 
 
+@pytest.mark.spikeinterface
 def test_raster_plot_validation():
     """Test RasterPlot initialization with invalid parameters"""
     plots = [RasterPlotItem(unit_id=1, spike_times_sec=np.array([0.1, 0.2, 0.3]))]
@@ -37,6 +39,7 @@ def test_raster_plot_validation():
         RasterPlot(start_time_sec=0.0, end_time_sec="invalid", plots=plots)
 
 
+@pytest.mark.spikeinterface
 def test_write_to_zarr_group():
     """Test writing RasterPlot data to zarr group"""
     # Create test data

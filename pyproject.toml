@@ -60,7 +60,6 @@ test-zarr3 = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "pytest-mock>=3.10",
-    "spikeinterface",
     "matplotlib",
     "plotly",
     "Pillow",
@@ -115,6 +114,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "spikeinterface: marks tests that depend on spikeinterface",
 ]
 
 [tool.coverage.run]

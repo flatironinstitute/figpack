@@ -51,6 +51,7 @@ def sample_similarity_scores():
     ]
 
 
+@pytest.mark.spikeinterface
 def test_units_table_init(sample_columns, sample_rows):
     """Test UnitsTable initialization"""
     # Test with minimal parameters
@@ -65,6 +66,7 @@ def test_units_table_init(sample_columns, sample_rows):
     assert table.height == 800
 
 
+@pytest.mark.spikeinterface
 def test_units_table_with_similarity_scores(
     sample_columns, sample_rows, sample_similarity_scores
 ):
@@ -78,6 +80,7 @@ def test_units_table_with_similarity_scores(
     assert len(table.similarity_scores) == 2
 
 
+@pytest.mark.spikeinterface
 def test_write_to_zarr(sample_columns, sample_rows, sample_similarity_scores):
     """Test writing UnitsTable to zarr group"""
     table = UnitsTable(
@@ -134,6 +137,7 @@ def test_write_to_zarr(sample_columns, sample_rows, sample_similarity_scores):
     assert group["similarity_scores_data"].chunks is not None
 
 
+@pytest.mark.spikeinterface
 def test_column_data_types(sample_rows):
     """Test UnitsTable with different column data types"""
     columns = [
@@ -180,6 +184,7 @@ def test_column_data_types(sample_rows):
     assert rows_list[0]["values"]["bool_col"] is True
 
 
+@pytest.mark.spikeinterface
 def test_mixed_unit_id_types():
     """Test UnitsTable with mixed string and integer unit IDs"""
     columns = [UnitsTableColumn(key="val", label="Value", dtype="int")]

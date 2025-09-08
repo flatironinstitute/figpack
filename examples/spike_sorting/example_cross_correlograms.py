@@ -7,8 +7,6 @@ import spikeinterface.extractors as se
 import figpack.spike_sorting.views as ssv
 import figpack.views as vv
 
-from helpers.compute_correlogram_data import compute_correlogram_data
-
 
 def main():
     recording, sorting = se.toy_example(
@@ -32,6 +30,8 @@ This is an example of cross-correlograms created using figpack.
 def example_cross_correlograms(
     *, sorting: si.BaseSorting, hide_unit_selector: bool = False
 ) -> vv.Splitter:
+    from helpers.compute_correlogram_data import compute_correlogram_data
+
     # Create a simple units table for the left side
     columns: List[ssv.UnitsTableColumn] = [
         ssv.UnitsTableColumn(key="unitId", label="Unit", dtype="int"),
