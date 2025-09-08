@@ -11,6 +11,66 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        zarr-version: ["zarr2", "zarr3"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: figpack-figure/package-lock.json
+
+      - name: Install GUI dependencies and build
+        run: |
+          cd figpack-figure
+          npm ci
+          npm run build
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[test-${{ matrix.zarr-version }}]"
+
+      - name: Run tests with pytest
+        run: |
+          if [ "${{ matrix.zarr-version }}" = "zarr3" ]; then
+            pytest -m "not spikeinterface" --cov=figpack --cov-report=xml --cov-report=term-missing
+          else
+            pytest --cov=figpack --cov-report=xml --cov-report=term-missing
+          fi
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Test tutorial snippets
+        run: |
+          python devel/test_tutorial_snippets.py
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,18 +96,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ".[test]"
+          pip install ".[dev]"
+          pip install black
 
-      - name: Run tests with pytest
+      - name: Check code formatting with black
         run: |
-          pytest --cov=figpack --cov-report=term-missing
-
-      - name: Test tutorial snippets
-        run: |
-          python devel/test_tutorial_snippets.py
+          black --check --diff figpack tests
 
   deploy:
-    needs: test
+    needs: [test, lint]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
