@@ -2,9 +2,11 @@
 Tests for figpack Markdown view
 """
 
-import pytest
 import zarr
+import zarr.storage
 import numpy as np
+
+import figpack
 from figpack.views import Markdown
 
 
@@ -20,8 +22,8 @@ def test_markdown_zarr_write():
     content = "# Test Heading\nWith some content"
     view = Markdown(content=content)
 
-    store = zarr.MemoryStore()
-    group = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    group = figpack.Group(zarr.group(store=store))
 
     view._write_to_zarr_group(group)
 
@@ -40,8 +42,8 @@ def test_markdown_empty_content():
     """Test Markdown view with empty content"""
     view = Markdown(content="")
 
-    store = zarr.MemoryStore()
-    group = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    group = figpack.Group(zarr.group(store=store))
 
     view._write_to_zarr_group(group)
 
@@ -71,8 +73,8 @@ def test():
 [Link](http://example.com)"""
 
     view = Markdown(content=content)
-    store = zarr.MemoryStore()
-    group = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    group = figpack.Group(zarr.group(store=store))
 
     view._write_to_zarr_group(group)
 
@@ -92,8 +94,8 @@ def test_markdown_array_properties():
     content = "Test content"
     view = Markdown(content=content)
 
-    store = zarr.MemoryStore()
-    group = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    group = figpack.Group(zarr.group(store=store))
 
     view._write_to_zarr_group(group)
 

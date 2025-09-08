@@ -4,6 +4,9 @@ Tests for the Box view component
 
 import pytest
 import zarr
+import zarr.storage
+
+import figpack
 from figpack.views import Box, LayoutItem
 from figpack.views import Markdown
 
@@ -30,8 +33,8 @@ def test_box_zarr_writing():
     box = Box(direction="horizontal", show_titles=False, items=items)
 
     # Create temporary zarr group
-    store = zarr.MemoryStore()
-    group = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    group = figpack.Group(zarr.group(store=store))
 
     # Write box to zarr
     box._write_to_zarr_group(group)

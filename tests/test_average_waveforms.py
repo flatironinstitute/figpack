@@ -2,7 +2,9 @@ import numpy as np
 import spikeinterface as si
 import spikeinterface.extractors as se
 import zarr
+import zarr.storage
 
+import figpack
 from figpack.spike_sorting.views.AverageWaveforms import (
     AverageWaveforms,
     AverageWaveformItem,
@@ -46,9 +48,9 @@ def test_average_waveforms_with_si():
             assert all(p.dtype == np.float32 for p in item.waveform_percentiles)
 
     # Test Zarr storage
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
     view._write_to_zarr_group(group)
 
     # Verify stored data

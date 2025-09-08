@@ -2,16 +2,10 @@ import os
 import pathlib
 import json
 import pytest
-import socket
 from http.client import HTTPConnection
-import shutil
-import tempfile
 from figpack.core._server_manager import (
     ProcessServerManager,
     _is_process_alive,
-    _is_port_in_use,
-    _cleanup_orphaned_directories,
-    CORSRequestHandler,
 )
 
 

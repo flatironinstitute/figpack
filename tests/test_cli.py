@@ -2,7 +2,6 @@ import json
 import pathlib
 import tarfile
 import tempfile
-from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import pytest

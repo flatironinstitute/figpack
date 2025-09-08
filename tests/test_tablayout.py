@@ -1,6 +1,8 @@
 import pytest
 import zarr
+import zarr.storage
 
+import figpack
 from figpack.views.TabLayout import TabLayout
 from figpack.views.TabLayoutItem import TabLayoutItem
 from figpack.views.Box import Box
@@ -62,9 +64,9 @@ def test_write_to_zarr(sample_tab_items):
     """Test writing TabLayout to zarr group"""
     layout = TabLayout(items=sample_tab_items, initial_tab_index=1)
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     layout._write_to_zarr_group(group)
 
@@ -108,9 +110,9 @@ def test_nested_tablayout(sample_tab_items):
 
     outer_layout = TabLayout(items=outer_tabs)
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     outer_layout._write_to_zarr_group(group)
 
@@ -139,9 +141,9 @@ def test_tablayout_with_different_view_types(sample_tab_items):
 
     layout = TabLayout(items=mixed_tabs)
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     layout._write_to_zarr_group(group)
 

@@ -1,6 +1,8 @@
 import pytest
 import zarr
+import zarr.storage
 
+import figpack
 from figpack.views.Splitter import Splitter
 from figpack.views.LayoutItem import LayoutItem
 from figpack.views.Box import Box
@@ -56,9 +58,9 @@ def test_write_to_zarr(sample_layout_items):
     item1, item2 = sample_layout_items
     splitter = Splitter(direction="horizontal", item1=item1, item2=item2, split_pos=0.7)
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     splitter._write_to_zarr_group(group)
 
@@ -96,9 +98,9 @@ def test_nested_splitter(sample_layout_items):
     # Create outer splitter
     outer_splitter = Splitter(direction="vertical", item1=outer_item, item2=item2)
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     outer_splitter._write_to_zarr_group(group)
 

@@ -2,8 +2,8 @@
 Tests for figpack core functionality
 """
 
-import pytest
 import zarr
+import zarr.storage
 from figpack.core.figpack_view import FigpackView
 
 
@@ -23,7 +23,7 @@ def test_figpack_view_zarr_write():
     """Test basic zarr writing functionality"""
     view = SimpleView(data={"test": 123})
 
-    store = zarr.MemoryStore()
+    store = zarr.storage.MemoryStore()
     group = zarr.group(store=store)
 
     view._write_to_zarr_group(group)
@@ -36,7 +36,7 @@ def test_figpack_view_empty_data():
     """Test view with no data"""
     view = SimpleView()
 
-    store = zarr.MemoryStore()
+    store = zarr.storage.MemoryStore()
     group = zarr.group(store=store)
 
     view._write_to_zarr_group(group)
@@ -49,7 +49,7 @@ def test_figpack_view_custom_attrs():
     """Test view with additional custom attributes"""
     view = SimpleView()
 
-    store = zarr.MemoryStore()
+    store = zarr.storage.MemoryStore()
     group = zarr.group(store=store)
 
     # Add custom attributes
