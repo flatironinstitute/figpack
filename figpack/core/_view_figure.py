@@ -109,7 +109,7 @@ def view_figure(figure_path: str, port: Union[int, None] = None) -> None:
 
         try:
             with tarfile.open(figure_path, "r:gz") as tar:
-                tar.extractall(temp_path)
+                tar.extractall(temp_path, filter="data")
 
             # Count extracted files
             extracted_files = list(temp_path.rglob("*"))

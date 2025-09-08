@@ -41,6 +41,19 @@ class Group:
     def attrs(self) -> Dict[str, Any]:
         return self._zarr_group.attrs
 
+    def __getitem__(self, key: str) -> Any:
+        return self._zarr_group[key]
+
+    # implement in operator
+    def __contains__(self, key: str) -> bool:
+        return key in self._zarr_group
+
+    def __iter__(self):
+        return iter(self._zarr_group)
+
+    def __reversed__(self):
+        return reversed(self._zarr_group)
+
 
 def _check_zarr_version():
     version = zarr.__version__

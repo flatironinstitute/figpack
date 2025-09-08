@@ -1,7 +1,8 @@
 import numpy as np
-import pytest
 import zarr
+import zarr.storage
 
+import figpack
 from figpack.franklab.views.TrackAnimation import TrackAnimation
 
 
@@ -146,9 +147,9 @@ def test_zarr_storage():
     )
 
     # Write to Zarr
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
     track_anim._write_to_zarr_group(group)
 
     # Verify view type

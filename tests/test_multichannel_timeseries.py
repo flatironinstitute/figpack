@@ -4,7 +4,9 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import zarr
+import zarr.storage
 
+import figpack
 from figpack.views.MultiChannelTimeseries import MultiChannelTimeseries
 
 
@@ -168,9 +170,9 @@ def test_zarr_storage(tmp_path):
     )
 
     # Create Zarr group
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     # Write data
     view._write_to_zarr_group(group)
@@ -203,9 +205,9 @@ def test_zarr_chunking(tmp_path):
         data=data,
     )
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     # Write data
     view._write_to_zarr_group(group)

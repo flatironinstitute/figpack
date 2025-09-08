@@ -1,7 +1,9 @@
 import pytest
 import numpy as np
 import zarr
+import zarr.storage
 
+import figpack
 from figpack.spike_sorting.views import RasterPlot, RasterPlotItem
 
 
@@ -46,8 +48,8 @@ def test_write_to_zarr_group():
     plot = RasterPlot(start_time_sec=0.0, end_time_sec=1.0, plots=plots)
 
     # Create temporary zarr group
-    store = zarr.MemoryStore()
-    root = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    root = figpack.Group(zarr.group(store=store))
 
     # Write data to zarr group
     plot._write_to_zarr_group(root)

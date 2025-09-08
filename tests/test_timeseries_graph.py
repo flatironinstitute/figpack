@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 import zarr
+import zarr.storage
 
+import figpack
 from figpack.views.TimeseriesGraph import (
     TimeseriesGraph,
     TGLineSeries,
@@ -257,9 +259,9 @@ def test_zarr_storage():
     )
 
     # Write to Zarr
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
     graph._write_to_zarr_group(group)
 
     # Verify general attributes

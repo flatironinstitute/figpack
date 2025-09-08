@@ -2,9 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 import zarr
-from datetime import datetime, date
+import zarr.storage
+from datetime import datetime
 from unittest.mock import MagicMock
 
+import figpack
 from figpack.views.DataFrame import DataFrame
 
 
@@ -72,9 +74,9 @@ def test_dataframe_init_invalid():
 def test_write_to_zarr_basic(sample_dataframe):
     """Test basic writing to zarr group"""
     view = DataFrame(sample_dataframe)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -109,9 +111,9 @@ def test_write_to_zarr_basic(sample_dataframe):
 def test_write_to_zarr_empty_dataframe(empty_dataframe):
     """Test writing empty DataFrame to zarr group"""
     view = DataFrame(empty_dataframe)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -132,9 +134,9 @@ def test_write_to_zarr_empty_dataframe(empty_dataframe):
 def test_write_to_zarr_mixed_types(mixed_types_dataframe):
     """Test writing DataFrame with mixed data types"""
     view = DataFrame(mixed_types_dataframe)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -171,9 +173,9 @@ def test_write_to_zarr_mixed_types(mixed_types_dataframe):
 def test_column_info_structure(sample_dataframe):
     """Test that column info has correct structure"""
     view = DataFrame(sample_dataframe)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -194,9 +196,9 @@ def test_column_info_structure(sample_dataframe):
 def test_csv_roundtrip(sample_dataframe):
     """Test that CSV conversion preserves data integrity"""
     view = DataFrame(sample_dataframe)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -227,9 +229,9 @@ def test_error_handling():
     view = DataFrame.__new__(DataFrame)  # Create instance without calling __init__
     view.df = mock_df
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     # Should not raise exception, but should store error info
     view._write_to_zarr_group(group)
@@ -261,9 +263,9 @@ def test_dtype_mapping():
     )
 
     view = DataFrame(df)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -296,9 +298,9 @@ def test_large_dataframe():
     )
 
     view = DataFrame(df)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 

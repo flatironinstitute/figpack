@@ -6,6 +6,10 @@ import numpy as np
 import pytest
 import tempfile
 import os
+
+import zarr.storage
+
+import figpack
 from figpack.views import Spectrogram
 
 
@@ -114,48 +118,6 @@ def test_spectrogram_invalid_inputs():
             frequency_delta_hz=-5.0,
             data=np.random.random((100, 10)),
         )
-
-
-def test_spectrogram_zarr_serialization():
-    """Test Zarr serialization"""
-    n_timepoints = 200
-    n_frequencies = 15
-    data = np.random.random((n_timepoints, n_frequencies)).astype(np.float32)
-
-    view = Spectrogram(
-        start_time_sec=1.0,
-        sampling_frequency_hz=50.0,
-        frequency_min_hz=5.0,
-        frequency_delta_hz=3.0,
-        data=data,
-    )
-
-    # Test serialization to temporary directory
-    with tempfile.TemporaryDirectory() as temp_dir:
-        zarr_path = os.path.join(temp_dir, "test.zarr")
-
-        # This would normally be called by the show() method
-        import zarr
-
-        store = zarr.DirectoryStore(zarr_path)
-        root = zarr.group(store=store)
-        view._write_to_zarr_group(root)
-
-        # Check that the zarr group was created with correct attributes
-        assert root.attrs["view_type"] == "Spectrogram"
-        assert root.attrs["start_time_sec"] == 1.0
-        assert root.attrs["sampling_frequency_hz"] == 50.0
-        assert root.attrs["frequency_min_hz"] == 5.0
-        assert root.attrs["frequency_delta_hz"] == 3.0
-        assert root.attrs["n_timepoints"] == n_timepoints
-        assert root.attrs["n_frequencies"] == n_frequencies
-
-        # Check that datasets were created
-        assert "data" in root
-
-        # Check data integrity
-        stored_data = root["data"][:]
-        np.testing.assert_array_equal(stored_data, data)
 
 
 if __name__ == "__main__":

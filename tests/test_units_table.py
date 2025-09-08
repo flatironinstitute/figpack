@@ -1,8 +1,11 @@
 import json
 import pytest
-import zarr
 import numpy as np
 
+import zarr
+import zarr.storage
+
+import figpack
 from figpack.spike_sorting.views.UnitsTable import UnitsTable
 from figpack.spike_sorting.views.UnitsTableColumn import UnitsTableColumn
 from figpack.spike_sorting.views.UnitsTableRow import UnitsTableRow
@@ -84,9 +87,9 @@ def test_write_to_zarr(sample_columns, sample_rows, sample_similarity_scores):
         height=700,
     )
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     table._write_to_zarr_group(group)
 
@@ -154,9 +157,9 @@ def test_column_data_types(sample_rows):
 
     table = UnitsTable(columns=columns, rows=rows)
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     table._write_to_zarr_group(group)
 
@@ -187,9 +190,9 @@ def test_mixed_unit_id_types():
 
     table = UnitsTable(columns=columns, rows=rows)
 
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     table._write_to_zarr_group(group)
 

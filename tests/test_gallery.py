@@ -5,6 +5,7 @@ Tests for the Gallery view
 from unittest.mock import MagicMock
 
 import zarr
+import zarr.storage
 
 import figpack
 from figpack.views.Gallery import Gallery
@@ -65,9 +66,9 @@ def test_gallery_write_to_zarr():
     gallery = Gallery(items=items, initial_item_index=0)
 
     # Create a zarr group
-    store = zarr.MemoryStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test_gallery")
+    group = figpack.Group(root.create_group("test_gallery"))
 
     # Write gallery to zarr
     gallery._write_to_zarr_group(group)

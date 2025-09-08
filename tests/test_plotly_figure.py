@@ -2,9 +2,11 @@ import numpy as np
 import plotly.graph_objects as go
 import pytest
 import zarr
+import zarr.storage
 from datetime import datetime
 from unittest.mock import MagicMock
 
+import figpack
 from figpack.views import PlotlyFigure
 
 
@@ -26,9 +28,9 @@ def test_plotly_figure_init(sample_plotly_figure):
 def test_write_to_zarr_basic(sample_plotly_figure):
     """Test basic writing to zarr group"""
     view = PlotlyFigure(sample_plotly_figure)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -64,9 +66,9 @@ def test_write_to_zarr_complex_data():
     fig.add_trace(go.Scatter(x=dates, y=[7, 8, 9]))
 
     view = PlotlyFigure(fig)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     # Should not raise any exceptions
     view._write_to_zarr_group(group)
@@ -100,9 +102,9 @@ def test_write_to_zarr_figure_methods():
     mock_fig.to_dict.return_value = {"data": [], "layout": {}}
 
     view = PlotlyFigure(mock_fig)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 

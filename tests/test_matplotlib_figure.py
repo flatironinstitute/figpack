@@ -1,10 +1,11 @@
-import io
 import pytest
 import matplotlib.pyplot as plt
 import numpy as np
 import zarr
+import zarr.storage
 from unittest.mock import MagicMock, patch
 
+import figpack
 from figpack.views.MatplotlibFigure import MatplotlibFigure
 
 
@@ -25,9 +26,9 @@ def test_matplotlib_figure_init(sample_figure):
 def test_write_to_zarr_basic(sample_figure):
     """Test basic writing to zarr group"""
     view = MatplotlibFigure(sample_figure)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -64,9 +65,9 @@ def test_write_to_zarr_error_handling():
     mock_fig.dpi = 100.0
 
     view = MatplotlibFigure(mock_fig)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -86,9 +87,9 @@ def test_write_to_zarr_custom_size(sample_figure):
     sample_figure.set_dpi(150)
 
     view = MatplotlibFigure(sample_figure)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)
 
@@ -107,9 +108,9 @@ def test_write_to_zarr_svg_options(sample_figure):
     view = MatplotlibFigure(sample_figure)
 
     with patch.object(sample_figure, "savefig") as mock_savefig:
-        store = zarr.storage.TempStore()
+        store = zarr.storage.MemoryStore()
         root = zarr.group(store=store)
-        group = root.create_group("test")
+        group = figpack.Group(root.create_group("test"))
 
         view._write_to_zarr_group(group)
 
@@ -125,8 +126,8 @@ def test_write_to_zarr_svg_options(sample_figure):
 def test_write_to_zarr_compression(sample_figure):
     """Test SVG data compression settings"""
     view = MatplotlibFigure(sample_figure)
-    store = zarr.storage.TempStore()
+    store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
-    group = root.create_group("test")
+    group = figpack.Group(root.create_group("test"))
 
     view._write_to_zarr_group(group)

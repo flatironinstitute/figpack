@@ -2,9 +2,11 @@
 Tests for figpack Image view
 """
 
-import os
 import pytest
 import zarr
+import zarr.storage
+
+import figpack
 from figpack.views import Image
 
 
@@ -29,8 +31,8 @@ def test_image_zarr_write_with_bytes():
     png_bytes = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x00\x00\x02\x00\x01\xe5\x27\xde\xfc\x00\x00\x00\x00IEND\xaeB`\x82"
     view = Image(png_bytes)
 
-    store = zarr.MemoryStore()
-    group = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    group = figpack.Group(zarr.group(store=store))
 
     view._write_to_zarr_group(group)
 
@@ -49,8 +51,8 @@ def test_image_zarr_write_with_missing_file():
     """Test Image view writing with missing file"""
     view = Image("nonexistent.png")
 
-    store = zarr.MemoryStore()
-    group = zarr.group(store=store)
+    store = zarr.storage.MemoryStore()
+    group = figpack.Group(zarr.group(store=store))
 
     view._write_to_zarr_group(group)
 
