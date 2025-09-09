@@ -2,6 +2,7 @@ import { ZarrGroup } from "./figpack-plugin-interface/ZarrTypes";
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import View from './View';
+import { FPViewContexts } from "./figpack-plugin-interface/FPPluginInterface";
 
 // Declare global types for figpack extension system
 export {};
@@ -16,8 +17,8 @@ declare global {
 window.figpackExtensions = window.figpackExtensions || {};
 
 window.figpackExtensions['figpack-spike-sorting'] = {
-  render: async function(a: {container: HTMLElement, zarrGroup: ZarrGroup, width: number, height: number, onResize: (callback: (width: number, height: number) => void) => void}) {
-    const { container, zarrGroup, width, height, onResize } = a;
+  render: async function(a: {container: HTMLElement, zarrGroup: ZarrGroup, width: number, height: number, onResize: (callback: (width: number, height: number) => void) => void, contexts: FPViewContexts}) {
+    const { container, zarrGroup, width, height, onResize, contexts } = a;
 
     container.innerHTML = '';
     
@@ -28,7 +29,8 @@ window.figpackExtensions['figpack-spike-sorting'] = {
           zarrGroup,
           width,
           height,
-          onResize
+          onResize,
+          contexts
         })
       );
       

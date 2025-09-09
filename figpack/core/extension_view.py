@@ -37,9 +37,4 @@ class ExtensionView(FigpackView):
         # Store the extension name so the frontend knows which extension to use
         group.attrs["extension_name"] = self.extension.name
 
-        # Store additional script names
-        group.attrs["additional_script_names"] = list(
-            self.extension.get_additional_filenames().keys()
-        )
-
         group.attrs["extension_version"] = self.extension.version
