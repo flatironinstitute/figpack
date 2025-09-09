@@ -1,5 +1,6 @@
 import os
 import pathlib
+import json
 from typing import Set
 
 import zarr
@@ -67,6 +68,9 @@ def prepare_figure_bundle(
         # Discover and write extension JavaScript files
         required_extensions = _discover_required_extensions(view)
         _write_extension_files(required_extensions, tmpdir)
+
+        # Generate extension manifest
+        _write_extension_manifest(required_extensions, tmpdir)
 
         zarr.consolidate_metadata(zarr_group._zarr_group.store)
     finally:
@@ -181,3 +185,43 @@ def _write_extension_files(extensions, tmpdir: str) -> None:
 """
 
             additional_path.write_text(additional_js_content, encoding="utf-8")
+
+
+def _write_extension_manifest(extensions, tmpdir: str) -> None:
+    """
+    Write the extension manifest file that lists all extensions and their files
+
+    Args:
+        extensions: List of FigpackExtension instances
+        tmpdir: Directory to write the manifest file to
+    """
+    tmpdir_path = pathlib.Path(tmpdir)
+    manifest_path = tmpdir_path / "extension_manifest.json"
+
+    # Build the manifest data
+    manifest_data = {"extensions": []}
+
+    for extension in extensions:
+        if not isinstance(extension, FigpackExtension):
+            raise ValueError("Expected a FigpackExtension instance")
+
+        # Get the main script filename
+        main_script = extension.get_javascript_filename()
+
+        # Get additional script filenames
+        additional_filenames = extension.get_additional_filenames()
+        additional_scripts = list(additional_filenames.values())
+
+        extension_entry = {
+            "name": extension.name,
+            "mainScript": main_script,
+            "additionalScripts": additional_scripts,
+            "version": extension.version,
+        }
+
+        manifest_data["extensions"].append(extension_entry)
+
+    # Write the manifest file
+    manifest_path.write_text(
+        json.dumps(manifest_data, indent=2, ensure_ascii=False), encoding="utf-8"
+    )

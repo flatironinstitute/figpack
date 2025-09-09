@@ -6,18 +6,10 @@ export const FPView: React.FC<FPViewComponentProps> = (props) => {
   const { zarrGroup } = props;
   const viewType = zarrGroup.attrs["view_type"];
   const extensionName = zarrGroup.attrs["extension_name"];
-  const additionalScriptNames: string[] =
-    zarrGroup.attrs["additional_script_names"] || [];
 
   // Handle extension views
   if (viewType === "ExtensionView" && extensionName) {
-    return (
-      <FPExtensionView
-        {...props}
-        extensionName={extensionName}
-        additionalScriptNames={additionalScriptNames}
-      />
-    );
+    return <FPExtensionView {...props} extensionName={extensionName} />;
   }
 
   // Handle regular plugin views
