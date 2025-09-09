@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
 import { useFigpackStatus } from "./hooks/useFigpackStatus";
@@ -27,7 +28,14 @@ function App() {
     }
   }, [zarrData]);
 
-  const contexts = useMemo(() => {
+  const { extensionLoadingStatus, extensionLoadingStatusString } =
+    useLoadExtensions();
+
+  const [contexts, setContexts] = useState<FPViewContexts | null>(null);
+
+  useEffect(() => {
+    // check if extensions are loaded
+    if (extensionLoadingStatus !== "loaded") return;
     const contexts: FPViewContexts = {};
     plugins.forEach((plugin) => {
       plugin.contextCreators.forEach((c) => {
@@ -42,14 +50,34 @@ function App() {
         contexts[c.name] = c.create();
       });
     });
-    return contexts;
-  }, []);
+    const figpackExtensions = (window as any).figpackExtensions || {};
+    Object.keys(figpackExtensions).forEach((extensionName) => {
+      const extension = figpackExtensions[extensionName];
+      if (extension.contextCreators) {
+        extension.contextCreators.forEach((c: any) => {
+          if (c.name in contexts) {
+            const allExtensionsWithThisName = Object.keys(
+              figpackExtensions,
+            ).filter((en) =>
+              figpackExtensions[en].contextCreators?.some(
+                (cc: any) => cc.name === c.name,
+              ),
+            );
+            throw new Error(
+              `Duplicate context creator name: ${c.name} (${allExtensionsWithThisName.join(
+                ", ",
+              )})`,
+            );
+          }
+          contexts[c.name] = c.create();
+        });
+      }
+    });
+    setContexts(contexts);
+  }, [extensionLoadingStatus]);
 
   // Adjust height to account for status bar (30px height)
   const adjustedHeight = height - 30;
-
-  const { extensionLoadingStatus, extensionLoadingStatusString } =
-    useLoadExtensions();
 
   if (zarrData == null) {
     return (
@@ -123,6 +151,25 @@ function App() {
           }}
         >
           This figure has expired.
+        </div>
+        <StatusBar />
+      </>
+    );
+  }
+
+  if (!contexts) {
+    return (
+      <>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: adjustedHeight,
+            fontSize: "18px",
+          }}
+        >
+          Loading contexts...
         </div>
         <StatusBar />
       </>
@@ -235,24 +282,19 @@ const useLoadExtensions = () => {
   return { extensionLoadingStatus, extensionLoadingStatusString };
 };
 
-// Helper function to load a script
-const loadScript = (src: string): Promise<void> => {
+// Helper function to load and execute a script
+const loadScript = async (src: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    // Check if script is already loaded
-    const existingScript = document.querySelector(`script[src="${src}"]`);
-    if (existingScript) {
-      resolve();
-      return;
-    }
-
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-
-    document.head.appendChild(script);
+    script.onload = () => {
+      resolve();
+    };
+    script.onerror = () => {
+      reject(new Error(`Failed to load script: ${src}`));
+    };
+    document.body.appendChild(script);
   });
 };
 

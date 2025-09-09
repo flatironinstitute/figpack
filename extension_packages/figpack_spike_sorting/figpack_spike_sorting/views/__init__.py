@@ -7,6 +7,7 @@ from .AutocorrelogramItem import AutocorrelogramItem
 from .UnitsTableRow import UnitsTableRow
 from .UnitsTableColumn import UnitsTableColumn
 from .UnitsTable import UnitsTable
+from .UnitSimilarityScore import UnitSimilarityScore
 from .AverageWaveforms import AverageWaveforms, AverageWaveformItem
 from .CrossCorrelograms import CrossCorrelograms, CrossCorrelogramItem
 from .RasterPlot import RasterPlot
@@ -25,6 +26,7 @@ __all__ = [
     "UnitsTableRow",
     "UnitsTableColumn",
     "UnitsTable",
+    "UnitSimilarityScore",
     "AverageWaveforms",
     "AverageWaveformItem",
     "CrossCorrelograms",

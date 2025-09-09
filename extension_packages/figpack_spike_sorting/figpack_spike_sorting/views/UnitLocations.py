@@ -59,7 +59,7 @@ class UnitLocations(figpack.ExtensionView):
         super()._write_to_zarr_group(group)
 
         # Set the view type
-        group.attrs["view_type"] = "UnitLocations"
+        group.attrs["spike_sorting_view_type"] = "UnitLocations"
 
         channel_locations = {}
         for channel_id, loc in self.channel_locations.items():
