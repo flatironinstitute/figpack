@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
 import { useFigpackStatus } from "./hooks/useFigpackStatus";
@@ -6,6 +6,7 @@ import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
 import "./localStyles.css";
 import { plugins } from "./main";
+import { FPViewContexts } from "@figpack/plugin-sdk";
 
 function App() {
   const zarrData = useZarrData();
@@ -23,6 +24,24 @@ function App() {
       }
     }
   }, [zarrData]);
+
+  const contexts = useMemo(() => {
+    const contexts: FPViewContexts = {};
+    plugins.forEach((plugin) => {
+      plugin.contextCreators.forEach((c) => {
+        if (c.name in contexts) {
+          const allPluginsWithThisName = plugins
+            .filter((p) => p.contextCreators.some((cc) => cc.name === c.name))
+            .map((p) => p.pluginName);
+          throw new Error(
+            `Duplicate context creator name: ${c.name} (${allPluginsWithThisName.join(", ")})`,
+          );
+        }
+        contexts[c.name] = c.create();
+      });
+    });
+    return contexts;
+  }, []);
 
   // Adjust height to account for status bar (30px height)
   const adjustedHeight = height - 30;
@@ -65,27 +84,16 @@ function App() {
     );
   }
 
-  // Helper function to wrap content with dynamic context providers
-  const wrapWithContexts = (content: React.ReactNode) => {
-    let wrappedContent = content;
-    plugins.forEach((plugin) => {
-      if (plugin.provideAppContexts) {
-        wrappedContent = plugin.provideAppContexts(wrappedContent);
-      }
-    });
-    return wrappedContent;
-  };
-
   return (
     <>
-      {wrapWithContexts(
-        <FPView
-          zarrGroup={zarrData}
-          width={width}
-          height={adjustedHeight}
-          FPView={FPView}
-        />,
-      )}
+      <FPView
+        zarrGroup={zarrData}
+        width={width}
+        height={adjustedHeight}
+        contexts={contexts}
+        FPView={FPView}
+      />
+      ,
       <StatusBar />
     </>
   );

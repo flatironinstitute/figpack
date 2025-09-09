@@ -13,7 +13,9 @@ const registerViewComponents = (
 };
 
 const plugin: FPPlugin = {
+  pluginName: "franklab",
   registerViewComponents,
+  contextCreators: [],
 };
 
 export default plugin;

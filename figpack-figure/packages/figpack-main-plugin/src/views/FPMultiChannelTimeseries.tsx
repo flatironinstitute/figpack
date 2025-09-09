@@ -1,17 +1,40 @@
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
-import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
+import {
+  TimeseriesSelectionContext,
+  useTimeseriesSelection,
+} from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { colorForUnitId } from "../core-utils/unit-colors";
 import { useEffect, useMemo, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContext, FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 import { useMultiChannelTimeseriesClient } from "./MultiChannelTimeseries/useMultiChannelTimeseriesClient";
 import {
   paintDownsampledChannelLine,
   paintOriginalChannelLine,
 } from "./MultiChannelTimeseries/timeseriesRendering";
 import { useBaseSpacingUnit } from "./MultiChannelTimeseries/spacingUtils";
+import { useProvideFPViewContext } from "@figpack/plugin-sdk";
 
 export const FPMultiChannelTimeseries: React.FC<{
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
+  width: number;
+  height: number;
+}> = ({ zarrGroup, contexts, width, height }) => {
+  return (
+    <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
+      <FPMultiChannelTimeseriesChild
+        zarrGroup={zarrGroup}
+        contexts={contexts}
+        width={width}
+        height={height}
+      />
+    </ProvideTimeseriesSelectionContext>
+  );
+};
+
+const FPMultiChannelTimeseriesChild: React.FC<{
+  zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
@@ -336,5 +359,24 @@ export const FPMultiChannelTimeseries: React.FC<{
       yAxisInfo={yAxisInfo}
       customToolbarActions={customToolbarActions}
     />
+  );
+};
+
+export const ProvideTimeseriesSelectionContext: React.FC<{
+  context: FPViewContext;
+  children: React.ReactNode;
+}> = ({ context, children }) => {
+  const { state, dispatch } = useProvideFPViewContext(context);
+
+  if (!dispatch) {
+    return <>Waiting for context...</>;
+  }
+
+  return (
+    <TimeseriesSelectionContext.Provider
+      value={{ timeseriesSelection: state, dispatch }}
+    >
+      {children}
+    </TimeseriesSelectionContext.Provider>
   );
 };

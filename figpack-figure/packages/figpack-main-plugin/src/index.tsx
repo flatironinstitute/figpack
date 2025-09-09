@@ -1,5 +1,8 @@
 // Import all view components
-import { ProvideTimeseriesSelection } from "./shared/context-timeseries-selection";
+import {
+  timeseriesSelectionReducer,
+  TimeseriesSelectionState,
+} from "./shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { FPBox } from "./views/FPBox";
 import { FPDataFrame } from "./views/FPDataFrame";
 import { FPGallery } from "./views/FPGallery";
@@ -11,7 +14,11 @@ import { FPSpectrogram } from "./views/FPSpectrogram";
 import { FPSplitter } from "./views/FPSplitter";
 import { FPTabLayout } from "./views/FPTabLayout";
 import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
-import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
+import {
+  FPPlugin,
+  FPViewComponentRegistry,
+  FPViewContext,
+} from "@figpack/plugin-sdk";
 
 export {
   // eslint-disable-next-line react-refresh/only-export-components
@@ -19,6 +26,8 @@ export {
   // eslint-disable-next-line react-refresh/only-export-components
   useTimeseriesSelection,
 } from "./shared/context-timeseries-selection";
+
+export { ProvideTimeseriesSelectionContext } from "./views/FPMultiChannelTimeseries";
 
 export { default as TimeScrollView3 } from "./shared/component-time-scroll-view-3/TimeScrollView3";
 // eslint-disable-next-line react-refresh/only-export-components
@@ -83,14 +92,57 @@ const registerViewComponents = (
   });
 };
 
-const provideAppContexts = (node: React.ReactNode) => {
-  // return <UnitSelectionProvider>{node}</UnitSelectionProvider>;
-  return <ProvideTimeseriesSelection>{node}</ProvideTimeseriesSelection>;
+const initialTimeseriesSelectionState: TimeseriesSelectionState = {
+  startTimeSec: undefined,
+  endTimeSec: undefined,
+  visibleStartTimeSec: undefined,
+  visibleEndTimeSec: undefined,
+  visibleTimeRangeHasBeenSetAtLeastOnce: false,
+  currentTime: undefined,
 };
 
+const createTimeseriesSelectionContext = (): FPViewContext => {
+  let state: TimeseriesSelectionState = initialTimeseriesSelectionState;
+  const listeners: ((newValue: TimeseriesSelectionState) => void)[] = [];
+
+  const dispatch = (action: any) => {
+    console.log("TimeseriesSelectionContext dispatch", action);
+    state = timeseriesSelectionReducer(state, action);
+    listeners.forEach((callback) => {
+      callback(state);
+    });
+  };
+
+  const onChange = (callback: (newValue: TimeseriesSelectionState) => void) => {
+    listeners.push(callback);
+    return () => {
+      const idx = listeners.indexOf(callback);
+      if (idx >= 0) listeners.splice(idx, 1);
+    };
+  };
+
+  return {
+    state,
+    dispatch,
+    onChange,
+    createNew: createTimeseriesSelectionContext,
+  };
+};
+
+const contextCreators: {
+  name: string;
+  create: () => FPViewContext;
+}[] = [
+  {
+    name: "timeseriesSelection",
+    create: createTimeseriesSelectionContext,
+  },
+];
+
 const plugin: FPPlugin = {
+  pluginName: "main",
   registerViewComponents,
-  provideAppContexts,
+  contextCreators,
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

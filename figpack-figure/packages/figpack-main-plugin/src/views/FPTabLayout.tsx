@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ProvideTimeseriesSelection } from "../shared/context-timeseries-selection";
 
 interface TabLayoutItemData {
   name: string;
@@ -14,12 +13,14 @@ export const FPTabLayout: React.FC<{
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
+  contexts: FPViewContexts;
   FPView: React.ComponentType<any>;
   eachItemGetsTimeseriesSelectionContext?: boolean;
 }> = ({
   zarrGroup,
   width,
   height,
+  contexts,
   FPView,
   eachItemGetsTimeseriesSelectionContext,
 }) => {
@@ -144,6 +145,7 @@ export const FPTabLayout: React.FC<{
               itemName={item.name}
               width={width}
               height={contentHeight}
+              contexts={contexts}
               FPView={FPView}
               eachItemGetsTimeseriesSelectionContext={
                 eachItemGetsTimeseriesSelectionContext
@@ -163,6 +165,7 @@ const TabLayoutItemContent: React.FC<{
   itemName: string;
   width: number;
   height: number;
+  contexts: FPViewContexts;
   FPView: React.ComponentType<any>;
   eachItemGetsTimeseriesSelectionContext?: boolean;
 }> = ({
@@ -170,6 +173,7 @@ const TabLayoutItemContent: React.FC<{
   itemName,
   width,
   height,
+  contexts,
   FPView,
   eachItemGetsTimeseriesSelectionContext,
 }) => {
@@ -195,6 +199,17 @@ const TabLayoutItemContent: React.FC<{
       canceled = true;
     };
   }, [zarrGroup, itemName]);
+
+  const contexts2 = useMemo(() => {
+    if (eachItemGetsTimeseriesSelectionContext) {
+      return {
+        ...contexts,
+        timeseriesSelection: contexts.timeseriesSelection.createNew(),
+      };
+    } else {
+      return contexts;
+    }
+  }, [contexts, eachItemGetsTimeseriesSelectionContext]);
 
   if (!childGroup) {
     return (
@@ -230,20 +245,15 @@ const TabLayoutItemContent: React.FC<{
     );
   }
 
-  const content = (
+  return (
     <FPView
       zarrGroup={childGroup}
       width={width}
       height={height}
+      contexts={contexts2}
       FPView={FPView}
     />
   );
-
-  if (eachItemGetsTimeseriesSelectionContext) {
-    return <ProvideTimeseriesSelection>{content}</ProvideTimeseriesSelection>;
-  } else {
-    return content;
-  }
 };
 
 const join = (path: string, name: string) => {

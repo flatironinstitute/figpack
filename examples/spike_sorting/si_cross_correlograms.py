@@ -8,7 +8,7 @@ def si_cross_correlograms():
         num_units=9, duration=300, seed=0, num_segments=1
     )
     view = ssv.CrossCorrelograms.from_sorting(sorting)
-    view.show()
+    view.show(title="SI Cross Correlograms Example", open_in_browser=True)
 
 
 if __name__ == "__main__":

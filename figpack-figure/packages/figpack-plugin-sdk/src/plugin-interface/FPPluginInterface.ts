@@ -19,10 +19,22 @@ export interface ZarrFile {
   ) => Promise<DatasetDataType | undefined>;
 }
 
+export type FPViewContext = {
+  state: any;
+  dispatch: (action: any) => void;
+  onChange: (callback: (newValue: any) => void) => () => void;
+  createNew: () => FPViewContext;
+};
+
+export type FPViewContexts = {
+  [key: string]: FPViewContext;
+};
+
 export interface FPViewComponentProps {
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
+  contexts: FPViewContexts;
   FPView: React.ComponentType<any>;
 }
 
@@ -36,8 +48,12 @@ export interface FPViewComponentRegistry {
 }
 
 export interface FPPlugin {
+  pluginName: string;
   registerViewComponents: (
     viewComponentRegistry: FPViewComponentRegistry,
   ) => void;
-  provideAppContexts?: (node: React.ReactNode) => React.ReactNode;
+  contextCreators: {
+    name: string;
+    create: () => FPViewContext;
+  }[];
 }
