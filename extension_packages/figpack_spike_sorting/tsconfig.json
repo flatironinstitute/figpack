@@ -17,5 +17,5 @@
     "types": ["three"]
   },
   "include": ["src/**/*", "vite.config.ts"],
-  "exclude": ["node_modules", "dist", "figpack_franklab"]
+  "exclude": ["node_modules", "dist", "figpack_spike_sorting"]
 }

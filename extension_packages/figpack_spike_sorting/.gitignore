@@ -1,4 +1,4 @@
-figpack_franklab/*.js
+figpack_spike_sorting/*.js
 
 # Node.js
 node_modules/
