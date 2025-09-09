@@ -22,7 +22,8 @@ my_extension = FigpackExtension(
         window.figpackExtensions = window.figpackExtensions || {};
 
         window.figpackExtensions['my-extension'] = {
-            render: function(container, zarrGroup, width, height, onResize) {
+            render: function(a) {
+              const {container, zarrGroup, width, height, onResize, contexts} = a;
                 // Implement rendering logic here
             }
         };
@@ -101,14 +102,16 @@ Extensions must register themselves in the `window.figpackExtensions` object:
 
 ```javascript
 window.figpackExtensions["extension-name"] = {
-  render: function (
-    container, // HTMLElement to render into
-    zarrGroup, // Zarr group containing data
-    width, // Container width
-    height, // Container height
-    onResize, // Function to register resize callback
-    utils // Utilities object
-  ) {
+  render: function (a) {
+    const { 
+      container, // HTMLElement to render into
+      zarrGroup, // Zarr group containing data
+      width, // Container width
+      height, // Container height
+      onResize, // Function to register resize callback
+      contexts, // Contexts object
+    } = a;
+
     // Return optional instance object
     return {
       destroy: function () {

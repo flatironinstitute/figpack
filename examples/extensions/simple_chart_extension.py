@@ -17,7 +17,9 @@ simple_chart_extension = FigpackExtension(
     
     // Define the extension
     window.figpackExtensions['simple-chart'] = {
-        render: function(container, zarrGroup, width, height, onResize) {
+        render: function(a) {
+            const { container, zarrGroup, width, height, onResize } = a;
+
             // Clear container
             container.innerHTML = '';
             

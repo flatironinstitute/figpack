@@ -7,7 +7,8 @@
     window.figpackExtensions = window.figpackExtensions || {};
     
     window.figpackExtensions['force-graph'] = {
-        render: async function(container, zarrGroup, width, height, onResize) {
+        render: async function(a) {
+            const { container, zarrGroup, width, height, onResize } = a;
             container.innerHTML = '';
             
             try {

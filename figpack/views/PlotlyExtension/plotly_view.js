@@ -28,7 +28,8 @@ const loadFigureData = async (zarrGroup) => {
     window.figpackExtensions = window.figpackExtensions || {};
     
     window.figpackExtensions['figpack_plotly'] = {
-        render: async function(container, zarrGroup, width, height, onResize) {
+        render: async function(a) {
+            const { container, zarrGroup, width, height, onResize } = a;
             container.innerHTML = '';
             
             try {

@@ -73,9 +73,7 @@ const createUnitMetricSelectionContext = (): FPViewContext => {
   const listeners: ((newValue: UnitMetricSelection) => void)[] = [];
 
   const dispatch = (action: any) => {
-    console.log("--- dispatching action:", action);
     state = unitMetricSelectionReducer(state, action);
-    console.log("--- new state:", state, listeners.length);
     listeners.forEach((callback) => {
       callback(state);
     });
@@ -83,15 +81,11 @@ const createUnitMetricSelectionContext = (): FPViewContext => {
 
   const onChange = (callback: (newValue: UnitMetricSelection) => void) => {
     listeners.push(callback);
-    console.log("--- added listener, now have", listeners.length);
     return () => {
-      console.log("--- removing listener, had", listeners.length);
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
     };
   };
-
-  console.log("--- creating unitMetricSelection context");
 
   return {
     state,

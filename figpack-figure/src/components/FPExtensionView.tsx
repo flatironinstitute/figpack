@@ -1,4 +1,8 @@
-import { FPViewComponentProps, ZarrGroup } from "@figpack/plugin-sdk";
+import {
+  FPViewComponentProps,
+  FPViewContexts,
+  ZarrGroup,
+} from "@figpack/plugin-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useFigureUrl } from "../hooks/useFigureUrl";
 import { useExtensionDevUrls } from "../hooks/useExtensionDevUrls";
@@ -8,13 +12,14 @@ interface ExtensionViewInstance {
 }
 
 interface ExtensionAPI {
-  render: (
-    container: HTMLElement,
-    zarrGroup: ZarrGroup,
-    width: number,
-    height: number,
-    onResize: (callback: (width: number, height: number) => void) => void,
-  ) => ExtensionViewInstance | void;
+  render: (a: {
+    container: HTMLElement;
+    zarrGroup: ZarrGroup;
+    width: number;
+    height: number;
+    onResize: (callback: (width: number, height: number) => void) => void;
+    contexts: FPViewContexts;
+  }) => ExtensionViewInstance | void;
 }
 
 declare global {
@@ -30,7 +35,14 @@ export const FPExtensionView: React.FC<
     extensionName: string;
     additionalScriptNames: string[];
   }
-> = ({ zarrGroup, width, height, extensionName, additionalScriptNames }) => {
+> = ({
+  zarrGroup,
+  width,
+  height,
+  contexts,
+  extensionName,
+  additionalScriptNames,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,13 +163,14 @@ export const FPExtensionView: React.FC<
       };
 
       // Call the extension's render method
-      const instance = extension.render(
+      const instance = extension.render({
         container,
         zarrGroup,
         width,
         height,
         onResize,
-      );
+        contexts,
+      });
       viewInstanceRef.current = instance || null;
     } catch (err) {
       setError(`Error rendering extension: ${err}`);

@@ -10,7 +10,7 @@ interface Props {
 };
 
 const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize }) => {
-  const viewType = zarrGroup.attrs['view_type'] || null;
+  const franklabViewType = zarrGroup.attrs['franklab_view_type'] || null;
 
   const [internalWidth, setInternalWidth] = React.useState(width);
   const [internalHeight, setInternalHeight] = React.useState(height);
@@ -22,15 +22,15 @@ const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize }) 
     });
   }, [onResize]);
 
-  if (!viewType) {
-    return <div>No view_type attribute found in Zarr group.</div>;
+  if (!franklabViewType) {
+    return <div>No franklab_view_type attribute found in Zarr group.</div>;
   }
 
-  if (viewType === 'track_animation') {
+  if (franklabViewType === 'TrackAnimation') {
     return <FPTrackAnimation zarrGroup={zarrGroup} width={internalWidth} height={internalHeight} contexts={{}} />;
   }
   else {
-    return <div>Unsupported view_type in extension figpack-franklab: {viewType}</div>;
+    return <div>Unsupported franklab_view_type in extension figpack-franklab: {franklabViewType}</div>;
   }
 };
 

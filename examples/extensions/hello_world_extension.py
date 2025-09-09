@@ -15,7 +15,8 @@ hello_extension = FigpackExtension(
     window.figpackExtensions = window.figpackExtensions || {};
     
     window.figpackExtensions['hello-world'] = {
-        render: function(container, zarrGroup, width, height, onResize) {
+        render: function(a) {
+            const { container, zarrGroup, width, height, onResize } = a;
             // Clear container
             container.innerHTML = '';
             

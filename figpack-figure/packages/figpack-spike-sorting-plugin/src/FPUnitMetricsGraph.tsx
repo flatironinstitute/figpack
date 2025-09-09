@@ -140,8 +140,6 @@ export const FPUnitMetricsGraph: FunctionComponent<Props> = ({
     );
   }
 
-  console.log("--- xxx", contexts.unitMetricSelection);
-
   return (
     <ProvideUnitMetricSelection context={contexts.unitMetricSelection}>
       <ProvideUnitSelectionContext context={contexts.unitSelection}>
@@ -157,7 +155,6 @@ export const ProvideUnitMetricSelection: React.FC<{
 }> = ({ context, children }) => {
   const { state, dispatch } = useProvideFPViewContext(context);
 
-  console.log("--- ProvideUnitMetricSelection state:", state);
   if (!dispatch) {
     return <>Waiting for unit metric selection context...</>;
   }
