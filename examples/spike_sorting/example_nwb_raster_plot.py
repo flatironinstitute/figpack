@@ -1,4 +1,4 @@
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 
 def example_nwb_spike_amplitudes():

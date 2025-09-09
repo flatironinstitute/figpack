@@ -16,7 +16,7 @@ The Units Table displays basic information about detected neural units:
 
 ```python
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic spike data
 recording, sorting = se.toy_example(
@@ -54,7 +54,7 @@ The Unit Metrics Graph provides interactive visualization of unit metrics, allow
 
 ```python
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic spike data
 recording, sorting = se.toy_example(
@@ -104,7 +104,7 @@ A raster plot shows when each unit fired spikes over time:
 ```python
 import numpy as np
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic data
 recording, sorting = se.toy_example(
@@ -143,7 +143,7 @@ Visualize spike amplitudes over time to assess unit stability:
 ```python
 import numpy as np
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic data
 recording, sorting = se.toy_example(
@@ -186,7 +186,7 @@ view.show(title="Spike Amplitudes Example", open_in_browser=True)
 Or load it from a local or remote NWB file:
 
 ```python
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 print(f"Loading from remote NWB file...")
 view = ssv.SpikeAmplitudes.from_nwb_units_table(
@@ -207,7 +207,7 @@ Average waveforms show the average spike shape for each unit:
 ```python
 import spikeinterface as si
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic data with ground truth
 recording, sorting = si.generate_ground_truth_recording(
@@ -242,7 +242,7 @@ Autocorrelograms help assess the quality of unit isolation by showing refractory
 
 ```python
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic data
 recording, sorting = se.toy_example(
@@ -266,7 +266,7 @@ In this example, we generate synthetic data and simulate unit locations for demo
 from typing import List
 import numpy as np
 import spikeinterface as si
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic data with ground truth
 recording, sorting = si.generate_ground_truth_recording(
@@ -322,7 +322,7 @@ Cross correlograms reveal temporal relationships between different units, helpin
 
 ```python
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 # Generate synthetic data with more units for cross-correlation analysis
 recording, sorting = se.toy_example(
@@ -343,7 +343,7 @@ Combine multiple views:
 ```python
 import numpy as np
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 import figpack.views as vv
 
 # Generate synthetic data

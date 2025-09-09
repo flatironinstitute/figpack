@@ -1,6 +1,5 @@
 import spikeinterface.extractors as se
-import figpack.views as vv
-from figpack.spike_sorting.views import (
+from figpack_spike_sorting.views import (
     UnitMetricsGraphMetric,
     UnitMetricsGraphUnit,
     UnitMetricsGraph,

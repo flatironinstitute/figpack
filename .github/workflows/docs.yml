@@ -54,6 +54,10 @@ jobs:
           npm install
           npm run build
           pip install -e .
+          cd ../figpack_spike_sorting
+          npm install
+          npm run build
+          pip install -e .
 
       - name: Build documentation
         run: |

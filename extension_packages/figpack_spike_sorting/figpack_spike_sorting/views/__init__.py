@@ -13,6 +13,11 @@ from .RasterPlot import RasterPlot
 from .RasterPlotItem import RasterPlotItem
 from .SpikeAmplitudes import SpikeAmplitudes, SpikeAmplitudesItem
 from .UnitLocations import UnitLocations, UnitLocationsItem
+from .UnitMetricsGraph import (
+    UnitMetricsGraph,
+    UnitMetricsGraphMetric,
+    UnitMetricsGraphUnit,
+)
 
 __all__ = [
     "Autocorrelograms",
@@ -30,4 +35,7 @@ __all__ = [
     "SpikeAmplitudesItem",
     "UnitLocations",
     "UnitLocationsItem",
+    "UnitMetricsGraph",
+    "UnitMetricsGraphMetric",
+    "UnitMetricsGraphUnit",
 ]

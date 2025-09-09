@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 import spikeinterface as si
 import spikeinterface.extractors as se
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 
 def main():
