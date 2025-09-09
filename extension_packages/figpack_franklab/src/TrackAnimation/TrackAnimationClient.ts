@@ -1,4 +1,4 @@
-import { ZarrGroup } from "./figpack-plugin-interface/ZarrTypes";
+import { ZarrGroup } from "../figpack-plugin-interface/ZarrTypes";
 
 // Client class for efficient data loading
 export class TrackAnimationClient {

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { ZarrGroup } from './figpack-plugin-interface/ZarrTypes';
-import { FPTrackAnimation } from './FPTrackAnimation';
+import { FPTrackAnimation } from './TrackAnimation/FPTrackAnimation';
 
 interface Props {
   zarrGroup: ZarrGroup;
