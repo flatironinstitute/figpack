@@ -256,6 +256,66 @@ view.show(title="Autocorrelograms Example", open_in_browser=True)
 
 <iframe src="./spike_sorting_tutorial_autocorrelograms/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
 
+## Unit Locations
+
+The Unit Locations view shows the spatial arrangement of units and recording channels on the probe.
+
+In this example, we generate synthetic data and simulate unit locations for demonstration:
+
+```python
+from typing import List
+import numpy as np
+import spikeinterface as si
+import figpack.spike_sorting.views as ssv
+
+# Generate synthetic data with ground truth
+recording, sorting = si.generate_ground_truth_recording(
+    durations=[120],
+    num_units=10,
+    seed=0,
+    num_channels=8,
+    noise_kwargs={"noise_levels": 50},
+)
+
+# Create unit locations view
+channel_locations = recording.get_channel_locations()
+xmin = np.min(channel_locations[:, 0])
+xmax = np.max(channel_locations[:, 0])
+if xmax <= xmin:
+    xmax = xmin + 1
+ymin = np.min(channel_locations[:, 1])
+ymax = np.max(channel_locations[:, 1])
+if ymax <= ymin:
+    ymax = ymin + 1
+
+unit_ids = sorting.get_unit_ids()
+unit_items: List[ssv.UnitLocationsItem] = []
+for ii, unit_id in enumerate(unit_ids):
+    unit_items.append(
+        ssv.UnitLocationsItem(
+            unit_id=unit_id,
+            x=float(xmin + ((ii + 0.5) / len(unit_ids)) * (xmax - xmin)),
+            y=float(ymin + ((ii + 0.5) / len(unit_ids)) * (ymax - ymin)),  # simulated location
+        )
+    )
+
+channel_locations_dict = {}
+for ii, channel_id in enumerate(recording.channel_ids):
+    channel_locations_dict[str(channel_id)] = recording.get_channel_locations()[
+        ii, :
+    ].astype(np.float32)
+
+view = ssv.UnitLocations(
+    units=unit_items,
+    channel_locations=channel_locations_dict,
+    disable_auto_rotate=True
+)
+
+view.show(title="Unit Locations Example", open_in_browser=True)
+```
+
+<iframe src="./spike_sorting_tutorial_unit_locations/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+
 ## Cross Correlograms
 
 Cross correlograms reveal temporal relationships between different units, helping identify potential synchrony or interactions:
