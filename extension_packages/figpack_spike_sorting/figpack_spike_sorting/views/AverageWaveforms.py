@@ -5,10 +5,8 @@ AverageWaveforms view for figpack - displays multiple average waveforms
 from typing import List, Optional, Union
 
 import numpy as np
-import zarr
-
-from ...core.figpack_view import FigpackView
-from ...core.zarr import Group
+import figpack
+from ..spike_sorting_extension import spike_sorting_extension
 
 
 class AverageWaveformItem:
@@ -51,7 +49,7 @@ class AverageWaveformItem:
             self.waveform_percentiles = None
 
 
-class AverageWaveforms(FigpackView):
+class AverageWaveforms(figpack.ExtensionView):
     """
     A view that displays multiple average waveforms for spike sorting analysis
     """
@@ -63,6 +61,7 @@ class AverageWaveforms(FigpackView):
         Args:
             average_waveforms: List of AverageWaveformItem objects
         """
+        super().__init__(extension=spike_sorting_extension)
         self.average_waveforms = average_waveforms
 
     @staticmethod
@@ -98,15 +97,17 @@ class AverageWaveforms(FigpackView):
         view = AverageWaveforms(average_waveforms=average_waveform_items)
         return view
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the AverageWaveforms data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
+        super()._write_to_zarr_group(group)
+
         # Set the view type
-        group.attrs["view_type"] = "AverageWaveforms"
+        group.attrs["spike_sorting_view_type"] = "AverageWaveforms"
 
         # Store the number of average waveforms
         group.attrs["num_average_waveforms"] = len(self.average_waveforms)

@@ -1,4 +1,4 @@
-import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "../figpack-plugin-interface";
 import { FunctionComponent, useEffect, useState } from "react";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 import {

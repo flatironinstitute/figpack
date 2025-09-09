@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import react from "@vitejs/plugin-react";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -8,6 +9,7 @@ export default defineConfig(({ command }) => {
   const isServe = command === 'serve';
   
   return {
+    plugins: [react()],
     root: __dirname,
     publicDir: 'figpack_spike_sorting', // Serve files from the figpack_spike_sorting directory
     server: {
@@ -37,7 +39,7 @@ export default defineConfig(({ command }) => {
           inlineDynamicImports: true,
         }
       },
-      target: 'es2018', // Good browser compatibility
+      target: 'es2023',
       minify: !isServe // Don't minify in dev mode for better debugging
     },
     define: {

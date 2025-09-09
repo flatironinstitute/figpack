@@ -4,16 +4,16 @@ RasterPlot view for figpack - displays multiple raster plots
 
 from typing import List
 import numpy as np
-import zarr
 
-from ...core.figpack_view import FigpackView
-from ...core.zarr import Group
 from .RasterPlotItem import RasterPlotItem
 from .UnitsTable import UnitsTable, UnitsTableColumn, UnitsTableRow
-from ...views.Box import Box, LayoutItem
+
+import figpack
+import figpack.views as fv
+from ..spike_sorting_extension import spike_sorting_extension
 
 
-class RasterPlot(FigpackView):
+class RasterPlot(figpack.ExtensionView):
     """
     A view that displays multiple raster plots for spike sorting analysis
     """
@@ -34,6 +34,7 @@ class RasterPlot(FigpackView):
             plots: List of RasterPlotItem objects
             height: Height of the plot in pixels (default: 500)
         """
+        super().__init__(extension=spike_sorting_extension)
         self.start_time_sec = float(start_time_sec)
         self.end_time_sec = float(end_time_sec)
         self.plots = plots
@@ -95,24 +96,26 @@ class RasterPlot(FigpackView):
                 columns=columns,
                 rows=rows,
             )
-            layout = Box(
+            layout = fv.Box(
                 direction="horizontal",
                 items=[
-                    LayoutItem(view=units_table, max_size=150, title="Units"),
-                    LayoutItem(view=view, title="Spike Amplitudes"),
+                    fv.LayoutItem(view=units_table, max_size=150, title="Units"),
+                    fv.LayoutItem(view=view, title="Spike Amplitudes"),
                 ],
             )
             return layout
         else:
             return view
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Args:
             group: Zarr group to write data into
         """
+        super()._write_to_zarr_group(group)
+
         # Set the view type
-        group.attrs["view_type"] = "RasterPlot"
+        group.attrs["spike_sorting_view_type"] = "RasterPlot"
 
         # Store view parameters
         group.attrs["start_time_sec"] = self.start_time_sec

@@ -1,6 +1,6 @@
 from typing import List
 
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 import figpack.views as vv
 
 

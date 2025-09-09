@@ -5,14 +5,14 @@ CrossCorrelograms view for figpack - displays multiple cross-correlograms
 from typing import List, Optional
 
 import numpy as np
-import zarr
 
-from ...core.figpack_view import FigpackView
-from ...core.zarr import Group
+import figpack
+from ..spike_sorting_extension import spike_sorting_extension
+
 from .CrossCorrelogramItem import CrossCorrelogramItem
 
 
-class CrossCorrelograms(FigpackView):
+class CrossCorrelograms(figpack.ExtensionView):
     """
     A view that displays multiple cross-correlograms for spike sorting analysis
     """
@@ -30,6 +30,7 @@ class CrossCorrelograms(FigpackView):
             cross_correlograms: List of CrossCorrelogramItem objects
             hide_unit_selector: Whether to hide the unit selector widget
         """
+        super().__init__(extension=spike_sorting_extension)
         self.cross_correlograms = cross_correlograms
         self.hide_unit_selector = hide_unit_selector
 
@@ -76,15 +77,17 @@ class CrossCorrelograms(FigpackView):
         view = CrossCorrelograms(cross_correlograms=cc_items, hide_unit_selector=False)
         return view
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the CrossCorrelograms data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
+        super()._write_to_zarr_group(group)
+
         # Set the view type
-        group.attrs["view_type"] = "CrossCorrelograms"
+        group.attrs["spike_sorting_view_type"] = "CrossCorrelograms"
 
         # Set view properties
         if self.hide_unit_selector is not None:

@@ -1,4 +1,4 @@
-import { TimeScrollView3, useTimeseriesSelection } from "@figpack/main-plugin";
+import { useTimeseriesSelection } from "../../TimeseriesSelectionContext";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   idToNum,
@@ -15,6 +15,7 @@ import {
   SpikeAmplitudesDataClient,
   SpikeAmplitudesRangeData,
 } from "./SpikeAmplitudesDataClient";
+import TimeScrollView3 from "../component-time-scroll-view-3/TimeScrollView3";
 
 type Props = {
   dataClient: SpikeAmplitudesDataClient;

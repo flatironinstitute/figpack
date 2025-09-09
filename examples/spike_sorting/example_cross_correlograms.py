@@ -1,10 +1,9 @@
-import os
 from typing import List
 
 import spikeinterface as si
 import spikeinterface.extractors as se
 
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 import figpack.views as vv
 
 
