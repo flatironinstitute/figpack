@@ -229,4 +229,4 @@ views_dict = {v["viewId"]: v for v in fig_data["views"]}
 main_box = process_layout_box(fig_data["layout"], views_dict)
 
 # Display the result
-main_box.show()
+main_box.show(title="Gillespie Example Figure", open_in_browser=True)
