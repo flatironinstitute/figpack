@@ -46,7 +46,6 @@ figpack-figure/
 │   ├── figpack-plugin-sdk/       # Core interfaces and types
 │   ├── figpack-main-plugin/      # Standard view components
 │   ├── figpack-spike-sorting-plugin/  # Neurophysiology views
-│   └── figpack-franklab-plugin/  # Lab-specific extensions
 ```
 
 ### Package Roles
@@ -54,7 +53,6 @@ figpack-figure/
 - **figpack-plugin-sdk**: Defines core interfaces (`FPPlugin`, `FPViewComponent`, `FPViewComponentProps`) and Zarr types
 - **figpack-main-plugin**: Implements standard views (TimeseriesGraph, Image, Markdown, layouts)
 - **figpack-spike-sorting-plugin**: Provides neurophysiology-specific visualizations
-- **figpack-franklab-plugin**: Contains lab-specific view components
 - **Main application**: Orchestrates plugin loading, data access, and rendering
 
 ### Build Dependencies

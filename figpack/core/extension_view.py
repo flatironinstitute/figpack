@@ -3,7 +3,7 @@ Base class for views that use figpack extensions
 """
 
 from .figpack_view import FigpackView
-from .figpack_extension import ExtensionRegistry
+from .figpack_extension import FigpackExtension
 from ..core.zarr import Group
 
 
@@ -12,7 +12,7 @@ class ExtensionView(FigpackView):
     Base class for views that are rendered by figpack extensions
     """
 
-    def __init__(self, *, extension_name: str):
+    def __init__(self, *, extension: FigpackExtension):
         """
         Initialize an extension-based view
 
@@ -20,16 +20,6 @@ class ExtensionView(FigpackView):
             extension_name: Name of the extension that will render this view
         """
         super().__init__()
-        self.extension_name = extension_name
-
-        # Validate that the extension is registered
-        registry = ExtensionRegistry.get_instance()
-        extension = registry.get_extension(extension_name)
-        if extension is None:
-            raise ValueError(
-                f"Extension '{extension_name}' is not registered. "
-                f"Make sure to register the extension before creating views that use it."
-            )
         self.extension = extension
 
     def _write_to_zarr_group(self, group: Group) -> None:
@@ -45,15 +35,11 @@ class ExtensionView(FigpackView):
         group.attrs["view_type"] = "ExtensionView"
 
         # Store the extension name so the frontend knows which extension to use
-        group.attrs["extension_name"] = self.extension_name
+        group.attrs["extension_name"] = self.extension.name
 
         # Store additional script names
         group.attrs["additional_script_names"] = list(
             self.extension.get_additional_filenames().keys()
         )
 
-        # Store extension metadata for debugging/compatibility
-        registry = ExtensionRegistry.get_instance()
-        extension = registry.get_extension(self.extension_name)
-        if extension:
-            group.attrs["extension_version"] = extension.version
+        group.attrs["extension_version"] = self.extension.version

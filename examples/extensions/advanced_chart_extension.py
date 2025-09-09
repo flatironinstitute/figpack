@@ -3,8 +3,7 @@ Advanced chart extension example with multiple javascript files
 """
 
 import numpy as np
-import figpack
-from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
+from figpack import FigpackExtension, ExtensionView
 
 # Simple chart utility functions
 chart_utils_js = """
@@ -171,8 +170,6 @@ advanced_chart_extension = FigpackExtension(
     version="1.0.0",
 )
 
-ExtensionRegistry.register(advanced_chart_extension)
-
 
 class AdvancedChartView(ExtensionView):
     """A chart view featuring multiple .js files"""
@@ -180,7 +177,7 @@ class AdvancedChartView(ExtensionView):
     def __init__(
         self, *, x_data=None, y_data=None, title="Data Visualization", color="#2196f3"
     ):
-        super().__init__(extension_name="advanced-chart")
+        super().__init__(extension=advanced_chart_extension)
         self.x_data = x_data
         self.y_data = y_data
         self.title = title

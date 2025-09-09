@@ -45,8 +45,6 @@ _three_d_extension = figpack.FigpackExtension(
     version="1.0.0",
 )
 
-figpack.ExtensionRegistry.register(_three_d_extension)
-
 
 class ThreeDView(figpack.ExtensionView):
     """
@@ -79,7 +77,7 @@ class ThreeDView(figpack.ExtensionView):
             camera_position: Initial camera position as [x, y, z]
             enable_controls: Whether to enable mouse controls for scene rotation
         """
-        super().__init__(extension_name="figpack-3d")
+        super().__init__(extension=_three_d_extension)
 
         self.objects = objects or []
         self.background_color = background_color

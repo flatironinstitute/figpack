@@ -67,8 +67,6 @@ _force_graph_extension = figpack.FigpackExtension(
     version="1.0.0",
 )
 
-figpack.ExtensionRegistry.register(_force_graph_extension)
-
 
 class ForceGraphView(figpack.ExtensionView):
     """
@@ -117,7 +115,7 @@ class ForceGraphView(figpack.ExtensionView):
             cooldown_ticks: Number of ticks to run before stopping simulation
             warmup_ticks: Number of ticks to run before starting to render
         """
-        super().__init__(extension_name="force-graph")
+        super().__init__(extension=_force_graph_extension)
 
         self.nodes = nodes or []
         self.links = links or []

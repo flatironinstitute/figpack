@@ -1,8 +1,3 @@
-import {
-  ProvideTimeseriesSelectionContext,
-  useTimeseriesSelection,
-} from "@figpack/main-plugin";
-import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 import React, {
   useCallback,
   useEffect,
@@ -17,6 +12,10 @@ import {
   drawTrackBins,
 } from "./TrackAnimationDrawing";
 import { useTrackAnimationClient } from "./useTrackAnimationClient";
+import { ZarrGroup } from "./figpack-plugin-interface/ZarrTypes";
+import { FPViewContext, FPViewContexts } from "./figpack-plugin-interface/FPPluginInterface";
+import useProvideFPViewContext from "./figpack-plugin-interface/useProvideFPViewContext";
+import { TimeseriesSelectionContext, useTimeseriesSelection } from "./TimeseriesSelectionContext";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -198,5 +197,24 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         </span>
       </div>
     </div>
+  );
+};
+
+export const ProvideTimeseriesSelectionContext: React.FC<{
+  context: FPViewContext;
+  children: React.ReactNode;
+}> = ({ context, children }) => {
+  const { state, dispatch } = useProvideFPViewContext(context);
+
+  if (!dispatch) {
+    return <>Waiting for context...</>;
+  }
+
+  return (
+    <TimeseriesSelectionContext.Provider
+      value={{ timeseriesSelection: state, dispatch }}
+    >
+      {children}
+    </TimeseriesSelectionContext.Provider>
   );
 };

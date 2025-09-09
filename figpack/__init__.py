@@ -5,14 +5,13 @@ figpack - A Python package for creating shareable, interactive visualizations in
 __version__ = "0.2.16"
 
 from .cli import view_figure
-from .core import FigpackView, FigpackExtension, ExtensionRegistry, ExtensionView
+from .core import FigpackView, FigpackExtension, ExtensionView
 from .core.zarr import Group
 
 __all__ = [
     "view_figure",
     "FigpackView",
     "FigpackExtension",
-    "ExtensionRegistry",
     "ExtensionView",
     "Group",
 ]

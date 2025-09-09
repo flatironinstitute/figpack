@@ -5,7 +5,7 @@ from typing import Set
 import zarr
 
 from .figpack_view import FigpackView
-from .figpack_extension import ExtensionRegistry
+from .figpack_extension import FigpackExtension
 from .extension_view import ExtensionView
 from .zarr import Group, _check_zarr_version
 
@@ -84,7 +84,8 @@ def _discover_required_extensions(view: FigpackView) -> Set[str]:
     Returns:
         Set of extension names required by this view hierarchy
     """
-    extensions = set()
+    extension_names_discovered = set()
+    extensions_discovered = []
     visited = set()  # Prevent infinite recursion
 
     def _collect_extensions(v: FigpackView):
@@ -95,7 +96,9 @@ def _discover_required_extensions(view: FigpackView) -> Set[str]:
 
         # Check if this view is an extension view
         if isinstance(v, ExtensionView):
-            extensions.add(v.extension_name)
+            if v.extension.name not in extension_names_discovered:
+                extension_names_discovered.add(v.extension.name)
+                extensions_discovered.append(v.extension)
 
         # Recursively check all attributes that might contain child views
         for attr_name in dir(v):
@@ -130,10 +133,10 @@ def _discover_required_extensions(view: FigpackView) -> Set[str]:
                 continue
 
     _collect_extensions(view)
-    return extensions
+    return extensions_discovered
 
 
-def _write_extension_files(extension_names: Set[str], tmpdir: str) -> None:
+def _write_extension_files(extensions, tmpdir: str) -> None:
     """
     Write JavaScript files for the required extensions
 
@@ -141,20 +144,11 @@ def _write_extension_files(extension_names: Set[str], tmpdir: str) -> None:
         extension_names: Set of extension names to write
         tmpdir: Directory to write extension files to
     """
-    if not extension_names:
-        return
-
-    registry = ExtensionRegistry.get_instance()
     tmpdir_path = pathlib.Path(tmpdir)
 
-    for extension_name in extension_names:
-        extension = registry.get_extension(extension_name)
-        if extension is None:
-            raise RuntimeError(
-                f"Extension '{extension_name}' is required but not registered"
-            )
-
-        # Write the main JavaScript file
+    for extension in extensions:
+        if not isinstance(extension, FigpackExtension):
+            raise ValueError("Expected a FigpackExtension instance")
         js_filename = extension.get_javascript_filename()
         js_path = tmpdir_path / js_filename
 
@@ -164,7 +158,7 @@ def _write_extension_files(extension_names: Set[str], tmpdir: str) -> None:
  * Version: {extension.version}
  * Generated automatically - do not edit
  */
-
+ 
 {extension.javascript_code}
 """
 
