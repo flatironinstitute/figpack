@@ -4,9 +4,7 @@ import { FPViewContext } from "./FPPluginInterface";
 const useProvideFPViewContext = (context: FPViewContext) => {
   const [internalState, setInternalState] = useState(undefined);
   useEffect(() => {
-    console.log("---- abc");
     const unsubscribe = context.onChange((newState) => {
-      console.log("--- context state changed:", newState);
       setInternalState(newState);
     });
     setInternalState(context.state);
