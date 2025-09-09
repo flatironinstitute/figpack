@@ -3,7 +3,7 @@ Simple Hello World extension example
 """
 
 import figpack
-from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
+from figpack import FigpackExtension, ExtensionView
 
 
 # Define a simple hello world extension
@@ -61,9 +61,6 @@ hello_extension = FigpackExtension(
     version="1.0.0",
 )
 
-# Register the extension
-ExtensionRegistry.register(hello_extension)
-
 
 class HelloWorldView(ExtensionView):
     """
@@ -71,7 +68,7 @@ class HelloWorldView(ExtensionView):
     """
 
     def __init__(self, *, message="Hello from Extension!", color="#1976d2"):
-        super().__init__(extension_name="hello-world")
+        super().__init__(extension=hello_extension)
         self.message = message
         self.color = color
 

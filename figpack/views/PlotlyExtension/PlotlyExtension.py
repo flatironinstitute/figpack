@@ -49,8 +49,6 @@ _plotly_extension = figpack.FigpackExtension(
     version="1.0.0",
 )
 
-figpack.ExtensionRegistry.register(_plotly_extension)
-
 
 class PlotlyFigure(figpack.ExtensionView):
     """
@@ -66,9 +64,7 @@ class PlotlyFigure(figpack.ExtensionView):
         Args:
             fig: The plotly figure object
         """
-        # for some reason, we need to reregister here to avoid issues with pytest
-        figpack.ExtensionRegistry.register(_plotly_extension)
-        super().__init__(extension_name="figpack_plotly")
+        super().__init__(extension=_plotly_extension)
 
         self.fig = fig
 

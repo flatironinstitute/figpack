@@ -3,8 +3,7 @@ Example extension that creates a simple chart using SVG
 """
 
 import numpy as np
-import figpack
-from figpack import FigpackExtension, ExtensionRegistry, ExtensionView
+from figpack import FigpackExtension, ExtensionView
 
 
 # Define the extension with JavaScript code
@@ -211,9 +210,6 @@ simple_chart_extension = FigpackExtension(
     version="1.0.0",
 )
 
-# Register the extension
-ExtensionRegistry.register(simple_chart_extension)
-
 
 class SimpleChartView(ExtensionView):
     """
@@ -223,7 +219,7 @@ class SimpleChartView(ExtensionView):
     def __init__(
         self, *, x_data=None, y_data=None, title="Simple Chart", color="steelblue"
     ):
-        super().__init__(extension_name="simple-chart")
+        super().__init__(extension=simple_chart_extension)
         self.x_data = x_data
         self.y_data = y_data
         self.title = title

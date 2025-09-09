@@ -1,17 +1,10 @@
-"""
-TrackAnimation view for figpack - displays animated tracking data
-"""
-
-from typing import Optional
-
 import numpy as np
-import zarr
 
-from ...core.figpack_view import FigpackView
-from ...core.zarr import Group
+import figpack
+from .franklab_extension import franklab_extension
 
 
-class TrackAnimation(FigpackView):
+class TrackAnimation(figpack.ExtensionView):
     """
     A track animation visualization component for displaying animal tracking data
     """
@@ -65,6 +58,8 @@ class TrackAnimation(FigpackView):
             xmax: Maximum x coordinate
             ymax: Maximum y coordinate
         """
+        super().__init__(extension=franklab_extension)
+
         # Validate input arrays
         assert isinstance(
             frame_bounds, np.ndarray
@@ -117,7 +112,7 @@ class TrackAnimation(FigpackView):
         self.track_bin_height = track_bin_height
         self.track_bin_width = track_bin_width
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the track animation data to a Zarr group
 

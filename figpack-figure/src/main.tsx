@@ -6,14 +6,9 @@ import { viewComponentRegistry } from "./view-registry/FPViewComponentRegistry.t
 
 import mainPlugin from "@figpack/main-plugin";
 import spikeSortingPlugin from "@figpack/spike-sorting-plugin";
-import franklabPlugin from "@figpack/franklab-plugin";
 import { FPPlugin } from "@figpack/plugin-sdk";
 
-export const plugins: FPPlugin[] = [
-  mainPlugin,
-  spikeSortingPlugin,
-  franklabPlugin,
-];
+export const plugins: FPPlugin[] = [mainPlugin, spikeSortingPlugin];
 
 plugins.forEach((plugin) => {
   if (plugin.registerViewComponents) {

@@ -12,7 +12,7 @@ An extension consists of two main parts:
 ### Extension Definition
 
 ```python
-from figpack import FigpackExtension, ExtensionRegistry
+from figpack import FigpackExtension
 
 my_extension = FigpackExtension(
     name="my-extension",
@@ -30,9 +30,6 @@ my_extension = FigpackExtension(
     """,
     version="1.0.0"
 )
-
-# Register the extension
-ExtensionRegistry.register(my_extension)
 ```
 
 ### Extension View
@@ -42,7 +39,7 @@ from figpack import ExtensionView
 
 class MyCustomView(ExtensionView):
     def __init__(self, *, some_data=None):
-        super().__init__(extension_name="my-extension")
+        super().__init__(extension=exteension)
         self.some_data = some_data
 
     def _write_to_zarr_group(self, group):

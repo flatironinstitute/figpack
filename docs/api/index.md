@@ -31,15 +31,6 @@ This section provides detailed API documentation for figpack.
    :show-inheritance:
 ```
 
-### Franklab Views
-
-```{eval-rst}
-.. automodule:: figpack.franklab.views
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
 ## Core Functionality
 
 The core functionality includes the essential `show()` function used to display and share visualizations. For detailed documentation of this crucial function and all its configuration options, see the [show() function reference](../show_function.md).
