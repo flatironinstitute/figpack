@@ -6,7 +6,6 @@ from typing import List, Optional
 import json
 
 import numpy as np
-import zarr
 
 import figpack
 from ..spike_sorting_extension import spike_sorting_extension

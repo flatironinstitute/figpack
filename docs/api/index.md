@@ -22,15 +22,6 @@ This section provides detailed API documentation for figpack.
    :show-inheritance:
 ```
 
-### Spike Sorting Views
-
-```{eval-rst}
-.. automodule:: figpack.spike_sorting.views
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
 ## Core Functionality
 
 The core functionality includes the essential `show()` function used to display and share visualizations. For detailed documentation of this crucial function and all its configuration options, see the [show() function reference](../show_function.md).
@@ -50,14 +41,6 @@ The core functionality includes the essential `show()` function used to display 
    :undoc-members:
    :show-inheritance:
 ```
-
-## Individual View Classes
-
-For detailed documentation of specific view classes, see the source code and docstrings in the respective modules:
-
-- `figpack.views` - Core visualization components
-- `figpack.spike_sorting.views` - Spike sorting specific views
-- `figpack.franklab.views` - Franklab specific views
 
 ## Usage Examples
 

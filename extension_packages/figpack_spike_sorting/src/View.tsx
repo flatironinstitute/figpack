@@ -8,6 +8,7 @@ import { FPCrossCorrelograms } from './views/FPCrossCorrelograms';
 import { FPRasterPlot } from './views/FPRasterPlot';
 import { FPSpikeAmplitudes } from './views/FPSpikeAmplitudes';
 import { FPUnitLocations } from './views/FPUnitLocations';
+import { FPUnitMetricsGraph } from './views/FPUnitMetricsGraph';
 
 interface Props {
   zarrGroup: ZarrGroup;
@@ -97,6 +98,16 @@ const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize, co
   else if (spikeSortingViewType === 'UnitLocations') {
     return (
       <FPUnitLocations
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+        contexts={contexts}
+      />
+    )
+  }
+  else if (spikeSortingViewType === 'UnitMetricsGraph') {
+    return (
+      <FPUnitMetricsGraph
         zarrGroup={zarrGroup}
         width={internalWidth}
         height={internalHeight}

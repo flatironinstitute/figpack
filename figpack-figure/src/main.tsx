@@ -5,10 +5,9 @@ import "./index.css";
 import { viewComponentRegistry } from "./view-registry/FPViewComponentRegistry.ts";
 
 import mainPlugin from "@figpack/main-plugin";
-import spikeSortingPlugin from "@figpack/spike-sorting-plugin";
 import { FPPlugin } from "@figpack/plugin-sdk";
 
-export const plugins: FPPlugin[] = [mainPlugin, spikeSortingPlugin];
+export const plugins: FPPlugin[] = [mainPlugin];
 
 plugins.forEach((plugin) => {
   if (plugin.registerViewComponents) {
