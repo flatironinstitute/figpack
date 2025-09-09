@@ -1,5 +1,8 @@
-import { useTimeseriesSelection } from "@figpack/main-plugin";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import {
+  ProvideTimeseriesSelectionContext,
+  useTimeseriesSelection,
+} from "@figpack/main-plugin";
+import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 import React, {
   useCallback,
   useEffect,
@@ -17,11 +20,22 @@ import { useTrackAnimationClient } from "./useTrackAnimationClient";
 
 type Props = {
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 };
 
-export const FPTrackAnimation: React.FC<Props> = ({
+export const FPTrackAnimation: React.FC<Props> = (props) => {
+  return (
+    <ProvideTimeseriesSelectionContext
+      context={props.contexts.timeseriesSelection}
+    >
+      <FPTrackAnimationChild {...props} />
+    </ProvideTimeseriesSelectionContext>
+  );
+};
+
+export const FPTrackAnimationChild: React.FC<Props> = ({
   zarrGroup,
   width,
   height,

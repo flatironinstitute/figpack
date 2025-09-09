@@ -1,4 +1,4 @@
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 import { useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
@@ -8,9 +8,29 @@ import {
   paintSpectrogramNonUniform,
 } from "./Spectrogram/spectrogramRendering";
 import { useSpectrogramClient } from "./Spectrogram/useSpectrogramClient";
+import { ProvideTimeseriesSelectionContext } from "./FPMultiChannelTimeseries";
 
 export const FPSpectrogram: React.FC<{
   zarrGroup: ZarrGroup;
+  width: number;
+  height: number;
+  contexts: FPViewContexts;
+}> = ({ zarrGroup, width, height, contexts }) => {
+  return (
+    <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
+      <FPSpectrogramChild
+        zarrGroup={zarrGroup}
+        contexts={contexts}
+        width={width}
+        height={height}
+      />
+    </ProvideTimeseriesSelectionContext>
+  );
+};
+
+const FPSpectrogramChild: React.FC<{
+  zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {

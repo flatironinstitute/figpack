@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 
 interface LayoutItemData {
   name: string;
@@ -26,8 +26,9 @@ export const FPBox: React.FC<{
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
+  contexts: FPViewContexts;
   FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, width, height, FPView }) => {
+}> = ({ zarrGroup, width, height, contexts, FPView }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const showTitles = zarrGroup.attrs["show_titles"] || false;
   const boxTitle = zarrGroup.attrs["title"] || null;
@@ -158,6 +159,7 @@ export const FPBox: React.FC<{
                   itemName={item.name}
                   width={layout.width}
                   height={layout.height - layout.titleHeight}
+                  contexts={contexts}
                   FPView={FPView}
                 />
               </div>
@@ -174,8 +176,9 @@ const BoxItem: React.FC<{
   itemName: string;
   width: number;
   height: number;
+  contexts: FPViewContexts;
   FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, itemName, width, height, FPView }) => {
+}> = ({ zarrGroup, itemName, width, height, contexts, FPView }) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
@@ -221,6 +224,7 @@ const BoxItem: React.FC<{
       zarrGroup={childGroup}
       width={width}
       height={height}
+      contexts={contexts}
       FPView={FPView}
     />
   );

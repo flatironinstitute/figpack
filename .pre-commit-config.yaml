@@ -5,3 +5,11 @@ repos:
       - id: black
         args: [--line-length=88]
         language_version: python3
+        
+  - repo: local
+    hooks:
+      - id: npm-format
+        name: Format JavaScript/TypeScript files
+        entry: bash -c 'cd figpack-figure && npm run format:all'
+        language: system
+        pass_filenames: false

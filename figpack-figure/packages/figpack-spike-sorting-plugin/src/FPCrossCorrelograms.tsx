@@ -1,16 +1,19 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 import CrossCorrelogramsView from "./view-cross-correlograms/CrossCorrelogramsView";
 import { CrossCorrelogramsViewData } from "./view-cross-correlograms/CrossCorrelogramsViewData";
+import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 
 type Props = {
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 };
 
 export const FPCrossCorrelograms: FunctionComponent<Props> = ({
   zarrGroup,
+  contexts,
   width,
   height,
 }) => {
@@ -100,7 +103,11 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
     return <div>Loading...</div>;
   }
 
-  return <CrossCorrelogramsView data={data} width={width} height={height} />;
+  return (
+    <ProvideUnitSelectionContext context={contexts.unitSelection}>
+      <CrossCorrelogramsView data={data} width={width} height={height} />
+    </ProvideUnitSelectionContext>
+  );
 };
 
 const join = (path: string, name: string) => {

@@ -1,8 +1,10 @@
-import { FunctionComponent, useEffect, useState } from "react";
 import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
-import UnitsTableView from "./view-units-table/UnitsTableView";
-import { UnitsTableViewData } from "./view-units-table/UnitsTableViewData";
+import { FunctionComponent, useEffect, useState } from "react";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
+import {
+  UnitLocationsView,
+  UnitLocationsViewData,
+} from "./view-unit-locations";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -11,13 +13,13 @@ type Props = {
   height: number;
 };
 
-export const FPUnitsTable: FunctionComponent<Props> = ({
+export const FPUnitLocations: FunctionComponent<Props> = ({
   zarrGroup,
   contexts,
   width,
   height,
 }) => {
-  const [data, setData] = useState<UnitsTableViewData | null>(null);
+  const [data, setData] = useState<UnitLocationsViewData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,49 +31,45 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
         setError(null);
 
         // Get columns from attributes (these are still in attrs as they're small)
-        const columns = zarrGroup.attrs["columns"] || [];
+        const disableAutoRotate =
+          zarrGroup.attrs["disable_auto_rotate"] || false;
+        const unitIds = zarrGroup.attrs["unit_ids"];
+        const channelLocations = zarrGroup.attrs["channel_locations"];
 
-        // Get rows from zarr array
-        const rowsData = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, "rows_data"),
+        const coords = await zarrGroup.file.getDatasetData(
+          join(zarrGroup.path, "coords"),
           {},
         );
-        if (!rowsData || rowsData.length === 0) {
-          throw new Error("Empty rows data");
+        if (!coords || coords.length === 0) {
+          throw new Error("Empty coords data");
         }
-        const rowsArray = new Uint8Array(rowsData);
-        const rowsString = new TextDecoder("utf-8").decode(rowsArray);
-        const rows = JSON.parse(rowsString);
-
-        // Get similarity scores from zarr array (if present)
-        let similarityScores = undefined;
-        try {
-          const scoresData = await zarrGroup.file.getDatasetData(
-            join(zarrGroup.path, "similarity_scores_data"),
-            {},
+        const coordsArray = new Float32Array(coords);
+        if (coordsArray.length !== unitIds.length * 2) {
+          throw new Error(
+            `Expected coords length ${unitIds.length * 2}, got ${coordsArray.length}`,
           );
-          if (scoresData && scoresData.length > 0) {
-            const scoresArray = new Uint8Array(scoresData);
-            const scoresString = new TextDecoder("utf-8").decode(scoresArray);
-            similarityScores = JSON.parse(scoresString);
-          }
-        } catch (err) {
-          // Similarity scores are optional, so we don't throw if they're not found
-          console.debug("No similarity scores found");
+        }
+        const units = [];
+        for (let i = 0; i < unitIds.length; i++) {
+          units.push({
+            unitId: unitIds[i],
+            x: coordsArray[i * 2],
+            y: coordsArray[i * 2 + 1],
+          });
         }
 
         if (canceled) return;
 
         setData({
-          type: "UnitsTable" as const,
-          columns,
-          rows,
-          similarityScores,
+          type: "UnitLocations" as const,
+          channelLocations,
+          units,
+          disableAutoRotate,
         });
       } catch (err) {
-        console.error("Error loading units table data:", err);
+        console.error("Error loading unit locations data:", err);
         setError(
-          `Failed to load units table data: ${
+          `Failed to load unit locations data: ${
             err instanceof Error ? err.message : String(err)
           }`,
         );
@@ -117,7 +115,7 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
           backgroundColor: "#f5f5f5",
         }}
       >
-        Loading units table data...
+        Loading unit locations data...
       </div>
     );
   }
@@ -135,14 +133,14 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
           backgroundColor: "#f5f5f5",
         }}
       >
-        No units table data available
+        No unit locations data available
       </div>
     );
   }
 
   return (
     <ProvideUnitSelectionContext context={contexts.unitSelection}>
-      <UnitsTableView data={data} width={width} height={height} />
+      <UnitLocationsView data={data} width={width} height={height} />
     </ProvideUnitSelectionContext>
   );
 };

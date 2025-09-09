@@ -1,16 +1,20 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
 import RasterPlotView from "./view-raster-plot-4/RasterPlotView";
 import { RasterPlotDataClient } from "./view-raster-plot-4/RasterPlotDataClient";
+import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
+import { ProvideTimeseriesSelectionContext } from "@figpack/main-plugin";
 
 type Props = {
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 };
 
 export const FPRasterPlot: FunctionComponent<Props> = ({
   zarrGroup,
+  contexts,
   width,
   height,
 }) => {
@@ -21,7 +25,11 @@ export const FPRasterPlot: FunctionComponent<Props> = ({
   }
 
   return (
-    <RasterPlotView dataClient={dataClient} width={width} height={height} />
+    <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
+      <ProvideUnitSelectionContext context={contexts.unitSelection}>
+        <RasterPlotView dataClient={dataClient} width={width} height={height} />
+      </ProvideUnitSelectionContext>
+    </ProvideTimeseriesSelectionContext>
   );
 };
 

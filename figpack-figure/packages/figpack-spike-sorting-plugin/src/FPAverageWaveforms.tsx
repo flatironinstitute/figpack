@@ -1,15 +1,25 @@
+import { FPViewContexts, ZarrFile, ZarrGroup } from "@figpack/plugin-sdk";
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrFile, ZarrGroup } from "@figpack/plugin-sdk";
+import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 import AverageWaveformsView from "./view-average-waveforms/AverageWaveformsView";
 import { AverageWaveformsViewData } from "./view-average-waveforms/AverageWaveformsViewData";
 
 type Props = {
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 };
 
-export const FPAverageWaveforms: FunctionComponent<Props> = ({
+export const FPAverageWaveforms: FunctionComponent<Props> = (props) => {
+  return (
+    <ProvideUnitSelectionContext context={props.contexts.unitSelection}>
+      <FPAverageWaveformsChild {...props} />
+    </ProvideUnitSelectionContext>
+  );
+};
+
+export const FPAverageWaveformsChild: FunctionComponent<Props> = ({
   zarrGroup,
   width,
   height,
@@ -118,7 +128,6 @@ export const FPAverageWaveforms: FunctionComponent<Props> = ({
     return <div>Loading...</div>;
   }
 
-  console.log("data=", data);
   return <AverageWaveformsView data={data} width={width} height={height} />;
 };
 

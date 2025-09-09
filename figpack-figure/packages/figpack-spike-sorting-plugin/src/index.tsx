@@ -1,20 +1,28 @@
-import { FPPlugin, FPViewComponentRegistry } from "@figpack/plugin-sdk";
+import {
+  FPPlugin,
+  FPViewComponentRegistry,
+  FPViewContext,
+} from "@figpack/plugin-sdk";
 
 // Import all view components
 import { FPAutocorrelograms } from "./FPAutocorrelograms";
-import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
-import { FPUnitsTable } from "./FPUnitsTable";
 import { FPAverageWaveforms } from "./FPAverageWaveforms";
+import { FPCrossCorrelograms } from "./FPCrossCorrelograms";
 import { FPSpikeAmplitudes } from "./FPSpikeAmplitudes";
 import { FPUnitMetricsGraph } from "./FPUnitMetricsGraph";
+import { FPUnitsTable } from "./FPUnitsTable";
+import { FPUnitLocations } from "./FPUnitLocations";
 
-import UnitSelectionProvider from "./context-unit-selection/UnitSelectionProvider";
-import { FPRasterPlot } from "./FPRasterPlot";
-import { FunctionComponent, useReducer } from "react";
 import {
-  UnitMetricSelectionContext,
+  UnitMetricSelection,
   unitMetricSelectionReducer,
 } from "./context-unit-metrics-selection";
+import {
+  defaultUnitSelection,
+  UnitSelection,
+  unitSelectionReducer,
+} from "./context-unit-selection/UnitSelectionContext";
+import { FPRasterPlot } from "./FPRasterPlot";
 
 const registerViewComponents = (
   viewComponentRegistry: FPViewComponentRegistry,
@@ -53,36 +61,91 @@ const registerViewComponents = (
     type: "UnitMetricsGraph",
     component: FPUnitMetricsGraph,
   });
+
+  viewComponentRegistry.registerViewComponent({
+    type: "UnitLocations",
+    component: FPUnitLocations,
+  });
 };
 
-const provideAppContexts = (node: React.ReactNode) => {
-  return (
-    <UnitMetricSelectionProvider>
-      <UnitSelectionProvider>{node}</UnitSelectionProvider>
-    </UnitMetricSelectionProvider>
-  );
+const createUnitMetricSelectionContext = (): FPViewContext => {
+  let state: UnitMetricSelection = {};
+  const listeners: ((newValue: UnitMetricSelection) => void)[] = [];
+
+  const dispatch = (action: any) => {
+    console.log("--- dispatching action:", action);
+    state = unitMetricSelectionReducer(state, action);
+    console.log("--- new state:", state, listeners.length);
+    listeners.forEach((callback) => {
+      callback(state);
+    });
+  };
+
+  const onChange = (callback: (newValue: UnitMetricSelection) => void) => {
+    listeners.push(callback);
+    console.log("--- added listener, now have", listeners.length);
+    return () => {
+      console.log("--- removing listener, had", listeners.length);
+      const idx = listeners.indexOf(callback);
+      if (idx >= 0) listeners.splice(idx, 1);
+    };
+  };
+
+  console.log("--- creating unitMetricSelection context");
+
+  return {
+    state,
+    dispatch,
+    onChange,
+    createNew: createUnitMetricSelectionContext,
+  };
 };
+
+const createUnitSelectionContext = (): FPViewContext => {
+  let state: UnitSelection = defaultUnitSelection;
+  const listeners: ((newValue: UnitSelection) => void)[] = [];
+
+  const dispatch = (action: any) => {
+    state = unitSelectionReducer(state, action);
+    listeners.forEach((callback) => {
+      callback(state);
+    });
+  };
+
+  const onChange = (callback: (newValue: UnitSelection) => void) => {
+    listeners.push(callback);
+    return () => {
+      const idx = listeners.indexOf(callback);
+      if (idx >= 0) listeners.splice(idx, 1);
+    };
+  };
+
+  return {
+    state,
+    dispatch,
+    onChange,
+    createNew: createUnitSelectionContext,
+  };
+};
+
+const contextCreators: {
+  name: string;
+  create: () => FPViewContext;
+}[] = [
+  {
+    name: "unitMetricSelection",
+    create: createUnitMetricSelectionContext,
+  },
+  {
+    name: "unitSelection",
+    create: createUnitSelectionContext,
+  },
+];
 
 const plugin: FPPlugin = {
+  pluginName: "spikeSorting",
   registerViewComponents,
-  provideAppContexts,
-};
-
-const UnitMetricSelectionProvider: FunctionComponent<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const [unitMetricSelection, unitMetricSelectionDispatch] = useReducer(
-    unitMetricSelectionReducer,
-    {},
-  );
-
-  return (
-    <UnitMetricSelectionContext.Provider
-      value={{ unitMetricSelection, unitMetricSelectionDispatch }}
-    >
-      {children}
-    </UnitMetricSelectionContext.Provider>
-  );
+  contextCreators,
 };
 
 export default plugin;

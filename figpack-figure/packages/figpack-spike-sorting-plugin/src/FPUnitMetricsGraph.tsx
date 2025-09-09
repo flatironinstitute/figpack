@@ -1,19 +1,28 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import {
+  FPViewContext,
+  FPViewContexts,
+  useProvideFPViewContext,
+  ZarrGroup,
+} from "@figpack/plugin-sdk";
 import { UnitMetricsGraphView } from "./view-unit-metrics-graph";
 import {
   UnitMetricsGraphViewData,
   isUnitMetricsGraphViewData,
 } from "./view-unit-metrics-graph";
+import { UnitMetricSelectionContext } from "./context-unit-metrics-selection";
+import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 
 type Props = {
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 };
 
 export const FPUnitMetricsGraph: FunctionComponent<Props> = ({
   zarrGroup,
+  contexts,
   width,
   height,
 }) => {
@@ -131,7 +140,38 @@ export const FPUnitMetricsGraph: FunctionComponent<Props> = ({
     );
   }
 
-  return <UnitMetricsGraphView data={data} width={width} height={height} />;
+  console.log("--- xxx", contexts.unitMetricSelection);
+
+  return (
+    <ProvideUnitMetricSelection context={contexts.unitMetricSelection}>
+      <ProvideUnitSelectionContext context={contexts.unitSelection}>
+        <UnitMetricsGraphView data={data} width={width} height={height} />
+      </ProvideUnitSelectionContext>
+    </ProvideUnitMetricSelection>
+  );
+};
+
+export const ProvideUnitMetricSelection: React.FC<{
+  context: FPViewContext;
+  children: React.ReactNode;
+}> = ({ context, children }) => {
+  const { state, dispatch } = useProvideFPViewContext(context);
+
+  console.log("--- ProvideUnitMetricSelection state:", state);
+  if (!dispatch) {
+    return <>Waiting for unit metric selection context...</>;
+  }
+
+  return (
+    <UnitMetricSelectionContext.Provider
+      value={{
+        unitMetricSelection: state,
+        unitMetricSelectionDispatch: dispatch,
+      }}
+    >
+      {children}
+    </UnitMetricSelectionContext.Provider>
+  );
 };
 
 const join = (path: string, name: string) => {

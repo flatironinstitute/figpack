@@ -1,11 +1,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DatasetDataType, ZarrGroup } from "@figpack/plugin-sdk";
+import {
+  DatasetDataType,
+  FPViewContexts,
+  ZarrGroup,
+} from "@figpack/plugin-sdk";
 import { useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
+import { ProvideTimeseriesSelectionContext } from "./FPMultiChannelTimeseries";
 
 export const FPTimeseriesGraph: React.FC<{
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
+  width: number;
+  height: number;
+}> = ({ zarrGroup, contexts, width, height }) => {
+  return (
+    <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
+      <FPTimeseriesGraphChild
+        zarrGroup={zarrGroup}
+        contexts={contexts}
+        width={width}
+        height={height}
+      />
+    </ProvideTimeseriesSelectionContext>
+  );
+};
+
+export const FPTimeseriesGraphChild: React.FC<{
+  zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
@@ -32,7 +56,9 @@ export const FPTimeseriesGraph: React.FC<{
   >(undefined);
 
   useEffect(() => {
+    console.log("--- 1");
     if (!client) return;
+    console.log("--- 2", client.limits.tMin, client.limits.tMax);
     initializeTimeseriesSelection({
       startTimeSec: client.limits.tMin,
       endTimeSec: client.limits.tMax,

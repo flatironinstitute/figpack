@@ -20,6 +20,7 @@ from .UnitMetricsGraph import (
     UnitMetricsGraphMetric,
     UnitMetricsGraphUnit,
 )
+from .UnitLocations import UnitLocationsItem, UnitLocations
 
 __all__ = [
     "AutocorrelogramItem",
@@ -38,4 +39,6 @@ __all__ = [
     "UnitMetricsGraph",
     "UnitMetricsGraphMetric",
     "UnitMetricsGraphUnit",
+    "UnitLocationsItem",
+    "UnitLocations",
 ]

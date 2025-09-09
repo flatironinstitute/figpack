@@ -3,4 +3,7 @@ export {
   unitMetricSelectionReducer,
   useUnitMetricSelection,
 } from "./UnitMetricSelectionContext";
-export type { UnitMetricSelectionAction } from "./UnitMetricSelectionContext";
+export type {
+  UnitMetricSelection,
+  UnitMetricSelectionAction,
+} from "./UnitMetricSelectionContext";

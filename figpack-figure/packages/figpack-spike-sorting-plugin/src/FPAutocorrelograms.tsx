@@ -1,16 +1,24 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import {
+  FPViewContext,
+  FPViewContexts,
+  useProvideFPViewContext,
+  ZarrGroup,
+} from "@figpack/plugin-sdk";
 import AutocorrelogramsView from "./view-autocorrelograms/AutocorrelogramsView";
 import { AutocorrelogramsViewData } from "./view-autocorrelograms/AutocorrelogramsViewData";
+import { UnitSelectionContext } from "./context-unit-selection";
 
 type Props = {
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 };
 
 export const FPAutocorrelograms: FunctionComponent<Props> = ({
   zarrGroup,
+  contexts,
   width,
   height,
 }) => {
@@ -93,7 +101,30 @@ export const FPAutocorrelograms: FunctionComponent<Props> = ({
     return <div>Loading...</div>;
   }
 
-  return <AutocorrelogramsView data={data} width={width} height={height} />;
+  return (
+    <ProvideUnitSelectionContext context={contexts.unitSelection}>
+      <AutocorrelogramsView data={data} width={width} height={height} />
+    </ProvideUnitSelectionContext>
+  );
+};
+
+export const ProvideUnitSelectionContext: React.FC<{
+  context: FPViewContext;
+  children: React.ReactNode;
+}> = ({ context, children }) => {
+  const { state, dispatch } = useProvideFPViewContext(context);
+
+  if (!dispatch) {
+    return <>Waiting for context...</>;
+  }
+
+  return (
+    <UnitSelectionContext.Provider
+      value={{ unitSelection: state, unitSelectionDispatch: dispatch }}
+    >
+      {children}
+    </UnitSelectionContext.Provider>
+  );
 };
 
 const join = (path: string, name: string) => {
