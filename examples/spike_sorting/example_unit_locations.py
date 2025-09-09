@@ -3,7 +3,7 @@ import numpy as np
 
 import spikeinterface as si
 
-import figpack.spike_sorting.views as ssv
+import figpack_spike_sorting.views as ssv
 
 
 def main():

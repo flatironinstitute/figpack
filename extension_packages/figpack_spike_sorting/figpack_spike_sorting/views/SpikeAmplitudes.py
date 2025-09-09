@@ -6,14 +6,14 @@ from typing import List
 
 import numpy as np
 
-from ...core.figpack_view import FigpackView
-from ...core.zarr import Group
 from .SpikeAmplitudesItem import SpikeAmplitudesItem
 from .UnitsTable import UnitsTable, UnitsTableColumn, UnitsTableRow
-from ...views.Box import Box, LayoutItem
+
+import figpack
+from ..spike_sorting_extension import spike_sorting_extension
 
 
-class SpikeAmplitudes(FigpackView):
+class SpikeAmplitudes(figpack.ExtensionView):
     """
     A view that displays spike amplitudes over time for multiple units
     """
@@ -33,6 +33,7 @@ class SpikeAmplitudes(FigpackView):
             end_time_sec: End time of the view in seconds
             plots: List of SpikeAmplitudesItem objects
         """
+        super().__init__(extension=spike_sorting_extension)
         self.start_time_sec = start_time_sec
         self.end_time_sec = end_time_sec
         self.plots = plots
@@ -112,15 +113,17 @@ class SpikeAmplitudes(FigpackView):
         else:
             return view
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the SpikeAmplitudes data to a Zarr group using unified storage format
 
         Args:
             group: Zarr group to write data into
         """
+        super()._write_to_zarr_group(group)
+
         # Set the view type
-        group.attrs["view_type"] = "SpikeAmplitudes"
+        group.attrs["spike_sorting_view_type"] = "SpikeAmplitudes"
 
         # Store view parameters
         group.attrs["start_time_sec"] = self.start_time_sec

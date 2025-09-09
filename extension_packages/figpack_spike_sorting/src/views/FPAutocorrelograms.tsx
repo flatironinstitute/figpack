@@ -4,7 +4,7 @@ import {
   FPViewContexts,
   useProvideFPViewContext,
   ZarrGroup,
-} from "@figpack/plugin-sdk";
+} from "../figpack-plugin-interface";
 import AutocorrelogramsView from "./view-autocorrelograms/AutocorrelogramsView";
 import { AutocorrelogramsViewData } from "./view-autocorrelograms/AutocorrelogramsViewData";
 import { UnitSelectionContext } from "./context-unit-selection";

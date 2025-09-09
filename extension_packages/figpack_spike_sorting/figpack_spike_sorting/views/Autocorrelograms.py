@@ -6,12 +6,12 @@ from typing import List
 
 import numpy as np
 
-from ...core.figpack_view import FigpackView
-from ...core.zarr import Group
+import figpack
 from .AutocorrelogramItem import AutocorrelogramItem
+from ..spike_sorting_extension import spike_sorting_extension
 
 
-class Autocorrelograms(FigpackView):
+class Autocorrelograms(figpack.ExtensionView):
     """
     A view that displays multiple autocorrelograms for spike sorting analysis
     """
@@ -27,6 +27,8 @@ class Autocorrelograms(FigpackView):
         Args:
             autocorrelograms: List of AutocorrelogramItem objects
         """
+        super().__init__(extension=spike_sorting_extension)
+
         self.autocorrelograms = autocorrelograms
 
     @staticmethod
@@ -66,15 +68,17 @@ class Autocorrelograms(FigpackView):
         view = Autocorrelograms(autocorrelograms=ac_items)
         return view
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the Autocorrelograms data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
+        super()._write_to_zarr_group(group)
+
         # Set the view type
-        group.attrs["view_type"] = "Autocorrelograms"
+        group.attrs["spike_sorting_view_type"] = "Autocorrelograms"
 
         # Store the number of autocorrelograms
         num_autocorrelograms = len(self.autocorrelograms)

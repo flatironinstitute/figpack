@@ -2,43 +2,32 @@
 Spike sorting views for figpack
 """
 
-from .AutocorrelogramItem import AutocorrelogramItem
 from .Autocorrelograms import Autocorrelograms
-from .CrossCorrelogramItem import CrossCorrelogramItem
-from .CrossCorrelograms import CrossCorrelograms
-from .UnitSimilarityScore import UnitSimilarityScore
-from .UnitsTable import UnitsTable
-from .UnitsTableColumn import UnitsTableColumn
+from .AutocorrelogramItem import AutocorrelogramItem
 from .UnitsTableRow import UnitsTableRow
-from .AverageWaveforms import AverageWaveforms
-from .SpikeAmplitudesItem import SpikeAmplitudesItem
-from .SpikeAmplitudes import SpikeAmplitudes
-from .RasterPlotItem import RasterPlotItem
+from .UnitsTableColumn import UnitsTableColumn
+from .UnitsTable import UnitsTable
+from .AverageWaveforms import AverageWaveforms, AverageWaveformItem
+from .CrossCorrelograms import CrossCorrelograms, CrossCorrelogramItem
 from .RasterPlot import RasterPlot
-from .UnitMetricsGraph import (
-    UnitMetricsGraph,
-    UnitMetricsGraphMetric,
-    UnitMetricsGraphUnit,
-)
-from .UnitLocations import UnitLocationsItem, UnitLocations
+from .RasterPlotItem import RasterPlotItem
+from .SpikeAmplitudes import SpikeAmplitudes, SpikeAmplitudesItem
+from .UnitLocations import UnitLocations, UnitLocationsItem
 
 __all__ = [
-    "AutocorrelogramItem",
     "Autocorrelograms",
-    "CrossCorrelogramItem",
-    "CrossCorrelograms",
-    "UnitsTableColumn",
+    "AutocorrelogramItem",
     "UnitsTableRow",
-    "UnitSimilarityScore",
+    "UnitsTableColumn",
     "UnitsTable",
     "AverageWaveforms",
-    "SpikeAmplitudesItem",
-    "SpikeAmplitudes",
-    "RasterPlotItem",
+    "AverageWaveformItem",
+    "CrossCorrelograms",
+    "CrossCorrelogramItem",
     "RasterPlot",
-    "UnitMetricsGraph",
-    "UnitMetricsGraphMetric",
-    "UnitMetricsGraphUnit",
-    "UnitLocationsItem",
+    "RasterPlotItem",
+    "SpikeAmplitudes",
+    "SpikeAmplitudesItem",
     "UnitLocations",
+    "UnitLocationsItem",
 ]

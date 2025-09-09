@@ -1,9 +1,9 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "../figpack-plugin-interface";
 import SpikeAmplitudesView from "./view-spike-amplitudes/SpikeAmplitudesView";
 import { SpikeAmplitudesDataClient } from "./view-spike-amplitudes/SpikeAmplitudesDataClient";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
-import { ProvideTimeseriesSelectionContext } from "@figpack/main-plugin";
+import { ProvideTimeseriesSelectionContext } from "./FPRasterPlot";
 
 type Props = {
   zarrGroup: ZarrGroup;

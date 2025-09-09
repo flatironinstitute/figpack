@@ -4,7 +4,7 @@ import {
   FPViewContexts,
   useProvideFPViewContext,
   ZarrGroup,
-} from "@figpack/plugin-sdk";
+} from "../figpack-plugin-interface";
 import { UnitMetricsGraphView } from "./view-unit-metrics-graph";
 import {
   UnitMetricsGraphViewData,

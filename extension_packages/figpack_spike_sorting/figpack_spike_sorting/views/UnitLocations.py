@@ -2,13 +2,12 @@
 AverageWaveforms view for figpack - displays multiple average waveforms
 """
 
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
-import zarr
 
-from ...core.figpack_view import FigpackView
-from ...core.zarr import Group
+import figpack
+from ..spike_sorting_extension import spike_sorting_extension
 
 
 class UnitLocationsItem:
@@ -26,7 +25,7 @@ class UnitLocationsItem:
         self.y = y
 
 
-class UnitLocations(FigpackView):
+class UnitLocations(figpack.ExtensionView):
     """
     A view that displays the locations of units in a 2D space
     """
@@ -45,17 +44,20 @@ class UnitLocations(FigpackView):
             units: List of UnitLocationsItem objects
             channel_locations: Dictionary mapping channel IDs to their locations
         """
+        super().__init__(extension=spike_sorting_extension)
         self.units = units
         self.channel_locations = channel_locations
         self.disable_auto_rotate = disable_auto_rotate
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the UnitLocations data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
+        super()._write_to_zarr_group(group)
+
         # Set the view type
         group.attrs["view_type"] = "UnitLocations"
 

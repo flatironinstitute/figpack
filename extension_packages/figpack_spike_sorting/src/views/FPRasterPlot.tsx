@@ -1,9 +1,9 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContext, FPViewContexts, useProvideFPViewContext, ZarrGroup } from "../figpack-plugin-interface";
 import RasterPlotView from "./view-raster-plot-4/RasterPlotView";
 import { RasterPlotDataClient } from "./view-raster-plot-4/RasterPlotDataClient";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
-import { ProvideTimeseriesSelectionContext } from "@figpack/main-plugin";
+import { TimeseriesSelectionContext } from "../TimeseriesSelectionContext";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -30,6 +30,25 @@ export const FPRasterPlot: FunctionComponent<Props> = ({
         <RasterPlotView dataClient={dataClient} width={width} height={height} />
       </ProvideUnitSelectionContext>
     </ProvideTimeseriesSelectionContext>
+  );
+};
+
+export const ProvideTimeseriesSelectionContext: React.FC<{
+  context: FPViewContext;
+  children: React.ReactNode;
+}> = ({ context, children }) => {
+  const { state, dispatch } = useProvideFPViewContext(context);
+
+  if (!dispatch) {
+    return <>Waiting for context...</>;
+  }
+
+  return (
+    <TimeseriesSelectionContext.Provider
+      value={{ timeseriesSelection: state, dispatch }}
+    >
+      {children}
+    </TimeseriesSelectionContext.Provider>
   );
 };
 

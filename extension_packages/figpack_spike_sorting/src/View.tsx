@@ -2,6 +2,12 @@ import React, { FunctionComponent, useEffect } from 'react';
 import { ZarrGroup } from './figpack-plugin-interface/ZarrTypes';
 import { FPAutocorrelograms } from './views/FPAutocorrelograms';
 import { FPViewContexts } from './figpack-plugin-interface/FPPluginInterface';
+import { FPUnitsTable } from './views/FPUnitsTable';
+import { FPAverageWaveforms } from './views/FPAverageWaveforms';
+import { FPCrossCorrelograms } from './views/FPCrossCorrelograms';
+import { FPRasterPlot } from './views/FPRasterPlot';
+import { FPSpikeAmplitudes } from './views/FPSpikeAmplitudes';
+import { FPUnitLocations } from './views/FPUnitLocations';
 
 interface Props {
   zarrGroup: ZarrGroup;
@@ -38,8 +44,68 @@ const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize, co
       />
     )
   }
+  else if (spikeSortingViewType === 'UnitsTable') {
+    return (
+      <FPUnitsTable
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+        contexts={contexts}
+      />
+    )
+  }
+  else if (spikeSortingViewType === 'AverageWaveforms') {
+    return (
+      <FPAverageWaveforms
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+        contexts={contexts}
+      />
+    )
+  }
+  else if (spikeSortingViewType === 'CrossCorrelograms') {
+    return (
+      <FPCrossCorrelograms
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+        contexts={contexts}
+      />
+    )
+  }
+  else if (spikeSortingViewType === 'RasterPlot') {
+    return (
+      <FPRasterPlot
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+        contexts={contexts}
+      />
+    )
+  }
+  else if (spikeSortingViewType === 'SpikeAmplitudes') {
+    return (
+      <FPSpikeAmplitudes
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+        contexts={contexts}
+      />
+    )
+  }
+  else if (spikeSortingViewType === 'UnitLocations') {
+    return (
+      <FPUnitLocations
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+        contexts={contexts}
+      />
+    )
+  }
   else {
-    return <div>Unsupported view_type in extension figpack-spike-sorting: {spikeSortingViewType}</div>;
+    return <div>Unsupported spike_sorting_view_type in extension figpack-spike-sorting: {spikeSortingViewType}</div>;
   }
 };
 
