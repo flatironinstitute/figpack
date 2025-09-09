@@ -56,9 +56,7 @@ export const FPTimeseriesGraphChild: React.FC<{
   >(undefined);
 
   useEffect(() => {
-    console.log("--- 1");
     if (!client) return;
-    console.log("--- 2", client.limits.tMin, client.limits.tMax);
     initializeTimeseriesSelection({
       startTimeSec: client.limits.tMin,
       endTimeSec: client.limits.tMax,

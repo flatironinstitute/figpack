@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { ZarrGroup } from './figpack-plugin-interface/ZarrTypes';
+import { FPAutocorrelograms } from './views/FPAutocorrelograms';
 
 interface Props {
   zarrGroup: ZarrGroup;
@@ -9,7 +10,7 @@ interface Props {
 };
 
 const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize }) => {
-  const viewType = zarrGroup.attrs['view_type'] || null;
+  const spikeSortingViewType = zarrGroup.attrs['spike_sorting_view_type'] || null;
 
   const [internalWidth, setInternalWidth] = React.useState(width);
   const [internalHeight, setInternalHeight] = React.useState(height);
@@ -21,17 +22,21 @@ const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize }) 
     });
   }, [onResize]);
 
-  if (!viewType) {
-    return <div>No view_type attribute found in Zarr group.</div>;
+  if (!spikeSortingViewType) {
+    return <div>No spike_sorting_view_type attribute found in Zarr group.</div>;
   }
 
-  if (viewType === 'test') {
-    return <div
-      style={{ width: internalWidth, height: internalHeight, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid black' }}
-    >TEST</div>
+  if (spikeSortingViewType === 'Autocorrelograms') {
+    return (
+      <FPAutocorrelograms
+        zarrGroup={zarrGroup}
+        width={internalWidth}
+        height={internalHeight}
+      />
+    )
   }
   else {
-    return <div>Unsupported view_type in extension figpack-spike-sorting: {viewType}</div>;
+    return <div>Unsupported view_type in extension figpack-spike-sorting: {spikeSortingViewType}</div>;
   }
 };
 

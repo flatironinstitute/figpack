@@ -32,7 +32,8 @@ main_extension_js = """
     window.figpackExtensions = window.figpackExtensions || {};
     
     window.figpackExtensions['advanced-chart'] = {
-        render: async function(container, zarrGroup, width, height, onResize) {
+        render: async function(a) {
+            const { container, zarrGroup, width, height, onResize } = a;
             container.innerHTML = '';
             
             try {

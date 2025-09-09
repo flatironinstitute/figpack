@@ -16,7 +16,9 @@ declare global {
 window.figpackExtensions = window.figpackExtensions || {};
 
 window.figpackExtensions['figpack-franklab'] = {
-  render: async function(container: HTMLElement, zarrGroup: ZarrGroup, width: number, height: number, onResize: (callback: (width: number, height: number) => void) => void) {
+  render: async function(a: {container: HTMLElement, zarrGroup: ZarrGroup, width: number, height: number, onResize: (callback: (width: number, height: number) => void) => void}) {
+    const { container, zarrGroup, width, height, onResize } = a;
+
     container.innerHTML = '';
     
     try {

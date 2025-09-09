@@ -119,8 +119,10 @@ class TrackAnimation(figpack.ExtensionView):
         Args:
             group: Zarr group to write data into
         """
+        super()._write_to_zarr_group(group)
+
         # Set view type
-        group.attrs["view_type"] = "TrackAnimation"
+        group.attrs["franklab_view_type"] = "TrackAnimation"
 
         # Store spatial binning parameters
         group.attrs["bin_height"] = self.bin_height

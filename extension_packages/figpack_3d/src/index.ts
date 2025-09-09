@@ -258,7 +258,8 @@ class ThreeScene {
 window.figpackExtensions = window.figpackExtensions || {};
 
 window.figpackExtensions['figpack-3d'] = {
-  render: async function(container: HTMLElement, zarrGroup: any, width: number, height: number, onResize: (callback: (width: number, height: number) => void) => void) {
+  render: async function(a: {container: HTMLElement, zarrGroup: any, width: number, height: number, onResize: (callback: (width: number, height: number) => void) => void}) {
+    const { container, zarrGroup, width, height, onResize } = a;
     container.innerHTML = '';
     
     try {
