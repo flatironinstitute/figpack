@@ -1,15 +1,17 @@
 import React, { FunctionComponent, useEffect } from 'react';
 import { ZarrGroup } from './figpack-plugin-interface/ZarrTypes';
 import { FPTrackAnimation } from './TrackAnimation/FPTrackAnimation';
+import { FPViewContexts } from './figpack-plugin-interface/FPPluginInterface';
 
 interface Props {
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
   onResize: (callback: (width: number, height: number) => void) => void;
+  contexts: FPViewContexts;
 };
 
-const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize }) => {
+const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize, contexts }) => {
   const franklabViewType = zarrGroup.attrs['franklab_view_type'] || null;
 
   const [internalWidth, setInternalWidth] = React.useState(width);
@@ -27,7 +29,7 @@ const View: FunctionComponent<Props> = ({ zarrGroup, width, height, onResize }) 
   }
 
   if (franklabViewType === 'TrackAnimation') {
-    return <FPTrackAnimation zarrGroup={zarrGroup} width={internalWidth} height={internalHeight} contexts={{}} />;
+    return <FPTrackAnimation zarrGroup={zarrGroup} width={internalWidth} height={internalHeight} contexts={contexts} />;
   }
   else {
     return <div>Unsupported franklab_view_type in extension figpack-franklab: {franklabViewType}</div>;
