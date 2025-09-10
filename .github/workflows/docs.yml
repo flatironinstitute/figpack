@@ -46,6 +46,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[docs,test]
 
+      - name: Install build dependencies
+        run: |
+          pip install build
+
       - name: Install extension packages
         run: |
           cd extension_packages/figpack_force_graph
@@ -66,6 +70,12 @@ jobs:
           python devel/generate_basic_views_tutorial_examples.py
           python devel/generate_spike_sorting_tutorial_examples.py
           python devel/generate_extensions_tutorial_examples.py
+
+      - name: Build extension wheels
+        run: ./scripts/build-extension-wheels.sh docs/_build/html/wheels
+
+      - name: Generate wheel index
+        run: python scripts/generate-wheel-index.py docs/_build/html/wheels
 
       - name: Setup Pages
         if: github.ref == 'refs/heads/main'
