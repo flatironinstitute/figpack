@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../../figpack-interface";
 import { MultiChannelTimeseriesClient } from "./MultiChannelTimeseriesClient";
 
 export const useMultiChannelTimeseriesClient = (zarrGroup: ZarrGroup) => {

@@ -93,7 +93,10 @@ class UnitMetricsGraph(figpack.ExtensionView):
             metrics: List of UnitMetricsGraphMetric objects defining the metrics
             height: Height of the view in pixels
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension,
+            view_type="spike_sorting.UnitMetricsGraph",
+        )
         self.units = units
         self.metrics = metrics
         self.height = height
@@ -106,9 +109,6 @@ class UnitMetricsGraph(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "UnitMetricsGraph"
 
         # Set view properties
         if self.height is not None:

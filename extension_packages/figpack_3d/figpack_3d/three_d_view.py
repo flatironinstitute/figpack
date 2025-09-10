@@ -77,7 +77,7 @@ class ThreeDView(figpack.ExtensionView):
             camera_position: Initial camera position as [x, y, z]
             enable_controls: Whether to enable mouse controls for scene rotation
         """
-        super().__init__(extension=_three_d_extension)
+        super().__init__(extension=_three_d_extension, view_type="3d.ThreeDView")
 
         self.objects = objects or []
         self.background_color = background_color

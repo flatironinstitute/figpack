@@ -2,7 +2,7 @@ import {
   FPViewComponentProps,
   FPViewContexts,
   ZarrGroup,
-} from "@figpack/plugin-sdk";
+} from "../figpack-interface";
 import { useEffect, useRef, useState } from "react";
 
 interface ExtensionViewInstance {

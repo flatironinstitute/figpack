@@ -178,7 +178,10 @@ class AdvancedChartView(ExtensionView):
     def __init__(
         self, *, x_data=None, y_data=None, title="Data Visualization", color="#2196f3"
     ):
-        super().__init__(extension=advanced_chart_extension)
+        super().__init__(
+            extension=advanced_chart_extension,
+            view_type="advanced-chart.AdvancedChartView",
+        )
         self.x_data = x_data
         self.y_data = y_data
         self.title = title

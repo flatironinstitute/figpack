@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../figpack-interface";
 
 export const FPMarkdown: React.FC<{
   zarrGroup: ZarrGroup;

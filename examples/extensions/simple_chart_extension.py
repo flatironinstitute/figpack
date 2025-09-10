@@ -221,7 +221,9 @@ class SimpleChartView(ExtensionView):
     def __init__(
         self, *, x_data=None, y_data=None, title="Simple Chart", color="steelblue"
     ):
-        super().__init__(extension=simple_chart_extension)
+        super().__init__(
+            extension=simple_chart_extension, view_type="simple-chart.SimpleChartView"
+        )
         self.x_data = x_data
         self.y_data = y_data
         self.title = title

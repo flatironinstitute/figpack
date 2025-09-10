@@ -40,7 +40,7 @@ from figpack import ExtensionView
 
 class MyCustomView(ExtensionView):
     def __init__(self, *, some_data=None):
-        super().__init__(extension=exteension)
+        super().__init__(extension=extension, view_type="my_extension.MyCustomView")
         self.some_data = some_data
 
     def _write_to_zarr_group(self, group):

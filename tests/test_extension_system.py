@@ -49,7 +49,7 @@ class TestExtensionSystem:
         )
 
         # Create a view that uses the extension
-        view = ExtensionView(extension=extension)
+        view = ExtensionView(extension=extension, view_type="test.ViewType")
         assert view.extension.name == "test-extension"
 
     def test_write_extension_files(self):
@@ -144,7 +144,7 @@ class TestExtensionSystem:
         )
 
         # Create a view
-        view = ExtensionView(extension=extension)
+        view = ExtensionView(extension=extension, view_type="test.ViewType")
 
         # Serialize to zarr
         group = zarr.group()

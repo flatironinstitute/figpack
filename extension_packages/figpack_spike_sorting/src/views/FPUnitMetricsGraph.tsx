@@ -2,9 +2,8 @@ import { FunctionComponent, useEffect, useState } from "react";
 import {
   FPViewContext,
   FPViewContexts,
-  useProvideFPViewContext,
   ZarrGroup,
-} from "../figpack-plugin-interface";
+} from "../figpack-interface";
 import { UnitMetricsGraphView } from "./view-unit-metrics-graph";
 import {
   UnitMetricsGraphViewData,
@@ -12,6 +11,7 @@ import {
 } from "./view-unit-metrics-graph";
 import { UnitMetricSelectionContext } from "./context-unit-metrics-selection";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
+import useProvideFPViewContext from "../useProvideFPViewContext";
 
 type Props = {
   zarrGroup: ZarrGroup;

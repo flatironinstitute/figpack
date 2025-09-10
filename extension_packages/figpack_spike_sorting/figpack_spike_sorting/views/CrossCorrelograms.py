@@ -30,7 +30,10 @@ class CrossCorrelograms(figpack.ExtensionView):
             cross_correlograms: List of CrossCorrelogramItem objects
             hide_unit_selector: Whether to hide the unit selector widget
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension,
+            view_type="spike_sorting.CrossCorrelograms",
+        )
         self.cross_correlograms = cross_correlograms
         self.hide_unit_selector = hide_unit_selector
 
@@ -85,9 +88,6 @@ class CrossCorrelograms(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "CrossCorrelograms"
 
         # Set view properties
         if self.hide_unit_selector is not None:

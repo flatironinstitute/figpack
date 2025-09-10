@@ -5,14 +5,14 @@ import {
 } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { colorForUnitId } from "../core-utils/unit-colors";
 import { useEffect, useMemo, useState } from "react";
-import { FPViewContext, FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
 import { useMultiChannelTimeseriesClient } from "./MultiChannelTimeseries/useMultiChannelTimeseriesClient";
 import {
   paintDownsampledChannelLine,
   paintOriginalChannelLine,
 } from "./MultiChannelTimeseries/timeseriesRendering";
 import { useBaseSpacingUnit } from "./MultiChannelTimeseries/spacingUtils";
-import { useProvideFPViewContext } from "@figpack/plugin-sdk";
+import useProvideFPViewContext from "../useProvideFPViewContext";
 
 export const FPMultiChannelTimeseries: React.FC<{
   zarrGroup: ZarrGroup;

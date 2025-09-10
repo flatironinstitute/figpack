@@ -13,3 +13,8 @@ repos:
         entry: bash -c 'cd figpack-figure && npm run format:all'
         language: system
         pass_filenames: false
+      - id: check-figpack-interfaces
+        name: Check figpack-interface.ts files are identical
+        entry: scripts/check-figpack-interfaces.js
+        language: node
+        pass_filenames: false

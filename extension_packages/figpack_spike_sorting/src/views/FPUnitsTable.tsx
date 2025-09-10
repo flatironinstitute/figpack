@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { FPViewContexts, ZarrGroup } from "../figpack-plugin-interface";
+import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 import UnitsTableView from "./view-units-table/UnitsTableView";
 import { UnitsTableViewData } from "./view-units-table/UnitsTableViewData";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";

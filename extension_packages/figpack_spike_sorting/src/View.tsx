@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useEffect } from 'react';
-import { ZarrGroup } from './figpack-plugin-interface/ZarrTypes';
+import { ZarrGroup } from './figpack-interface';
 import { FPAutocorrelograms } from './views/FPAutocorrelograms';
-import { FPViewContexts } from './figpack-plugin-interface/FPPluginInterface';
+import { FPViewContexts } from './figpack-interface';
 import { FPUnitsTable } from './views/FPUnitsTable';
 import { FPAverageWaveforms } from './views/FPAverageWaveforms';
 import { FPCrossCorrelograms } from './views/FPCrossCorrelograms';

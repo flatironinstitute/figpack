@@ -1,4 +1,4 @@
-import { FPViewContexts, ZarrFile, ZarrGroup } from "../figpack-plugin-interface";
+import { FPViewContexts, ZarrFile, ZarrGroup } from "../figpack-interface";
 import { FunctionComponent, useEffect, useState } from "react";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 import AverageWaveformsView from "./view-average-waveforms/AverageWaveformsView";

@@ -1,4 +1,4 @@
-import { DatasetDataType } from "@figpack/plugin-sdk";
+import { DatasetDataType } from "../../figpack-interface";
 
 export const paintDownsampledChannelLine = (
   context: CanvasRenderingContext2D,

@@ -1,4 +1,4 @@
-import { DatasetDataType, ZarrFile, ZarrGroup } from "../../figpack-plugin-interface";
+import { DatasetDataType, ZarrFile, ZarrGroup } from "../../figpack-interface";
 
 export interface SpikeAmplitudesMetadata {
   startTimeSec: number;

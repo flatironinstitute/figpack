@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 import React from "react";
 import { FPTabLayout } from "./FPTabLayout";
 

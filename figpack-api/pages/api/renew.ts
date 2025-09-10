@@ -75,11 +75,13 @@ export default async function handler(
       });
     }
 
-    // Verify ownership
-    if (figure.ownerEmail !== authResult.user?.email) {
+    // Verify ownership or admin status
+    if (figure.ownerEmail !== authResult.user?.email && !authResult.isAdmin) {
       return res.status(403).json({
         success: false,
-        message: "You can only renew figures that you own",
+        message: authResult.isAdmin 
+          ? "Admin renewal failed" 
+          : "You can only renew figures that you own",
       });
     }
 

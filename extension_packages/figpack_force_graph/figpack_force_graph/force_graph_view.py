@@ -61,7 +61,7 @@ except Exception as e:
 
 # Create and register the force graph extension
 _force_graph_extension = figpack.FigpackExtension(
-    name="force-graph",
+    name="figpack-force-graph",
     javascript_code=_load_javascript_code(),
     additional_files=additional_files,
     version="1.0.0",
@@ -115,7 +115,9 @@ class ForceGraphView(figpack.ExtensionView):
             cooldown_ticks: Number of ticks to run before stopping simulation
             warmup_ticks: Number of ticks to run before starting to render
         """
-        super().__init__(extension=_force_graph_extension)
+        super().__init__(
+            extension=_force_graph_extension, view_type="force-graph.ForceGraphView"
+        )
 
         self.nodes = nodes or []
         self.links = links or []

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { TrackAnimationClient } from "./TrackAnimationClient";
-import { ZarrGroup } from "../figpack-plugin-interface/ZarrTypes";
+import { ZarrGroup } from "../figpack-interface";
 
 // Hook to use the TrackAnimation client
 export const useTrackAnimationClient = (zarrGroup: ZarrGroup) => {

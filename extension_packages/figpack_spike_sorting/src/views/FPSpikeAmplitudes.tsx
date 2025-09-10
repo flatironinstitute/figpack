@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { FPViewContexts, ZarrGroup } from "../figpack-plugin-interface";
+import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 import SpikeAmplitudesView from "./view-spike-amplitudes/SpikeAmplitudesView";
 import { SpikeAmplitudesDataClient } from "./view-spike-amplitudes/SpikeAmplitudesDataClient";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
