@@ -3,7 +3,6 @@
 ## Requirements
 
 - Python 3.8 or higher
-- pip package manager
 
 ## Install from PyPI
 
@@ -43,14 +42,14 @@ The easiest way to install extension packages is using the built-in figpack CLI:
 figpack extensions list
 
 # Install specific extensions
-figpack extensions install figpack_3d
-figpack extensions install figpack_3d figpack_spike_sorting
+figpack extensions install figpack_spike_sorting
+figpack extensions install figpack_spike_sorting figpack_3d
 
 # Install all available extensions
 figpack extensions install --all
 
 # Upgrade an already installed extension
-figpack extensions install figpack_3d --upgrade
+figpack extensions install figpack_spike_sorting --upgrade
 ```
 
 #### Manual Installation
@@ -58,20 +57,11 @@ figpack extensions install figpack_3d --upgrade
 You can also install extension packages directly from our GitHub Pages wheel repository:
 
 ```bash
-# Install the 3D visualization extension
-pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ figpack_3d
-
-# Install the force graph extension
-pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ figpack_force_graph
-
 # Install the spike sorting extension
 pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ figpack_spike_sorting
-
-# Install the Frank Lab extension
-pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ figpack_franklab
 ```
 
-You can also browse and download wheels directly from the [wheels page](https://flatironinstitute.github.io/figpack/wheels/).
+Or browse and download wheels directly from the [wheels page](https://flatironinstitute.github.io/figpack/wheels/).
 
 #### Managing Extensions
 
@@ -80,7 +70,7 @@ You can also browse and download wheels directly from the [wheels page](https://
 figpack extensions list
 
 # Uninstall extensions
-figpack extensions uninstall figpack_3d
+figpack extensions uninstall figpack_spike_sorting
 
 # Get help for extension commands
 figpack extensions --help
@@ -92,7 +82,7 @@ For development work on extension packages:
 
 ```bash
 git clone https://github.com/flatironinstitute/figpack.git
-cd figpack/extension_packages/figpack_3d  # or any other extension
+cd figpack/extension_packages/figpack_spike_sorting  # or any other extension
 npm install  # if the extension has JavaScript components
 npm run build  # if the extension has JavaScript components
 pip install -e .
