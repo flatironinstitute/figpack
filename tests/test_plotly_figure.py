@@ -35,7 +35,7 @@ def test_write_to_zarr_basic(sample_plotly_figure):
     view._write_to_zarr_group(group)
 
     # Check basic attributes and data array
-    assert group.attrs["view_type"] == "ExtensionView"
+    assert group.attrs["view_type"] == "plotly.PlotlyFigure"
     assert "figure_data" in group
     assert "data_size" in group.attrs
 

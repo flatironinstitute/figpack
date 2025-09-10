@@ -151,6 +151,6 @@ class TestExtensionSystem:
         view._write_to_zarr_group(group)
 
         # Check attributes
-        assert group.attrs["view_type"] == "ExtensionView"
+        assert group.attrs["view_type"] == "test.ViewType"
         assert group.attrs["extension_name"] == "test-extension"
         assert group.attrs["extension_version"] == "1.5.0"
