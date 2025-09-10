@@ -18,6 +18,7 @@ import requests
 from . import __version__
 from .core._server_manager import CORSRequestHandler
 from .core._view_figure import serve_files, view_figure
+from .extensions import ExtensionManager
 
 MAX_WORKERS_FOR_DOWNLOAD = 16
 
@@ -214,6 +215,40 @@ def download_figure(figure_url: str, dest_path: str) -> None:
         print(f"Archive saved to: {dest_path}")
 
 
+def handle_extensions_command(args):
+    """Handle extensions subcommands"""
+    extension_manager = ExtensionManager()
+
+    if args.extensions_command == "list":
+        extension_manager.list_extensions()
+    elif args.extensions_command == "install":
+        if not args.extensions and not args.all:
+            print("Error: No extensions specified. Use extension names or --all flag.")
+            print("Example: figpack extensions install figpack_3d")
+            print("         figpack extensions install --all")
+            sys.exit(1)
+
+        success = extension_manager.install_extensions(
+            extensions=args.extensions, upgrade=args.upgrade, install_all=args.all
+        )
+
+        if not success:
+            sys.exit(1)
+
+    elif args.extensions_command == "uninstall":
+        success = extension_manager.uninstall_extensions(args.extensions)
+
+        if not success:
+            sys.exit(1)
+    else:
+        print("Available extension commands:")
+        print("  list      - List available extensions and their status")
+        print("  install   - Install or upgrade extension packages")
+        print("  uninstall - Uninstall extension packages")
+        print()
+        print("Use 'figpack extensions <command> --help' for more information.")
+
+
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
@@ -240,12 +275,51 @@ def main():
         "--port", type=int, help="Port number to serve on (default: auto-select)"
     )
 
+    # Extensions command
+    extensions_parser = subparsers.add_parser(
+        "extensions", help="Manage figpack extension packages"
+    )
+    extensions_subparsers = extensions_parser.add_subparsers(
+        dest="extensions_command", help="Extension management commands"
+    )
+
+    # Extensions list subcommand
+    extensions_list_parser = extensions_subparsers.add_parser(
+        "list", help="List available extensions and their status"
+    )
+
+    # Extensions install subcommand
+    extensions_install_parser = extensions_subparsers.add_parser(
+        "install", help="Install or upgrade extension packages"
+    )
+    extensions_install_parser.add_argument(
+        "extensions",
+        nargs="*",
+        help="Extension package names to install (e.g., figpack_3d figpack_spike_sorting)",
+    )
+    extensions_install_parser.add_argument(
+        "--all", action="store_true", help="Install all available extensions"
+    )
+    extensions_install_parser.add_argument(
+        "--upgrade", action="store_true", help="Upgrade packages if already installed"
+    )
+
+    # Extensions uninstall subcommand
+    extensions_uninstall_parser = extensions_subparsers.add_parser(
+        "uninstall", help="Uninstall extension packages"
+    )
+    extensions_uninstall_parser.add_argument(
+        "extensions", nargs="+", help="Extension package names to uninstall"
+    )
+
     args = parser.parse_args()
 
     if args.command == "download":
         download_figure(args.figure_url, args.dest)
     elif args.command == "view":
         view_figure(args.archive, port=args.port)
+    elif args.command == "extensions":
+        handle_extensions_command(args)
     else:
         parser.print_help()
 
