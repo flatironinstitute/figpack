@@ -50,7 +50,7 @@ pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ fig
 pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ figpack_franklab
 ```
 
-You can also browse and download wheels directly from the [wheels page](wheels/).
+You can also browse and download wheels directly from the [wheels page](https://flatironinstitute.github.io/figpack/wheels/).
 
 ### Development Installation of Extensions
 
