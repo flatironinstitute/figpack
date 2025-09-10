@@ -18,10 +18,7 @@ export const FPMarkdown: React.FC<{
         setError(null);
 
         // Get the markdown content from the zarr array
-        const data = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, "content_data"),
-          {},
-        );
+        const data = await zarrGroup.getDatasetData("content_data", {});
         if (!data || data.length === 0) {
           throw new Error("Empty markdown content");
         }
@@ -103,12 +100,4 @@ export const FPMarkdown: React.FC<{
       <ReactMarkdown>{content}</ReactMarkdown>
     </div>
   );
-};
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
 };

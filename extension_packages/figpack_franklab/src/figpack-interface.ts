@@ -25,6 +25,16 @@ export type ZarrGroup = {
   attrs: {
     [key: string]: any;
   };
+  getGroup: (name: string) => Promise<ZarrGroup | undefined>;
+  getDataset: (name: string) => Promise<ZarrDataset | undefined>;
+  getDatasetData: (
+    name: string,
+    o: {
+      slice?: [number, number][];
+      allowBigInt?: boolean;
+      canceler?: Canceler;
+    },
+  ) => Promise<DatasetDataType | undefined>;
 };
 
 export type ZarrSubgroup = {

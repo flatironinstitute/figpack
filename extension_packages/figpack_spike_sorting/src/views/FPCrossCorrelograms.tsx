@@ -37,16 +37,10 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
       }
 
       // Fetch the shared bin edges dataset
-      const binEdgesSecData = await zarrGroup.file.getDatasetData(
-        join(zarrGroup.path, "bin_edges_sec"),
-        {},
-      );
+      const binEdgesSecData = await zarrGroup.getDatasetData("bin_edges_sec", {});
 
       // Fetch the 2D bin counts dataset
-      const binCountsData = await zarrGroup.file.getDatasetData(
-        join(zarrGroup.path, "bin_counts"),
-        {},
-      );
+      const binCountsData = await zarrGroup.getDatasetData("bin_counts", {});
 
       if (!binEdgesSecData || !binCountsData) {
         console.error("Failed to load cross-correlograms data");
@@ -108,12 +102,4 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
       <CrossCorrelogramsView data={data} width={width} height={height} />
     </ProvideUnitSelectionContext>
   );
-};
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
 };

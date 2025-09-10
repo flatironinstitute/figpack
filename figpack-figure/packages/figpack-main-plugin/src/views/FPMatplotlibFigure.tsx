@@ -22,10 +22,7 @@ export const FPMatplotlibFigure: React.FC<{
         setError(null);
 
         // Get the SVG data from the zarr array
-        const data = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, "svg_data"),
-          {},
-        );
+        const data = await zarrGroup.getDatasetData("svg_data", {});
         if (!data || data.length === 0) {
           throw new Error("Empty SVG data");
         }
@@ -177,12 +174,4 @@ export const FPMatplotlibFigure: React.FC<{
       }}
     />
   );
-};
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
 };

@@ -32,10 +32,7 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
         const columns = zarrGroup.attrs["columns"] || [];
 
         // Get rows from zarr array
-        const rowsData = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, "rows_data"),
-          {},
-        );
+        const rowsData = await zarrGroup.getDatasetData("rows_data", {});
         if (!rowsData || rowsData.length === 0) {
           throw new Error("Empty rows data");
         }
@@ -46,8 +43,8 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
         // Get similarity scores from zarr array (if present)
         let similarityScores = undefined;
         try {
-          const scoresData = await zarrGroup.file.getDatasetData(
-            join(zarrGroup.path, "similarity_scores_data"),
+          const scoresData = await zarrGroup.getDatasetData(
+            "similarity_scores_data",
             {},
           );
           if (scoresData && scoresData.length > 0) {
@@ -147,10 +144,3 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
   );
 };
 
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
-};

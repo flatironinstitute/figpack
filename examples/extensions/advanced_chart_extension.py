@@ -56,8 +56,8 @@ main_extension_js = """
         
         renderChart: async function(svg, zarrGroup, width, height) {
             try {
-                const xData = await zarrGroup.file.getDatasetData(join(zarrGroup.path, 'x'), {});
-                const yData = await zarrGroup.file.getDatasetData(join(zarrGroup.path, 'y'), {});
+                const xData = await zarrGroup.getDatasetData("x", {});
+                const yData = await zarrGroup.getDatasetData("y", {});
                 
                 if (!xData || !yData || xData.length !== yData.length) {
                     this.renderPlaceholder(svg, width, height);
@@ -154,12 +154,6 @@ main_extension_js = """
             svg.appendChild(text);
         }
     };
-    
-    function join(p1, p2) {
-        if (p1.endsWith('/')) p1 = p1.slice(0, -1);
-        if (p2.startsWith('/')) p2 = p2.slice(1);
-        return p1 + '/' + p2;
-    }
 })();
 """
 

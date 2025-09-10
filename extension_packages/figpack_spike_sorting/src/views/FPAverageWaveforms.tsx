@@ -45,12 +45,10 @@ export const FPAverageWaveformsChild: FunctionComponent<Props> = ({
         );
       }
 
-      const file = zarrGroup.file as ZarrFile;
-
       for (let i = 0; i < numAverageWaveforms; i++) {
         const waveformName = `waveform_${i}`;
-        const waveformGroup = await file.getGroup(
-          join(zarrGroup.path, waveformName),
+        const waveformGroup = await zarrGroup.getGroup(
+          waveformName
         );
         if (!waveformGroup) {
           console.warn(`No group for ${waveformName}`);
@@ -64,8 +62,8 @@ export const FPAverageWaveformsChild: FunctionComponent<Props> = ({
           continue;
         }
 
-        const waveformDataset = await file.getDataset(
-          join(zarrGroup.path, `${waveformName}/waveform`),
+        const waveformDataset = await zarrGroup.getDataset(
+          `${waveformName}/waveform`,
         );
         if (!waveformDataset) {
           console.warn(`Could not load waveform dataset for ${waveformName}`);
@@ -73,8 +71,8 @@ export const FPAverageWaveformsChild: FunctionComponent<Props> = ({
         }
         const waveformShape = waveformDataset.shape;
 
-        const waveformData = await file.getDatasetData(
-          join(zarrGroup.path, `${waveformName}/waveform`),
+        const waveformData = await zarrGroup.getDatasetData(
+          `${waveformName}/waveform`,
           {},
         );
 
@@ -86,8 +84,8 @@ export const FPAverageWaveformsChild: FunctionComponent<Props> = ({
         ) {
           waveformStdDevData = undefined;
         } else {
-          waveformStdDevData = await file.getDatasetData(
-            join(zarrGroup.path, `${waveformName}/waveform_std_dev`),
+          waveformStdDevData = await zarrGroup.getDatasetData(
+            `${waveformName}/waveform_std_dev`,
             {},
           );
         }
@@ -129,14 +127,6 @@ export const FPAverageWaveformsChild: FunctionComponent<Props> = ({
   }
 
   return <AverageWaveformsView data={data} width={width} height={height} />;
-};
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
 };
 
 const to2dArray = (data: Float32Array, shape: number[]): number[][] => {

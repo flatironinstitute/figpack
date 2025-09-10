@@ -1,4 +1,4 @@
-import { DatasetDataType, ZarrFile, ZarrGroup } from "../../figpack-interface";
+import { DatasetDataType, ZarrGroup } from "../../figpack-interface";
 
 export interface RasterPlotMetadata {
   startTimeSec: number;
@@ -24,8 +24,6 @@ export interface DataRangeParams {
 }
 
 export class RasterPlotDataClient {
-  private file: ZarrFile;
-
   constructor(
     private zarrGroup: ZarrGroup,
     public metadata: RasterPlotMetadata,
@@ -35,7 +33,6 @@ export class RasterPlotDataClient {
     private binEdges: number[],
   ) {
     this.zarrGroup = zarrGroup;
-    this.file = zarrGroup.file as ZarrFile;
   }
 
   static async create(zarrGroup: ZarrGroup): Promise<RasterPlotDataClient> {
@@ -45,12 +42,12 @@ export class RasterPlotDataClient {
       unitIds: zarrGroup.attrs["unit_ids"] || [],
       totalSpikes: zarrGroup.attrs["total_spikes"] || 0,
     };
-    const referenceTimes = await zarrGroup.file.getDatasetData(
-      join(zarrGroup.path, "reference_times"),
+    const referenceTimes = await zarrGroup.getDatasetData(
+      "reference_times",
       {},
     );
-    const referenceIndices = await zarrGroup.file.getDatasetData(
-      join(zarrGroup.path, "reference_indices"),
+    const referenceIndices = await zarrGroup.getDatasetData(
+      "reference_indices",
       {},
     );
 
@@ -61,8 +58,8 @@ export class RasterPlotDataClient {
     }
 
     // Load spike counts data if available
-    const spikeCountsData = await zarrGroup.file
-      .getDatasetData(join(zarrGroup.path, "spike_counts_1sec"), {})
+    const spikeCountsData = await zarrGroup
+      .getDatasetData("spike_counts_1sec", {})
       .catch(() => undefined); // Gracefully handle if dataset doesn't exist
 
     if (!spikeCountsData) {
@@ -126,12 +123,12 @@ export class RasterPlotDataClient {
       return emptyData;
     }
 
-    const timestampsData = await this.file.getDatasetData(
-      join(this.zarrGroup.path, `timestamps`),
+    const timestampsData = await this.zarrGroup.getDatasetData(
+      `timestamps`,
       { slice: [[startIndex, endIndex]] },
     );
-    const unitIndicesData = await this.file.getDatasetData(
-      join(this.zarrGroup.path, `unit_indices`),
+    const unitIndicesData = await this.zarrGroup.getDatasetData(
+      `unit_indices`,
       { slice: [[startIndex, endIndex]] },
     );
 
@@ -225,11 +222,3 @@ export class RasterPlotDataClient {
     return referenceIndices[i];
   }
 }
-
-const join = (path: string, name: string): string => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
-};

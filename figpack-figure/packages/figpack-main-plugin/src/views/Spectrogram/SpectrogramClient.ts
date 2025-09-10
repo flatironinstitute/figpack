@@ -1,5 +1,4 @@
 import { ZarrGroup } from "../../figpack-interface";
-import { join } from "../MultiChannelTimeseries/utils";
 
 export class SpectrogramClient {
   constructor(
@@ -38,10 +37,7 @@ export class SpectrogramClient {
       frequencyDeltaHz = zarrGroup.attrs["frequency_delta_hz"] || 1;
     } else {
       // Load non-uniform frequencies dataset
-      const frequenciesData = await zarrGroup.file.getDatasetData(
-        join(zarrGroup.path, "frequencies"),
-        {},
-      );
+      const frequenciesData = await zarrGroup.getDatasetData("frequencies", {});
       if (frequenciesData) {
         frequencies = new Float32Array(frequenciesData as ArrayLike<number>);
       }
@@ -153,15 +149,12 @@ export class SpectrogramClient {
     const length = endIndex - startIndex + 1;
 
     // Load visible chunk of original data
-    const rawData = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, "data"),
-      {
-        slice: [
-          [startIndex, endIndex + 1],
-          [0, this.nFrequencies],
-        ],
-      },
-    );
+    const rawData = await this.zarrGroup.getDatasetData("data", {
+      slice: [
+        [startIndex, endIndex + 1],
+        [0, this.nFrequencies],
+      ],
+    });
 
     if (!rawData) {
       throw new Error("Failed to load original data");
@@ -215,15 +208,12 @@ export class SpectrogramClient {
     const length = endIndex - startIndex + 1;
 
     // Load visible chunk of downsampled data (shape: [length, nFrequencies])
-    const rawData = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, datasetName),
-      {
-        slice: [
-          [startIndex, endIndex + 1],
-          [0, this.nFrequencies],
-        ],
-      },
-    );
+    const rawData = await this.zarrGroup.getDatasetData(datasetName, {
+      slice: [
+        [startIndex, endIndex + 1],
+        [0, this.nFrequencies],
+      ],
+    });
 
     if (!rawData) {
       throw new Error(`Failed to load downsampled data: ${datasetName}`);
