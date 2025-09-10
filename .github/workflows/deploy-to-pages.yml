@@ -1,10 +1,11 @@
-name: Build and Deploy Documentation
+name: Build docs and extensions and deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
       - "docs/**"
+      - "extension_packages/**"
   workflow_dispatch:
 
 permissions:
