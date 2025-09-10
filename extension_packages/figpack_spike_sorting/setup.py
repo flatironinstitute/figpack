@@ -26,7 +26,7 @@ setup(
     url="https://github.com/flatironinstitute/figpack",
     packages=find_packages(),
     package_data={
-        "figpack_spike_sorting": ["*.js"],
+        "figpack_spike_sorting": ["*.js", "*.css"],
     },
     include_package_data=True,
     install_requires=["figpack>=0.2.17"],
