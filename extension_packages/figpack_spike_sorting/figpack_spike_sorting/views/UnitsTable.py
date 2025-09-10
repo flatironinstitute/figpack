@@ -36,7 +36,9 @@ class UnitsTable(figpack.ExtensionView):
             similarity_scores: Optional list of UnitSimilarityScore objects
             height: Height of the view in pixels
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension, view_type="spike_sorting.UnitsTable"
+        )
         self.columns = columns
         self.rows = rows
         self.similarity_scores = similarity_scores or []
@@ -50,9 +52,6 @@ class UnitsTable(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "UnitsTable"
 
         # Set view properties
         if self.height is not None:

@@ -1,1 +1,0 @@
-export { viewComponentRegistry } from "./FPViewComponentRegistry";

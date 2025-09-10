@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
@@ -8,8 +7,12 @@ import { useZarrData } from "./hooks/useZarrData";
 import { useFigureUrl } from "./hooks/useFigureUrl";
 import { useExtensionDevUrls } from "./hooks/useExtensionDevUrls";
 import "./localStyles.css";
-import { plugins } from "./main";
-import { FPViewContexts } from "@figpack/plugin-sdk";
+// import { plugins } from "./main";
+import { FPViewContexts } from "./figpack-interface";
+import {
+  registeredFPExtensions,
+  registeredFPViewContextCreators,
+} from "./main";
 
 function App() {
   const zarrData = useZarrData();
@@ -34,47 +37,68 @@ function App() {
   const [contexts, setContexts] = useState<FPViewContexts | null>(null);
 
   useEffect(() => {
-    // check if extensions are loaded
-    if (extensionLoadingStatus !== "loaded") return;
+    if (extensionLoadingStatus !== "loaded") {
+      return;
+    }
     const contexts: FPViewContexts = {};
-    plugins.forEach((plugin) => {
-      plugin.contextCreators.forEach((c) => {
-        if (c.name in contexts) {
-          const allPluginsWithThisName = plugins
-            .filter((p) => p.contextCreators.some((cc) => cc.name === c.name))
-            .map((p) => p.pluginName);
-          throw new Error(
-            `Duplicate context creator name: ${c.name} (${allPluginsWithThisName.join(", ")})`,
-          );
-        }
-        contexts[c.name] = c.create();
-      });
-    });
-    const figpackExtensions = (window as any).figpackExtensions || {};
-    Object.keys(figpackExtensions).forEach((extensionName) => {
-      const extension = figpackExtensions[extensionName];
-      if (extension.contextCreators) {
-        extension.contextCreators.forEach((c: any) => {
-          if (c.name in contexts) {
-            const allExtensionsWithThisName = Object.keys(
-              figpackExtensions,
-            ).filter((en) =>
-              figpackExtensions[en].contextCreators?.some(
-                (cc: any) => cc.name === c.name,
-              ),
-            );
-            throw new Error(
-              `Duplicate context creator name: ${c.name} (${allExtensionsWithThisName.join(
-                ", ",
-              )})`,
-            );
-          }
-          contexts[c.name] = c.create();
-        });
+    registeredFPViewContextCreators.forEach((c) => {
+      if (c.name in contexts) {
+        const allCreatorsWithThisName = registeredFPViewContextCreators
+          .filter((cc) => cc.name === c.name)
+          .map((cc) => cc.name);
+        throw new Error(
+          `Duplicate context creator name: ${c.name} (${allCreatorsWithThisName.join(
+            ", ",
+          )})`,
+        );
       }
+      contexts[c.name] = c.create();
     });
     setContexts(contexts);
   }, [extensionLoadingStatus]);
+
+  // useEffect(() => {
+  //   // check if extensions are loaded
+  //   if (extensionLoadingStatus !== "loaded") return;
+  //   const contexts: FPViewContexts = {};
+  //   plugins.forEach((plugin) => {
+  //     plugin.contextCreators.forEach((c) => {
+  //       if (c.name in contexts) {
+  //         const allPluginsWithThisName = plugins
+  //           .filter((p) => p.contextCreators.some((cc) => cc.name === c.name))
+  //           .map((p) => p.pluginName);
+  //         throw new Error(
+  //           `Duplicate context creator name: ${c.name} (${allPluginsWithThisName.join(", ")})`,
+  //         );
+  //       }
+  //       contexts[c.name] = c.create();
+  //     });
+  //   });
+  //   const figpackExtensions = (window as any).figpackExtensions || {};
+  //   Object.keys(figpackExtensions).forEach((extensionName) => {
+  //     const extension = figpackExtensions[extensionName];
+  //     if (extension.contextCreators) {
+  //       extension.contextCreators.forEach((c: any) => {
+  //         if (c.name in contexts) {
+  //           const allExtensionsWithThisName = Object.keys(
+  //             figpackExtensions,
+  //           ).filter((en) =>
+  //             figpackExtensions[en].contextCreators?.some(
+  //               (cc: any) => cc.name === c.name,
+  //             ),
+  //           );
+  //           throw new Error(
+  //             `Duplicate context creator name: ${c.name} (${allExtensionsWithThisName.join(
+  //               ", ",
+  //             )})`,
+  //           );
+  //         }
+  //         contexts[c.name] = c.create();
+  //       });
+  //     }
+  //   });
+  //   setContexts(contexts);
+  // }, [extensionLoadingStatus]);
 
   // Adjust height to account for status bar (30px height)
   const adjustedHeight = height - 30;
@@ -257,8 +281,10 @@ const useLoadExtensions = () => {
             }
           }
 
-          // Verify the extension registered itself
-          if (!window.figpackExtensions?.[extension.name]) {
+          const ee = registeredFPExtensions.find(
+            (e) => e.name === extension.name,
+          );
+          if (!ee) {
             throw new Error(
               `Extension '${extension.name}' did not register itself properly`,
             );

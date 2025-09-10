@@ -69,7 +69,9 @@ class HelloWorldView(ExtensionView):
     """
 
     def __init__(self, *, message="Hello from Extension!", color="#1976d2"):
-        super().__init__(extension=hello_extension)
+        super().__init__(
+            extension=hello_extension, view_type="hello-world.HelloWorldView"
+        )
         self.message = message
         self.color = color
 

@@ -33,7 +33,9 @@ class SpikeAmplitudes(figpack.ExtensionView):
             end_time_sec: End time of the view in seconds
             plots: List of SpikeAmplitudesItem objects
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension, view_type="spike_sorting.SpikeAmplitudes"
+        )
         self.start_time_sec = start_time_sec
         self.end_time_sec = end_time_sec
         self.plots = plots
@@ -121,9 +123,6 @@ class SpikeAmplitudes(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "SpikeAmplitudes"
 
         # Store view parameters
         group.attrs["start_time_sec"] = self.start_time_sec

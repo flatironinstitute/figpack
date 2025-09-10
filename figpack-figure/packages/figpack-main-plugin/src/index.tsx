@@ -1,4 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Import all view components
+import { FunctionComponent, useEffect, useState } from "react";
+import {
+  FPViewContextCreator,
+  FPViewComponent,
+  RenderParams,
+  FPViewContext,
+} from "./figpack-interface";
 import {
   timeseriesSelectionReducer,
   TimeseriesSelectionState,
@@ -14,11 +22,7 @@ import { FPSpectrogram } from "./views/FPSpectrogram";
 import { FPSplitter } from "./views/FPSplitter";
 import { FPTabLayout } from "./views/FPTabLayout";
 import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
-import {
-  FPPlugin,
-  FPViewComponentRegistry,
-  FPViewContext,
-} from "@figpack/plugin-sdk";
+import { createRoot } from "react-dom/client";
 
 export {
   // eslint-disable-next-line react-refresh/only-export-components
@@ -33,62 +37,132 @@ export { default as TimeScrollView3 } from "./shared/component-time-scroll-view-
 // eslint-disable-next-line react-refresh/only-export-components
 export { useTimeScrollView3 } from "./shared/component-time-scroll-view-3/useTimeScrollView3";
 
-const registerViewComponents = (
-  viewComponentRegistry: FPViewComponentRegistry,
+type ComponentWrapperProps = {
+  zarrGroup: any;
+  width: number;
+  height: number;
+  onResize: (callback: (width: number, height: number) => void) => void;
+  contexts: { [key: string]: FPViewContext };
+  component: React.ComponentType<any>;
+  FPView: any;
+};
+
+const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
+  zarrGroup,
+  width,
+  height,
+  onResize,
+  contexts,
+  component: Component,
+  FPView,
+}) => {
+  const [internalWidth, setInternalWidth] = useState(width);
+  const [internalHeight, setInternalHeight] = useState(height);
+
+  useEffect(() => {
+    onResize((newWidth, newHeight) => {
+      setInternalWidth(newWidth);
+      setInternalHeight(newHeight);
+    });
+  }, [onResize]);
+
+  return (
+    <Component
+      zarrGroup={zarrGroup}
+      width={internalWidth}
+      height={internalHeight}
+      contexts={contexts}
+      FPView={FPView}
+    />
+  );
+};
+
+const makeRenderFunction = (
+  Component: React.ComponentType<any>,
+  FPView: any,
 ) => {
-  viewComponentRegistry.registerViewComponent({
-    type: "TimeseriesGraph",
-    component: FPTimeseriesGraph,
+  return (a: RenderParams) => {
+    const { container, zarrGroup, width, height, onResize, contexts } = a;
+    const root = createRoot(container);
+    root.render(
+      <ComponentWrapper
+        zarrGroup={zarrGroup}
+        width={width}
+        height={height}
+        onResize={onResize}
+        contexts={contexts}
+        component={Component}
+        FPView={FPView}
+      />,
+    );
+  };
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const registerMainPlugin = (FPView: any) => {
+  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
+    .figpack_p1.registerFPViewComponent;
+  registerFPViewComponent({
+    name: "TimeseriesGraph",
+    render: makeRenderFunction(FPTimeseriesGraph, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "MultiChannelTimeseries",
-    component: FPMultiChannelTimeseries,
+  registerFPViewComponent({
+    name: "MultiChannelTimeseries",
+    render: makeRenderFunction(FPMultiChannelTimeseries, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "Box",
-    component: FPBox,
+  registerFPViewComponent({
+    name: "Box",
+    render: makeRenderFunction(FPBox, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "Splitter",
-    component: FPSplitter,
+  registerFPViewComponent({
+    name: "Splitter",
+    render: makeRenderFunction(FPSplitter, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "TabLayout",
-    component: FPTabLayout,
+  registerFPViewComponent({
+    name: "TabLayout",
+    render: makeRenderFunction(FPTabLayout, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "Gallery",
-    component: FPGallery,
+  registerFPViewComponent({
+    name: "Gallery",
+    render: makeRenderFunction(FPGallery, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "Markdown",
-    component: FPMarkdown,
+  registerFPViewComponent({
+    name: "Markdown",
+    render: makeRenderFunction(FPMarkdown, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "MatplotlibFigure",
-    component: FPMatplotlibFigure,
+  registerFPViewComponent({
+    name: "MatplotlibFigure",
+    render: makeRenderFunction(FPMatplotlibFigure, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "Image",
-    component: FPImage,
+  registerFPViewComponent({
+    name: "Image",
+    render: makeRenderFunction(FPImage, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "DataFrame",
-    component: FPDataFrame,
+  registerFPViewComponent({
+    name: "DataFrame",
+    render: makeRenderFunction(FPDataFrame, FPView),
   });
 
-  viewComponentRegistry.registerViewComponent({
-    type: "Spectrogram",
-    component: FPSpectrogram,
+  registerFPViewComponent({
+    name: "Spectrogram",
+    render: makeRenderFunction(FPSpectrogram, FPView),
+  });
+
+  const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (
+    window as any
+  ).figpack_p1.registerFPViewContextCreator;
+  registerFPViewContextCreator({
+    name: "timeseriesSelection",
+    create: createTimeseriesSelectionContext,
   });
 };
 
@@ -129,21 +203,21 @@ const createTimeseriesSelectionContext = (): FPViewContext => {
   };
 };
 
-const contextCreators: {
-  name: string;
-  create: () => FPViewContext;
-}[] = [
-  {
-    name: "timeseriesSelection",
-    create: createTimeseriesSelectionContext,
-  },
-];
+// const contextCreators: {
+//   name: string;
+//   create: () => FPViewContext;
+// }[] = [
+//   {
+//     name: "timeseriesSelection",
+//     create: createTimeseriesSelectionContext,
+//   },
+// ];
 
-const plugin: FPPlugin = {
-  pluginName: "main",
-  registerViewComponents,
-  contextCreators,
-};
+// const plugin: FPPlugin = {
+//   pluginName: "main",
+//   registerViewComponents,
+//   contextCreators,
+// };
 
-// eslint-disable-next-line react-refresh/only-export-components
-export default plugin;
+// // eslint-disable-next-line react-refresh/only-export-components
+// export default plugin;

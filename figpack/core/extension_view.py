@@ -12,7 +12,7 @@ class ExtensionView(FigpackView):
     Base class for views that are rendered by figpack extensions
     """
 
-    def __init__(self, *, extension: FigpackExtension):
+    def __init__(self, *, extension: FigpackExtension, view_type: str):
         """
         Initialize an extension-based view
 
@@ -21,6 +21,7 @@ class ExtensionView(FigpackView):
         """
         super().__init__()
         self.extension = extension
+        self.view_type = view_type
 
     def _write_to_zarr_group(self, group: Group) -> None:
         """
@@ -32,7 +33,7 @@ class ExtensionView(FigpackView):
             group: Zarr group to write data into
         """
         # Set the view type to indicate this is an extension view
-        group.attrs["view_type"] = "ExtensionView"
+        group.attrs["view_type"] = self.view_type
 
         # Store the extension name so the frontend knows which extension to use
         group.attrs["extension_name"] = self.extension.name

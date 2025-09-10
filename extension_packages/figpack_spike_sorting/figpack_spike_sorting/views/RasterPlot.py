@@ -34,7 +34,9 @@ class RasterPlot(figpack.ExtensionView):
             plots: List of RasterPlotItem objects
             height: Height of the plot in pixels (default: 500)
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension, view_type="spike_sorting.RasterPlot"
+        )
         self.start_time_sec = float(start_time_sec)
         self.end_time_sec = float(end_time_sec)
         self.plots = plots
@@ -113,9 +115,6 @@ class RasterPlot(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "RasterPlot"
 
         # Store view parameters
         group.attrs["start_time_sec"] = self.start_time_sec

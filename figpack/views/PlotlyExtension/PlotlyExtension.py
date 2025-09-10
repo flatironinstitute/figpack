@@ -64,7 +64,7 @@ class PlotlyFigure(figpack.ExtensionView):
         Args:
             fig: The plotly figure object
         """
-        super().__init__(extension=_plotly_extension)
+        super().__init__(extension=_plotly_extension, view_type="plotly.PlotlyFigure")
 
         self.fig = fig
 

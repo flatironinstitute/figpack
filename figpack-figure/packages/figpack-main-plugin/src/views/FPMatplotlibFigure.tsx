@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../figpack-interface";
 
 export const FPMatplotlibFigure: React.FC<{
   zarrGroup: ZarrGroup;

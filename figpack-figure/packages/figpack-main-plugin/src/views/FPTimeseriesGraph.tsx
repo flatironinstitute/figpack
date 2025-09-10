@@ -3,7 +3,7 @@ import {
   DatasetDataType,
   FPViewContexts,
   ZarrGroup,
-} from "@figpack/plugin-sdk";
+} from "../figpack-interface";
 import { useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";

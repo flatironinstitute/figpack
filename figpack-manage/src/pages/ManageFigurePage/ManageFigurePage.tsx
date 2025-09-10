@@ -46,9 +46,9 @@ const ManageFigurePage: React.FC = () => {
     loadFigureData,
   } = useFigure(figureUrl);
 
-  const userOwnsFigure = useMemo(() => {
+  const canManageFigure = useMemo(() => {
     if (!user || !figpackStatus) return false;
-    return user.email === figpackStatus.ownerEmail;
+    return user.email === figpackStatus.ownerEmail || user.isAdmin;
   }, [user, figpackStatus]);
 
   const {
@@ -131,13 +131,13 @@ const ManageFigurePage: React.FC = () => {
           getTimeUntilExpiration={getTimeUntilExpiration}
           renewLoading={renewLoading}
           handleRefresh={handleRefresh}
-          handleRenew={userOwnsFigure ? handleRenew : null}
+          handleRenew={canManageFigure ? handleRenew : null}
           handleOpenPinDialog={
-            handlePin && userOwnsFigure ? handleOpenPinDialog : null
+            handlePin && canManageFigure ? handleOpenPinDialog : null
           }
-          handleUnpin={userOwnsFigure ? handleUnpin : null}
+          handleUnpin={canManageFigure ? handleUnpin : null}
           handleDelete={
-            handleDelete && userOwnsFigure ? handleOpenDeleteDialog : null
+            handleDelete && canManageFigure ? handleOpenDeleteDialog : null
           }
           unpinLoading={unpinLoading}
           deleteLoading={deleteLoading}

@@ -209,7 +209,7 @@ def process_layout_box(box_data, views_dict):
                 ta_data = ka.load_json(data_uri)
                 view = process_track_animation(ta_data)
             else:
-                raise ValueError(f"Unsupported view type: {view_data['type']}")
+                raise ValueError(f"Unknown view type: {view_data['type']}")
 
         items.append(fpv.LayoutItem(view=view, title=title, stretch=stretch))
 

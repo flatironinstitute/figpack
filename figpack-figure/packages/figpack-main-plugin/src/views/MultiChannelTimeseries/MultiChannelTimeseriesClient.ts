@@ -1,4 +1,4 @@
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../../figpack-interface";
 import { join } from "./utils";
 
 export class MultiChannelTimeseriesClient {

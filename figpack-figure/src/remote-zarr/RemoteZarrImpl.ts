@@ -5,8 +5,8 @@ import {
   ZarrGroup,
   ZarrSubdataset,
   ZarrSubgroup,
-} from "@figpack/plugin-sdk";
-import { ZarrFile, Canceler } from "@figpack/plugin-sdk";
+} from "../figpack-interface";
+import { ZarrFile, Canceler } from "../figpack-interface";
 
 const globalZarrStats = {
   getGroupCount: 0,

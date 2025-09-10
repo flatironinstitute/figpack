@@ -44,7 +44,9 @@ class UnitLocations(figpack.ExtensionView):
             units: List of UnitLocationsItem objects
             channel_locations: Dictionary mapping channel IDs to their locations
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension, view_type="spike_sorting.UnitLocations"
+        )
         self.units = units
         self.channel_locations = channel_locations
         self.disable_auto_rotate = disable_auto_rotate
@@ -57,9 +59,6 @@ class UnitLocations(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "UnitLocations"
 
         channel_locations = {}
         for channel_id, loc in self.channel_locations.items():

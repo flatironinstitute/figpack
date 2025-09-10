@@ -1,4 +1,4 @@
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../../figpack-interface";
 import { useEffect, useState } from "react";
 import { SpectrogramClient } from "./SpectrogramClient";
 

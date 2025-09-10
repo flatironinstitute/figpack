@@ -27,7 +27,10 @@ class Autocorrelograms(figpack.ExtensionView):
         Args:
             autocorrelograms: List of AutocorrelogramItem objects
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension,
+            view_type="spike_sorting.Autocorrelograms",
+        )
 
         self.autocorrelograms = autocorrelograms
 
@@ -76,9 +79,6 @@ class Autocorrelograms(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "Autocorrelograms"
 
         # Store the number of autocorrelograms
         num_autocorrelograms = len(self.autocorrelograms)

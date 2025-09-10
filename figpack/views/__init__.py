@@ -12,4 +12,5 @@ from .Splitter import Splitter
 from .TabLayout import TabLayout
 from .TabLayoutItem import TabLayoutItem
 from .TimeseriesGraph import TimeseriesGraph
-from .PlotlyExtension import PlotlyFigure
+
+# from .PlotlyExtension import PlotlyFigure

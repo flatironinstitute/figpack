@@ -26,7 +26,7 @@ export default defineConfig(({ command }) => {
     },
     build: {
       lib: {
-        entry: path.resolve(__dirname, 'src/index.ts'),
+        entry: path.resolve(__dirname, 'src/index.tsx'),
         name: 'figpackspikesorting',
         formats: ['iife'],
         fileName: () => 'figpack_spike_sorting.js'

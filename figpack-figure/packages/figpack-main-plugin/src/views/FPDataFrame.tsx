@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../figpack-interface";
 import { DataTable } from "../components/DataTable";
 
 const join = (path: string, name: string) => {

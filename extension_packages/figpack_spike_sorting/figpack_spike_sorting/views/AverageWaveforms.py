@@ -61,7 +61,10 @@ class AverageWaveforms(figpack.ExtensionView):
         Args:
             average_waveforms: List of AverageWaveformItem objects
         """
-        super().__init__(extension=spike_sorting_extension)
+        super().__init__(
+            extension=spike_sorting_extension,
+            view_type="spike_sorting.AverageWaveforms",
+        )
         self.average_waveforms = average_waveforms
 
     @staticmethod
@@ -105,9 +108,6 @@ class AverageWaveforms(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         super()._write_to_zarr_group(group)
-
-        # Set the view type
-        group.attrs["spike_sorting_view_type"] = "AverageWaveforms"
 
         # Store the number of average waveforms
         group.attrs["num_average_waveforms"] = len(self.average_waveforms)

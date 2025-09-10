@@ -2,12 +2,12 @@ import { FunctionComponent, useEffect, useState } from "react";
 import {
   FPViewContext,
   FPViewContexts,
-  useProvideFPViewContext,
   ZarrGroup,
-} from "../figpack-plugin-interface";
+} from "../figpack-interface";
 import AutocorrelogramsView from "./view-autocorrelograms/AutocorrelogramsView";
 import { AutocorrelogramsViewData } from "./view-autocorrelograms/AutocorrelogramsViewData";
 import { UnitSelectionContext } from "./context-unit-selection";
+import useProvideFPViewContext from "../useProvideFPViewContext";
 
 type Props = {
   zarrGroup: ZarrGroup;

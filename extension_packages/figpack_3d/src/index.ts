@@ -3,7 +3,8 @@
  * Provides interactive 3D scene rendering for figpack
  */
 
-import * as THREE from 'three';
+import * as THREE from "three";
+import { FPViewComponent, RenderParams } from "./figpack-interface";
 
 // Declare global types for figpack extension system
 declare global {
@@ -20,7 +21,7 @@ interface SceneConfig {
 
 interface SceneData {
   objects: Array<{
-    type: 'cube' | 'sphere' | 'cylinder';
+    type: "cube" | "sphere" | "cylinder";
     position: [number, number, number];
     rotation?: [number, number, number];
     scale?: [number, number, number];
@@ -40,10 +41,10 @@ class ThreeScene {
   constructor(container: HTMLElement, config: SceneConfig = {}) {
     this.container = container;
     this.config = {
-      backgroundColor: '#000000',
+      backgroundColor: "#000000",
       cameraPosition: [5, 5, 5],
       enableControls: true,
-      ...config
+      ...config,
     };
 
     this.scene = new THREE.Scene();
@@ -54,14 +55,17 @@ class ThreeScene {
       1000
     );
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    
+
     this.init();
   }
 
   private init(): void {
     // Set up renderer
-    this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-    this.renderer.setClearColor(this.config.backgroundColor || '#000000');
+    this.renderer.setSize(
+      this.container.clientWidth,
+      this.container.clientHeight
+    );
+    this.renderer.setClearColor(this.config.backgroundColor || "#000000");
     this.container.appendChild(this.renderer.domElement);
 
     // Set up camera
@@ -115,26 +119,26 @@ class ThreeScene {
       mouseY = event.clientY;
     };
 
-    this.renderer.domElement.addEventListener('mousedown', onMouseDown);
-    this.renderer.domElement.addEventListener('mouseup', onMouseUp);
-    this.renderer.domElement.addEventListener('mousemove', onMouseMove);
-    
+    this.renderer.domElement.addEventListener("mousedown", onMouseDown);
+    this.renderer.domElement.addEventListener("mouseup", onMouseUp);
+    this.renderer.domElement.addEventListener("mousemove", onMouseMove);
+
     // Add mouse wheel zoom
-    this.renderer.domElement.addEventListener('wheel', (event: WheelEvent) => {
+    this.renderer.domElement.addEventListener("wheel", (event: WheelEvent) => {
       event.preventDefault();
-      
+
       const zoomSpeed = 0.1;
       const zoomDirection = event.deltaY > 0 ? 1 : -1;
-      const zoomFactor = 1 + (zoomDirection * zoomSpeed);
-      
+      const zoomFactor = 1 + zoomDirection * zoomSpeed;
+
       // Zoom by moving camera closer/farther from the origin
       this.camera.position.multiplyScalar(zoomFactor);
-      
+
       // Clamp zoom to reasonable limits
       const distance = this.camera.position.length();
       const minDistance = 2;
       const maxDistance = 50;
-      
+
       if (distance < minDistance) {
         this.camera.position.normalize().multiplyScalar(minDistance);
       } else if (distance > maxDistance) {
@@ -149,19 +153,19 @@ class ThreeScene {
       update: () => {
         rotationX += (targetRotationX - rotationX) * 0.1;
         rotationY += (targetRotationY - rotationY) * 0.1;
-      }
+      },
     };
   }
 
   addSceneData(data: SceneData): void {
     // Clear existing objects (except lights)
     const objectsToRemove = this.scene.children.filter(
-      child => !(child instanceof THREE.Light)
+      (child) => !(child instanceof THREE.Light)
     );
-    objectsToRemove.forEach(obj => this.scene.remove(obj));
+    objectsToRemove.forEach((obj) => this.scene.remove(obj));
 
     // Add new objects
-    data.objects.forEach(objData => {
+    data.objects.forEach((objData) => {
       const mesh = this.createMesh(objData);
       if (mesh) {
         this.scene.add(mesh);
@@ -171,15 +175,15 @@ class ThreeScene {
 
   private createMesh(objData: any): THREE.Mesh | null {
     let geometry: THREE.BufferGeometry;
-    
+
     switch (objData.type) {
-      case 'cube':
+      case "cube":
         geometry = new THREE.BoxGeometry(1, 1, 1);
         break;
-      case 'sphere':
+      case "sphere":
         geometry = new THREE.SphereGeometry(0.5, 32, 32);
         break;
-      case 'cylinder':
+      case "cylinder":
         geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
         break;
       default:
@@ -188,22 +192,22 @@ class ThreeScene {
     }
 
     const material = new THREE.MeshLambertMaterial({
-      color: objData.color || '#ffffff',
-      wireframe: objData.wireframe || false
+      color: objData.color || "#ffffff",
+      wireframe: objData.wireframe || false,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    
+
     // Set position
     const [x, y, z] = objData.position;
     mesh.position.set(x, y, z);
-    
+
     // Set rotation if provided
     if (objData.rotation) {
       const [rx, ry, rz] = objData.rotation;
       mesh.rotation.set(rx, ry, rz);
     }
-    
+
     // Set scale if provided
     if (objData.scale) {
       const [sx, sy, sz] = objData.scale;
@@ -221,14 +225,14 @@ class ThreeScene {
 
   animate(): void {
     this.animationId = requestAnimationFrame(() => this.animate());
-    
+
     // Update mouse controls if enabled
     if (this.config.enableControls && (this as any).mouseControls) {
       (this as any).mouseControls.update();
       this.scene.rotation.x = (this as any).mouseControls.rotationX();
       this.scene.rotation.y = (this as any).mouseControls.rotationY();
     }
-    
+
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -254,75 +258,81 @@ class ThreeScene {
   }
 }
 
-// Register the figpack extension
-window.figpackExtensions = window.figpackExtensions || {};
+const renderThreeDView = async (params: RenderParams) => {
+  const { container, zarrGroup, width, height, onResize } = params;
 
-window.figpackExtensions['figpack-3d'] = {
-  render: async function(a: {container: HTMLElement, zarrGroup: any, width: number, height: number, onResize: (callback: (width: number, height: number) => void) => void}) {
-    const { container, zarrGroup, width, height, onResize } = a;
-    container.innerHTML = '';
-    
-    try {
-      // Load scene data and config from zarr
-      const sceneData = await this.loadSceneData(zarrGroup);
-      const config = JSON.parse(zarrGroup.attrs.config || "{}");
-      
-      // Debug: log the configuration
-      console.log('3D Scene config:', config);
-      
-      // Create and start the 3D scene
-      const threeScene = new ThreeScene(container, config);
-      threeScene.addSceneData(sceneData);
-      threeScene.resize(width, height);
-      threeScene.start();
-      
-      // Handle resize events
-      onResize((newWidth: number, newHeight: number) => {
-        threeScene.resize(newWidth, newHeight);
-      });
-      
-      return {
-        destroy: () => {
-          threeScene.destroy();
-        }
-      };
-      
-    } catch (error) {
-      console.error('Error rendering 3D scene:', error);
-      this.renderError(container, width, height, (error as Error).message);
-      return { destroy: () => {} };
-    }
-  },
+  container.innerHTML = "";
 
-  loadSceneData: async function(zarrGroup: any): Promise<SceneData> {
-    try {
-      // Load the scene data from the zarr group
-      const sceneDataBytes = await zarrGroup.file.getDatasetData(
-        this.joinPath(zarrGroup.path, 'scene_data'),
-        {}
-      );
-      
-      if (!sceneDataBytes || sceneDataBytes.length === 0) {
-        return { objects: [] };
-      }
-      
-      // Convert bytes to string and parse JSON
-      const jsonString = new TextDecoder('utf-8').decode(sceneDataBytes);
-      const sceneData = JSON.parse(jsonString);
-      
-      // Validate data structure
-      if (!sceneData.objects) sceneData.objects = [];
-      
-      return sceneData;
-      
-    } catch (error) {
-      console.warn('Error loading scene data:', error);
+  try {
+    // Load scene data and config from zarr
+    const sceneData = await loadSceneData(zarrGroup);
+    const config = JSON.parse(zarrGroup.attrs.config || "{}");
+
+    // Debug: log the configuration
+    console.log("3D Scene config:", config);
+
+    // Create and start the 3D scene
+    const threeScene = new ThreeScene(container, config);
+    threeScene.addSceneData(sceneData);
+    threeScene.resize(width, height);
+    threeScene.start();
+
+    // Handle resize events
+    onResize((newWidth: number, newHeight: number) => {
+      threeScene.resize(newWidth, newHeight);
+    });
+
+    return {
+      destroy: () => {
+        threeScene.destroy();
+      },
+    };
+  } catch (error) {
+    console.error("Error rendering 3D scene:", error);
+    renderError(container, width, height, (error as Error).message);
+    return { destroy: () => {} };
+  }
+};
+
+const loadSceneData = async (zarrGroup: any): Promise<SceneData> => {
+  try {
+    // Load the scene data from the zarr group
+    const sceneDataBytes = await zarrGroup.file.getDatasetData(
+      joinPath(zarrGroup.path, "scene_data"),
+      {}
+    );
+
+    if (!sceneDataBytes || sceneDataBytes.length === 0) {
       return { objects: [] };
     }
-  },
 
-  renderError: function(container: HTMLElement, width: number, height: number, message: string): void {
-    container.innerHTML = `
+    // Convert bytes to string and parse JSON
+    const jsonString = new TextDecoder("utf-8").decode(sceneDataBytes);
+    const sceneData = JSON.parse(jsonString);
+
+    // Validate data structure
+    if (!sceneData.objects) sceneData.objects = [];
+
+    return sceneData;
+  } catch (error) {
+    console.warn("Error loading scene data:", error);
+    return { objects: [] };
+  }
+};
+
+const joinPath = (p1: string, p2: string): string => {
+  if (p1.endsWith("/")) p1 = p1.slice(0, -1);
+  if (p2.startsWith("/")) p2 = p2.slice(1);
+  return p1 + "/" + p2;
+};
+
+const renderError = (
+  container: HTMLElement,
+  width: number,
+  height: number,
+  message: string
+) => {
+  container.innerHTML = `
       <div style="
         width: ${width}px; 
         height: ${height}px; 
@@ -344,11 +354,21 @@ window.figpackExtensions['figpack-3d'] = {
         </div>
       </div>
     `;
-  },
-
-  joinPath: function(p1: string, p2: string): string {
-    if (p1.endsWith('/')) p1 = p1.slice(0, -1);
-    if (p2.startsWith('/')) p2 = p2.slice(1);
-    return p1 + '/' + p2;
-  }
 };
+
+const registerExtension = () => {
+  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
+    .figpack_p1.registerFPViewComponent;
+  registerFPViewComponent({
+    name: "3d.ThreeDView",
+    render: renderThreeDView,
+  });
+
+  // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
+
+  const registerFPExtension: (e: { name: string }) => void = (window as any)
+    .figpack_p1.registerFPExtension;
+  registerFPExtension({ name: "figpack-3d" });
+};
+
+registerExtension();

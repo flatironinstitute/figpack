@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { FPViewContexts, ZarrGroup } from "../figpack-plugin-interface";
+import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 import CrossCorrelogramsView from "./view-cross-correlograms/CrossCorrelogramsView";
 import { CrossCorrelogramsViewData } from "./view-cross-correlograms/CrossCorrelogramsViewData";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";

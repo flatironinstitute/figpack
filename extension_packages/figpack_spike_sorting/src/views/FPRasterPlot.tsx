@@ -1,9 +1,10 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { FPViewContext, FPViewContexts, useProvideFPViewContext, ZarrGroup } from "../figpack-plugin-interface";
+import { FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
 import RasterPlotView from "./view-raster-plot-4/RasterPlotView";
 import { RasterPlotDataClient } from "./view-raster-plot-4/RasterPlotDataClient";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 import { TimeseriesSelectionContext } from "../TimeseriesSelectionContext";
+import useProvideFPViewContext from "../useProvideFPViewContext";
 
 type Props = {
   zarrGroup: ZarrGroup;

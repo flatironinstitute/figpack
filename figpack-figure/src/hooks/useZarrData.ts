@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../figpack-interface";
 import { useFigureUrl } from "./useFigureUrl";
 
 export const useZarrData = () => {

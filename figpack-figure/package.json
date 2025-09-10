@@ -8,12 +8,10 @@
   ],
   "scripts": {
     "dev": "npm run build:packages && concurrently \"npm run dev:packages\" \"vite\"",
-    "dev:packages": "concurrently \"npm run dev:plugin-sdk\" \"npm run dev:main-plugin\"",
-    "dev:plugin-sdk": "npm run dev --workspace=@figpack/plugin-sdk",
+    "dev:packages": "concurrently \"npm run dev:main-plugin\"",
     "dev:main-plugin": "npm run dev --workspace=@figpack/main-plugin",
     "build": "npm run build:packages && tsc -b && vite build",
-    "build:packages": "npm run build:plugin-sdk && npm run build:main-plugin",
-    "build:plugin-sdk": "npm run build --workspace=@figpack/plugin-sdk",
+    "build:packages": "npm run build:main-plugin",
     "build:main-plugin": "npm run build --workspace=@figpack/main-plugin",
     "build:gui": "tsc -b && vite build",
     "clean": "npm run clean --workspaces --if-present && rm -rf dist",
@@ -26,7 +24,6 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@figpack/plugin-sdk": "file:./packages/figpack-plugin-sdk",
     "@figpack/main-plugin": "file:./packages/figpack-main-plugin",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "@fortawesome/react-fontawesome": "^0.2.3",

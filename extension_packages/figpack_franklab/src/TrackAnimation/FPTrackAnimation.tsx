@@ -12,10 +12,10 @@ import {
   drawTrackBins,
 } from "./TrackAnimationDrawing";
 import { useTrackAnimationClient } from "./useTrackAnimationClient";
-import { ZarrGroup } from "../figpack-plugin-interface/ZarrTypes";
-import { FPViewContext, FPViewContexts } from "../figpack-plugin-interface/FPPluginInterface";
-import useProvideFPViewContext from "../figpack-plugin-interface/useProvideFPViewContext";
+import { ZarrGroup } from "../figpack-interface";
+import { FPViewContext, FPViewContexts } from "../figpack-interface";
 import { TimeseriesSelectionContext, useTimeseriesSelection } from "../TimeseriesSelectionContext";
+import useProvideFPViewContext from "../useProvideFPViewContext";
 
 type Props = {
   zarrGroup: ZarrGroup;

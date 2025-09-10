@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState, useCallback, useRef } from "react";
-import { FPViewContexts, ZarrGroup } from "@figpack/plugin-sdk";
+import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar
 const MIN_PANE_SIZE = 50; // Minimum size for each pane

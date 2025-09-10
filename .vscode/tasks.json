@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build All Extensions",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build Franklab Extension",
+        "Build Spike Sorting Extension",
+        "Build 3D Extension"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build Franklab Extension",
+      "type": "shell",
+      "command": "cd extension_packages/figpack_franklab && npm run build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Build Spike Sorting Extension",
+      "type": "shell",
+      "command": "cd extension_packages/figpack_spike_sorting && npm run build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Build 3D Extension",
+      "type": "shell",
+      "command": "cd extension_packages/figpack_3d && npm run build",
+      "problemMatcher": ["$tsc"]
+    }
+  ]
+}

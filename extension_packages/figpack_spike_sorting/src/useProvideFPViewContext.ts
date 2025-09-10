@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FPViewContext } from "./FPPluginInterface";
+import { FPViewContext } from "./figpack-interface";
 
 const useProvideFPViewContext = (context: FPViewContext) => {
   const [internalState, setInternalState] = useState(undefined);

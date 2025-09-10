@@ -1,4 +1,4 @@
-import { ZarrGroup } from "@figpack/plugin-sdk";
+import { ZarrGroup } from "../../figpack-interface";
 import { join } from "../MultiChannelTimeseries/utils";
 
 export class SpectrogramClient {
