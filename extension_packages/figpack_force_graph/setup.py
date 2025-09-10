@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_force_graph",
-    version="1.0.0",
+    version="0.1.0",
     description="Force-directed graph visualization extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
