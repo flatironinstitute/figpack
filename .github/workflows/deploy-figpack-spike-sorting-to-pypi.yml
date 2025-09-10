@@ -1,0 +1,96 @@
+name: deploy-figpack-spike-sorting-to-pypi
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "extension_packages/figpack_spike_sorting/figpack_spike_sorting/__init__.py"
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: extension_packages/figpack_spike_sorting/package-lock.json
+
+      - name: Install main figpack package
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Install extension JavaScript dependencies and build
+        run: |
+          cd extension_packages/figpack_spike_sorting
+          npm ci
+          npm run build
+
+      - name: Install extension package
+        run: |
+          cd extension_packages/figpack_spike_sorting
+          pip install .
+
+      - name: Test extension import
+        run: |
+          python -c "import figpack_spike_sorting; print(f'figpack_spike_sorting version: {figpack_spike_sorting.__version__}')"
+
+  deploy:
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: extension_packages/figpack_spike_sorting/package-lock.json
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+
+      - name: Install extension JavaScript dependencies and build
+        run: |
+          cd extension_packages/figpack_spike_sorting
+          npm ci
+          npm run build
+
+      - name: Build package
+        run: |
+          cd extension_packages/figpack_spike_sorting
+          python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: extension_packages/figpack_spike_sorting/dist/

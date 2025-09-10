@@ -26,39 +26,47 @@ pip install -e .
 
 Figpack provides several extension packages with specialized visualization capabilities:
 
+- **figpack_spike_sorting**: Spike sorting specific visualization tools (available on PyPI)
 - **figpack_3d**: 3D visualization extension using Three.js
 - **figpack_force_graph**: Force-directed graph visualization extension  
 - **figpack_franklab**: Frank Lab specific neuroscience visualization tools
-- **figpack_spike_sorting**: Spike sorting specific visualization tools
 
 ### Installing Extension Packages
 
-#### Using the figpack CLI (Recommended)
+#### From PyPI
 
-The easiest way to install extension packages is using the built-in figpack CLI:
+The figpack_spike_sorting extension is available directly from PyPI:
+
+```bash
+# Install the spike sorting extension from PyPI
+pip install figpack_spike_sorting
+```
+
+#### Using the figpack CLI
+
+For other extensions:
 
 ```bash
 # List available extensions
 figpack extensions list
 
 # Install specific extensions
-figpack extensions install figpack_spike_sorting
-figpack extensions install figpack_spike_sorting figpack_3d
+figpack extensions install figpack_3d
 
 # Install all available extensions
 figpack extensions install --all
 
 # Upgrade an already installed extension
-figpack extensions install figpack_spike_sorting --upgrade
+figpack extensions install figpack_3d --upgrade
 ```
 
-#### Manual Installation
+#### Manual Installation from Wheels
 
 You can also install extension packages directly from our GitHub Pages wheel repository:
 
 ```bash
-# Install the spike sorting extension
-pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ figpack_spike_sorting
+# Install extensions from wheels (for extensions not on PyPI)
+pip install --find-links https://flatironinstitute.github.io/figpack/wheels/ figpack_3d
 ```
 
 Or browse and download wheels directly from the [wheels page](https://flatironinstitute.github.io/figpack/wheels/).
@@ -70,7 +78,7 @@ Or browse and download wheels directly from the [wheels page](https://flatironin
 figpack extensions list
 
 # Uninstall extensions
-figpack extensions uninstall figpack_spike_sorting
+figpack extensions uninstall figpack_3d
 
 # Get help for extension commands
 figpack extensions --help
