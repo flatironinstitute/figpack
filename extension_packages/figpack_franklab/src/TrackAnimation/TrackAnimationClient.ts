@@ -56,10 +56,7 @@ export class TrackAnimationClient {
       return this.trackBinCornersCache;
     }
 
-    const data = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, "track_bin_corners"),
-      {},
-    );
+    const data = await this.zarrGroup.getDatasetData("track_bin_corners", {});
 
     if (!data) {
       throw new Error("Track bin corners data not found");
@@ -73,15 +70,12 @@ export class TrackAnimationClient {
     if (frame >= this.totalRecordingFrameLength) return null;
 
     // Load position data for this frame (slice to get just this frame)
-    const data = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, "positions"),
-      {
-        slice: [
-          [0, 2],
-          [frame, frame + 1],
-        ],
-      },
-    );
+    const data = await this.zarrGroup.getDatasetData("positions", {
+      slice: [
+        [0, 2],
+        [frame, frame + 1],
+      ],
+    });
 
     if (!data || data.length < 2) return null;
 
@@ -92,10 +86,9 @@ export class TrackAnimationClient {
     if (frame >= this.totalRecordingFrameLength) return undefined;
 
     // Load head direction for this frame
-    const data = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, "head_direction"),
-      { slice: [[frame, frame + 1]] },
-    );
+    const data = await this.zarrGroup.getDatasetData("head_direction", {
+      slice: [[frame, frame + 1]],
+    });
 
     if (!data || data.length === 0) return undefined;
 
@@ -106,8 +99,8 @@ export class TrackAnimationClient {
     if (frame >= this.totalRecordingFrameLength) return undefined;
 
     // Load timestamp for this frame
-    const data = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, "timestamps"),
+    const data = await this.zarrGroup.getDatasetData(
+      "timestamps",
       { slice: [[frame, frame + 1]] },
     );
 
@@ -129,10 +122,9 @@ export class TrackAnimationClient {
     }
 
     // Get frame bounds up to the current frame to compute cumulative sum
-    const frameBoundsData = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, "frame_bounds"),
-      { slice: [[0, frame + 1]] },
-    );
+    const frameBoundsData = await this.zarrGroup.getDatasetData("frame_bounds", {
+      slice: [[0, frame + 1]],
+    });
 
     if (!frameBoundsData || frameBoundsData.length === 0) return null;
 
@@ -153,11 +145,10 @@ export class TrackAnimationClient {
 
     // Load the locations and values for this frame
     const [locationsData, valuesData] = await Promise.all([
-      this.zarrGroup.file.getDatasetData(
-        join(this.zarrGroup.path, "locations"),
-        { slice: [[frameStart, frameEnd]] },
-      ),
-      this.zarrGroup.file.getDatasetData(join(this.zarrGroup.path, "values"), {
+      this.zarrGroup.getDatasetData("locations", {
+        slice: [[frameStart, frameEnd]],
+      }),
+      this.zarrGroup.getDatasetData("values", {
         slice: [[frameStart, frameEnd]],
       }),
     ]);
@@ -190,11 +181,3 @@ export class TrackAnimationClient {
     return result;
   }
 }
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
-};

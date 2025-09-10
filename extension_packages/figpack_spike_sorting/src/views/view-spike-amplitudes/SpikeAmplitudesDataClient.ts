@@ -1,4 +1,4 @@
-import { DatasetDataType, ZarrFile, ZarrGroup } from "../../figpack-interface";
+import { DatasetDataType, ZarrGroup } from "../../figpack-interface";
 
 export interface SpikeAmplitudesMetadata {
   startTimeSec: number;
@@ -20,8 +20,6 @@ export interface DataRangeParams {
 }
 
 export class SpikeAmplitudesDataClient {
-  private file: ZarrFile;
-
   constructor(
     private zarrGroup: ZarrGroup,
     public metadata: SpikeAmplitudesMetadata,
@@ -32,7 +30,6 @@ export class SpikeAmplitudesDataClient {
     private referenceIndices: DatasetDataType,
   ) {
     this.zarrGroup = zarrGroup;
-    this.file = zarrGroup.file as ZarrFile;
   }
 
   static async create(
@@ -49,12 +46,12 @@ export class SpikeAmplitudesDataClient {
     const subsampledDataGroup = zarrGroup.subgroups.find(
       (g) => g.name === "subsampled_data",
     );
-    const referenceTimes = await zarrGroup.file.getDatasetData(
-      join(zarrGroup.path, "reference_times"),
+    const referenceTimes = await zarrGroup.getDatasetData(
+      "reference_times",
       {},
     );
-    const referenceIndices = await zarrGroup.file.getDatasetData(
-      join(zarrGroup.path, "reference_indices"),
+    const referenceIndices = await zarrGroup.getDatasetData(
+      "reference_indices",
       {},
     );
     if (!referenceTimes || !referenceIndices) {
@@ -63,10 +60,10 @@ export class SpikeAmplitudesDataClient {
       );
     }
     if (subsampledDataGroup) {
-      const g = await zarrGroup.file.getGroup(subsampledDataGroup.path);
+      const g = await zarrGroup.getGroup(subsampledDataGroup.name);
       if (!g) {
         throw new Error(
-          `Failed to load subsampled_data group at ${subsampledDataGroup.path}`,
+          `Failed to load subsampled_data group at ${subsampledDataGroup.name} in ${zarrGroup.path}`,
         );
       }
       let f = 4;
@@ -75,9 +72,9 @@ export class SpikeAmplitudesDataClient {
         if (!sg) {
           break;
         }
-        const subGroup = await zarrGroup.file.getGroup(sg.path);
+        const subGroup = await zarrGroup.getGroup(sg.name);
         if (!subGroup) {
-          throw new Error(`Failed to load subsampled group at ${sg.path}`);
+          throw new Error(`Failed to load subsampled group at ${sg.name} in ${zarrGroup.path}`);
         }
         const client = await SpikeAmplitudesDataClient.create(subGroup);
         subsampleClients[f] = client;
@@ -142,16 +139,16 @@ export class SpikeAmplitudesDataClient {
       }
     }
 
-    const timestampsData = await this.file.getDatasetData(
-      join(this.zarrGroup.path, `timestamps`),
+    const timestampsData = await this.zarrGroup.getDatasetData(
+      `timestamps`,
       { slice: [[startIndex, endIndex]] },
     );
-    const unitIndicesData = await this.file.getDatasetData(
-      join(this.zarrGroup.path, `unit_indices`),
+    const unitIndicesData = await this.zarrGroup.getDatasetData(
+      `unit_indices`,
       { slice: [[startIndex, endIndex]] },
     );
-    const amplitudesData = await this.file.getDatasetData(
-      join(this.zarrGroup.path, `amplitudes`),
+    const amplitudesData = await this.zarrGroup.getDatasetData(
+      `amplitudes`,
       { slice: [[startIndex, endIndex]] },
     );
 
@@ -189,11 +186,3 @@ export class SpikeAmplitudesDataClient {
     return referenceIndices[i];
   }
 }
-
-const join = (path: string, name: string): string => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
-};

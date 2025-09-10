@@ -274,6 +274,40 @@ class RemoteZarr implements ZarrFile {
         subgroups,
         datasets: subdatasets,
         attrs: zattrs || {},
+        getGroup: async (name: string) => {
+          const subPath =
+            path === "/"
+              ? `/${name}`
+              : path.endsWith("/")
+                ? `${path}${name}`
+                : `${path}/${name}`;
+          return this.getGroup(subPath);
+        },
+        getDataset: async (name: string) => {
+          const subPath =
+            path === "/"
+              ? `/${name}`
+              : path.endsWith("/")
+                ? `${path}${name}`
+                : `${path}/${name}`;
+          return this.getDataset(subPath);
+        },
+        getDatasetData: async (
+          name: string,
+          o: {
+            slice?: [number, number][];
+            allowBigInt?: boolean;
+            canceler?: Canceler;
+          },
+        ) => {
+          const subPath =
+            path === "/"
+              ? `/${name}`
+              : path.endsWith("/")
+                ? `${path}${name}`
+                : `${path}/${name}`;
+          return this.getDatasetData(subPath, o);
+        },
       };
     }
     globalZarrStats.getGroupCount++;

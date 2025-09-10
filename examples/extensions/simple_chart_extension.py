@@ -81,8 +81,8 @@ simple_chart_extension = FigpackExtension(
         loadAndRenderData: async function(svg, zarrGroup, width, height, color) {
             try {
                 // Try to load x and y data
-                const xData = await zarrGroup.file.getDatasetData(join(zarrGroup.path, 'x'), {});
-                const yData = await zarrGroup.file.getDatasetData(join(zarrGroup.path, 'y'), {});
+                const xData = await zarrGroup.getDatasetData("x", {});
+                const yData = await zarrGroup.getDatasetData("y", {});
 
                 if (xData && yData && xData.length === yData.length) {
                     this.renderLineChart(svg, xData, yData, width, height, color);
@@ -202,11 +202,6 @@ simple_chart_extension = FigpackExtension(
             svg.appendChild(text);
         }
     };
-    function join(p1, p2) {
-        if (p1.endsWith('/')) p1 = p1.slice(0, -1);
-        if (p2.startsWith('/')) p2 = p2.slice(1);
-        return p1 + '/' + p2;
-    }
 })();
 """,
     version="1.0.0",

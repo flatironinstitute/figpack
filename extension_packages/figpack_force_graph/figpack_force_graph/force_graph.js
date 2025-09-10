@@ -3,12 +3,6 @@
  * Provides interactive force-directed graph visualization using force-graph library
  */
 
-const joinPath = (p1, p2) => {
-  if (p1.endsWith("/")) p1 = p1.slice(0, -1);
-  if (p2.startsWith("/")) p2 = p2.slice(1);
-  return p1 + "/" + p2;
-};
-
 const renderError = (container, width, height, message) => {
   container.innerHTML = `
                 <div style="
@@ -37,10 +31,7 @@ const renderError = (container, width, height, message) => {
 const loadGraphData = async (zarrGroup) => {
   try {
     // Load the graph data from the zarr group
-    const graphDataBytes = await zarrGroup.file.getDatasetData(
-      joinPath(zarrGroup.path, "graph_data"),
-      {}
-    );
+    const graphDataBytes = await zarrGroup.getDatasetData("graph_data", {});
 
     if (!graphDataBytes || graphDataBytes.length === 0) {
       return { nodes: [], links: [] };

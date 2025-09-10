@@ -468,15 +468,12 @@ const loadOriginalData = async (
   const length = endIndex - startIndex + 1;
 
   // Load visible chunk of original data
-  const rawData = await series.zarrGroup.file.getDatasetData(
-    join(series.zarrGroup.path, "data"),
-    {
-      slice: [
-        [startIndex, endIndex + 1],
-        [0, series.nChannels],
-      ],
-    },
-  );
+  const rawData = await series.zarrGroup.getDatasetData("data", {
+    slice: [
+      [startIndex, endIndex + 1],
+      [0, series.nChannels],
+    ],
+  });
 
   if (!rawData) {
     throw new Error("Failed to load original data");
@@ -533,16 +530,13 @@ const loadDownsampledData = async (
   const length = endIndex - startIndex + 1;
 
   // Load visible chunk of downsampled data (shape: [length, 2, nChannels])
-  const rawData = await series.zarrGroup.file.getDatasetData(
-    join(series.zarrGroup.path, datasetName),
-    {
-      slice: [
-        [startIndex, endIndex + 1],
-        [0, 2],
-        [0, series.nChannels],
-      ],
-    },
-  );
+  const rawData = await series.zarrGroup.getDatasetData(datasetName, {
+    slice: [
+      [startIndex, endIndex + 1],
+      [0, 2],
+      [0, series.nChannels],
+    ],
+  });
 
   if (!rawData) {
     throw new Error(`Failed to load downsampled data: ${datasetName}`);
@@ -908,27 +902,19 @@ class TimeseriesGraphClient {
       | UniformSeries
     )[] = [];
     for (const name of seriesNames) {
-      const seriesGroup = await zarrGroup.file.getGroup(
-        join(zarrGroup.path, name),
-      );
+      const seriesGroup = await zarrGroup.getGroup(name);
       if (!seriesGroup) {
         console.warn(`Series group not found: ${name}`);
         continue;
       }
       const attrs = seriesGroup.attrs || {};
       if (attrs["series_type"] === "line") {
-        const t = await seriesGroup.file.getDatasetData(
-          seriesGroup.path + "/t",
-          {},
-        );
+        const t = await seriesGroup.getDatasetData("t", {});
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
           continue;
         }
-        const y = await seriesGroup.file.getDatasetData(
-          seriesGroup.path + "/y",
-          {},
-        );
+        const y = await seriesGroup.getDatasetData("y", {});
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
           continue;
@@ -942,18 +928,12 @@ class TimeseriesGraphClient {
           dash: attrs["dash"] || undefined,
         });
       } else if (attrs["series_type"] === "marker") {
-        const t = await seriesGroup.file.getDatasetData(
-          seriesGroup.path + "/t",
-          {},
-        );
+        const t = await seriesGroup.getDatasetData("t", {});
         if (!t) {
           console.warn(`Dataset t not found for series: ${name}`);
           continue;
         }
-        const y = await seriesGroup.file.getDatasetData(
-          seriesGroup.path + "/y",
-          {},
-        );
+        const y = await seriesGroup.getDatasetData("y", {});
         if (!y) {
           console.warn(`Dataset y not found for series: ${name}`);
           continue;
@@ -967,18 +947,12 @@ class TimeseriesGraphClient {
           y,
         });
       } else if (attrs["series_type"] === "interval") {
-        const t_start = await seriesGroup.file.getDatasetData(
-          seriesGroup.path + "/t_start",
-          {},
-        );
+        const t_start = await seriesGroup.getDatasetData("t_start", {});
         if (!t_start) {
           console.warn(`Dataset t_start not found for series: ${name}`);
           continue;
         }
-        const t_end = await seriesGroup.file.getDatasetData(
-          seriesGroup.path + "/t_end",
-          {},
-        );
+        const t_end = await seriesGroup.getDatasetData("t_end", {});
         if (!t_end) {
           console.warn(`Dataset t_end not found for series: ${name}`);
           continue;
@@ -1055,11 +1029,3 @@ class TimeseriesGraphClient {
     );
   }
 }
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
-};

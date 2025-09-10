@@ -257,9 +257,7 @@ const SplitterItem: React.FC<{
     let canceled = false;
     const loadGroup = async () => {
       try {
-        const group = await zarrGroup.file.getGroup(
-          join(zarrGroup.path, itemName),
-        );
+        const group = await zarrGroup.getGroup(itemName);
         if (canceled) return;
         setChildGroup(group || null);
       } catch (error) {
@@ -300,12 +298,4 @@ const SplitterItem: React.FC<{
       FPView={FPView}
     />
   );
-};
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
 };

@@ -41,10 +41,7 @@ export const FPUnitMetricsGraph: FunctionComponent<Props> = ({
         const metrics = zarrGroup.attrs["metrics"] || [];
 
         // Get units from zarr array
-        const unitsData = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, "units_data"),
-          {},
-        );
+        const unitsData = await zarrGroup.getDatasetData("units_data", {});
         if (!unitsData || unitsData.length === 0) {
           throw new Error("Empty units data");
         }
@@ -171,10 +168,3 @@ export const ProvideUnitMetricSelection: React.FC<{
   );
 };
 
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
-};

@@ -5,8 +5,8 @@
 
 const loadFigureData = async (zarrGroup) => {
     // Get the figure data from the zarr array
-    const data = await zarrGroup.file.getDatasetData(
-        joinPath(zarrGroup.path, "figure_data"),
+    const data = await zarrGroup.getDatasetData(
+        "figure_data",
         {},
     );
     if (!data || data.length === 0) {
@@ -22,12 +22,6 @@ const loadFigureData = async (zarrGroup) => {
     const parsedData = JSON.parse(jsonString);
 
     return parsedData;
-};
-
-const joinPath = function(p1, p2) {
-    if (p1.endsWith('/')) p1 = p1.slice(0, -1);
-    if (p2.startsWith('/')) p2 = p2.slice(1);
-    return p1 + '/' + p2;
 };
 
 const renderPlotlyFigure = async (params) => {

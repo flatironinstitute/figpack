@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { MultiChannelTimeseriesClient } from "./MultiChannelTimeseriesClient";
-import { join } from "./utils";
 
 /**
  * Computes a base spacing unit from the median inner 80th percentile range
@@ -12,15 +11,12 @@ const computeBaseSpacingUnit = async (
   try {
     // Load a representative sample of data (first 10,000 points or 10% of data, whichever is smaller)
     const sampleSize = Math.min(10000, Math.ceil(client.nTimepoints * 0.1));
-    const sampleData = await client.zarrGroup.file.getDatasetData(
-      join(client.zarrGroup.path, "data"),
-      {
-        slice: [
-          [0, sampleSize],
-          [0, client.nChannels],
-        ],
-      },
-    );
+    const sampleData = await client.zarrGroup.getDatasetData("data", {
+      slice: [
+        [0, sampleSize],
+        [0, client.nChannels],
+      ],
+    });
 
     if (!sampleData || sampleData.length === 0) {
       return Math.abs(client.dataMax - client.dataMin) * 0.1; // Fallback

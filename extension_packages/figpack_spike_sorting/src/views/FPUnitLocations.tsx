@@ -36,10 +36,7 @@ export const FPUnitLocations: FunctionComponent<Props> = ({
         const unitIds = zarrGroup.attrs["unit_ids"];
         const channelLocations = zarrGroup.attrs["channel_locations"];
 
-        const coords = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, "coords"),
-          {},
-        );
+        const coords = await zarrGroup.getDatasetData("coords", {});
         if (!coords || coords.length === 0) {
           throw new Error("Empty coords data");
         }
@@ -143,12 +140,4 @@ export const FPUnitLocations: FunctionComponent<Props> = ({
       <UnitLocationsView data={data} width={width} height={height} />
     </ProvideUnitSelectionContext>
   );
-};
-
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
 };

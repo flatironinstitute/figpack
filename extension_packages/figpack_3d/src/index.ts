@@ -297,10 +297,7 @@ const renderThreeDView = async (params: RenderParams) => {
 const loadSceneData = async (zarrGroup: any): Promise<SceneData> => {
   try {
     // Load the scene data from the zarr group
-    const sceneDataBytes = await zarrGroup.file.getDatasetData(
-      joinPath(zarrGroup.path, "scene_data"),
-      {}
-    );
+    const sceneDataBytes = await zarrGroup.getDatasetData("scene_data", {});
 
     if (!sceneDataBytes || sceneDataBytes.length === 0) {
       return { objects: [] };
@@ -318,12 +315,6 @@ const loadSceneData = async (zarrGroup: any): Promise<SceneData> => {
     console.warn("Error loading scene data:", error);
     return { objects: [] };
   }
-};
-
-const joinPath = (p1: string, p2: string): string => {
-  if (p1.endsWith("/")) p1 = p1.slice(0, -1);
-  if (p2.startsWith("/")) p2 = p2.slice(1);
-  return p1 + "/" + p2;
 };
 
 const renderError = (

@@ -1,5 +1,4 @@
 import { ZarrGroup } from "../../figpack-interface";
-import { join } from "./utils";
 
 export class MultiChannelTimeseriesClient {
   constructor(
@@ -27,15 +26,12 @@ export class MultiChannelTimeseriesClient {
     const endTimeSec = startTimeSec + (nTimepoints - 1) / samplingFrequencyHz;
 
     // Calculate data range by loading a small sample of original data
-    const sampleData = await zarrGroup.file.getDatasetData(
-      join(zarrGroup.path, "data"),
-      {
-        slice: [
-          [0, Math.min(1000, nTimepoints)],
-          [0, nChannels],
-        ],
-      },
-    );
+    const sampleData = await zarrGroup.getDatasetData("data", {
+      slice: [
+        [0, Math.min(1000, nTimepoints)],
+        [0, nChannels],
+      ],
+    });
 
     let dataMin = Infinity;
     let dataMax = -Infinity;
@@ -146,15 +142,12 @@ export class MultiChannelTimeseriesClient {
     const length = endIndex - startIndex + 1;
 
     // Load visible chunk of original data
-    const rawData = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, "data"),
-      {
-        slice: [
-          [startIndex, endIndex + 1],
-          [0, this.nChannels],
-        ],
-      },
-    );
+    const rawData = await this.zarrGroup.getDatasetData("data", {
+      slice: [
+        [startIndex, endIndex + 1],
+        [0, this.nChannels],
+      ],
+    });
 
     if (!rawData) {
       throw new Error("Failed to load original data");
@@ -213,16 +206,13 @@ export class MultiChannelTimeseriesClient {
     const length = endIndex - startIndex + 1;
 
     // Load visible chunk of downsampled data (shape: [length, 2, nChannels])
-    const rawData = await this.zarrGroup.file.getDatasetData(
-      join(this.zarrGroup.path, datasetName),
-      {
-        slice: [
-          [startIndex, endIndex + 1],
-          [0, 2],
-          [0, this.nChannels],
-        ],
-      },
-    );
+    const rawData = await this.zarrGroup.getDatasetData(datasetName, {
+      slice: [
+        [startIndex, endIndex + 1],
+        [0, 2],
+        [0, this.nChannels],
+      ],
+    });
 
     if (!rawData) {
       throw new Error(`Failed to load downsampled data: ${datasetName}`);

@@ -2,14 +2,6 @@ import React, { useEffect, useState } from "react";
 import { ZarrGroup } from "../figpack-interface";
 import { DataTable } from "../components/DataTable";
 
-const join = (path: string, name: string) => {
-  if (path.endsWith("/")) {
-    return path + name;
-  } else {
-    return path + "/" + name;
-  }
-};
-
 interface ColumnInfo {
   name: string;
   dtype: string;
@@ -69,10 +61,7 @@ export const FPDataFrame: React.FC<{
         }
 
         // Get the CSV data from the zarr array
-        const data = await zarrGroup.file.getDatasetData(
-          join(zarrGroup.path, "csv_data"),
-          {},
-        );
+        const data = await zarrGroup.getDatasetData("csv_data", {});
         if (!data || data.length === 0) {
           throw new Error("Empty CSV data");
         }
