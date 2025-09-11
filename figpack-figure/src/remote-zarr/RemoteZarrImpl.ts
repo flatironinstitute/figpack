@@ -72,9 +72,11 @@ export class ZarrFileSystemClient {
       decodeArray?: boolean;
       startByte?: number;
       endByte?: number;
-      disableCache?: boolean;
+      disableCache?: boolean; // not actually used
+      cacheBust?: boolean;
     },
   ): Promise<any | undefined> {
+    const cacheBust = o.cacheBust || false;
     if (o.startByte !== undefined) {
       if (o.decodeArray)
         throw Error("Cannot decode array and read a slice at the same time");
@@ -119,7 +121,10 @@ export class ZarrFileSystemClient {
         }
         return undefined;
       }
-      const url = this.url + "/" + path;
+      let url = this.url + "/" + path;
+      if (cacheBust) {
+        url += `?cb=${Date.now()}`;
+      }
       let buf: ArrayBuffer | undefined;
       if (o.startByte !== undefined && o.endByte !== undefined) {
         buf = await fetchByteRange(url, o.startByte, o.endByte - o.startByte);
@@ -188,7 +193,8 @@ class RemoteZarr implements ZarrFile {
     url: string,
     zarrWriteDispatch?: ZarrWriteDispatch,
   ) {
-    const zmetadataUrl = `${url}/.zmetadata`;
+    // important that we always get an accurate version of .zmetadata, so we add a cache-buster
+    const zmetadataUrl = `${url}/.zmetadata?cb=${Date.now()}`;
     const zmetadataResponse = await fetch(zmetadataUrl);
     if (!zmetadataResponse.ok) {
       throw new Error(`Failed to fetch Zarr metadata from ${zmetadataUrl}`);
@@ -315,6 +321,7 @@ class RemoteZarr implements ZarrFile {
             slice?: [number, number][];
             allowBigInt?: boolean;
             canceler?: Canceler;
+            cacheBust?: boolean;
           },
         ) => {
           const subPath =
@@ -372,6 +379,7 @@ class RemoteZarr implements ZarrFile {
       slice?: [number, number][];
       allowBigInt?: boolean;
       canceler?: Canceler;
+      cacheBust?: boolean;
     },
   ): Promise<DatasetDataType | undefined> {
     // check for invalid slice
@@ -419,6 +427,7 @@ class RemoteZarr implements ZarrFile {
       zarray,
       slice: o.slice || [],
       disableCache: this.#cacheDisabled,
+      cacheBust: o.cacheBust,
     });
     if (ret.length === 1) {
       // candidate for scalar, need to check for _SCALAR attribute
