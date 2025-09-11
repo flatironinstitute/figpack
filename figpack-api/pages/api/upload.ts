@@ -24,7 +24,7 @@ function isZarrChunk(fileName: string): boolean {
 
 function validateFilePath(path: string): { valid: boolean } {
   // Check exact matches first
-  if (path === "index.html" || path === "manifest.json") {
+  if (path === "index.html" || path === "manifest.json" || path === "extension_manifest.json") {
     return { valid: true };
   }
 
