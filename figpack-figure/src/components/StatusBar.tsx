@@ -77,13 +77,14 @@ export const StatusBar: React.FC<{
   const title = zarrData?.attrs?.title;
   const description = zarrData?.attrs?.description;
 
-  const figureManagementUrl =
-    status?.figureManagementUrl || "https://manage.figpack.org/figure";
+  const figureManagementUrl = status
+    ? status?.figureManagementUrl || "https://manage.figpack.org/figure"
+    : undefined;
 
   const aboutButton = <AboutButton title={title} description={description} />;
 
   const manageButton =
-    !embedded && status ? (
+    !embedded && status && figureManagementUrl ? (
       <ManageButton figureManagementUrl={figureManagementUrl} />
     ) : (
       <></>
@@ -94,6 +95,7 @@ export const StatusBar: React.FC<{
     <ManageEditsView
       zarrData={zarrData!}
       figureUrl={figureUrl}
+      figureManagementUrl={figureManagementUrl}
       editedFiles={editedFiles}
       onRefreshZarrData={onRefreshZarrData}
     />
@@ -165,9 +167,16 @@ export const StatusBar: React.FC<{
 const ManageEditsView: React.FC<{
   zarrData: ZarrGroup | null;
   figureUrl: string;
+  figureManagementUrl: string | undefined;
   editedFiles: { [path: string]: string | ArrayBuffer | null };
   onRefreshZarrData: () => void;
-}> = ({ zarrData, figureUrl, editedFiles, onRefreshZarrData }) => {
+}> = ({
+  zarrData,
+  figureUrl,
+  figureManagementUrl,
+  editedFiles,
+  onRefreshZarrData,
+}) => {
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const hasEdits = editedFiles && Object.keys(editedFiles).length > 0;
 
@@ -205,6 +214,7 @@ const ManageEditsView: React.FC<{
         <SaveChangesDialog
           editedFiles={editedFiles}
           figureUrl={figureUrl}
+          figureManagementUrl={figureManagementUrl}
           isOpen={isSaveDialogOpen}
           onClose={handleCloseSaveDialog}
           onRefreshZarrData={onRefreshZarrData}

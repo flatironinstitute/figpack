@@ -65,30 +65,6 @@ const registerFPExtension = (extension: { name: string }) => {
 
 registerMainPlugin(FPView);
 
-(window as any).figpackCanPutFigureFiles = (figureUrl: string) => {
-  if (figureUrl.startsWith("http://localhost:")) {
-    return true;
-  }
-  return false;
-};
-
-(window as any).figpackPutFigureFiles = async (
-  files: { url: string; headers: any; body: string | ArrayBuffer }[],
-) => {
-  for (const file of files) {
-    const response = await fetch(file.url, {
-      method: "PUT",
-      headers: file.headers,
-      body: file.body,
-    });
-    if (!response.ok) {
-      throw new Error(
-        `Failed to upload file to ${file.url} (status: ${response.status})`,
-      );
-    }
-  }
-};
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />

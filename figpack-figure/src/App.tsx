@@ -241,8 +241,15 @@ const useLoadExtensions = () => {
         // Try to fetch the extension manifest
         let manifest;
         try {
+          const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
+            ? figureUrl.slice(0, -"index.html".length)
+            : figureUrl;
+          const figureUrlWithoutTrailingSlash =
+            figureUrlWithoutIndexHtml.endsWith("/")
+              ? figureUrlWithoutIndexHtml.slice(0, -1)
+              : figureUrlWithoutIndexHtml;
           const manifestResponse = await fetch(
-            figureUrl + "extension_manifest.json",
+            figureUrlWithoutTrailingSlash + "/extension_manifest.json",
           );
           if (!manifestResponse.ok) {
             // No manifest file - this is okay, just means no extensions
@@ -281,11 +288,22 @@ const useLoadExtensions = () => {
             await loadScript(devUrl);
           } else {
             // Load main script
-            await loadScript(figureUrl + extension.mainScript);
+            const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
+              ? figureUrl.slice(0, -"index.html".length)
+              : figureUrl;
+            const figureUrlWithoutTrailingSlash =
+              figureUrlWithoutIndexHtml.endsWith("/")
+                ? figureUrlWithoutIndexHtml.slice(0, -1)
+                : figureUrlWithoutIndexHtml;
+            await loadScript(
+              figureUrlWithoutTrailingSlash + "/" + extension.mainScript,
+            );
 
             // Load additional scripts
             for (const additionalScript of extension.additionalScripts) {
-              await loadScript(figureUrl + additionalScript);
+              await loadScript(
+                figureUrlWithoutTrailingSlash + "/" + additionalScript,
+              );
             }
           }
 

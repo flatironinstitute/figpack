@@ -21,7 +21,15 @@ export const useZarrData = (figureUrl: string) => {
   useEffect(() => {
     let canceled = false;
     const load = async () => {
-      const dataUrl = figureUrl + "data.zarr";
+      const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
+        ? figureUrl.slice(0, -"index.html".length)
+        : figureUrl;
+      const figureUrlWithoutTrailingSlash = figureUrlWithoutIndexHtml.endsWith(
+        "/",
+      )
+        ? figureUrlWithoutIndexHtml.slice(0, -1)
+        : figureUrlWithoutIndexHtml;
+      const dataUrl = figureUrlWithoutTrailingSlash + "/data.zarr";
       const a = await RemoteZarr.createFromZarr(dataUrl);
       const g = await a.getGroup("/");
       if (canceled) return;

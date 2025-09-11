@@ -7,7 +7,11 @@ export const useFigureUrl = () => {
 
     if (figureUrl) {
       // Development mode: use the provided figure URL
-      return figureUrl.endsWith("/") ? figureUrl : figureUrl + "/";
+      return figureUrl.endsWith("/index.html")
+        ? figureUrl
+        : figureUrl.endsWith("/")
+          ? figureUrl
+          : figureUrl + "/";
     } else {
       // Production mode: load from current directory
       return "./";

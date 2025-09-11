@@ -336,6 +336,40 @@ button:focus-visible {
   background-color: #666;
 }
 
+.dialog-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #2a2a2a;
+  color: #ffffff;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-content-fullscreen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dialog-content-fullscreen .dialog-header {
+  flex-shrink: 0;
+}
+
+.dialog-content-fullscreen .dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.dialog-content-fullscreen .dialog-footer {
+  flex-shrink: 0;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -468,5 +502,10 @@ button:focus-visible {
 
   .dialog-button:hover {
     background-color: #d0d0d0;
+  }
+
+  .dialog-fullscreen {
+    background-color: #ffffff;
+    color: #333333;
   }
 }
