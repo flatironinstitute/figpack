@@ -1,10 +1,19 @@
-import { useState, useEffect } from "react";
-import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { ZarrGroup } from "../figpack-interface";
+import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
+import EditableZarrGroup, {
+  emptyZarrEdits,
+  zarrEditsReducer,
+} from "./EditableZarrGroup";
 import { useFigureUrl } from "./useFigureUrl";
 
 export const useZarrData = () => {
   const [zarrData, setZarrData] = useState<ZarrGroup | null | undefined>(null);
+  const [zarrEdits, zarrEditsDispatch] = useReducer(
+    zarrEditsReducer,
+    emptyZarrEdits,
+  );
   const figureUrl = useFigureUrl();
 
   useEffect(() => {
@@ -21,5 +30,13 @@ export const useZarrData = () => {
       canceled = true;
     };
   }, [figureUrl]);
-  return zarrData;
+
+  const zarrDataCombined = useMemo(() => {
+    if (!zarrData) {
+      return zarrData;
+    }
+    return new EditableZarrGroup(zarrData, zarrEdits, zarrEditsDispatch);
+  }, [zarrData, zarrEdits]);
+
+  return zarrDataCombined;
 };
