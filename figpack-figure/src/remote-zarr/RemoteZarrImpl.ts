@@ -167,6 +167,14 @@ export class ZarrFileSystemClient {
   }
 }
 
+export type ZarrWriteAction = {
+  type: "setAttrs";
+  path: string;
+  attrs: { [key: string]: any };
+};
+
+export type ZarrWriteDispatch = (action: ZarrWriteAction) => Promise<void>;
+
 class RemoteZarr implements ZarrFile {
   #cacheDisabled = false; // just for benchmarking
   #sourceUrls: string[] | undefined = undefined;
@@ -174,8 +182,12 @@ class RemoteZarr implements ZarrFile {
     public url: string,
     private zarrFileSystemClient: ZarrFileSystemClient,
     private pathsByParentPath: { [key: string]: string[] },
+    private zarrWriteDispatch?: ZarrWriteDispatch,
   ) {}
-  static async createFromZarr(url: string) {
+  static async createFromZarr(
+    url: string,
+    zarrWriteDispatch?: ZarrWriteDispatch,
+  ) {
     const zmetadataUrl = `${url}/.zmetadata`;
     const zmetadataResponse = await fetch(zmetadataUrl);
     if (!zmetadataResponse.ok) {
@@ -203,7 +215,12 @@ class RemoteZarr implements ZarrFile {
         }
       }
     }
-    return new RemoteZarr(url, zarrFileSystemClient, pathsByParentPath);
+    return new RemoteZarr(
+      url,
+      zarrFileSystemClient,
+      pathsByParentPath,
+      zarrWriteDispatch,
+    );
   }
   get dataIsRemote() {
     return !this.url.startsWith("http://localhost");
@@ -308,6 +325,16 @@ class RemoteZarr implements ZarrFile {
                 : `${path}/${name}`;
           return this.getDatasetData(subPath, o);
         },
+        setAttrs: this.zarrWriteDispatch
+          ? async (attrs: { [key: string]: any }) => {
+              if (!this.zarrWriteDispatch) return;
+              await this.zarrWriteDispatch({
+                type: "setAttrs",
+                path,
+                attrs,
+              });
+            }
+          : undefined,
       };
     }
     globalZarrStats.getGroupCount++;

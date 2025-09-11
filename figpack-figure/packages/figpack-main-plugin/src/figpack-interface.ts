@@ -35,6 +35,19 @@ export type ZarrGroup = {
       canceler?: Canceler;
     },
   ) => Promise<DatasetDataType | undefined>;
+  setAttrs?: (attrs: { [key: string]: any }) => void;
+  createDataset?: (
+    name: string,
+    data: DatasetDataType,
+    o: {
+      shape: number[];
+      dtype: string;
+      attrs: { [key: string]: any };
+    },
+  ) => void;
+  removeDataset?: (name: string) => void;
+  createGroup?: (name: string, attrs: { [key: string]: any }) => void;
+  removeGroup?: (name: string) => void;
 };
 
 export type ZarrSubgroup = {
