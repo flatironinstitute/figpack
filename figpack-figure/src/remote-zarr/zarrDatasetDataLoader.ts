@@ -8,9 +8,17 @@ const zarrDatasetDataLoader = async (o: {
   slice: [number, number][];
   assertSingleChunkInFirstTwoDimensions?: boolean;
   disableCache?: boolean;
+  cacheBust?: boolean;
 }) => {
-  const { client, zarray, path, slice, assertSingleChunkInFirstTwoDimensions } =
-    o;
+  const {
+    client,
+    zarray,
+    path,
+    slice,
+    assertSingleChunkInFirstTwoDimensions,
+    disableCache,
+    cacheBust,
+  } = o;
 
   const chunkShape = zarray.chunks;
   const shape = zarray.shape;
@@ -36,7 +44,8 @@ const zarrDatasetDataLoader = async (o: {
       zarray,
       slice: slice1,
       assertSingleChunkInFirstTwoDimensions,
-      disableCache: o.disableCache,
+      disableCache,
+      cacheBust,
     });
     const xxRet = allocateArrayWithDtype(sN1 * sN2 * sN3 * sNother, dtype);
     let iRet = 0;
@@ -85,6 +94,8 @@ const zarrDatasetDataLoader = async (o: {
       decodeArray: false,
       startByte,
       endByte,
+      disableCache,
+      cacheBust,
     });
     let a = createDataView(dd, dtype);
     if (slice.length === 2) {
@@ -189,7 +200,8 @@ const zarrDatasetDataLoader = async (o: {
       }
       const x = await client.readBinary(chunkPath, {
         decodeArray: true,
-        disableCache: o.disableCache,
+        disableCache,
+        cacheBust,
       });
       if (!x) {
         console.log({
@@ -266,7 +278,8 @@ const zarrDatasetDataLoader = async (o: {
           }
           const x = await client.readBinary(chunkPath, {
             decodeArray: true,
-            disableCache: o.disableCache,
+            disableCache,
+            cacheBust,
           });
           if (!x) {
             console.log({
@@ -383,7 +396,8 @@ const zarrDatasetDataLoader = async (o: {
       zarray,
       slice: sliceA,
       assertSingleChunkInFirstTwoDimensions: true, // avoid infinite recursion by accident
-      disableCache: o.disableCache,
+      disableCache,
+      cacheBust,
     });
     let iXX = 0;
     for (let ii1 = slice1[0]; ii1 < slice1[1]; ii1++) {

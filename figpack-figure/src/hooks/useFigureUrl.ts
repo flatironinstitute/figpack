@@ -13,8 +13,13 @@ export const useFigureUrl = () => {
           ? figureUrl
           : figureUrl + "/";
     } else {
-      // Production mode: load from current directory
-      return "./";
+      // everything before the ?
+      const baseUrl = window.location.href.split("?")[0];
+      return baseUrl.endsWith("/index.html")
+        ? baseUrl
+        : baseUrl.endsWith("/")
+          ? baseUrl
+          : baseUrl + "/";
     }
   }, []);
 };

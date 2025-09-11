@@ -13,6 +13,7 @@ export interface ZarrFile {
       slice?: [number, number][];
       allowBigInt?: boolean;
       canceler?: Canceler;
+      cacheBust?: boolean;
     },
   ) => Promise<DatasetDataType | undefined>;
 }
@@ -33,6 +34,7 @@ export type ZarrGroup = {
       slice?: [number, number][];
       allowBigInt?: boolean;
       canceler?: Canceler;
+      cacheBust?: boolean;
     },
   ) => Promise<DatasetDataType | undefined>;
   setAttrs?: (attrs: { [key: string]: any }) => void;

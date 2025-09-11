@@ -34,13 +34,13 @@ const TextEditView: FunctionComponent<{
   useEffect(() => {
     setInternalText(text);
   }, [text]);
-  // save every 3 seconds if changed
+  // save every 300 ms if changed
   useEffect(() => {
     const interval = setInterval(() => {
       if (internalTextRef.current !== text) {
         onSave(internalTextRef.current);
       }
-    }, 3000);
+    }, 300);
     return () => clearInterval(interval);
   }, [text, onSave]);
   return (
@@ -75,7 +75,7 @@ class EditableNotesClient {
     try {
       const ds = await zarrGroup.getDataset("text");
       if (!ds) throw new Error("No text dataset found");
-      const data = await zarrGroup.getDatasetData("text", {});
+      const data = await zarrGroup.getDatasetData("text", {cacheBust: true});
       if (data && data.length > 0) {
         text = new TextDecoder().decode(data);
       }
