@@ -220,6 +220,122 @@ button:focus-visible {
   font-style: italic;
 }
 
+.manage-edits-view {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+}
+
+.edits-notification {
+  color: #ff9800;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.save-changes-button {
+  background-color: #ff9800;
+  color: #000;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  height: 22px;
+  transition: background-color 0.2s;
+}
+
+.save-changes-button:hover {
+  background-color: #f57c00;
+}
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.dialog-content {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #444;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.dialog-close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.dialog-close:hover {
+  background-color: #444;
+}
+
+.dialog-body {
+  padding: 20px;
+}
+
+.dialog-body p {
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.dialog-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #444;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dialog-button {
+  background-color: #444;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.dialog-button:hover {
+  background-color: #666;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -306,5 +422,51 @@ button:focus-visible {
 
   .about-dialog-description blockquote {
     border-left: 4px solid #ccc;
+  }
+
+  .edits-notification {
+    color: #e65100;
+  }
+
+  .save-changes-button {
+    background-color: #ff9800;
+    color: #fff;
+    border: 1px solid #f57c00;
+  }
+
+  .save-changes-button:hover {
+    background-color: #f57c00;
+  }
+
+  .dialog-content {
+    background-color: #ffffff;
+    color: #333333;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .dialog-header {
+    border-bottom: 1px solid #ddd;
+  }
+
+  .dialog-close {
+    color: #333333;
+  }
+
+  .dialog-close:hover {
+    background-color: #f0f0f0;
+  }
+
+  .dialog-footer {
+    border-top: 1px solid #ddd;
+  }
+
+  .dialog-button {
+    background-color: #e0e0e0;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+
+  .dialog-button:hover {
+    background-color: #d0d0d0;
   }
 }

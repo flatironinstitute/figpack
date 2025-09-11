@@ -148,7 +148,7 @@ def _show_view(
 
         # Start or get existing server
         base_url, server_port = server_manager.start_server(
-            port=port, allow_origin=allow_origin
+            port=port, allow_origin=allow_origin, enable_file_upload=True
         )
 
         # Construct URL to the specific figure subdirectory

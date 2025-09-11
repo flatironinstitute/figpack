@@ -73,9 +73,38 @@ def prepare_figure_bundle(
         _write_extension_manifest(required_extensions, tmpdir)
 
         zarr.consolidate_metadata(zarr_group._zarr_group.store)
+
+        # It's important that we remove all the metadata files except for the
+        # consolidated one, because otherwise we may get inconstencies
+        # once we start editing the zarr data from the browser.
+        _remove_metadata_files_except_consolidated(pathlib.Path(tmpdir) / "data.zarr")
     finally:
         if _check_zarr_version() == 3:
             zarr.config.set({"default_zarr_format": old_default_zarr_format})
+
+
+def _remove_metadata_files_except_consolidated(zarr_dir: pathlib.Path) -> None:
+    """
+    Remove all zarr metadata files except for the consolidated one.
+
+    Args:
+        zarr_dir: Path to the zarr directory
+    """
+    if not zarr_dir.is_dir():
+        raise ValueError(f"Expected a directory, got: {zarr_dir}")
+
+    for root, dirs, files in os.walk(zarr_dir):
+        for file in files:
+            if (
+                file.endswith(".zarray")
+                or file.endswith(".zgroup")
+                or file.endswith(".zattrs")
+            ):
+                file_path = pathlib.Path(root) / file
+                try:
+                    file_path.unlink()
+                except Exception as e:
+                    print(f"Warning: could not remove file {file_path}: {e}")
 
 
 def _discover_required_extensions(view: FigpackView) -> Set[str]:

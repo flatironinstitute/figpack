@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { ZarrGroup } from "src/figpack-interface";
 import { useFigpackStatus } from "../hooks/useFigpackStatus";
-import { useZarrData } from "../hooks/useZarrData";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
+import SaveChangesDialog from "./SaveChangesDialog";
 
 const AboutButton: React.FC<{ title?: string; description?: string }> = ({
   title,
@@ -62,10 +63,14 @@ const ManageButton: React.FC<{ figureManagementUrl: string }> = ({
   );
 };
 
-export const StatusBar: React.FC = () => {
+export const StatusBar: React.FC<{
+  zarrData: ZarrGroup | null;
+  figureUrl: string;
+  editedFiles: { [path: string]: string | ArrayBuffer | null };
+  onRefreshZarrData: () => void;
+}> = ({ zarrData, figureUrl, editedFiles, onRefreshZarrData }) => {
   const { isLoading, error, status, isExpired, timeUntilExpiration } =
     useFigpackStatus();
-  const zarrData = useZarrData();
   const { embedded } = useUrlParams();
 
   // Extract title and description from zarr data
@@ -75,11 +80,30 @@ export const StatusBar: React.FC = () => {
   const figureManagementUrl =
     status?.figureManagementUrl || "https://manage.figpack.org/figure";
 
+  const aboutButton = <AboutButton title={title} description={description} />;
+
+  const manageButton =
+    !embedded && status ? (
+      <ManageButton figureManagementUrl={figureManagementUrl} />
+    ) : (
+      <></>
+    );
+
+  // const manageEditsView = <ManageEditsView zarrData={zarrData} />;
+  const manageEditsView = (
+    <ManageEditsView
+      zarrData={zarrData!}
+      figureUrl={figureUrl}
+      editedFiles={editedFiles}
+      onRefreshZarrData={onRefreshZarrData}
+    />
+  );
+
   if (isLoading) {
     return (
       <div className="status-bar">
         <span>Loading status...</span>
-        <AboutButton title={title} description={description} />
+        {aboutButton}
       </div>
     );
   }
@@ -88,27 +112,18 @@ export const StatusBar: React.FC = () => {
     return (
       <div className="status-bar error">
         <span>{error}</span>
-        <AboutButton title={title} description={description} />
+        {aboutButton}
       </div>
     );
   }
 
-  if (!status) {
-    return (
-      <div className="status-bar">
-        <AboutButton title={title} description={description} />
-      </div>
-    );
-  }
-
-  if (status.status !== "completed") {
+  if (status && status.status !== "completed") {
     return (
       <div className="status-bar warning">
         <span>Upload status: {status.status}</span>
-        <AboutButton title={title} description={description} />
-        {!embedded && (
-          <ManageButton figureManagementUrl={figureManagementUrl} />
-        )}
+        {aboutButton}
+        {manageButton}
+        {manageEditsView}
       </div>
     );
   }
@@ -119,10 +134,9 @@ export const StatusBar: React.FC = () => {
         <span>
           This figure has expired, but it may be possible to recover it.
         </span>
-        <AboutButton title={title} description={description} />
-        {!embedded && (
-          <ManageButton figureManagementUrl={figureManagementUrl} />
-        )}
+        {aboutButton}
+        {manageButton}
+        {manageEditsView}
       </div>
     );
   }
@@ -131,10 +145,9 @@ export const StatusBar: React.FC = () => {
     return (
       <div className="status-bar">
         <span>Expires in: {timeUntilExpiration}</span>
-        <AboutButton title={title} description={description} />
-        {!embedded && (
-          <ManageButton figureManagementUrl={figureManagementUrl} />
-        )}
+        {aboutButton}
+        {manageButton}
+        {manageEditsView}
       </div>
     );
   }
@@ -142,8 +155,61 @@ export const StatusBar: React.FC = () => {
   return (
     <div className="status-bar">
       <span>Figure ready</span>
-      <AboutButton title={title} description={description} />
-      {!embedded && <ManageButton figureManagementUrl={figureManagementUrl} />}
+      {aboutButton}
+      {manageButton}
+      {manageEditsView}
     </div>
+  );
+};
+
+const ManageEditsView: React.FC<{
+  zarrData: ZarrGroup | null;
+  figureUrl: string;
+  editedFiles: { [path: string]: string | ArrayBuffer | null };
+  onRefreshZarrData: () => void;
+}> = ({ zarrData, figureUrl, editedFiles, onRefreshZarrData }) => {
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const hasEdits = editedFiles && Object.keys(editedFiles).length > 0;
+
+  const handleSaveClick = () => {
+    setIsSaveDialogOpen(true);
+  };
+
+  const handleCloseSaveDialog = () => {
+    setIsSaveDialogOpen(false);
+  };
+
+  // Don't show anything if there are no edits
+  if (!hasEdits) {
+    return null;
+  }
+
+  if (!zarrData) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="manage-edits-view">
+        <span className="edits-notification">You have unsaved changes</span>
+        <button
+          onClick={handleSaveClick}
+          className="save-changes-button"
+          title="Save changes"
+        >
+          Save Changes
+        </button>
+      </div>
+      {/* Do not include unless open because we don't want to always be loading the consolidated metadata */}
+      {isSaveDialogOpen && (
+        <SaveChangesDialog
+          editedFiles={editedFiles}
+          figureUrl={figureUrl}
+          isOpen={isSaveDialogOpen}
+          onClose={handleCloseSaveDialog}
+          onRefreshZarrData={onRefreshZarrData}
+        />
+      )}
+    </>
   );
 };

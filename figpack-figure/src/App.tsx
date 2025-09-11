@@ -15,7 +15,8 @@ import {
 } from "./main";
 
 function App() {
-  const zarrData = useZarrData();
+  const figureUrl = useFigureUrl();
+  const { zarrData, editedFiles, refreshZarrData } = useZarrData(figureUrl);
   const { width, height } = useWindowDimensions();
   const { isExpired } = useFigpackStatus();
 
@@ -100,6 +101,15 @@ function App() {
   //   setContexts(contexts);
   // }, [extensionLoadingStatus]);
 
+  const statusBar = (
+    <StatusBar
+      zarrData={zarrData || null}
+      figureUrl={figureUrl}
+      editedFiles={editedFiles}
+      onRefreshZarrData={refreshZarrData}
+    />
+  );
+
   // Adjust height to account for status bar (30px height)
   const adjustedHeight = height - 30;
 
@@ -107,7 +117,6 @@ function App() {
     return (
       <>
         <div>Loading...</div>
-        <StatusBar />
       </>
     );
   }
@@ -115,7 +124,7 @@ function App() {
     return (
       <>
         <div>Error loading data</div>
-        <StatusBar />
+        {statusBar}
       </>
     );
   }
@@ -135,7 +144,7 @@ function App() {
         >
           {extensionLoadingStatusString}
         </div>
-        <StatusBar />
+        {statusBar}
       </>
     );
   }
@@ -155,7 +164,7 @@ function App() {
         >
           {extensionLoadingStatusString}
         </div>
-        <StatusBar />
+        {statusBar}
       </>
     );
   }
@@ -176,7 +185,7 @@ function App() {
         >
           This figure has expired.
         </div>
-        <StatusBar />
+        {statusBar}
       </>
     );
   }
@@ -195,7 +204,7 @@ function App() {
         >
           Loading contexts...
         </div>
-        <StatusBar />
+        {statusBar}
       </>
     );
   }
@@ -209,8 +218,7 @@ function App() {
         contexts={contexts}
         FPView={FPView}
       />
-      ,
-      <StatusBar />
+      {statusBar}
     </>
   );
 }

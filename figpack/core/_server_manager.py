@@ -28,11 +28,22 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                 "Access-Control-Expose-Headers",
                 "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
             )
+
+        # Prevent browser caching - important for when we are editing figures in place
+        # This ensures the browser always fetches the latest version of files
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+
         super().end_headers()
 
     def do_OPTIONS(self):
         self.send_response(204, "No Content")
         self.end_headers()
+
+    def do_PUT(self):
+        """Reject PUT requests when file upload is not enabled."""
+        self.send_error(405, "Method Not Allowed")
 
     def log_message(self, fmt, *args):
         pass
@@ -153,10 +164,20 @@ class ProcessServerManager:
         return figure_dir
 
     def start_server(
-        self, port: Optional[int] = None, allow_origin: Optional[str] = None
+        self,
+        port: Optional[int] = None,
+        allow_origin: Optional[str] = None,
+        enable_file_upload: bool = False,
+        max_file_size: int = 10 * 1024 * 1024,
     ) -> tuple[str, int]:
         """
         Start the server if not already running, or return existing server info.
+
+        Args:
+            port: Port to bind to (auto-selected if None)
+            allow_origin: CORS origin to allow (None for no CORS)
+            enable_file_upload: Whether to enable PUT requests for file uploads
+            max_file_size: Maximum file size in bytes for uploads (default 10MB)
 
         Returns:
             tuple: (base_url, port)
@@ -184,11 +205,26 @@ class ProcessServerManager:
 
         temp_dir = self.get_temp_dir()
 
-        # Configure handler with directory and allow_origin
-        def handler_factory(*args, **kwargs):
-            return CORSRequestHandler(
-                *args, directory=str(temp_dir), allow_origin=allow_origin, **kwargs
-            )
+        # Choose handler based on file upload requirement
+        if enable_file_upload:
+            from ._file_handler import FileUploadCORSRequestHandler
+
+            def handler_factory(*args, **kwargs):
+                return FileUploadCORSRequestHandler(
+                    *args,
+                    directory=str(temp_dir),
+                    allow_origin=allow_origin,
+                    enable_file_upload=True,
+                    max_file_size=max_file_size,
+                    **kwargs,
+                )
+
+        else:
+
+            def handler_factory(*args, **kwargs):
+                return CORSRequestHandler(
+                    *args, directory=str(temp_dir), allow_origin=allow_origin, **kwargs
+                )
 
         self._server = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)
         self._port = port

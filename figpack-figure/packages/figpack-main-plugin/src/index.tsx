@@ -6,6 +6,7 @@ import {
   FPViewComponent,
   RenderParams,
   FPViewContext,
+  ZarrGroup,
 } from "./figpack-interface";
 import {
   timeseriesSelectionReducer,
@@ -38,10 +39,11 @@ export { default as TimeScrollView3 } from "./shared/component-time-scroll-view-
 export { useTimeScrollView3 } from "./shared/component-time-scroll-view-3/useTimeScrollView3";
 
 type ComponentWrapperProps = {
-  zarrGroup: any;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
   onResize: (callback: (width: number, height: number) => void) => void;
+  onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: { [key: string]: FPViewContext };
   component: React.ComponentType<any>;
   FPView: any;
@@ -52,23 +54,28 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   width,
   height,
   onResize,
+  onDataChange,
   contexts,
   component: Component,
   FPView,
 }) => {
   const [internalWidth, setInternalWidth] = useState(width);
   const [internalHeight, setInternalHeight] = useState(height);
+  const [internalZarrGroup, setInternalZarrGroup] = useState(zarrGroup);
 
   useEffect(() => {
     onResize((newWidth, newHeight) => {
       setInternalWidth(newWidth);
       setInternalHeight(newHeight);
     });
-  }, [onResize]);
+    onDataChange((newZarrGroup) => {
+      setInternalZarrGroup(newZarrGroup);
+    });
+  }, [onResize, onDataChange]);
 
   return (
     <Component
-      zarrGroup={zarrGroup}
+      zarrGroup={internalZarrGroup}
       width={internalWidth}
       height={internalHeight}
       contexts={contexts}
@@ -82,7 +89,15 @@ const makeRenderFunction = (
   FPView: any,
 ) => {
   return (a: RenderParams) => {
-    const { container, zarrGroup, width, height, onResize, contexts } = a;
+    const {
+      container,
+      zarrGroup,
+      width,
+      height,
+      onResize,
+      onDataChange,
+      contexts,
+    } = a;
     const root = createRoot(container);
     root.render(
       <ComponentWrapper
@@ -90,6 +105,7 @@ const makeRenderFunction = (
         width={width}
         height={height}
         onResize={onResize}
+        onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
         FPView={FPView}

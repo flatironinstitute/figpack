@@ -8,20 +8,7 @@ import {
 } from "../figpack-interface";
 
 type ZarrEditsState = {
-  attrs: { [path: string]: { [key: string]: any } };
-  removedDatasets: { [path: string]: true };
-  removedGroups: { [path: string]: true };
-  createdGroups: { [path: string]: { [key: string]: any } };
-  createdDatasets: {
-    [path: string]: {
-      data: DatasetDataType;
-      options: {
-        shape: number[];
-        dtype: string;
-        attrs: { [key: string]: any };
-      };
-    };
-  };
+  editedFiles: { [file: string]: string | ArrayBuffer | null };
 };
 
 type ZarrEditsAction =
@@ -52,6 +39,9 @@ type ZarrEditsAction =
         dtype: string;
         attrs: { [key: string]: any };
       };
+    }
+  | {
+      type: "clearEdits";
     };
 
 export const zarrEditsReducer = (
@@ -60,120 +50,88 @@ export const zarrEditsReducer = (
 ): ZarrEditsState => {
   switch (action.type) {
     case "setAttrs": {
-      const newState = { ...state };
-      newState.attrs = { ...newState.attrs, [action.path]: action.attrs };
-      if (action.path in newState.createdGroups) {
-        newState.createdGroups = {
-          ...newState.createdGroups,
-          [action.path]: action.attrs,
-        };
-      }
-      return newState;
+      return {
+        ...state,
+        editedFiles: {
+          ...state.editedFiles,
+          [action.path + "/.zattrs"]: JSON.stringify(action.attrs, null, 2),
+        },
+      };
     }
     case "removeDataset": {
-      const newState = { ...state };
-      // check if this dataset was created in this session
-      if (action.path in state.createdDatasets) {
-        newState.createdDatasets = { ...newState.createdDatasets };
-        delete newState.createdDatasets[action.path];
-      }
-      newState.removedDatasets = {
-        ...newState.removedDatasets,
-        [action.path]: true,
+      return {
+        ...state,
+        editedFiles: {
+          ...state.editedFiles,
+          [action.path + "/.zarray"]: null,
+          [action.path + "/.zattrs"]: null,
+        },
       };
-      return newState;
     }
     case "removeGroup": {
-      const newState = { ...state };
-
-      // If this group exists in createdGroups, just remove it from there
-      if (action.path in state.createdGroups) {
-        newState.createdGroups = { ...newState.createdGroups };
-        delete newState.createdGroups[action.path];
-      } else {
-        // Only add to removedGroups if it's not a created group (i.e., it exists in base)
-        newState.removedGroups = {
-          ...newState.removedGroups,
-          [action.path]: true,
-        };
-      }
-
-      // Clean up attrs regardless
-      newState.attrs = { ...newState.attrs };
-      if (action.path in newState.attrs) {
-        delete newState.attrs[action.path];
-      }
-
-      return newState;
+      return {
+        ...state,
+        editedFiles: {
+          ...state.editedFiles,
+          [action.path + "/.zgroup"]: null,
+          [action.path + "/.zattrs"]: null,
+        },
+      };
     }
     case "createGroup": {
-      if (action.path in state.removedGroups) {
-        throw new Error(
-          "Cannot create a group at a path that has been removed, because this would be potentially dangerous if child datasets/groups exist in the base.",
-        );
-      }
-      const newState = { ...state };
-      newState.createdGroups = {
-        ...newState.createdGroups,
-        [action.path]: action.attrs,
+      return {
+        ...state,
+        editedFiles: {
+          ...state.editedFiles,
+          [action.path + "/.zgroup"]: JSON.stringify(
+            {
+              zarr_format: 2,
+            },
+            null,
+            2,
+          ),
+          [action.path + "/.zattrs"]: JSON.stringify(action.attrs, null, 2),
+        },
       };
-      newState.attrs = { ...newState.attrs, [action.path]: action.attrs };
-      // Remove from removedGroups if it was previously removed
-      if (action.path in newState.removedGroups) {
-        newState.removedGroups = { ...newState.removedGroups };
-        delete newState.removedGroups[action.path];
-      }
-      return newState;
     }
     case "createDataset": {
-      // if it was removed, then un-remove it
-      const newState = { ...state };
-      if (action.path in newState.removedDatasets) {
-        newState.removedDatasets = { ...newState.removedDatasets };
-        delete newState.removedDatasets[action.path];
-      }
-      newState.createdDatasets = {
-        ...newState.createdDatasets,
-        [action.path]: { data: action.data, options: action.options },
+      const numDims = action.options.shape.length;
+      const chunkFname = new Array(numDims).fill(0).join(".");
+      return {
+        ...state,
+        editedFiles: {
+          ...state.editedFiles,
+          [action.path + "/.zarray"]: JSON.stringify(
+            {
+              zarr_format: 2,
+              shape: action.options.shape,
+              chunks: action.options.shape, // single chunk
+              dtype: action.options.dtype,
+              compressor: null,
+              fill_value: null,
+              order: "C",
+              filters: null,
+            },
+            null,
+            2,
+          ),
+          [action.path + "/.zattrs"]: JSON.stringify(
+            action.options.attrs,
+            null,
+            2,
+          ),
+          [action.path + `/${chunkFname}`]: action.data, // this will actually be a typed array
+        },
       };
-      return newState;
+    }
+    case "clearEdits": {
+      return {
+        ...state,
+        editedFiles: {},
+      };
     }
     default:
       return state;
-  }
-};
-
-export const emptyZarrEdits: ZarrEditsState = {
-  attrs: {},
-  removedDatasets: {},
-  removedGroups: {},
-  createdGroups: {},
-  createdDatasets: {},
-};
-
-// Helper functions for path handling
-const isDirectChild = (parentPath: string, childPath: string): boolean => {
-  if (parentPath === "/") {
-    // For root path, check if childPath is like "/name" (no additional slashes)
-    return (
-      childPath.startsWith("/") &&
-      childPath.slice(1).indexOf("/") === -1 &&
-      childPath !== "/"
-    );
-  } else {
-    // For non-root paths, check if childPath starts with parentPath + "/" and has no additional slashes
-    const expectedPrefix = parentPath + "/";
-    if (!childPath.startsWith(expectedPrefix)) return false;
-    const remainder = childPath.slice(expectedPrefix.length);
-    return remainder.indexOf("/") === -1 && remainder.length > 0;
-  }
-};
-
-const getChildName = (parentPath: string, childPath: string): string => {
-  if (parentPath === "/") {
-    return childPath.slice(1); // Remove leading "/"
-  } else {
-    return childPath.slice(parentPath.length + 1); // Remove parent path and "/"
   }
 };
 
@@ -195,66 +153,74 @@ class EditableZarrGroup implements ZarrGroup {
   get subgroups(): ZarrSubgroup[] {
     // Start with base subgroups, filtered and with attribute overrides
     const baseSubgroups = this.base.subgroups
-      .filter((sg) => !(sg.path in this.edits.removedGroups))
-      .map((sg) =>
-        sg.path in this.edits.attrs
-          ? {
-              ...sg,
-              attrs: this.edits.attrs[sg.path],
-            }
-          : sg,
-      );
+      .filter((sg) => {
+        // remove those groups that have been removed
+        if (this.edits.editedFiles[sg.path + "/.zgroup"] === null) {
+          return false;
+        }
+        return true;
+      })
+      .map((sg) => {
+        if (this.edits.editedFiles[sg.path + "/.zattrs"]) {
+          return {
+            ...sg,
+            attrs: JSON.parse(
+              this.edits.editedFiles[sg.path + "/.zattrs"] as string,
+            ),
+          };
+        }
+        return sg;
+      });
 
     // Find created groups that are direct children of this path
     const createdSubgroups: ZarrSubgroup[] = [];
-    for (const [createdPath, createdAttrs] of Object.entries(
-      this.edits.createdGroups,
-    )) {
-      if (
-        isDirectChild(this.path, createdPath) &&
-        !(createdPath in this.edits.removedGroups)
-      ) {
-        const name = getChildName(this.path, createdPath);
-        createdSubgroups.push({
-          name,
-          path: createdPath,
-          attrs: createdAttrs,
-        });
+    for (const filePath in this.edits.editedFiles) {
+      if (filePath.endsWith("/.zgroup")) {
+        const groupPath = filePath.slice(0, -"/.zgroup".length);
+        if (isDirectChild(this.path, groupPath)) {
+          const name = getChildName(this.path, groupPath);
+          const attrsFile = groupPath + "/.zattrs";
+          let attrs = {};
+          if (attrsFile in this.edits.editedFiles) {
+            attrs = JSON.parse(this.edits.editedFiles[attrsFile] as string);
+          }
+          createdSubgroups.push({
+            name,
+            path: groupPath,
+            attrs,
+          });
+        }
       }
     }
 
-    // Combine and deduplicate (created groups override base groups with same name)
-    const allSubgroups = [...baseSubgroups];
-    for (const createdSg of createdSubgroups) {
-      const existingIndex = allSubgroups.findIndex(
-        (sg) => sg.name === createdSg.name,
-      );
-      if (existingIndex >= 0) {
-        allSubgroups[existingIndex] = createdSg;
-      } else {
-        allSubgroups.push(createdSg);
-      }
-    }
+    // created subgroups replace any base subgroups with the same name
+    const createdNames = new Set(createdSubgroups.map((sg) => sg.name));
+    const filteredBaseSubgroups = baseSubgroups.filter(
+      (sg) => !createdNames.has(sg.name),
+    );
 
-    return allSubgroups;
+    return [...filteredBaseSubgroups, ...createdSubgroups];
   }
 
   async getGroup(name: string): Promise<ZarrGroup | undefined> {
     const groupPath = this.path === "/" ? `/${name}` : `${this.path}/${name}`;
 
-    // Check if this is a created group
-    if (groupPath in this.edits.createdGroups) {
-      // Check if it's been removed
-      if (groupPath in this.edits.removedGroups) {
-        return undefined;
-      }
+    // check if this is a deleted group
+    if (this.edits.editedFiles[groupPath + "/.zgroup"] === null) {
+      return undefined;
+    }
+
+    if (groupPath + "/.zgroup" in this.edits.editedFiles) {
       // Create a virtual group for the created group
       const virtualGroup: ZarrGroup = {
         file: this.file,
         path: groupPath,
         subgroups: [],
         datasets: [],
-        attrs: this.edits.createdGroups[groupPath],
+        attrs:
+          JSON.parse(
+            this.edits.editedFiles[groupPath + "/.zattrs"] as string,
+          ) || {},
         getGroup: async () => undefined,
         getDataset: async () => undefined,
         getDatasetData: async () => undefined,
@@ -281,34 +247,35 @@ class EditableZarrGroup implements ZarrGroup {
     const group = await this.base.getGroup(name);
     if (!group) return group;
 
-    // Check if this group has been removed
-    if (group.path in this.edits.removedGroups) {
-      return undefined;
-    }
-
     return new EditableZarrGroup(group, this.edits, this.dispatch);
   }
 
   async getDataset(name: string) {
     const datasetPath = this.path === "/" ? `/${name}` : `${this.path}/${name}`;
-    if (datasetPath in this.edits.createdDatasets) {
-      const created = this.edits.createdDatasets[datasetPath];
+
+    // check if this is a deleted dataset
+    if (this.edits.editedFiles[datasetPath + "/.zarray"] === null) {
+      return undefined;
+    }
+
+    const zarrayText = this.edits.editedFiles[datasetPath + "/.zarray"];
+    if (zarrayText) {
+      const created = JSON.parse(zarrayText as string);
+      const datasetAttrs =
+        JSON.parse(
+          this.edits.editedFiles[datasetPath + "/.zattrs"] as string,
+        ) || {};
       return {
         name,
         path: datasetPath,
-        shape: created.options.shape,
-        dtype: created.options.dtype,
-        attrs: created.options.attrs,
+        shape: created.shape,
+        dtype: created.dtype,
+        attrs: datasetAttrs,
       } as ZarrDataset;
     }
 
     const dataset = await this.base.getDataset(name);
     if (!dataset) return dataset;
-
-    // Check if this dataset has been removed
-    if (dataset.path in this.edits.removedDatasets) {
-      return undefined;
-    }
 
     return dataset;
   }
@@ -322,53 +289,95 @@ class EditableZarrGroup implements ZarrGroup {
     },
   ) {
     const datasetPath = this.path === "/" ? `/${name}` : `${this.path}/${name}`;
-    if (datasetPath in this.edits.createdDatasets) {
+
+    // check if this is a deleted dataset
+    if (this.edits.editedFiles[datasetPath + "/.zarray"] === null) {
+      return undefined;
+    }
+
+    const zarrayText = this.edits.editedFiles[datasetPath + "/.zarray"];
+    if (zarrayText) {
       if (o.slice) {
         throw new Error("Slicing not supported for created datasets");
       }
-      const created = this.edits.createdDatasets[datasetPath];
-      return created.data;
+      const zarray = JSON.parse(zarrayText as string);
+      const shape = zarray.shape;
+      // we assume only one chunk for created datasets
+      const numDims = shape.length;
+      const chunkFileName = new Array(numDims).fill(0).join(".");
+      const chunkData =
+        this.edits.editedFiles[datasetPath + "/" + chunkFileName];
+      if (!chunkData) {
+        throw new Error("No data found for created dataset");
+      }
+      return chunkData as DatasetDataType; // this will actually be a typed array
     }
+    // otherwise, get from base
     return await this.base.getDatasetData(name, o);
   }
 
   get datasets() {
-    const ret = this.base.datasets
-      .filter((ds) => !(ds.path in this.edits.removedDatasets))
-      .map((ds) =>
-        ds.path in this.edits.attrs
-          ? {
-              ...ds,
-              attrs: this.edits.attrs[ds.path],
-            }
-          : ds,
-      );
-    for (const [createdPath, createdData] of Object.entries(
-      this.edits.createdDatasets,
-    )) {
-      if (
-        isDirectChild(this.path, createdPath) &&
-        !(createdPath in this.edits.removedDatasets)
-      ) {
-        const name = getChildName(this.path, createdPath);
-        ret.push({
-          name,
-          path: createdPath,
-          shape: createdData.options.shape,
-          dtype: createdData.options.dtype,
-          attrs: createdData.options.attrs,
-        });
+    // Start with base datasets, filtered and with attribute overrides
+    const baseDatasets = this.base.datasets
+      .filter((ds) => {
+        // remove those datasets that have been removed
+        if (this.edits.editedFiles[ds.path + "/.zarray"] === null) {
+          return false;
+        }
+        return true;
+      })
+      .map((ds) => {
+        if (this.edits.editedFiles[ds.path + "/.zattrs"]) {
+          return {
+            ...ds,
+            attrs: JSON.parse(
+              this.edits.editedFiles[ds.path + "/.zattrs"] as string,
+            ),
+          };
+        }
+        return ds;
+      });
+
+    // Find created datasets that are direct children of this path
+    const createdDatasets: ZarrDataset[] = [];
+    for (const filePath in this.edits.editedFiles) {
+      if (filePath.endsWith("/.zarray")) {
+        const datasetPath = filePath.slice(0, -"/.zarray".length);
+        if (isDirectChild(this.path, datasetPath)) {
+          const name = getChildName(this.path, datasetPath);
+          const zarray = JSON.parse(this.edits.editedFiles[filePath] as string);
+          const attrsFile = datasetPath + "/.zattrs";
+          let attrs = {};
+          if (attrsFile in this.edits.editedFiles) {
+            attrs = JSON.parse(this.edits.editedFiles[attrsFile] as string);
+          }
+          createdDatasets.push({
+            file: this.file,
+            name,
+            path: datasetPath,
+            shape: zarray.shape,
+            dtype: zarray.dtype,
+            attrs,
+          });
+        }
       }
     }
-    return ret;
+    // created datasets replace any base datasets with the same name
+    const createdNames = new Set(createdDatasets.map((ds) => ds.name));
+    const filteredBaseDatasets = baseDatasets.filter(
+      (ds) => !createdNames.has(ds.name),
+    );
+
+    return [...filteredBaseDatasets, ...createdDatasets];
   }
 
   get attrs() {
-    if (this.path in this.edits.attrs) {
-      return this.edits.attrs[this.path];
-    } else {
-      return this.base.attrs;
+    if (this.edits.editedFiles[this.path + "/.zattrs"]) {
+      return JSON.parse(
+        this.edits.editedFiles[this.path + "/.zattrs"] as string,
+      );
     }
+    return this.base.attrs;
   }
 
   setAttrs(attrs: { [key: string]: any }) {
@@ -396,13 +405,99 @@ class EditableZarrGroup implements ZarrGroup {
     o: { shape: number[]; dtype: string; attrs: { [key: string]: any } },
   ) {
     const datasetPath = this.path === "/" ? `/${name}` : `${this.path}/${name}`;
+    let dtype = o.dtype;
+    if (dtype === "uint8") {
+      dtype = "|u1";
+    } else if (dtype === "int8") {
+      dtype = "|i1";
+    } else if (dtype === "uint16") {
+      dtype = "|u2";
+    } else if (dtype === "int16") {
+      dtype = "|i2";
+    } else if (dtype === "uint32") {
+      dtype = "|u4";
+    } else if (dtype === "int32") {
+      dtype = "|i4";
+    } else if (dtype === "uint64") {
+      dtype = "|u8";
+    } else if (dtype === "int64") {
+      dtype = "|i8";
+    } else if (dtype === "float32") {
+      dtype = "|f4";
+    } else if (dtype === "float64") {
+      dtype = "|f8";
+    }
+    if (
+      ![
+        "|u1",
+        "|i1",
+        "|u2",
+        "|i2",
+        "|u4",
+        "|i4",
+        "|u8",
+        "|i8",
+        "|f4",
+        "|f8",
+        "<f4",
+        "<f8",
+        "<i1",
+        "<i2",
+        "<i4",
+        "<i8",
+        "<u1",
+        "<u2",
+        "<u4",
+        "<u8",
+      ].includes(dtype)
+    ) {
+      throw new Error(`Unsupported dtype: ${dtype}`);
+    }
     this.dispatch({
       type: "createDataset",
       path: datasetPath,
       data,
-      options: o,
+      options: {
+        ...o,
+        dtype,
+      },
     });
   }
+
+  get hasEdits() {
+    return Object.keys(this.edits.editedFiles).length > 0;
+  }
+
+  get fileEdits() {
+    return this.edits.editedFiles;
+  }
 }
+
+function isDirectChild(parentPath: string, childPath: string) {
+  if (parentPath === "/") {
+    parentPath = "";
+  }
+  if (!childPath.startsWith(parentPath + "/")) {
+    return false;
+  }
+  const rest = childPath.slice(parentPath.length + 1);
+  return !rest.includes("/");
+}
+
+function getChildName(parentPath: string, childPath: string) {
+  if (parentPath === "/") {
+    parentPath = "";
+  }
+  if (!childPath.startsWith(parentPath + "/")) {
+    throw new Error("Not a child path");
+  }
+  const rest = childPath.slice(parentPath.length + 1);
+  const parts = rest.split("/");
+  return parts[0];
+}
+
+export const emptyZarrEdits: ZarrEditsState = {
+  editedFiles: {},
+};
 
 export default EditableZarrGroup;
