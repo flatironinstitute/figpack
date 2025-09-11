@@ -22,7 +22,7 @@ interface FigpackStatusResult {
 const queryParams = new URLSearchParams(window.location.search);
 const figureUrl = queryParams.get("figure");
 
-const disableLoad = figureUrl ? true : false; // in dev mode we are not going to try to load figpack.json
+const disableLoad = figureUrl?.startsWith("http://localhost:"); // for local figures we are not going to try to load figpack.json
 
 export const useFigpackStatus = (): FigpackStatusResult => {
   const [isLoading, setIsLoading] = useState(true);
@@ -42,10 +42,17 @@ export const useFigpackStatus = (): FigpackStatusResult => {
       }
       try {
         let figpackJsonUrl = "./figpack.json";
-        const dataUrl = new URLSearchParams(window.location.search).get("data");
-        if (dataUrl) {
-          figpackJsonUrl =
-            dataUrl.split("/").slice(0, -1).join("/") + "/figpack.json";
+        if (figureUrl) {
+          const figureUrlWithoutTrailingIndexHtml = figureUrl.endsWith(
+            "/index.html",
+          )
+            ? figureUrl.slice(0, -"/index.html".length)
+            : figureUrl;
+          const figureUrlWithoutTrailingSlash =
+            figureUrlWithoutTrailingIndexHtml.endsWith("/")
+              ? figureUrlWithoutTrailingIndexHtml.slice(0, -1)
+              : figureUrlWithoutTrailingIndexHtml;
+          figpackJsonUrl = figureUrlWithoutTrailingSlash + "/figpack.json";
         }
         const response = await fetch(figpackJsonUrl + `?cb=${Date.now()}`);
         if (!response.ok) {

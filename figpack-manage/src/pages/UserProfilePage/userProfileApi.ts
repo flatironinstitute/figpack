@@ -46,7 +46,7 @@ interface UsageStatsResponse {
  */
 export async function getUserProfile(apiKey: string): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user?cb=${Date.now()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export async function updateUserProfile(
   userData: { name: string; researchDescription: string }
 ): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user?cb=${Date.now()}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export async function updateUserProfile(
  */
 export async function regenerateUserApiKey(apiKey: string): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user?cb=${Date.now()}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export async function regenerateUserApiKey(apiKey: string): Promise<ApiResponse>
  */
 export async function getUserUsageStats(apiKey: string, email?: string): Promise<UsageStatsResponse> {
   try {
-    const url = new URL(`${FIGPACK_API_BASE_URL}/api/user/usage-stats`);
+    const url = new URL(`${FIGPACK_API_BASE_URL}/api/user/usage-stats?cb=${Date.now()}`);
     if (email) {
       url.searchParams.append('email', email);
     }
