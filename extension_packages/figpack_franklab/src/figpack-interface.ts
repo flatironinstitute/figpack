@@ -48,6 +48,7 @@ export type ZarrGroup = {
   removeDataset?: (name: string) => void;
   createGroup?: (name: string, attrs: { [key: string]: any }) => void;
   removeGroup?: (name: string) => void;
+  hasEdits?: boolean;
 };
 
 export type ZarrSubgroup = {
@@ -106,6 +107,7 @@ export type RenderParams = {
   width: number;
   height: number;
   onResize: (callback: (width: number, height: number) => void) => void;
+  onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: FPViewContexts;
 };
 

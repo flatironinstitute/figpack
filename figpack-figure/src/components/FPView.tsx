@@ -1,6 +1,10 @@
-import { registeredFPViewComponents } from "../main";
 import { useEffect, useRef, useState } from "react";
-import { FPViewComponentProps, RenderParams } from "../figpack-interface";
+import {
+  FPViewComponentProps,
+  RenderParams,
+  ZarrGroup,
+} from "../figpack-interface";
+import { registeredFPViewComponents } from "../main";
 
 export const FPView: React.FC<FPViewComponentProps> = (props) => {
   const { zarrGroup } = props;
@@ -56,6 +60,9 @@ export const ComponentWrapper: React.FC<
   const resizeCallbackRef = useRef<
     ((width: number, height: number) => void) | null
   >(null);
+  const dataChangeCallbackRef = useRef<((zarrGroup: ZarrGroup) => void) | null>(
+    null,
+  );
   const [container, setContainer] = useState<HTMLElement | null>(null);
 
   // Render the extension when available
@@ -70,19 +77,25 @@ export const ComponentWrapper: React.FC<
         resizeCallbackRef.current = callback;
       };
 
+      // Create the onDataChange callback registration function
+      const onDataChange = (callback: (zarrGroup: ZarrGroup) => void) => {
+        dataChangeCallbackRef.current = callback;
+      };
+
       render({
         container,
         zarrGroup,
         width,
         height,
         onResize,
+        onDataChange,
         contexts,
       });
     } catch (err) {
       setError(`Error rendering extension: ${err}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contexts, zarrGroup, container, render]); // we intentionally do not include width/height here
+  }, [contexts, container, render]); // we intentionally do not include width/height/zarrGroup here
 
   // Handle resize by calling the registered callback
   useEffect(() => {
@@ -92,8 +105,23 @@ export const ComponentWrapper: React.FC<
       } catch (err) {
         console.warn(`Error in extension resize callback: ${err}`);
       }
+    } else {
+      console.log("no resizeCallbackRef.current");
     }
   }, [width, height]);
+
+  // Handle data updates
+  useEffect(() => {
+    if (dataChangeCallbackRef.current) {
+      try {
+        dataChangeCallbackRef.current(zarrGroup);
+      } catch (err) {
+        console.warn(`Error in extension data change callback: ${err}`);
+      }
+    } else {
+      console.log("no dataChangeCallbackRef.current");
+    }
+  }, [zarrGroup]);
 
   if (error) {
     return (

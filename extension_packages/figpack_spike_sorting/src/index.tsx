@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { FPViewComponent, FPViewContext, FPViewContextCreator, RenderParams } from "./figpack-interface";
+import { FPViewComponent, FPViewContext, FPViewContextCreator, RenderParams, ZarrGroup } from "./figpack-interface";
 import {
   UnitMetricSelection,
   unitMetricSelectionReducer,
@@ -165,10 +165,11 @@ const createUnitSelectionContext = (): FPViewContext => {
 // };
 
 type ComponentWrapperProps = {
-  zarrGroup: any;
+  zarrGroup: ZarrGroup;
   width: number;
   height: number;
   onResize: (callback: (width: number, height: number) => void) => void;
+  onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: { [key: string]: FPViewContext };
   component: React.ComponentType<any>;
 };
@@ -178,21 +179,27 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   width,
   height,
   onResize,
+  onDataChange,
   contexts,
   component: Component,
 }) => {
   const [internalWidth, setInternalWidth] = useState(width);
   const [internalHeight, setInternalHeight] = useState(height);
+  const [internalZarrGroup, setInternalZarrGroup] = useState(zarrGroup);
 
   useEffect(() => {
     onResize((newWidth, newHeight) => {
       setInternalWidth(newWidth);
       setInternalHeight(newHeight);
     });
-  }, [onResize]);
+    onDataChange((newZarrGroup) => {
+      setInternalZarrGroup(newZarrGroup);
+    });
+
+  }, [onResize, onDataChange]);
 
   return (<Component
-      zarrGroup={zarrGroup}
+      zarrGroup={internalZarrGroup}
       width={internalWidth}
       height={internalHeight}
       contexts={contexts}
@@ -202,7 +209,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
 
 const makeRenderFunction = (Component: React.ComponentType<any>) => {
   return (a: RenderParams) => {
-    const { container, zarrGroup, width, height, onResize, contexts } = a;
+    const { container, zarrGroup, width, height, onResize, onDataChange, contexts } = a;
     const root = createRoot(container);
     root.render(
       <ComponentWrapper
@@ -210,12 +217,13 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
         width={width}
         height={height}
         onResize={onResize}
+        onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
       />
     );
   }
-}
+};
 
 const registerExtension = () => {
   const components = [

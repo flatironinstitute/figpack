@@ -11,7 +11,7 @@ import threading
 import webbrowser
 from typing import Union
 
-from ._server_manager import CORSRequestHandler, ThreadingHTTPServer
+from ._server_manager import ProcessServerManager
 
 
 def serve_files(
@@ -20,35 +20,66 @@ def serve_files(
     port: Union[int, None],
     open_in_browser: bool = False,
     allow_origin: Union[str, None] = None,
+    enable_file_upload: bool = False,
+    max_file_size: int = 10 * 1024 * 1024,
 ):
     """
-    Serve files from a directory using a simple HTTP server.
+    Serve files from a directory using the ProcessServerManager.
 
     Args:
         tmpdir: Directory to serve
         port: Port number for local server
         open_in_browser: Whether to open in browser automatically
         allow_origin: CORS allow origin header
+        enable_file_upload: Whether to enable PUT requests for file uploads
+        max_file_size: Maximum file size in bytes for uploads (default 10MB)
     """
+    tmpdir = pathlib.Path(tmpdir)
+    tmpdir = tmpdir.resolve()
+    if not tmpdir.exists() or not tmpdir.is_dir():
+        raise SystemExit(f"Directory not found: {tmpdir}")
+
+    # Create a temporary server manager instance for this specific directory
+    # Note: We can't use the singleton ProcessServerManager here because it serves
+    # from its own temp directory, but we need to serve from the specified tmpdir
+
+    # Import the required classes for direct server creation
+    from ._server_manager import CORSRequestHandler, ThreadingHTTPServer
+    from ._file_handler import FileUploadCORSRequestHandler
+
     # if port is None, find a free port
     if port is None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("", 0))
             port = s.getsockname()[1]
 
-    tmpdir = pathlib.Path(tmpdir)
-    tmpdir = tmpdir.resolve()
-    if not tmpdir.exists() or not tmpdir.is_dir():
-        raise SystemExit(f"Directory not found: {tmpdir}")
+    # Choose handler based on file upload requirement
+    if enable_file_upload:
 
-    # Configure handler with directory and allow_origin
-    def handler_factory(*args, **kwargs):
-        return CORSRequestHandler(
-            *args, directory=str(tmpdir), allow_origin=allow_origin, **kwargs
-        )
+        def handler_factory(*args, **kwargs):
+            return FileUploadCORSRequestHandler(
+                *args,
+                directory=str(tmpdir),
+                allow_origin=allow_origin,
+                enable_file_upload=True,
+                max_file_size=max_file_size,
+                **kwargs,
+            )
+
+        upload_status = " (file upload enabled)" if enable_file_upload else ""
+    else:
+
+        def handler_factory(*args, **kwargs):
+            return CORSRequestHandler(
+                *args, directory=str(tmpdir), allow_origin=allow_origin, **kwargs
+            )
+
+        upload_status = ""
 
     httpd = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)
-    print(f"Serving {tmpdir} at http://localhost:{port} (CORS → {allow_origin})")
+    print(
+        f"Serving {tmpdir} at http://localhost:{port} (CORS → {allow_origin}){upload_status}"
+    )
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
 
