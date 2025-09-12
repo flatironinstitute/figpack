@@ -205,6 +205,7 @@ const createTimeseriesSelectionContext = (): FPViewContext => {
 
   const onChange = (callback: (newValue: TimeseriesSelectionState) => void) => {
     listeners.push(callback);
+    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);

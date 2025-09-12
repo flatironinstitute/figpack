@@ -43,6 +43,7 @@ const createUnitMetricSelectionContext = (): FPViewContext => {
 
   const onChange = (callback: (newValue: UnitMetricSelection) => void) => {
     listeners.push(callback);
+    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
@@ -70,6 +71,7 @@ const createUnitSelectionContext = (): FPViewContext => {
 
   const onChange = (callback: (newValue: UnitSelection) => void) => {
     listeners.push(callback);
+    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
@@ -98,6 +100,7 @@ const createSortingCurationContext = (): FPViewContext => {
 
   const onChange = (callback: (newValue: any) => void) => {
     listeners.push(callback);
+    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
