@@ -26,5 +26,5 @@ export const setCorsHeaders = (req: any, res: any) => {
   }
 };
 
-export const figureManagementUrl =
-  process.env.FIGURE_MANAGEMENT_URL || "https://manage.figpack.org/figure";
+export const figpackManageUrl =
+  process.env.FIGPACK_MANAGE_URL || "https://manage.figpack.org";

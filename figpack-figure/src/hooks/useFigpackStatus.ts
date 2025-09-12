@@ -7,7 +7,8 @@ interface FigpackStatus {
   expiration?: string;
   figureUrl?: string;
   totalFiles?: number;
-  figureManagementUrl?: string;
+  figureManagementUrl?: string; // to phase out
+  figpackManageUrl?: string; // new
 }
 
 interface FigpackStatusResult {

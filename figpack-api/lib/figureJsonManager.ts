@@ -18,7 +18,8 @@ export const updateFigureJson = async (figure: IFigure) => {
     pinned: figure.pinned,
     createdAt: figure.createdAt,
     updatedAt: figure.updatedAt,
-    figureManagementUrl: figure.figureManagementUrl || "",
+    figureManagementUrl: figure.figureManagementUrl || "", // to phase out
+    figpackManageUrl: figure.figpackManageUrl || "",
   };
 
   // Only include owner email and pin info if the figure is pinned

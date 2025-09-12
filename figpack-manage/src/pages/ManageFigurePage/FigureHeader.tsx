@@ -46,7 +46,8 @@ interface FigpackStatus {
   pinInfo?: PinInfo;
   ownerEmail?: string;
   title?: string;
-  figureManagementUrl?: string;
+  figureManagementUrl?: string; // to phase out
+  figpackManageUrl?: string; // new
 }
 
 interface FigureHeaderProps {

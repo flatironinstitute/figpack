@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { validateApiKey } from "../../../lib/adminAuth";
 import connectDB, { Figure, IFigure, Bucket } from "../../../lib/db";
 import { updateFigureJson } from "../../../lib/figureJsonManager";
-import { figureManagementUrl, setCorsHeaders } from "../../../lib/config";
+import { figpackManageUrl, setCorsHeaders } from "../../../lib/config";
 
 interface CreateFigureRequest {
   figureHash: string;
@@ -205,7 +205,7 @@ export default async function handler(
       title: req.body.title,
       createdAt: now,
       updatedAt: now,
-      figureManagementUrl,
+      figpackManageUrl,
       channel: ephemeral ? "ephemeral" : "default",
       isEphemeral: ephemeral || false,
     });

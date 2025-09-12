@@ -61,7 +61,8 @@ export interface IFigure {
     pinnedTimestamp: number;
   };
   renewalTimestamp?: number; // When the figure was last renewed
-  figureManagementUrl?: string; // e.g., https://manage.figpack.org/figure
+  figureManagementUrl?: string; // e.g., https://manage.figpack.org/figure (to phase out)
+  figpackManageUrl?: string; // e.g., https://manage.figpack.org (new)
   channel?: string; // "default" or "ephemeral"
   isEphemeral?: boolean; // Whether this is an ephemeral figure
 }
@@ -137,7 +138,11 @@ const figureSchema = new mongoose.Schema<IFigureDocument>({
     pinnedTimestamp: Number,
   },
   renewalTimestamp: Number,
-  figureManagementUrl: {
+  figureManagementUrl: { // to phase out
+    type: String,
+    required: false,
+  },
+  figpackManageUrl: {
     type: String,
     required: false,
   },

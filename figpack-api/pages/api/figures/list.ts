@@ -26,7 +26,8 @@ interface FigureListItem {
     pinnedTimestamp: number;
   };
   renewalTimestamp?: number;
-  figureManagementUrl?: string;
+  figureManagementUrl?: string; // to phase out
+  figpackManageUrl?: string; // new
 }
 
 interface FigureListResponse {
@@ -202,6 +203,7 @@ export default async function handler(
       pinInfo: doc.pinInfo,
       renewalTimestamp: doc.renewalTimestamp,
       figureManagementUrl: doc.figureManagementUrl,
+      figpackManageUrl: doc.figpackManageUrl,
     }));
 
     const hasMore = skip + limitNum < total;
