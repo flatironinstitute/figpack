@@ -358,6 +358,9 @@ class EditableZarrGroup implements ZarrGroup {
             shape: zarray.shape,
             dtype: zarray.dtype,
             attrs,
+            getData: async (o) => {
+              return this.getDatasetData(name, o);
+            },
           });
         }
       }

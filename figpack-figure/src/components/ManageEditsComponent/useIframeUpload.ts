@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { IframeUploadHandlerProps } from "./IframeUploadTypes";
 import {
   createParentMessageHandler,
+  ParentMessageHandler,
   type UploadErrorPayload,
   type UploadProgressPayload,
   type UploadSuccessPayload,
@@ -22,9 +23,7 @@ export const useIframeUpload = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadMessage, setUploadMessage] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const messageHandlerRef = useRef<ReturnType<
-    typeof createParentMessageHandler
-  > | null>(null);
+  const messageHandlerRef = useRef<ParentMessageHandler | null>(null);
 
   // Setup iframe message handler
   useEffect(() => {

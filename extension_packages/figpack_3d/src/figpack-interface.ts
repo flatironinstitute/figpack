@@ -80,6 +80,13 @@ export type ZarrDataset = {
   attrs: {
     [key: string]: any;
   };
+  getData: (o: {
+    slice?: [number, number][];
+    allowBigInt?: boolean;
+    canceler?: Canceler;
+    cacheBust?: boolean;
+  }) => Promise<DatasetDataType | undefined>;
+  setAttrs?: (attrs: { [key: string]: any }) => void;
 };
 
 export type DatasetDataType =

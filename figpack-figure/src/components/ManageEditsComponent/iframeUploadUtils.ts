@@ -134,8 +134,3 @@ export class ParentMessageHandler {
 }
 
 export const createParentMessageHandler = () => new ParentMessageHandler();
-
-export function shouldUseIframeUpload(figureUrl: string): boolean {
-  // Use iframe upload for cloud figures (not localhost)
-  return figureUrl.startsWith("https://figures.figpack.org/");
-}

@@ -1,5 +1,5 @@
 """
-Setup script for figpack_jfm package
+Setup script for figpack_nwb package
 """
 
 from setuptools import setup, find_packages
@@ -16,7 +16,7 @@ def read_readme():
 
 
 setup(
-    name="figpack_jfm",
+    name="figpack_nwb",
     version="0.1.1",
     description="Extension for figpack",
     long_description=read_readme(),
@@ -26,7 +26,7 @@ setup(
     url="https://github.com/flatironinstitute/figpack",
     packages=find_packages(),
     package_data={
-        "figpack_jfm": ["*.js"],
+        "figpack_nwb": ["*.js"],
     },
     include_package_data=True,
     install_requires=["figpack>=0.2.17"],

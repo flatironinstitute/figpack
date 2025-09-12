@@ -366,6 +366,24 @@ class RemoteZarr implements ZarrFile {
         shape: zarray.shape || [],
         dtype: zarray.dtype || "",
         attrs: zattrs || {},
+        getData: async (o: {
+          slice?: [number, number][];
+          allowBigInt?: boolean;
+          canceler?: Canceler;
+          cacheBust?: boolean;
+        }) => {
+          return this.getDatasetData(path, o);
+        },
+        setAttrs: this.zarrWriteDispatch
+          ? async (attrs: { [key: string]: any }) => {
+              if (!this.zarrWriteDispatch) return;
+              await this.zarrWriteDispatch({
+                type: "setAttrs",
+                path,
+                attrs,
+              });
+            }
+          : undefined,
       };
     } else {
       dataset = undefined;
