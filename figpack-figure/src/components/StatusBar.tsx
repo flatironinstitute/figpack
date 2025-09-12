@@ -3,7 +3,7 @@ import { ZarrGroup } from "src/figpack-interface";
 import { useFigpackStatus } from "../hooks/useFigpackStatus";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
-import SaveChangesDialog from "./SaveChangesDialog";
+import ManageEditsComponent from "./ManageEditsComponent/ManageEditsComponent";
 
 const AboutButton: React.FC<{ title?: string; description?: string }> = ({
   title,
@@ -43,12 +43,12 @@ const AboutButton: React.FC<{ title?: string; description?: string }> = ({
   );
 };
 
-const ManageButton: React.FC<{ figureManagementUrl: string }> = ({
-  figureManagementUrl,
+const ManageButton: React.FC<{ figpackManageUrl: string }> = ({
+  figpackManageUrl,
 }) => {
   const handleManageClick = () => {
     const currentUrl = window.location.href;
-    const managementUrl = `${figureManagementUrl}?figure_url=${encodeURIComponent(currentUrl)}`;
+    const managementUrl = `${figpackManageUrl}/figure?figure_url=${encodeURIComponent(currentUrl)}`;
     window.open(managementUrl, "_blank");
   };
 
@@ -77,25 +77,24 @@ export const StatusBar: React.FC<{
   const title = zarrData?.attrs?.title;
   const description = zarrData?.attrs?.description;
 
-  const figureManagementUrl = status
-    ? status?.figureManagementUrl || "https://manage.figpack.org/figure"
+  const figpackManageUrl = status
+    ? status?.figpackManageUrl || "https://manage.figpack.org"
     : undefined;
 
   const aboutButton = <AboutButton title={title} description={description} />;
 
   const manageButton =
-    !embedded && status && figureManagementUrl ? (
-      <ManageButton figureManagementUrl={figureManagementUrl} />
+    !embedded && status && figpackManageUrl ? (
+      <ManageButton figpackManageUrl={figpackManageUrl} />
     ) : (
       <></>
     );
 
-  // const manageEditsView = <ManageEditsView zarrData={zarrData} />;
-  const manageEditsView = (
-    <ManageEditsView
+  const manageEditsComponent = (
+    <ManageEditsComponent
       zarrData={zarrData!}
       figureUrl={figureUrl}
-      figureManagementUrl={figureManagementUrl}
+      figpackManageUrl={figpackManageUrl}
       editedFiles={editedFiles}
       onRefreshZarrData={onRefreshZarrData}
     />
@@ -125,7 +124,7 @@ export const StatusBar: React.FC<{
         <span>Upload status: {status.status}</span>
         {aboutButton}
         {manageButton}
-        {manageEditsView}
+        {manageEditsComponent}
       </div>
     );
   }
@@ -138,7 +137,7 @@ export const StatusBar: React.FC<{
         </span>
         {aboutButton}
         {manageButton}
-        {manageEditsView}
+        {manageEditsComponent}
       </div>
     );
   }
@@ -149,7 +148,7 @@ export const StatusBar: React.FC<{
         <span>Expires in: {timeUntilExpiration}</span>
         {aboutButton}
         {manageButton}
-        {manageEditsView}
+        {manageEditsComponent}
       </div>
     );
   }
@@ -159,67 +158,7 @@ export const StatusBar: React.FC<{
       <span>Figure ready</span>
       {aboutButton}
       {manageButton}
-      {manageEditsView}
+      {manageEditsComponent}
     </div>
-  );
-};
-
-const ManageEditsView: React.FC<{
-  zarrData: ZarrGroup | null;
-  figureUrl: string;
-  figureManagementUrl: string | undefined;
-  editedFiles: { [path: string]: string | ArrayBuffer | null };
-  onRefreshZarrData: () => void;
-}> = ({
-  zarrData,
-  figureUrl,
-  figureManagementUrl,
-  editedFiles,
-  onRefreshZarrData,
-}) => {
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const hasEdits = editedFiles && Object.keys(editedFiles).length > 0;
-
-  const handleSaveClick = () => {
-    setIsSaveDialogOpen(true);
-  };
-
-  const handleCloseSaveDialog = () => {
-    setIsSaveDialogOpen(false);
-  };
-
-  // Don't show anything if there are no edits
-  if (!hasEdits) {
-    return null;
-  }
-
-  if (!zarrData) {
-    return null;
-  }
-
-  return (
-    <>
-      <div className="manage-edits-view">
-        <span className="edits-notification">You have unsaved changes</span>
-        <button
-          onClick={handleSaveClick}
-          className="save-changes-button"
-          title="Save changes"
-        >
-          Save Changes
-        </button>
-      </div>
-      {/* Do not include unless open because we don't want to always be loading the consolidated metadata */}
-      {isSaveDialogOpen && (
-        <SaveChangesDialog
-          editedFiles={editedFiles}
-          figureUrl={figureUrl}
-          figureManagementUrl={figureManagementUrl}
-          isOpen={isSaveDialogOpen}
-          onClose={handleCloseSaveDialog}
-          onRefreshZarrData={onRefreshZarrData}
-        />
-      )}
-    </>
   );
 };

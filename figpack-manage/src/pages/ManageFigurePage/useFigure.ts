@@ -25,7 +25,8 @@ export interface FigpackStatus {
   hasWriteAccess?: boolean;
   pinned?: boolean;
   pin_info?: PinInfo;
-  figureManagementUrl?: string;
+  figureManagementUrl?: string; // to phase out
+  figpackManageUrl?: string; // new
 }
 
 interface UseFigureResult {

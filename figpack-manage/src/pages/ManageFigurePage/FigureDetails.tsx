@@ -24,7 +24,8 @@ interface FigureDetailsProps {
     uploadCompleted?: number;
     expiration: number;
     hasWriteAccess?: boolean;
-    figureManagementUrl?: string;
+    figureManagementUrl?: string; // to phase out
+    figpackManageUrl?: string; // new
   };
   formatBytes: (bytes: number) => string;
   formatDate: (timestamp: number) => string;

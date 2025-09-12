@@ -21,7 +21,8 @@ export interface FigureListItem {
     pinnedTimestamp: number;
   };
   renewalTimestamp?: number;
-  figureManagementUrl?: string;
+  figureManagementUrl?: string; // to phase out
+  figpackManageUrl?: string; // new
 }
 
 export interface FigureListResponse {

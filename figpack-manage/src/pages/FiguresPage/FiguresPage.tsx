@@ -207,10 +207,6 @@ const FiguresPage: React.FC = () => {
     setShowAll(event.target.checked);
   };
 
-  const getManageUrl = (figureUrl: string) => {
-    return `/figure?figure_url=${encodeURIComponent(figureUrl)}`;
-  };
-
   const getBacklinkCount = (figureUrl: string) => {
     if (backlinksLoading || !backlinks) return 0;
     return backlinks.filter((backlink) => backlink.url === figureUrl).length;
@@ -422,7 +418,7 @@ const FiguresPage: React.FC = () => {
                         <TableCell>
                           <Box>
                             <Link
-                              href={getManageUrl(figure.figureUrl)}
+                              href={figure.figpackManageUrl}
                               sx={{
                                 fontWeight: "medium",
                                 mb: 0.5,
@@ -580,7 +576,7 @@ const FiguresPage: React.FC = () => {
                             <Tooltip title="Manage Figure">
                               <IconButton
                                 component="a"
-                                href={getManageUrl(figure.figureUrl)}
+                                href={figure.figpackManageUrl}
                                 size="small"
                                 color="primary"
                               >
