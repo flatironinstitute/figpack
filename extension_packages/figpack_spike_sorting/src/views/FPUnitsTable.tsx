@@ -3,6 +3,7 @@ import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 import UnitsTableView from "./view-units-table/UnitsTableView";
 import { UnitsTableViewData } from "./view-units-table/UnitsTableViewData";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
+import { ProvideSortingCurationContext } from "./FPSortingCuration";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -139,7 +140,9 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
 
   return (
     <ProvideUnitSelectionContext context={contexts.unitSelection}>
-      <UnitsTableView data={data} width={width} height={height} />
+      <ProvideSortingCurationContext context={contexts.sortingCuration}>
+        <UnitsTableView data={data} width={width} height={height} />
+      </ProvideSortingCurationContext>
     </ProvideUnitSelectionContext>
   );
 };

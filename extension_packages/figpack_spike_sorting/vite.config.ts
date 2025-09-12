@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import react from "@vitejs/plugin-react";
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -9,7 +10,7 @@ export default defineConfig(({ command }) => {
   const isServe = command === 'serve';
   
   return {
-    plugins: [react()],
+    plugins: [react(), cssInjectedByJsPlugin()],
     root: __dirname,
     publicDir: 'figpack_spike_sorting', // Serve files from the figpack_spike_sorting directory
     server: {
@@ -33,14 +34,15 @@ export default defineConfig(({ command }) => {
       },
       outDir: 'figpack_spike_sorting',
       emptyOutDir: false, // Don't clear the directory since it contains Python files
+      cssCodeSplit: false, // Bundle CSS inside the JS file instead of separate files
       rollupOptions: {
         output: {
           // Ensure all dependencies are bundled into the single file
-          inlineDynamicImports: true,
+          inlineDynamicImports: true
         }
       },
       target: 'es2023',
-      minify: !isServe // Don't minify in dev mode for better debugging
+      minify: !isServe, // Don't minify in dev mode for better debugging
     },
     define: {
       // Ensure process.env is defined for any dependencies that might need it

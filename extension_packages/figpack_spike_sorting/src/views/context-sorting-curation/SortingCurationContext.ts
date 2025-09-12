@@ -8,6 +8,9 @@ export type SortingCuration = {
   isClosed?: boolean;
 };
 
+export const emptySortingCuration: SortingCuration = {
+};
+
 export const sortingCurationReducer = (
   state: SortingCuration,
   action: SortingCurationAction,
@@ -101,18 +104,31 @@ export const sortingCurationReducer = (
         ),
       ),
     };
-  } else return state;
+  } else if (action.type === "SET_LABEL_CHOICES") {
+    return {
+      ...state,
+      labelChoices: action.labelChoices,
+    };
+  }
+
+  return state;
+};
+
+const defaultSortingCurationContext = {
+  sortingCuration: emptySortingCuration,
+  sortingCurationDispatch: (_action: SortingCurationAction) => {
+    console.warn("No sortingCurationDispatch function provided.");
+  },
 };
 
 const SortingCurationContext = React.createContext<{
-  sortingCuration?: SortingCuration;
-  sortingCurationDispatch?: (action: SortingCurationAction) => void;
-  labelChoices?: string[];
-  setLabelChoices?: (c: string[]) => void;
-}>({});
+  sortingCuration: SortingCuration;
+  sortingCurationDispatch: (action: SortingCurationAction) => void;
+}>(defaultSortingCurationContext);
 
 export const useSortingCuration = () => {
   const c = useContext(SortingCurationContext);
+  if (!c) throw Error("useSortingCuration must be used within a SortingCurationContext.Provider");
   return c;
 };
 

@@ -1,35 +1,178 @@
-.SortableTableWidget .MuiTableCell-root {
-    padding-top: 1px;
-    padding-bottom: 1px;
-    padding-left: 0px;
-    padding-right: 0px;
-    font-size: 12px;
-    border: solid 1px #f0f0f0;
+.compact-table-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  font-size: 12px;
+  line-height: 1.0;
+  overflow: auto;
+  background: #ffffff;
 }
 
-.SortableTableWidget .MuiTableRow-root.selectedRow {
-    background-color: #b5d1ff;
+.compact-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 12px;
+  table-layout: auto;
+  background: #ffffff;
 }
 
-.SortableTableWidget .MuiTableRow-root.currentRow {
-    background-color: #95b1df;
+.compact-table-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #d1d5db;
+  border-bottom: 2px solid #9ca3af;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  height: 20px;
+  line-height: 1.0;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  user-select: none;
+  transition: all 0.15s ease;
 }
 
-.SortCaretSpan {
-    font-size: 16px;
-    color: gray;
-    padding-left: 3px;
-    padding-right: 5px;
-    padding-top: 2px;
+.compact-table-header:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.SortableTableWidget .unitLabel {
-    width: 10px;
-    height: 10px;
-    position: relative;
-    display: inline-block;
+.compact-table-cell {
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f3f4f6;
+  padding: 2px 6px;
+  font-size: 12px;
+  height: 18px;
+  line-height: 1.0;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+  color: #1f2937;
+  transition: background-color 0.1s ease;
 }
 
-.SortableTableWidget .SortableTableCheckbox {
-    padding: 1px;
+.compact-table-row {
+  height: 18px;
+  transition: all 0.1s ease;
+}
+
+.compact-table-row:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.compact-table-row:hover {
+  background-color: #f0f9ff !important;
+  transform: scale(1.002);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.compact-table-row.selected {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+  border-left: 3px solid #3b82f6;
+}
+
+.compact-table-row.current {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  border-left: 3px solid #f59e0b;
+  font-weight: 600;
+}
+
+.sort-indicator {
+  font-size: 12px;
+  margin-left: 1px;
+  color: #6b7280;
+  font-weight: bold;
+  text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+}
+
+.compact-table input[type="checkbox"] {
+  transform: scale(1);
+  margin: 0;
+  padding: 0;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.compact-table-cell > span {
+  font-size: 12px !important;
+  line-height: 1.0 !important;
+}
+
+.compact-table-cell > div {
+  font-size: 12px !important;
+  line-height: 1.0 !important;
+}
+
+/* Unit label styling */
+.compact-table .unitLabel {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  margin-right: 2px;
+  border-radius: 1px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Ensure all nested elements are compact */
+.compact-table * {
+  font-size: 12px !important;
+  line-height: 1.0 !important;
+}
+
+/* Remove borders from last column */
+.compact-table-cell:last-child {
+  border-right: none;
+}
+
+/* Add subtle shadow to the table */
+.compact-table-container {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Improve checkbox styling */
+.compact-table input[type="checkbox"]:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Override any Material-UI styles that might still be present */
+.SortableTableWidget .MuiTableCell-root,
+.SortableTableWidget .MuiTableRow-root,
+.SortableTableWidget .MuiTable-root,
+.SortableTableWidget * {
+  font-size: 12px !important;
+  line-height: 1.0 !important;
+  padding: 2px 6px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+}
+
+/* Scrollbar styling for webkit browsers */
+.compact-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.compact-table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.compact-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.compact-table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
