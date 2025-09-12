@@ -67,197 +67,25 @@ export const FPTimeseriesGraphChild: React.FC<{
     setYRange({ yMin: 0, yMax: 10 }); // Default fallback
   }, [initializeTimeseriesSelection, client]);
 
+  const draw = useMemo(() => {
+    if (!client) return undefined;
+    if (visibleStartTimeSec === undefined) return undefined;
+    if (visibleEndTimeSec === undefined) return undefined;
+    return createDraw({
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      client,
+    });
+  }, [visibleStartTimeSec, visibleEndTimeSec, client]);
+
   useEffect(() => {
     if (!context) return;
-    if (!client) return;
     if (!margins) return;
-    let canceled = false;
-    const draw = async () => {
-      if (canceled) return;
-      // clear the canvas
-      context.clearRect(0, 0, canvasWidth, canvasHeight);
-      if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
-        return;
-
-      // Collect y-limits from all loaded series data
-      let globalYMin: number | undefined = undefined;
-      let globalYMax: number | undefined = undefined;
-
-      // Helper function to update global y-limits
-      const updateYLimits = (values: number[]) => {
-        for (const value of values) {
-          if (!isNaN(value) && isFinite(value)) {
-            if (globalYMin === undefined || value < globalYMin)
-              globalYMin = value;
-            if (globalYMax === undefined || value > globalYMax)
-              globalYMax = value;
-          }
-        }
-      };
-
-      // Load data and collect y-limits for each series
-      const loadedSeriesData: Array<{
-        series: LineSeries | MarkerSeries | IntervalSeries | UniformSeries;
-        data?: any;
-      }> = [];
-
-      for (const s of client.series) {
-        if (s.seriesType === "line" || s.seriesType === "marker") {
-          // Extract visible y values
-          const visibleYValues: number[] = [];
-          for (let i = 0; i < s.t.length; i++) {
-            const time = s.t[i] as number;
-            if (time >= visibleStartTimeSec && time <= visibleEndTimeSec) {
-              visibleYValues.push(s.y[i] as number);
-            }
-          }
-          updateYLimits(visibleYValues);
-          loadedSeriesData.push({ series: s });
-        } else if (s.seriesType === "interval") {
-          // Interval series don't contribute to y-limits
-          loadedSeriesData.push({ series: s });
-        } else if (s.seriesType === "uniform") {
-          try {
-            // Calculate visible timepoints and downsample factor
-            const visibleDuration = visibleEndTimeSec - visibleStartTimeSec;
-            const totalDuration = (s.nTimepoints - 1) / s.samplingFrequencyHz;
-            const visibleTimepoints = Math.ceil(
-              (visibleDuration / totalDuration) * s.nTimepoints,
-            );
-            const downsampleFactor = selectDownsampleFactor(
-              visibleTimepoints,
-              canvasWidth - margins.left - margins.right,
-              s.downsampleFactors,
-            );
-
-            let uniformData;
-            if (downsampleFactor === 1) {
-              uniformData = await loadOriginalData(
-                s,
-                visibleStartTimeSec,
-                visibleEndTimeSec,
-              );
-              // Collect y-limits from all channels
-              for (const channelData of uniformData.data) {
-                updateYLimits(Array.from(channelData));
-              }
-            } else {
-              uniformData = await loadDownsampledData(
-                s,
-                downsampleFactor,
-                visibleStartTimeSec,
-                visibleEndTimeSec,
-              );
-              // Collect y-limits from min/max values of all channels
-              for (const channelMinMaxData of uniformData.data) {
-                updateYLimits(Array.from(channelMinMaxData));
-              }
-            }
-            loadedSeriesData.push({ series: s, data: uniformData });
-          } catch (error) {
-            console.error(
-              "Failed to load uniform series data for y-limits:",
-              error,
-            );
-            loadedSeriesData.push({ series: s });
-          }
-        }
-      }
-
-      if (globalYMin === undefined || globalYMax === undefined) {
-        // If we don't have valid y-limits, we can't update the range
-        return;
-      }
-
-      // Add small padding (5% of range)
-      const range = globalYMax - globalYMin;
-      const padding = range * 0.05;
-      const newYRange = {
-        yMin: globalYMin - padding,
-        yMax: globalYMax + padding,
-      };
-
-      setYRange(newYRange);
-
-      // Set clipping region to graph area
-      context.save();
-      context.beginPath();
-      context.rect(
-        margins.left,
-        margins.top,
-        canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom,
-      );
-      context.clip();
-
-      const timeToPixel = (t: number) => {
-        return (
-          margins.left +
-          ((t - visibleStartTimeSec) /
-            (visibleEndTimeSec - visibleStartTimeSec)) *
-            (canvasWidth - margins.left - margins.right)
-        );
-      };
-      const valueToPixel = (v: number) => {
-        return (
-          canvasHeight -
-          margins.bottom -
-          ((v - (newYRange ? newYRange.yMin : 0)) /
-            ((newYRange ? newYRange.yMax : 10) -
-              (newYRange ? newYRange.yMin : 0))) *
-            (canvasHeight - margins.top - margins.bottom)
-        );
-      };
-
-      // Render all series using loaded data
-      for (const { series: s, data } of loadedSeriesData) {
-        if (s.seriesType === "line") {
-          paintLine(context, s, {
-            visibleStartTimeSec,
-            visibleEndTimeSec,
-            timeToPixel,
-            valueToPixel,
-          });
-        } else if (s.seriesType === "marker") {
-          paintMarker(context, s, {
-            visibleStartTimeSec,
-            visibleEndTimeSec,
-            timeToPixel,
-            valueToPixel,
-          });
-        } else if (s.seriesType === "interval") {
-          paintInterval(context, s, {
-            visibleStartTimeSec,
-            visibleEndTimeSec,
-            timeToPixel,
-          });
-        } else if (s.seriesType === "uniform" && data) {
-          paintUniformWithData(context, s, data, {
-            timeToPixel,
-            valueToPixel,
-          });
-        }
-      }
-
-      // Restore canvas state (removes clipping)
-      context.restore();
-
-      // Paint legend after restoring canvas state (so it's not clipped)
-      paintLegend(context, client, { margins, canvasWidth });
-    };
-    draw();
-    return () => {
-      canceled = true;
-    };
-  }, [
-    context,
-    client,
-    visibleStartTimeSec,
-    visibleEndTimeSec,
-    canvasWidth,
-    canvasHeight,
-    margins,
-  ]);
+    if (!draw) return;
+    draw(context, canvasWidth, canvasHeight, margins, {
+      exporting: false,
+    }).then((yr) => setYRange(yr));
+  }, [context, margins, draw, canvasWidth, canvasHeight]);
 
   const yAxisInfo = useMemo(() => {
     return {
@@ -283,6 +111,7 @@ export const FPTimeseriesGraphChild: React.FC<{
       yAxisInfo={yAxisInfo}
       hideNavToolbar={client?.hideNavToolbar ?? false}
       hideTimeAxisLabels={client?.hideTimeAxisLabels ?? false}
+      drawForExport={draw}
     />
   );
 };
@@ -754,13 +583,15 @@ const paintLegend = (
     };
     const titleRect = {
       x: R.x + margin + symbolWidth + margin,
-      y: y0,
+      y: y0 - 3, // the -3 is just a tweak
       w: legendWidth - margin - margin - symbolWidth - margin,
       h: entryHeight,
     };
 
     context.fillStyle = "black";
     context.font = `${entryFontSize}px Arial`;
+    context.textAlign = "left";
+    context.textBaseline = "middle";
     context.fillText(
       entry.name,
       titleRect.x,
@@ -1029,3 +860,195 @@ class TimeseriesGraphClient {
     );
   }
 }
+
+const createDraw = ({
+  visibleStartTimeSec,
+  visibleEndTimeSec,
+  client,
+}: {
+  visibleStartTimeSec: number;
+  visibleEndTimeSec: number;
+  client: TimeseriesGraphClient;
+}) => {
+  return async (
+    context: CanvasRenderingContext2D,
+    canvasWidth: number,
+    canvasHeight: number,
+    margins: { left: number; right: number; top: number; bottom: number },
+    o: {
+      exporting?: boolean;
+    },
+  ) => {
+    if (!o.exporting) {
+      // clear the canvas
+      context.clearRect(0, 0, canvasWidth, canvasHeight);
+    }
+    if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
+      return;
+
+    // Collect y-limits from all loaded series data
+    let globalYMin: number | undefined = undefined;
+    let globalYMax: number | undefined = undefined;
+
+    // Helper function to update global y-limits
+    const updateYLimits = (values: number[]) => {
+      for (const value of values) {
+        if (!isNaN(value) && isFinite(value)) {
+          if (globalYMin === undefined || value < globalYMin)
+            globalYMin = value;
+          if (globalYMax === undefined || value > globalYMax)
+            globalYMax = value;
+        }
+      }
+    };
+
+    // Load data and collect y-limits for each series
+    const loadedSeriesData: Array<{
+      series: LineSeries | MarkerSeries | IntervalSeries | UniformSeries;
+      data?: any;
+    }> = [];
+
+    for (const s of client.series) {
+      if (s.seriesType === "line" || s.seriesType === "marker") {
+        // Extract visible y values
+        const visibleYValues: number[] = [];
+        for (let i = 0; i < s.t.length; i++) {
+          const time = s.t[i] as number;
+          if (time >= visibleStartTimeSec && time <= visibleEndTimeSec) {
+            visibleYValues.push(s.y[i] as number);
+          }
+        }
+        updateYLimits(visibleYValues);
+        loadedSeriesData.push({ series: s });
+      } else if (s.seriesType === "interval") {
+        // Interval series don't contribute to y-limits
+        loadedSeriesData.push({ series: s });
+      } else if (s.seriesType === "uniform") {
+        try {
+          // Calculate visible timepoints and downsample factor
+          const visibleDuration = visibleEndTimeSec - visibleStartTimeSec;
+          const totalDuration = (s.nTimepoints - 1) / s.samplingFrequencyHz;
+          const visibleTimepoints = Math.ceil(
+            (visibleDuration / totalDuration) * s.nTimepoints,
+          );
+          const downsampleFactor = selectDownsampleFactor(
+            visibleTimepoints,
+            canvasWidth - margins.left - margins.right,
+            s.downsampleFactors,
+          );
+
+          let uniformData;
+          if (downsampleFactor === 1) {
+            uniformData = await loadOriginalData(
+              s,
+              visibleStartTimeSec,
+              visibleEndTimeSec,
+            );
+            // Collect y-limits from all channels
+            for (const channelData of uniformData.data) {
+              updateYLimits(Array.from(channelData));
+            }
+          } else {
+            uniformData = await loadDownsampledData(
+              s,
+              downsampleFactor,
+              visibleStartTimeSec,
+              visibleEndTimeSec,
+            );
+            // Collect y-limits from min/max values of all channels
+            for (const channelMinMaxData of uniformData.data) {
+              updateYLimits(Array.from(channelMinMaxData));
+            }
+          }
+          loadedSeriesData.push({ series: s, data: uniformData });
+        } catch (error) {
+          console.error(
+            "Failed to load uniform series data for y-limits:",
+            error,
+          );
+          loadedSeriesData.push({ series: s });
+        }
+      }
+    }
+
+    if (globalYMin === undefined || globalYMax === undefined) {
+      // If we don't have valid y-limits, we can't update the range
+      return;
+    }
+
+    // Add small padding (5% of range)
+    const range = globalYMax - globalYMin;
+    const padding = range * 0.05;
+    const yRange = {
+      yMin: globalYMin - padding,
+      yMax: globalYMax + padding,
+    };
+
+    // Set clipping region to graph area
+    context.save();
+    context.beginPath();
+    context.rect(
+      margins.left,
+      margins.top,
+      canvasWidth - margins.left - margins.right,
+      canvasHeight - margins.top - margins.bottom,
+    );
+    context.clip();
+
+    const timeToPixel = (t: number) => {
+      return (
+        margins.left +
+        ((t - visibleStartTimeSec) /
+          (visibleEndTimeSec - visibleStartTimeSec)) *
+          (canvasWidth - margins.left - margins.right)
+      );
+    };
+    const valueToPixel = (v: number) => {
+      return (
+        canvasHeight -
+        margins.bottom -
+        ((v - (yRange ? yRange.yMin : 0)) /
+          ((yRange ? yRange.yMax : 10) - (yRange ? yRange.yMin : 0))) *
+          (canvasHeight - margins.top - margins.bottom)
+      );
+    };
+
+    // Render all series using loaded data
+    for (const { series: s, data } of loadedSeriesData) {
+      if (s.seriesType === "line") {
+        paintLine(context, s, {
+          visibleStartTimeSec,
+          visibleEndTimeSec,
+          timeToPixel,
+          valueToPixel,
+        });
+      } else if (s.seriesType === "marker") {
+        paintMarker(context, s, {
+          visibleStartTimeSec,
+          visibleEndTimeSec,
+          timeToPixel,
+          valueToPixel,
+        });
+      } else if (s.seriesType === "interval") {
+        paintInterval(context, s, {
+          visibleStartTimeSec,
+          visibleEndTimeSec,
+          timeToPixel,
+        });
+      } else if (s.seriesType === "uniform" && data) {
+        paintUniformWithData(context, s, data, {
+          timeToPixel,
+          valueToPixel,
+        });
+      }
+    }
+
+    // Restore canvas state (removes clipping)
+    context.restore();
+
+    // Paint legend after restoring canvas state (so it's not clipped)
+    paintLegend(context, client, { margins, canvasWidth });
+
+    return yRange;
+  };
+};

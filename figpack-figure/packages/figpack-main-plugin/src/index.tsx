@@ -198,7 +198,6 @@ const createTimeseriesSelectionContext = (): FPViewContext => {
   const listeners: ((newValue: TimeseriesSelectionState) => void)[] = [];
 
   const dispatch = (action: any) => {
-    console.log("TimeseriesSelectionContext dispatch", action);
     stateRef.current = timeseriesSelectionReducer(stateRef.current, action);
     listeners.forEach((callback) => {
       callback(stateRef.current);
