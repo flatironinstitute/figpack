@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "figpack"
-copyright = "2025, Jeremy Magland"
+# copyright = "2025, Jeremy Magland"
 author = "Jeremy Magland"
-release = "0.2.18"
+release = "0.2.19"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
