@@ -25,6 +25,8 @@ help:
 		python devel/generate_spike_sorting_tutorial_examples.py; \
 		echo "Generating extensions tutorial examples..."; \
 		python devel/generate_extensions_tutorial_examples.py; \
+		echo "Generating NWB tutorial examples..."; \
+		python devel/generate_nwb_tutorial_examples.py; \
 	fi
 
 # Custom targets for development

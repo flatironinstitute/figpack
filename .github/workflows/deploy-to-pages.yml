@@ -67,6 +67,10 @@ jobs:
           npm install
           npm run build
           pip install -e .
+          cd ../figpack_nwb
+          npm install
+          npm run build
+          pip install -e .
 
       - name: Build documentation
         run: |
@@ -75,6 +79,7 @@ jobs:
           python devel/generate_basic_views_tutorial_examples.py
           python devel/generate_spike_sorting_tutorial_examples.py
           python devel/generate_extensions_tutorial_examples.py
+          python devel/generate_nwb_tutorial_examples.py
 
       - name: Build extension wheels
         run: ./scripts/build-extension-wheels.sh docs/_build/html/wheels
