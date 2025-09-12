@@ -19,6 +19,7 @@ from .UnitMetricsGraph import (
     UnitMetricsGraphMetric,
     UnitMetricsGraphUnit,
 )
+from .SortingCuration import SortingCuration
 
 __all__ = [
     "Autocorrelograms",
@@ -40,4 +41,5 @@ __all__ = [
     "UnitMetricsGraph",
     "UnitMetricsGraphMetric",
     "UnitMetricsGraphUnit",
+    "SortingCuration",
 ]

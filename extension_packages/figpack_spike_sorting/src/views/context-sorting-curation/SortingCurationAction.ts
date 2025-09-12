@@ -41,6 +41,11 @@ export interface ReopenCurationCurationAction {
   type: "REOPEN_CURATION";
 }
 
+export interface SetLabelChoicesAction {
+  type: "SET_LABEL_CHOICES";
+  labelChoices: string[];
+}
+
 type SortingCurationAction =
   | AddUnitLabelCurationAction
   | ToggleUnitLabelCurationAction
@@ -49,6 +54,7 @@ type SortingCurationAction =
   | UnmergeUnitsCurationAction
   | SetCurationCurationAction
   | CloseCurationCurationAction
-  | ReopenCurationCurationAction;
+  | ReopenCurationCurationAction
+  | SetLabelChoicesAction;
 
 export default SortingCurationAction;

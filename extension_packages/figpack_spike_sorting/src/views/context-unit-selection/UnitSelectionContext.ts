@@ -221,11 +221,17 @@ export const useSelectedUnitIds = () => {
     [unitSelection.orderedUnitIds, unitSelection.restrictedUnitIds],
   );
 
+  const selectedUnitIdsArray = useMemo(
+    () => unitSelection.orderedUnitIds.filter((x) => unitSelection.selectedUnitIds.has(x)),
+    [unitSelection.orderedUnitIds, unitSelection.selectedUnitIds],
+  );
+
   return {
     selectedUnitIds: unitSelection.selectedUnitIds,
     currentUnitId: unitSelection.currentUnitId,
     orderedUnitIds,
     allOrderedUnitIds: unitSelection.orderedUnitIds,
+    selectedUnitIdsArray,
     visibleUnitIds: unitSelection.visibleUnitIds,
     primarySortRule:
       unitSelection.sortRules && unitSelection.sortRules.length > 0

@@ -1,19 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Table, TableBody, TableCell, TableContainer } from "@mui/material";
-import { FunctionComponent, JSX, useCallback, useMemo } from "react";
+import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import {
   allUnitSelectionState,
-  voidClickHandler,
+  SortingRule
 } from "../context-unit-selection";
 import "./SortableTableWidget.css";
-import SortableTableWidgetContentRow from "./SortableTableWidgetContentRow";
-import SortableTableWidgetHeaderRow, {
-  sorterCallbackWrapper,
-} from "./SortableTableWidgetHeader";
 import {
-  ColsDict,
   SortableTableProps,
-  SortableTableWidgetRow,
+  SortableTableWidgetColumn,
+  SortableTableWidgetRow
 } from "./SortableTableWidgetTypes";
 
 const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
@@ -30,11 +25,15 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
     selectionDisabled,
     hideSelectionColumn,
   } = props;
+
+  const [sortRule, setSortRule] = useState<SortingRule | undefined>(primarySortRule);
+
   const _visibleUnitIds = useMemo(() => {
     return visibleUnitIds && visibleUnitIds.length > 0
       ? visibleUnitIds
       : orderedUnitIds;
   }, [visibleUnitIds, orderedUnitIds]);
+
   const allUnitSelectionStatus = useMemo(
     () =>
       allUnitSelectionState({
@@ -44,99 +43,124 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
       }),
     [selectedUnitIds, orderedUnitIds, _visibleUnitIds],
   );
-  const rowSorter = useCallback(
-    (colsDict: ColsDict) => sorterCallbackWrapper(rows, colsDict),
-    [rows],
-  );
 
-  // useEffect(() => {
-  //     if (_visibleUnitIds.some(id => !rows.has(id))) throw Error('Rows missing from row dict (1)')
-  // }, [rows, _visibleUnitIds])
+  const handleHeaderClick = useCallback((columnName: string, column: SortableTableWidgetColumn) => {
+    const newSortAscending = sortRule?.columnName === columnName ? !sortRule?.sortAscending : true;
+    const newSortRule: SortingRule = {
+      columnName,
+      sortAscending: newSortAscending,
+    };
+    setSortRule(newSortRule);
+    
+    if (selectionDispatch) {
+      selectionDispatch({
+        type: "UPDATE_SORT_FIELDS",
+        newSortField: columnName,
+        ascending: newSortAscending,
+      });
+    }
+  }, [sortRule, selectionDispatch]);
 
-  const header = useMemo(() => {
-    return (
-      <SortableTableWidgetHeaderRow
-        columns={columns}
-        primarySortRule={primarySortRule}
-        allUnitSelectionStatus={allUnitSelectionStatus}
-        rowSorterCallback={rowSorter}
-        selectionDispatch={selectionDispatch}
-        selectionDisabled={selectionDisabled}
-        hideSelectionColumn={hideSelectionColumn}
-      />
-    );
-  }, [
-    columns,
-    primarySortRule,
-    allUnitSelectionStatus,
-    rowSorter,
-    selectionDispatch,
-    selectionDisabled,
-    hideSelectionColumn,
-  ]);
+  const handleSelectAll = useCallback(() => {
+    if (selectionDispatch) {
+      if (allUnitSelectionStatus === "all") {
+        selectionDispatch({ type: "DESELECT_ALL" });
+      } else {
+        selectionDispatch({ type: "TOGGLE_SELECT_ALL" });
+      }
+    }
+  }, [allUnitSelectionStatus, selectionDispatch]);
 
-  const _contentFieldsByRow = useMemo(() => {
-    const contentDict: { [key: string]: JSX.Element[] } = {};
-    rows.forEach((row) => {
-      const columnValues = columns.map((column) => (
-        <TableCell key={column.columnName}>
-          <div title={column.tooltip}>
-            {column.dataElement(row.data[column.columnName].value)}
-          </div>
-        </TableCell>
-      ));
-      contentDict[row.rowId] = columnValues;
-    });
-    return contentDict;
-  }, [rows, columns]);
-
-  // This subselection could be combined into the one below it, but this version seems to be working faster,
-  // even though it should make no difference. It's probably all in my head, but I'm leaving it.
-  const visibleRows = useMemo(() => {
-    if (!rows) return [];
-    const realizedRows = _visibleUnitIds
+  const sortedVisibleRows = useMemo(() => {
+    const visibleRows = _visibleUnitIds
       .map((id) => rows.get(id))
-      .filter((r) => r !== undefined);
-    if (realizedRows.some((r) => r === undefined))
-      throw Error("Rows missing from row dict (2)");
-    return realizedRows as any as SortableTableWidgetRow[];
-  }, [_visibleUnitIds, rows]);
+      .filter((r) => r !== undefined) as SortableTableWidgetRow[];
 
-  // TODO: Is this still rerendering too much/too often?
-  const _projectedRows = useMemo(() => {
-    return visibleRows.map((row) => {
-      return (
-        <SortableTableWidgetContentRow
-          key={row.rowId}
-          rowId={row.rowId}
-          selected={selectedUnitIds.has(row.rowId)}
-          current={currentUnitId === row.rowId}
-          onClick={
-            !hideSelectionColumn
-              ? row.checkboxFn || voidClickHandler
-              : undefined
-          }
-          isDisabled={selectionDisabled || false}
-          contentRepository={_contentFieldsByRow}
-        />
-      );
+    if (!sortRule) return visibleRows;
+
+    const column = columns.find(c => c.columnName === sortRule.columnName);
+    if (!column) return visibleRows;
+
+    return [...visibleRows].sort((a, b) => {
+      const aValue = a.data[sortRule.columnName]?.sortValue;
+      const bValue = b.data[sortRule.columnName]?.sortValue;
+      const result = column.sort(aValue, bValue);
+      return sortRule.sortAscending ? result : -result;
     });
-  }, [
-    selectedUnitIds,
-    currentUnitId,
-    visibleRows,
-    _contentFieldsByRow,
-    selectionDisabled,
-    hideSelectionColumn,
-  ]);
+  }, [_visibleUnitIds, rows, sortRule, columns]);
+
+  const getSortIndicator = (columnName: string) => {
+    if (sortRule?.columnName !== columnName) return "";
+    return sortRule.sortAscending ? "↑" : "↓";
+  };
 
   return (
-    <TableContainer style={height !== undefined ? { maxHeight: height } : {}}>
-      <Table stickyHeader className="SortableTableWidget">
-        {header}
-        <TableBody>{_projectedRows}</TableBody>
-      </Table>
-    </TableContainer>
+    <div 
+      className="compact-table-container" 
+      style={{ height: height ? `${height}px` : "100%", overflow: "auto" }}
+    >
+      <table className="compact-table">
+        <thead>
+          <tr>
+            {!hideSelectionColumn && (
+              <th className="compact-table-header">
+                <input
+                  type="checkbox"
+                  checked={allUnitSelectionStatus === "all"}
+                  ref={(input) => {
+                    if (input) input.indeterminate = allUnitSelectionStatus === "partial";
+                  }}
+                  onChange={handleSelectAll}
+                  disabled={selectionDisabled}
+                />
+              </th>
+            )}
+            {columns.map((column) => (
+              <th
+                key={column.columnName}
+                className="compact-table-header"
+                onClick={() => handleHeaderClick(column.columnName, column)}
+                title={column.tooltip}
+                style={{ cursor: "pointer" }}
+              >
+                {column.label}
+                <span className="sort-indicator">{getSortIndicator(column.columnName)}</span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {sortedVisibleRows.map((row) => (
+            <tr
+              key={row.rowId}
+              className={`compact-table-row ${
+                selectedUnitIds.has(row.rowId) ? "selected" : ""
+              } ${currentUnitId === row.rowId ? "current" : ""}`}
+            >
+              {!hideSelectionColumn && (
+                <td className="compact-table-cell">
+                  <input
+                    type="checkbox"
+                    checked={selectedUnitIds.has(row.rowId)}
+                    onChange={(e) => {
+                      if (row.checkboxFn) {
+                        row.checkboxFn(e as any);
+                      }
+                    }}
+                    disabled={selectionDisabled}
+                  />
+                </td>
+              )}
+              {columns.map((column) => (
+                <td key={column.columnName} className="compact-table-cell">
+                  {column.dataElement(row.data[column.columnName]?.value)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 

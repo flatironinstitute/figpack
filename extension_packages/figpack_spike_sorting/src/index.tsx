@@ -18,6 +18,8 @@ import { FPRasterPlot } from "./views/FPRasterPlot";
 import { FPSpikeAmplitudes } from "./views/FPSpikeAmplitudes";
 import { FPUnitLocations } from "./views/FPUnitLocations";
 import { FPUnitMetricsGraph } from "./views/FPUnitMetricsGraph";
+import { FPSortingCuration } from "./views/FPSortingCuration";
+import { sortingCurationReducer } from "./views/context-sorting-curation";
 
 // Declare global types for figpack extension system
 export { };
@@ -81,6 +83,34 @@ const createUnitSelectionContext = (): FPViewContext => {
     createNew: createUnitSelectionContext,
   };
 };
+
+const createSortingCurationContext = (): FPViewContext => {
+  let state = {};
+  const listeners: ((newValue: any) => void)[] = [];
+
+  const dispatch = (action: any) => {
+    console.log('--- dispatching', action);
+    state = sortingCurationReducer(state, action);
+    listeners.forEach((callback) => {
+      callback(state);
+    });
+  };
+
+  const onChange = (callback: (newValue: any) => void) => {
+    listeners.push(callback);
+    return () => {
+      const idx = listeners.indexOf(callback);
+      if (idx >= 0) listeners.splice(idx, 1);
+    };
+  };
+
+  return {
+    state,
+    dispatch,
+    onChange,
+    createNew: createSortingCurationContext,
+  };
+}
 
 // // Register the figpack extension
 // window.figpackExtensions = window.figpackExtensions || {};
@@ -235,6 +265,7 @@ const registerExtension = () => {
     { name: "spike_sorting.UnitLocations", component: FPUnitLocations },
     { name: "spike_sorting.UnitMetricsGraph", component: FPUnitMetricsGraph },
     { name: "spike_sorting.UnitsTable", component: FPUnitsTable },
+    { name: "spike_sorting.SortingCuration", component: FPSortingCuration },
   ]
 
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any).figpack_p1.registerFPViewComponent;
@@ -249,6 +280,7 @@ const registerExtension = () => {
 
   registerFPViewContextCreator({ name: "unitSelection", create: createUnitSelectionContext });
   registerFPViewContextCreator({ name: "unitMetricSelection", create: createUnitMetricSelectionContext });
+  registerFPViewContextCreator({ name: "sortingCuration", create: createSortingCurationContext });
 
   const registerFPExtension: (e: { name: string }) => void = (window as any).figpack_p1.registerFPExtension;
   registerFPExtension({ name: "figpack-spike-sorting" });
