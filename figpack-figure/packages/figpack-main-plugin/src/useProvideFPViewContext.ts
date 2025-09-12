@@ -7,11 +7,10 @@ const useProvideFPViewContext = (context: FPViewContext) => {
     const unsubscribe = context.onChange((newState) => {
       setInternalState(newState);
     });
-    setInternalState(context.state);
     return () => {
       unsubscribe();
     };
-  }, [context.state, context.onChange]);
+  }, [context.onChange]);
   if (internalState === undefined) {
     return { state: undefined, dispatch: undefined };
   }
