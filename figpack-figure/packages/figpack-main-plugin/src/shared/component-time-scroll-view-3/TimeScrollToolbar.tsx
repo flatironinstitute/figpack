@@ -20,6 +20,7 @@ type Props = {
   onInteractionModeChange: (mode: InteractionMode) => void;
   currentTime?: number;
   onZoomToFit?: () => void;
+  onExport?: () => void;
 };
 
 const formatTime = (timeSec: number): string => {
@@ -39,6 +40,7 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
   onInteractionModeChange,
   currentTime,
   onZoomToFit,
+  onExport,
 }) => {
   const { zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange();
 
@@ -259,6 +261,44 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
         >
           🏠
         </button>
+        {onExport && (
+          <>
+            <div
+              style={{
+                width: "1px",
+                height: "20px",
+                backgroundColor: "#dee2e6",
+                margin: "0 4px",
+              }}
+            />
+            <button
+              onClick={onExport}
+              style={{
+                padding: "6px 10px",
+                border: "1px solid #ced4da",
+                borderRadius: "4px",
+                backgroundColor: "#ffffff",
+                color: "#495057",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "500",
+                transition: "all 0.15s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+              title="Export as SVG"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e9ecef";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#ffffff";
+              }}
+            >
+              📤 Export
+            </button>
+          </>
+        )}
       </div>
 
       {/* Right side - Time display */}

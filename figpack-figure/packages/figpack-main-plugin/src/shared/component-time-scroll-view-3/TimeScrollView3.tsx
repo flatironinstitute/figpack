@@ -23,6 +23,7 @@ import TimeScrollToolbar, {
 } from "./TimeScrollToolbar";
 import CustomActionsToolbar from "./CustomActionsToolbar";
 import suppressWheelScroll from "./supressWheelScroll";
+import ExportDialog from "./ExportDialog";
 
 type Props = {
   width: number;
@@ -52,6 +53,13 @@ type Props = {
   onCanvasClick?: (x: number, y: number) => void;
   hideNavToolbar?: boolean;
   hideTimeAxisLabels?: boolean;
+  drawForExport?: (
+    context: CanvasRenderingContext2D,
+    canvasWidth: number,
+    canvasHeight: number,
+    margins: { top: number; bottom: number; left: number; right: number },
+    o: { exporting?: boolean },
+  ) => Promise<{ yMin: number; yMax: number } | undefined>;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -72,6 +80,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   onCanvasClick,
   hideNavToolbar = false,
   hideTimeAxisLabels = false,
+  drawForExport,
 }) => {
   const {
     visibleStartTimeSec,
@@ -205,6 +214,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   const divRef = useRef<HTMLDivElement | null>(null);
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode>("pan");
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const {
     isViewClicked,
@@ -271,6 +281,14 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       setVisibleTimeRange(startTimeSec, endTimeSec);
     }
   }, [startTimeSec, endTimeSec, setVisibleTimeRange]);
+
+  const handleExportClick = useCallback(() => {
+    setIsExportDialogOpen(true);
+  }, []);
+
+  const handleCloseExportDialog = useCallback(() => {
+    setIsExportDialogOpen(false);
+  }, []);
 
   const selectionLayer = useMemo(() => {
     return (
@@ -348,6 +366,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         onInteractionModeChange={setInteractionMode}
         currentTime={currentTime}
         onZoomToFit={handleZoomToFit}
+        onExport={drawForExport ? handleExportClick : undefined}
       />
     );
   }, [
@@ -356,6 +375,8 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     setInteractionMode,
     currentTime,
     handleZoomToFit,
+    drawForExport,
+    handleExportClick,
   ]);
 
   const customActionsToolbar = useMemo(() => {
@@ -380,6 +401,18 @@ const TimeScrollView3: FunctionComponent<Props> = ({
           {timeScrollToolbar}
           {customActionsToolbar}
         </div>
+      )}
+      {drawForExport && (
+        <ExportDialog
+          isOpen={isExportDialogOpen}
+          onClose={handleCloseExportDialog}
+          drawForExport={drawForExport}
+          visibleStartTimeSec={visibleStartTimeSec || 0}
+          visibleEndTimeSec={visibleEndTimeSec || 0}
+          yAxisInfo={yAxisInfo}
+          gridlineOpts={gridlineOpts}
+          hideTimeAxisLabels={hideTimeAxisLabels}
+        />
       )}
     </div>
   );
