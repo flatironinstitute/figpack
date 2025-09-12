@@ -4,7 +4,7 @@ import base64
 
 import kachery as ka
 import figpack.views as fpv
-from figpack_franklab import TrackAnimation
+import figpack_franklab.views as fpf
 
 
 def decode_base64_to_numpy(data_b64, dtype, shape):
@@ -127,7 +127,7 @@ def process_track_animation(data):
     print(f"ymax: {metadata['ymax']}")
     print(f"ymin: {metadata['ymin']}")
 
-    X = TrackAnimation(
+    X = fpf.TrackAnimation(
         bin_height=decoded_pos["bin_height"],
         bin_width=decoded_pos["bin_width"],
         frame_bounds=decoded_pos["frame_bounds"],

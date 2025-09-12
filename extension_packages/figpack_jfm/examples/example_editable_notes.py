@@ -1,8 +1,8 @@
-from figpack_jfm import EditableNotes
+import figpack_jfm.views as fpj
 
 
 def main():
-    v = EditableNotes(initial_text="Hello, this is an editable note.")
+    v = fpj.EditableNotes(initial_text="Hello, this is an editable note.")
     v.show(title="Editable Notes Example", open_in_browser=True)
 
 
