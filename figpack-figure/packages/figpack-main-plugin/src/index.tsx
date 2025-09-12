@@ -192,20 +192,21 @@ const initialTimeseriesSelectionState: TimeseriesSelectionState = {
 };
 
 const createTimeseriesSelectionContext = (): FPViewContext => {
-  let state: TimeseriesSelectionState = initialTimeseriesSelectionState;
+  const stateRef: { current: TimeseriesSelectionState } = {
+    current: initialTimeseriesSelectionState,
+  };
   const listeners: ((newValue: TimeseriesSelectionState) => void)[] = [];
 
   const dispatch = (action: any) => {
     console.log("TimeseriesSelectionContext dispatch", action);
-    state = timeseriesSelectionReducer(state, action);
+    stateRef.current = timeseriesSelectionReducer(stateRef.current, action);
     listeners.forEach((callback) => {
-      callback(state);
+      callback(stateRef.current);
     });
   };
 
   const onChange = (callback: (newValue: TimeseriesSelectionState) => void) => {
     listeners.push(callback);
-    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
@@ -213,7 +214,7 @@ const createTimeseriesSelectionContext = (): FPViewContext => {
   };
 
   return {
-    state,
+    stateRef,
     dispatch,
     onChange,
     createNew: createTimeseriesSelectionContext,
