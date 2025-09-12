@@ -31,19 +31,18 @@ declare global {
 }
 
 const createUnitMetricSelectionContext = (): FPViewContext => {
-  let state: UnitMetricSelection = {};
+  const stateRef: { current: UnitMetricSelection } = { current: {} };
   const listeners: ((newValue: UnitMetricSelection) => void)[] = [];
 
   const dispatch = (action: any) => {
-    state = unitMetricSelectionReducer(state, action);
+    stateRef.current = unitMetricSelectionReducer(stateRef.current, action);
     listeners.forEach((callback) => {
-      callback(state);
+      callback(stateRef.current);
     });
   };
 
   const onChange = (callback: (newValue: UnitMetricSelection) => void) => {
     listeners.push(callback);
-    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
@@ -51,7 +50,7 @@ const createUnitMetricSelectionContext = (): FPViewContext => {
   };
 
   return {
-    state,
+    stateRef,
     dispatch,
     onChange,
     createNew: createUnitMetricSelectionContext,
@@ -59,19 +58,18 @@ const createUnitMetricSelectionContext = (): FPViewContext => {
 };
 
 const createUnitSelectionContext = (): FPViewContext => {
-  let state: UnitSelection = defaultUnitSelection;
+  const stateRef: {current: UnitSelection} = {current: defaultUnitSelection};
   const listeners: ((newValue: UnitSelection) => void)[] = [];
 
   const dispatch = (action: any) => {
-    state = unitSelectionReducer(state, action);
+    stateRef.current = unitSelectionReducer(stateRef.current, action);
     listeners.forEach((callback) => {
-      callback(state);
+      callback(stateRef.current);
     });
   };
 
   const onChange = (callback: (newValue: UnitSelection) => void) => {
     listeners.push(callback);
-    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
@@ -79,7 +77,7 @@ const createUnitSelectionContext = (): FPViewContext => {
   };
 
   return {
-    state,
+    stateRef,
     dispatch,
     onChange,
     createNew: createUnitSelectionContext,
@@ -87,20 +85,18 @@ const createUnitSelectionContext = (): FPViewContext => {
 };
 
 const createSortingCurationContext = (): FPViewContext => {
-  let state = {};
+  const stateRef: { current: any } = { current: {} };
   const listeners: ((newValue: any) => void)[] = [];
 
   const dispatch = (action: any) => {
-    console.log('--- dispatching', action);
-    state = sortingCurationReducer(state, action);
+    stateRef.current = sortingCurationReducer(stateRef.current, action);
     listeners.forEach((callback) => {
-      callback(state);
+      callback(stateRef.current);
     });
   };
 
   const onChange = (callback: (newValue: any) => void) => {
     listeners.push(callback);
-    callback(state); // Call immediately with current state
     return () => {
       const idx = listeners.indexOf(callback);
       if (idx >= 0) listeners.splice(idx, 1);
@@ -108,12 +104,12 @@ const createSortingCurationContext = (): FPViewContext => {
   };
 
   return {
-    state,
+    stateRef,
     dispatch,
     onChange,
     createNew: createSortingCurationContext,
   };
-}
+};
 
 // // Register the figpack extension
 // window.figpackExtensions = window.figpackExtensions || {};

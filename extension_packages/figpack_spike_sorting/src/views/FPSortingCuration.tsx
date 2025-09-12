@@ -48,7 +48,6 @@ const FPSortingCurationChild: FunctionComponent<Props> = ({
   const { sortingCuration, sortingCurationDispatch } = useSortingCuration();
 
   useEffect(() => {
-    console.log('--- setting savedSortingCuration', savedSortingCuration);
     sortingCurationDispatch({
       type: "SET_CURATION",
       curation: savedSortingCuration || {},
@@ -140,8 +139,6 @@ export const ProvideSortingCurationContext: React.FC<{
   if (!dispatch) {
     return <>Waiting for context...</>;
   }
-
-  console.log('---- x', state);
 
   return (
     <SortingCurationContext.Provider

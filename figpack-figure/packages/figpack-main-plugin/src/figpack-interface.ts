@@ -100,7 +100,7 @@ export type DatasetDataType =
   | Uint32Array;
 
 export type FPViewContext = {
-  state: any;
+  stateRef: { current: any };
   dispatch: (action: any) => void;
   onChange: (callback: (newValue: any) => void) => () => void;
   createNew: () => FPViewContext;
