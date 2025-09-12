@@ -16,13 +16,13 @@ figpack extensions install --upgrade figpack_nwb
 The Plane Segmentation view displays calcium imaging data with region of interest (ROI) segmentation from NWB files.
 
 ```python
-from figpack_nwb import PlaneSegmentation
+import figpack_nwb.views as fpn
 
 # Load plane segmentation data from a remote NWB file
 nwb_url = "https://api.dandiarchive.org/api/assets/4660dd15-93b2-4e64-88b1-ba92871989b4/download/"
 path = "/processing/ophys/ImageSegmentation/PlaneSegmentation"
 
-view = PlaneSegmentation(nwb=nwb_url, path=path)
+view = fpn.PlaneSegmentation(nwb=nwb_url, path=path)
 view.show(title="Plane Segmentation Example", open_in_browser=True)
 ```
 
