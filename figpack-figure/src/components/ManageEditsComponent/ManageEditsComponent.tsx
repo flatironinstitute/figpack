@@ -47,7 +47,7 @@ const ManageEditsComponent: React.FC<{
   return (
     <>
       <div className="manage-edits-view">
-        <span className="edits-notification">You have unsaved changes</span>
+        <span className="edits-notification">Unsaved changes</span>
         <button
           onClick={handleSaveClick}
           className="save-changes-button"
@@ -75,8 +75,7 @@ const ManageEditsComponent: React.FC<{
         />
       ) : (
         <div className="no-upload-method-warning">
-          No upload method available. You can only save changes when running on
-          localhost or when the figure is managed via Figpack Cloud.
+          No upload method available.
         </div>
       )}
     </>

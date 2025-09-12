@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import react from "@vitejs/plugin-react";
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -8,6 +10,7 @@ export default defineConfig(({ command }) => {
   const isServe = command === 'serve';
   
   return {
+    plugins: [react(), cssInjectedByJsPlugin()],
     root: __dirname,
     publicDir: 'figpack_nwb', // Serve files from the figpack_nwb directory
     server: {

@@ -401,3 +401,66 @@ view.show(title="Spike Sorting Dashboard", open_in_browser=True)
 ```
 
 <iframe src="./spike_sorting_tutorial_dashboard/index.html?embedded=1" width="100%" height="450" frameborder="0"></iframe>
+
+## Sorting Curation
+
+The Sorting Curation view provides an interactive interface for manually curating spike sorting results. This allows you to label units as "good", "noise", "mua" (multi-unit activity), or other custom labels to assess the quality of the sorting:
+
+```python
+from typing import List
+import spikeinterface.extractors as se
+import figpack_spike_sorting.views as ssv
+import figpack.views as vv
+
+# Generate synthetic data
+recording, sorting = se.toy_example(
+    num_units=18, duration=300, seed=0, num_segments=1
+)
+
+# Create a units table for the left side
+columns: List[ssv.UnitsTableColumn] = [
+    ssv.UnitsTableColumn(key="unitId", label="Unit", dtype="int"),
+]
+rows: List[ssv.UnitsTableRow] = []
+for unit_id in sorting.get_unit_ids():
+    rows.append(
+        ssv.UnitsTableRow(
+            unit_id=unit_id,
+            values={
+                "unitId": unit_id,
+            },
+        )
+    )
+
+units_table = ssv.UnitsTable(
+    columns=columns,
+    rows=rows,
+)
+
+# Create autocorrelograms for the right side
+autocorrelograms = ssv.Autocorrelograms.from_sorting(sorting)
+
+# Create the sorting curation view
+curation_view = ssv.SortingCuration(default_label_options=["mua", "good", "noise"])
+
+# Combine views in a layout
+left_panel = vv.Box(
+    direction="vertical",
+    items=[
+        vv.LayoutItem(view=units_table, title="Units Table"),
+        vv.LayoutItem(view=curation_view, title="Sorting Curation"),
+    ],
+)
+
+# Create splitter with units table and curation on left, autocorrelograms on right
+view = vv.Splitter(
+    direction="horizontal",
+    item1=vv.LayoutItem(view=left_panel, max_size=800, title="Units"),
+    item2=vv.LayoutItem(view=autocorrelograms, title="Autocorrelograms"),
+    split_pos=0.25,  # 25% for the left panel, 75% for autocorrelograms
+)
+
+view.show(title="Sorting Curation Example", open_in_browser=True)
+```
+
+<iframe src="./spike_sorting_tutorial_sorting_curation/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
