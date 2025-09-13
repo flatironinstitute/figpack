@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Export as SVG for Timeseries Graph, Spectrogram, Multichannel Timeseries
 
 ## [0.2.19] - 2025-09-12
 

@@ -160,7 +160,7 @@ export const paintSpectrogramNonUniform = (
     visibleMaxValue: number;
     timeToPixel: (t: number) => number;
     frequencyToPixel: (f: number) => number;
-    frequencies: Float32Array;
+    frequencies: number[];
     plotWidth: number;
     plotHeight: number;
     plotLeft: number;

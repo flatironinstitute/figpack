@@ -221,107 +221,37 @@ const FPMultiChannelTimeseriesChild: React.FC<{
     actualVerticalSpacing,
   ]);
 
+  const draw = useMemo(() => {
+    if (visibleStartTimeSec === undefined) return undefined;
+    if (visibleEndTimeSec === undefined) return undefined;
+    if (!visibleData || !client) return undefined;
+    if (!yRange) return undefined;
+
+    return createDrawFunction({
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      visibleData,
+      yRange,
+      actualVerticalSpacing,
+      nChannels: client.nChannels,
+    });
+  }, [
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    visibleData,
+    client,
+    yRange,
+    actualVerticalSpacing,
+  ]);
+
   useEffect(() => {
+    if (!draw) return;
     if (!context) return;
+    if (canvasWidth <= 0) return;
+    if (canvasHeight <= 0) return;
     if (!margins) return;
-    if (!visibleData || !client) return;
-    let canceled = false;
 
-    const draw = async () => {
-      if (canceled) return;
-      // Clear the canvas
-      context.clearRect(0, 0, canvasWidth, canvasHeight);
-      if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
-        return;
-
-      // Set clipping region to graph area
-      context.save();
-      context.beginPath();
-      context.rect(
-        margins.left,
-        margins.top,
-        canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom,
-      );
-      context.clip();
-
-      const timeToPixel = (t: number) => {
-        return (
-          margins.left +
-          ((t - visibleStartTimeSec) /
-            (visibleEndTimeSec - visibleStartTimeSec)) *
-            (canvasWidth - margins.left - margins.right)
-        );
-      };
-
-      const valueToPixel = (v: number) => {
-        return (
-          canvasHeight -
-          margins.bottom -
-          ((v - (yRange ? yRange.yMin : 0)) /
-            ((yRange ? yRange.yMax : 10) - (yRange ? yRange.yMin : 0))) *
-            (canvasHeight - margins.top - margins.bottom)
-        );
-      };
-
-      // Draw each channel using appropriate rendering mode
-      if (visibleData.isDownsampled) {
-        // Use downsampled rendering with vertical line segments
-        for (
-          let channelIndex = 0;
-          channelIndex < visibleData.data.length;
-          channelIndex++
-        ) {
-          const channelData = visibleData.data[channelIndex];
-          const channelOffset = channelIndex * actualVerticalSpacing;
-          const color = colorForUnitId(channelIndex);
-
-          paintDownsampledChannelLine(context, {
-            startTimeSec: visibleData.startTimeSec,
-            samplingFrequency: visibleData.samplingFrequency,
-            length: visibleData.length,
-            minMaxData: channelData,
-            channelOffset,
-            color,
-            visibleStartTimeSec,
-            visibleEndTimeSec,
-            timeToPixel,
-            valueToPixel,
-          });
-        }
-      } else {
-        // Use original rendering with connected lines
-        for (
-          let channelIndex = 0;
-          channelIndex < client.nChannels;
-          channelIndex++
-        ) {
-          const channelOffset = channelIndex * actualVerticalSpacing;
-          const color = colorForUnitId(channelIndex);
-
-          paintOriginalChannelLine(context, {
-            startTimeSec: visibleData.startTimeSec,
-            samplingFrequency: visibleData.samplingFrequency,
-            length: visibleData.length,
-            dataArray: visibleData.data[channelIndex],
-            channelOffset,
-            color,
-            visibleStartTimeSec,
-            visibleEndTimeSec,
-            timeToPixel,
-            valueToPixel,
-          });
-        }
-      }
-
-      // Restore canvas state (removes clipping)
-      context.restore();
-    };
-
-    draw();
-    return () => {
-      canceled = true;
-    };
+    draw(context, canvasWidth, canvasHeight, margins, { exporting: false });
   }, [
     context,
     visibleData,
@@ -358,6 +288,7 @@ const FPMultiChannelTimeseriesChild: React.FC<{
       }}
       yAxisInfo={yAxisInfo}
       customToolbarActions={customToolbarActions}
+      drawForExport={draw}
     />
   );
 };
@@ -380,3 +311,120 @@ export const ProvideTimeseriesSelectionContext: React.FC<{
     </TimeseriesSelectionContext.Provider>
   );
 };
+
+const createDrawFunction =
+  ({
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    visibleData,
+    yRange,
+    actualVerticalSpacing,
+    nChannels,
+  }: {
+    visibleStartTimeSec: number;
+    visibleEndTimeSec: number;
+    visibleData: {
+      data: Float32Array[];
+      isDownsampled: boolean;
+      downsampleFactor: number;
+      startTimeSec: number;
+      samplingFrequency: number;
+      length: number;
+    };
+    yRange: { yMin: number; yMax: number };
+    actualVerticalSpacing: number;
+    nChannels: number;
+  }) =>
+  async (
+    context: CanvasRenderingContext2D,
+    canvasWidth: number,
+    canvasHeight: number,
+    margins: { top: number; right: number; bottom: number; left: number },
+    o: { exporting?: boolean },
+  ) => {
+    // Clear the canvas
+    if (!o.exporting) {
+      context.clearRect(0, 0, canvasWidth, canvasHeight);
+    }
+    if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
+      return;
+
+    // Set clipping region to graph area
+    context.save();
+    context.beginPath();
+    context.rect(
+      margins.left,
+      margins.top,
+      canvasWidth - margins.left - margins.right,
+      canvasHeight - margins.top - margins.bottom,
+    );
+    context.clip();
+
+    const timeToPixel = (t: number) => {
+      return (
+        margins.left +
+        ((t - visibleStartTimeSec) /
+          (visibleEndTimeSec - visibleStartTimeSec)) *
+          (canvasWidth - margins.left - margins.right)
+      );
+    };
+
+    const valueToPixel = (v: number) => {
+      return (
+        canvasHeight -
+        margins.bottom -
+        ((v - (yRange ? yRange.yMin : 0)) /
+          ((yRange ? yRange.yMax : 10) - (yRange ? yRange.yMin : 0))) *
+          (canvasHeight - margins.top - margins.bottom)
+      );
+    };
+
+    // Draw each channel using appropriate rendering mode
+    if (visibleData.isDownsampled) {
+      // Use downsampled rendering with vertical line segments
+      for (
+        let channelIndex = 0;
+        channelIndex < visibleData.data.length;
+        channelIndex++
+      ) {
+        const channelData = visibleData.data[channelIndex];
+        const channelOffset = channelIndex * actualVerticalSpacing;
+        const color = colorForUnitId(channelIndex);
+
+        paintDownsampledChannelLine(context, {
+          startTimeSec: visibleData.startTimeSec,
+          samplingFrequency: visibleData.samplingFrequency,
+          length: visibleData.length,
+          minMaxData: channelData,
+          channelOffset,
+          color,
+          visibleStartTimeSec,
+          visibleEndTimeSec,
+          timeToPixel,
+          valueToPixel,
+        });
+      }
+    } else {
+      // Use original rendering with connected lines
+      for (let channelIndex = 0; channelIndex < nChannels; channelIndex++) {
+        const channelOffset = channelIndex * actualVerticalSpacing;
+        const color = colorForUnitId(channelIndex);
+
+        paintOriginalChannelLine(context, {
+          startTimeSec: visibleData.startTimeSec,
+          samplingFrequency: visibleData.samplingFrequency,
+          length: visibleData.length,
+          dataArray: visibleData.data[channelIndex],
+          channelOffset,
+          color,
+          visibleStartTimeSec,
+          visibleEndTimeSec,
+          timeToPixel,
+          valueToPixel,
+        });
+      }
+    }
+
+    // Restore canvas state (removes clipping)
+    context.restore();
+  };
