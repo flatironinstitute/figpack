@@ -157,110 +157,34 @@ const FPSpectrogramChild: React.FC<{
     });
   }, [client]);
 
+  const draw = useMemo(() => {
+    if (visibleStartTimeSec === undefined) return undefined;
+    if (visibleEndTimeSec === undefined) return undefined;
+    if (!visibleData || !client) return undefined;
+    return createDrawFunction({
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      visibleData,
+      yRange,
+      brightness,
+      client,
+    });
+  }, [
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    visibleData,
+    yRange,
+    brightness,
+    client,
+  ]);
+
   useEffect(() => {
     if (!context) return;
+    if (!draw) return;
+    if (canvasWidth <= 0) return;
+    if (canvasHeight <= 0) return;
     if (!margins) return;
-    if (!visibleData || !client) return;
-    let canceled = false;
-
-    const draw = async () => {
-      if (canceled) return;
-      // Clear the canvas
-      context.clearRect(0, 0, canvasWidth, canvasHeight);
-      if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
-        return;
-
-      // Set clipping region to graph area
-      context.save();
-      context.beginPath();
-      context.rect(
-        margins.left,
-        margins.top,
-        canvasWidth - margins.left - margins.right,
-        canvasHeight - margins.top - margins.bottom,
-      );
-      context.clip();
-
-      const timeToPixel = (t: number) => {
-        return (
-          margins.left +
-          ((t - visibleStartTimeSec) /
-            (visibleEndTimeSec - visibleStartTimeSec)) *
-            (canvasWidth - margins.left - margins.right)
-        );
-      };
-
-      const frequencyToPixel = (f: number) => {
-        if (!yRange) return 0;
-        const scaledF = f;
-        return (
-          canvasHeight -
-          margins.bottom -
-          ((scaledF - yRange.yMin) / (yRange.yMax - yRange.yMin)) *
-            (canvasHeight - margins.top - margins.bottom)
-        );
-      };
-
-      // Calculate visible max value for color scaling
-      const visibleMaxValue = calculateVisibleMaxValue(
-        visibleData.data,
-        visibleData.length,
-        visibleData.nFrequencies,
-        visibleData.startTimeSec,
-        visibleData.samplingFrequency,
-        visibleStartTimeSec,
-        visibleEndTimeSec,
-        brightness,
-      );
-
-      // Draw the spectrogram using appropriate rendering method
-      if (client.uniformFrequencies) {
-        // Use bitmap rendering for uniform frequencies
-        paintSpectrogramHeatmap(context, {
-          data: visibleData.data,
-          length: visibleData.length,
-          nFrequencies: visibleData.nFrequencies,
-          startTimeSec: visibleData.startTimeSec,
-          samplingFrequency: visibleData.samplingFrequency,
-          visibleStartTimeSec,
-          visibleEndTimeSec,
-          visibleMaxValue,
-          timeToPixel,
-          frequencyToPixel,
-          plotWidth: canvasWidth - margins.left - margins.right,
-          plotHeight: canvasHeight - margins.top - margins.bottom,
-          plotLeft: margins.left,
-          plotTop: margins.top,
-        });
-      } else {
-        // Use rectangle rendering for non-uniform frequencies
-        paintSpectrogramNonUniform(context, {
-          data: visibleData.data,
-          length: visibleData.length,
-          nFrequencies: visibleData.nFrequencies,
-          startTimeSec: visibleData.startTimeSec,
-          samplingFrequency: visibleData.samplingFrequency,
-          visibleStartTimeSec,
-          visibleEndTimeSec,
-          visibleMaxValue,
-          timeToPixel,
-          frequencyToPixel,
-          frequencies: client.frequencyBins,
-          plotWidth: canvasWidth - margins.left - margins.right,
-          plotHeight: canvasHeight - margins.top - margins.bottom,
-          plotLeft: margins.left,
-          plotTop: margins.top,
-        });
-      }
-
-      // Restore canvas state (removes clipping)
-      context.restore();
-    };
-
-    draw();
-    return () => {
-      canceled = true;
-    };
+    draw(context, canvasWidth, canvasHeight, margins, { exporting: false });
   }, [
     context,
     visibleData,
@@ -297,6 +221,135 @@ const FPSpectrogramChild: React.FC<{
       }}
       yAxisInfo={yAxisInfo}
       customToolbarActions={customToolbarActions}
+      drawForExport={draw}
     />
   );
 };
+
+const createDrawFunction =
+  ({
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    visibleData,
+    yRange,
+    brightness,
+    client,
+  }: {
+    visibleStartTimeSec: number;
+    visibleEndTimeSec: number;
+    visibleData: {
+      data: Float32Array;
+      isDownsampled: boolean;
+      downsampleFactor: number;
+      startTimeSec: number;
+      samplingFrequency: number;
+      length: number;
+      nFrequencies: number;
+    };
+    yRange: { yMin: number; yMax: number } | undefined;
+    brightness: number | undefined;
+    client: {
+      uniformFrequencies: boolean;
+      frequencyBins: number[];
+    };
+  }) =>
+  async (
+    context: CanvasRenderingContext2D,
+    canvasWidth: number,
+    canvasHeight: number,
+    margins: { top: number; right: number; bottom: number; left: number },
+    o: { exporting?: boolean },
+  ) => {
+    // Clear the canvas
+    if (!o.exporting) {
+      context.clearRect(0, 0, canvasWidth, canvasHeight);
+    }
+    if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
+      return;
+
+    // Set clipping region to graph area
+    context.save();
+    context.beginPath();
+    context.rect(
+      margins.left,
+      margins.top,
+      canvasWidth - margins.left - margins.right,
+      canvasHeight - margins.top - margins.bottom,
+    );
+    context.clip();
+
+    const timeToPixel = (t: number) => {
+      return (
+        margins.left +
+        ((t - visibleStartTimeSec) /
+          (visibleEndTimeSec - visibleStartTimeSec)) *
+          (canvasWidth - margins.left - margins.right)
+      );
+    };
+
+    const frequencyToPixel = (f: number) => {
+      if (!yRange) return 0;
+      const scaledF = f;
+      return (
+        canvasHeight -
+        margins.bottom -
+        ((scaledF - yRange.yMin) / (yRange.yMax - yRange.yMin)) *
+          (canvasHeight - margins.top - margins.bottom)
+      );
+    };
+
+    // Calculate visible max value for color scaling
+    const visibleMaxValue = calculateVisibleMaxValue(
+      visibleData.data,
+      visibleData.length,
+      visibleData.nFrequencies,
+      visibleData.startTimeSec,
+      visibleData.samplingFrequency,
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      brightness,
+    );
+
+    // Draw the spectrogram using appropriate rendering method
+    if (client.uniformFrequencies) {
+      // Use bitmap rendering for uniform frequencies
+      paintSpectrogramHeatmap(context, {
+        data: visibleData.data,
+        length: visibleData.length,
+        nFrequencies: visibleData.nFrequencies,
+        startTimeSec: visibleData.startTimeSec,
+        samplingFrequency: visibleData.samplingFrequency,
+        visibleStartTimeSec,
+        visibleEndTimeSec,
+        visibleMaxValue,
+        timeToPixel,
+        frequencyToPixel,
+        plotWidth: canvasWidth - margins.left - margins.right,
+        plotHeight: canvasHeight - margins.top - margins.bottom,
+        plotLeft: margins.left,
+        plotTop: margins.top,
+      });
+    } else {
+      // Use rectangle rendering for non-uniform frequencies
+      paintSpectrogramNonUniform(context, {
+        data: visibleData.data,
+        length: visibleData.length,
+        nFrequencies: visibleData.nFrequencies,
+        startTimeSec: visibleData.startTimeSec,
+        samplingFrequency: visibleData.samplingFrequency,
+        visibleStartTimeSec,
+        visibleEndTimeSec,
+        visibleMaxValue,
+        timeToPixel,
+        frequencyToPixel,
+        frequencies: client.frequencyBins,
+        plotWidth: canvasWidth - margins.left - margins.right,
+        plotHeight: canvasHeight - margins.top - margins.bottom,
+        plotLeft: margins.left,
+        plotTop: margins.top,
+      });
+    }
+
+    // Restore canvas state (removes clipping)
+    context.restore();
+  };

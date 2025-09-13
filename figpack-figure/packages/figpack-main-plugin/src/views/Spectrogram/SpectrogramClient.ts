@@ -9,7 +9,7 @@ export class SpectrogramClient {
     public uniformFrequencies: boolean,
     public frequencyMinHz: number | null,
     public frequencyDeltaHz: number | null,
-    public frequencies: Float32Array | null,
+    public frequencies: number[] | null,
     public nTimepoints: number,
     public nFrequencies: number,
     public dataMin: number,
@@ -29,7 +29,7 @@ export class SpectrogramClient {
 
     let frequencyMinHz: number | null = null;
     let frequencyDeltaHz: number | null = null;
-    let frequencies: Float32Array | null = null;
+    let frequencies: number[] | null = null;
 
     if (uniformFrequencies) {
       // Load uniform frequency parameters
@@ -39,7 +39,10 @@ export class SpectrogramClient {
       // Load non-uniform frequencies dataset
       const frequenciesData = await zarrGroup.getDatasetData("frequencies", {});
       if (frequenciesData) {
-        frequencies = new Float32Array(frequenciesData as ArrayLike<number>);
+        const frequenciesArray = new Float32Array(
+          frequenciesData as ArrayLike<number>,
+        );
+        frequencies = Array.from(frequenciesArray);
       }
     }
 
@@ -233,17 +236,17 @@ export class SpectrogramClient {
     };
   }
 
-  get frequencyBins(): Float32Array {
+  get frequencyBins(): number[] {
     if (this.uniformFrequencies) {
       // Generate uniform frequency bins
       const bins = new Float32Array(this.nFrequencies);
       for (let i = 0; i < this.nFrequencies; i++) {
         bins[i] = this.frequencyMinHz! + i * this.frequencyDeltaHz!;
       }
-      return bins;
+      return Array.from(bins);
     } else {
       // Return the non-uniform frequencies
-      return this.frequencies || new Float32Array(0);
+      return this.frequencies || [];
     }
   }
 }

@@ -59,7 +59,7 @@ type Props = {
     canvasHeight: number,
     margins: { top: number; bottom: number; left: number; right: number },
     o: { exporting?: boolean },
-  ) => Promise<{ yMin: number; yMax: number } | undefined>;
+  ) => Promise<any>;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({

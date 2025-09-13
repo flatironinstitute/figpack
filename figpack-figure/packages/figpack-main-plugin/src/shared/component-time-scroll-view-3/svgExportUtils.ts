@@ -46,6 +46,10 @@ export interface SVGContext {
   translate(x: number, y: number): void;
   rotate(angle: number): void;
 
+  // ImageData methods for spectrogram support
+  createImageData(width: number, height: number): ImageData;
+  putImageData(imageData: ImageData, dx: number, dy: number): void;
+
   // SVG-specific methods
   getSVG(): string;
 }
@@ -294,6 +298,51 @@ class SVGContextImpl implements SVGContext {
 
   rotate(angle: number): void {
     this.transform.rotation += angle;
+  }
+
+  createImageData(width: number, height: number): ImageData {
+    // Create a real ImageData object using a temporary canvas
+    // This ensures full compatibility with the Canvas API
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+    const tempCtx = tempCanvas.getContext("2d");
+
+    if (!tempCtx) {
+      throw new Error(
+        "Failed to create temporary canvas context for ImageData",
+      );
+    }
+
+    return tempCtx.createImageData(width, height);
+  }
+
+  putImageData(imageData: ImageData, dx: number, dy: number): void {
+    // Convert ImageData to PNG and embed as SVG image element
+    const canvas = document.createElement("canvas");
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      console.error("Failed to create canvas context for ImageData conversion");
+      return;
+    }
+
+    // Put the ImageData onto the temporary canvas
+    ctx.putImageData(imageData, 0, 0);
+
+    // Convert canvas to base64 PNG
+    const dataURL = canvas.toDataURL("image/png");
+
+    // Apply current transformations
+    const transformX = dx + this.transform.translateX;
+    const transformY = dy + this.transform.translateY;
+
+    // Create SVG image element
+    this.svgElements.push(
+      `<image x="${transformX}" y="${transformY}" width="${imageData.width}" height="${imageData.height}" href="${dataURL}"${this.getOpacityAttr()}${this.getClipPathAttr()} />`,
+    );
   }
 
   getSVG(): string {
