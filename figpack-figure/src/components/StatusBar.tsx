@@ -3,7 +3,7 @@ import { ZarrGroup } from "src/figpack-interface";
 import { useFigpackStatus } from "../hooks/useFigpackStatus";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
-import ManageEditsComponent from "./ManageEditsComponent/ManageEditsComponent";
+import FigureAnnotationsStatusComponent from "./FigureAnnotationsStatusComponent";
 
 const AboutButton: React.FC<{ title?: string; description?: string }> = ({
   title,
@@ -66,9 +66,16 @@ const ManageButton: React.FC<{ figpackManageUrl: string }> = ({
 export const StatusBar: React.FC<{
   zarrData: ZarrGroup | null;
   figureUrl: string;
-  editedFiles: { [path: string]: string | ArrayBuffer | null };
   onRefreshZarrData: () => void;
-}> = ({ zarrData, figureUrl, editedFiles, onRefreshZarrData }) => {
+  figureAnnotationsIsDirty: boolean;
+  revertFigureAnnotations: () => void;
+  saveFigureAnnotations: () => void;
+}> = ({
+  zarrData,
+  figureAnnotationsIsDirty,
+  revertFigureAnnotations,
+  saveFigureAnnotations,
+}) => {
   const { isLoading, error, status, isExpired, timeUntilExpiration } =
     useFigpackStatus();
   const { embedded } = useUrlParams();
@@ -90,13 +97,11 @@ export const StatusBar: React.FC<{
       <></>
     );
 
-  const manageEditsComponent = (
-    <ManageEditsComponent
-      zarrData={zarrData!}
-      figureUrl={figureUrl}
-      figpackManageUrl={figpackManageUrl}
-      editedFiles={editedFiles}
-      onRefreshZarrData={onRefreshZarrData}
+  const figureAnnotationsStatusComponent = (
+    <FigureAnnotationsStatusComponent
+      figureAnnotationsIsDirty={figureAnnotationsIsDirty}
+      revertFigureAnnotations={revertFigureAnnotations}
+      saveFigureAnnotations={saveFigureAnnotations}
     />
   );
 
@@ -124,7 +129,6 @@ export const StatusBar: React.FC<{
         <span>Upload status: {status.status}</span>
         {aboutButton}
         {manageButton}
-        {manageEditsComponent}
       </div>
     );
   }
@@ -137,7 +141,6 @@ export const StatusBar: React.FC<{
         </span>
         {aboutButton}
         {manageButton}
-        {manageEditsComponent}
       </div>
     );
   }
@@ -148,7 +151,7 @@ export const StatusBar: React.FC<{
         <span>Expires in: {timeUntilExpiration}</span>
         {aboutButton}
         {manageButton}
-        {manageEditsComponent}
+        {figureAnnotationsStatusComponent}
       </div>
     );
   }
@@ -158,7 +161,7 @@ export const StatusBar: React.FC<{
       <span>Figure ready</span>
       {aboutButton}
       {manageButton}
-      {manageEditsComponent}
+      {figureAnnotationsStatusComponent}
     </div>
   );
 };

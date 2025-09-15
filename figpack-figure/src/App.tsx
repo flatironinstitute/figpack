@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
+import { useExtensionDevUrls } from "./hooks/useExtensionDevUrls";
 import { useFigpackStatus } from "./hooks/useFigpackStatus";
+import { useFigureUrl } from "./hooks/useFigureUrl";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
-import { useFigureUrl } from "./hooks/useFigureUrl";
-import { useExtensionDevUrls } from "./hooks/useExtensionDevUrls";
 import "./localStyles.css";
 // import { plugins } from "./main";
+import { useLocation } from "react-router-dom";
 import { FPViewContexts } from "./figpack-interface";
+import FPHeader from "./FPHeader/FPHeader";
+import { useSavedFigureAnnotations } from "./hooks/useSavedFigureAnnotations";
 import {
   registeredFPExtensions,
   registeredFPViewContextCreators,
@@ -16,7 +19,14 @@ import {
 
 function App() {
   const figureUrl = useFigureUrl();
-  const { zarrData, editedFiles, refreshZarrData } = useZarrData(figureUrl);
+  const { zarrData, refreshZarrData } = useZarrData(figureUrl);
+  const [headerIframeElement, setHeaderIframeElement] =
+    useState<HTMLIFrameElement | null>(null);
+  const {
+    figureAnnotationsIsDirty,
+    revertFigureAnnotations,
+    saveFigureAnnotations,
+  } = useSavedFigureAnnotations(figureUrl, headerIframeElement);
   const { width, height } = useWindowDimensions();
   const { isExpired } = useFigpackStatus();
 
@@ -57,6 +67,8 @@ function App() {
     });
     setContexts(contexts);
   }, [extensionLoadingStatus]);
+
+  const location = useLocation();
 
   // useEffect(() => {
   //   // check if extensions are loaded
@@ -105,13 +117,12 @@ function App() {
     <StatusBar
       zarrData={zarrData || null}
       figureUrl={figureUrl}
-      editedFiles={editedFiles}
       onRefreshZarrData={refreshZarrData}
+      figureAnnotationsIsDirty={figureAnnotationsIsDirty}
+      revertFigureAnnotations={revertFigureAnnotations}
+      saveFigureAnnotations={saveFigureAnnotations}
     />
   );
-
-  // Adjust height to account for status bar (30px height)
-  const adjustedHeight = height - 30;
 
   if (zarrData == null) {
     return (
@@ -129,16 +140,38 @@ function App() {
     );
   }
 
+  let headerHeight: number;
+  const queryParams = new URLSearchParams(location.search);
+  const editing = queryParams.get("edit") === "1";
+  if (editing) {
+    headerHeight = 100;
+  } else {
+    headerHeight = 0;
+  }
+  const header = (
+    <FPHeader
+      width={width}
+      height={headerHeight}
+      onIframeElement={setHeaderIframeElement}
+    />
+  );
+
+  const statusBarHeight = 30;
+  const adjustedHeight = height - statusBarHeight - headerHeight;
+
   // Show extension loading status
   if (extensionLoadingStatus === "loading") {
     return (
       <>
+        {header}
         <div
           style={{
-            display: "flex",
+            position: "absolute",
+            top: headerHeight,
+            height: adjustedHeight,
+            width: width,
             justifyContent: "center",
             alignItems: "center",
-            height: adjustedHeight,
             fontSize: "18px",
           }}
         >
@@ -154,10 +187,12 @@ function App() {
       <>
         <div
           style={{
-            display: "flex",
+            position: "absolute",
+            top: headerHeight,
+            height: adjustedHeight,
+            width: width,
             justifyContent: "center",
             alignItems: "center",
-            height: adjustedHeight,
             fontSize: "18px",
             color: "#d32f2f",
           }}
@@ -175,10 +210,12 @@ function App() {
       <>
         <div
           style={{
-            display: "flex",
+            position: "absolute",
+            top: headerHeight,
+            height: adjustedHeight,
+            width: width,
             justifyContent: "center",
             alignItems: "center",
-            height: adjustedHeight,
             fontSize: "24px",
             color: "#d32f2f",
           }}
@@ -195,10 +232,12 @@ function App() {
       <>
         <div
           style={{
-            display: "flex",
+            position: "absolute",
+            top: headerHeight,
+            height: adjustedHeight,
+            width: width,
             justifyContent: "center",
             alignItems: "center",
-            height: adjustedHeight,
             fontSize: "18px",
           }}
         >
@@ -211,13 +250,23 @@ function App() {
 
   return (
     <>
-      <FPView
-        zarrGroup={zarrData}
-        width={width}
-        height={adjustedHeight}
-        contexts={contexts}
-        FPView={FPView}
-      />
+      {header}
+      <div
+        style={{
+          position: "absolute",
+          top: headerHeight,
+          height: adjustedHeight,
+          width: width,
+        }}
+      >
+        <FPView
+          zarrGroup={zarrData}
+          width={width}
+          height={adjustedHeight}
+          contexts={contexts}
+          FPView={FPView}
+        />
+      </div>
       {statusBar}
     </>
   );

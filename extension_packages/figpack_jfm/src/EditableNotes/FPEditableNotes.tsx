@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useRef } from "react";
+import React, { FunctionComponent, useEffect, useMemo, useRef } from "react";
 import { ZarrGroup } from "../figpack-interface";
 
 type Props = {
@@ -8,19 +8,58 @@ type Props = {
 };
 
 const FPEditableNotes: React.FC<Props> = ({ zarrGroup }) => {
-  const client = useEditableNotesClient(zarrGroup);
-  if (!client) {
-    return <div>Loading...</div>;
+  const [text, setText] = useFigureAnnotationItem(zarrGroup.path + ':text');
+  if (!setText) {
+    return (
+      <div>
+        <p>{text}</p>
+        <p style={{ color: 'red' }}>Read-only mode (cannot edit)</p>
+      </div>
+    );
   }
   return (
     <TextEditView
-      text={client.text}
+      text={text}
       onSave={(newText) => {
-        client.setText(newText);
+        setText(newText);
       }}
     />
   );
 };
+
+interface FigureAnnotations {
+  getItem: (key: string) => string | undefined;
+  setItem?: (key: string, value: string | undefined) => void;
+  onItemChanged: (key: string, callback: (value: string) => void) => () => void;
+}
+
+const useFigureAnnotationItem = (key: string) => {
+  const [internalValue, setInternalValue] = React.useState<string>('');
+  const figureAnnotationsObj = useMemo(() => {
+    const obj = (window as any).figpack_p1?.figureAnnotations as FigureAnnotations;
+    if (!obj) {
+      console.warn("figureAnnotations object not found on window.figpack_p1");
+    }
+    return obj;
+  }, []);
+  useEffect(() => {
+    if (!figureAnnotationsObj) return;
+    const currentValue = figureAnnotationsObj.getItem(key) || '';
+    setInternalValue(currentValue);
+    const unsubscribe = figureAnnotationsObj.onItemChanged(key, (newValue) => {
+      setInternalValue(newValue);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [figureAnnotationsObj, key]);
+  const setValue = figureAnnotationsObj.setItem ? (newValue: string) => {
+    if (!figureAnnotationsObj) return;
+    if (!figureAnnotationsObj.setItem) return;
+    figureAnnotationsObj.setItem(key, newValue);
+  } : undefined;
+  return [internalValue, setValue] as const;
+}
 
 const TextEditView: FunctionComponent<{
   text: string;
@@ -53,48 +92,5 @@ const TextEditView: FunctionComponent<{
     </div>
   );
 };
-
-const useEditableNotesClient = (zarrGroup: ZarrGroup) => {
-  const [client, setClient] = React.useState<any>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      const c = await EditableNotesClient.create(zarrGroup);
-      setClient(c);
-    };
-    load();
-  }, [zarrGroup]);
-
-  return client;
-};
-
-class EditableNotesClient {
-  constructor(private zarrGroup: ZarrGroup, public text: string) {}
-  static async create(zarrGroup: ZarrGroup) {
-    let text = "";
-    try {
-      const ds = await zarrGroup.getDataset("text");
-      if (!ds) throw new Error("No text dataset found");
-      const data = await zarrGroup.getDatasetData("text", {cacheBust: true});
-      if (data && data.length > 0) {
-        text = new TextDecoder().decode(data);
-      }
-    } catch (err) {
-      console.warn("Error loading text dataset:", err);
-    }
-    return new EditableNotesClient(zarrGroup, text);
-  }
-  setText(newText: string) {
-    if (!this.zarrGroup.createDataset) {
-      throw new Error("Zarr group is not editable");
-    }
-    const data = new TextEncoder().encode(newText);
-    this.zarrGroup.createDataset("text", data, {
-      shape: [data.length],
-      dtype: "uint8",
-      attrs: {},
-    });
-  }
-}
 
 export default FPEditableNotes;

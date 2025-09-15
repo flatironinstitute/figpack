@@ -28,8 +28,6 @@ export class IframeMessageHandler {
           const handler = this.messageHandlers.get(message.type);
           if (handler) {
             handler(message.payload);
-          } else {
-            console.warn('No handler registered for message type:', message.type);
           }
         }
       } catch (error) {
@@ -134,5 +132,3 @@ export class IframeMessageHandler {
     // Note: We don't remove the event listener as it's needed for the lifetime of the component
   }
 }
-
-export const createIframeMessageHandler = () => new IframeMessageHandler();

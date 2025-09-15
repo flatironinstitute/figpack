@@ -1,17 +1,9 @@
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
 import { ZarrGroup } from "../figpack-interface";
 import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
-import EditableZarrGroup, {
-  emptyZarrEdits,
-  zarrEditsReducer,
-} from "./EditableZarrGroup";
 
 export const useZarrData = (figureUrl: string) => {
   const [zarrData, setZarrData] = useState<ZarrGroup | null | undefined>(null);
-  const [zarrEdits, zarrEditsDispatch] = useReducer(
-    zarrEditsReducer,
-    emptyZarrEdits,
-  );
 
   const [refreshCode, setRefreshCode] = useState(0);
   const refreshZarrData = () => {
@@ -34,7 +26,6 @@ export const useZarrData = (figureUrl: string) => {
       const g = await a.getGroup("/");
       if (canceled) return;
       setZarrData(g);
-      zarrEditsDispatch({ type: "clearEdits" });
     };
     load();
     return () => {
@@ -42,15 +33,5 @@ export const useZarrData = (figureUrl: string) => {
     };
   }, [figureUrl, refreshCode]);
 
-  const zarrDataCombined = useMemo(() => {
-    if (!zarrData) {
-      return zarrData;
-    }
-    const x = new EditableZarrGroup(zarrData, zarrEdits, zarrEditsDispatch);
-    return x;
-  }, [zarrData, zarrEdits]);
-
-  const editedFiles = zarrEdits.editedFiles;
-
-  return { zarrData: zarrDataCombined, editedFiles, refreshZarrData };
+  return { zarrData, refreshZarrData };
 };
