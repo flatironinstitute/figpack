@@ -1,25 +1,25 @@
 import {
-  Alert,
   Box,
   Button,
-  Chip,
-  Divider,
   LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
+  Tooltip,
   Typography,
-} from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import type { UploadRequestPayload } from '../../types/uploadTypes';
-import { IframeMessageHandler } from '../../utils/postMessageUtils';
-import { uploadFigureFiles } from './uploadFilesApi';
+} from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import type { UploadRequestPayload } from "../../types/uploadTypes";
+import { IframeMessageHandler } from "../../utils/postMessageUtils";
+import { uploadFigureFiles } from "./uploadFilesApi";
 
 interface UploadState {
-  status: 'waiting' | 'pending_approval' | 'uploading' | 'success' | 'error' | 'cancelled';
-  figureUrl?: string;
+  status:
+    | "awaiting_permission"
+    | "ready"
+    | "uploading"
+    | "success"
+    | "error"
+    | "cancelled";
+  approvedFigureUrl?: string;
   files?: { [path: string]: string | ArrayBuffer | null };
   progress?: number;
   currentFile?: string;
@@ -30,271 +30,350 @@ interface UploadState {
 }
 
 const EditFigureServicePage: React.FC = () => {
-  const { apiKey, isLoggedIn } = useAuth();
-  const [uploadState, setUploadState] = useState<UploadState>({ status: 'waiting' });
+  const { apiKey, isLoggedIn, login } = useAuth();
+  const [uploadState, setUploadState] = useState<UploadState>({
+    status: "awaiting_permission",
+  });
+  const [figureUrlFromQuery, setFigureUrlFromQuery] = useState<string | null>(
+    null
+  );
+  const [messageHandler, setMessageHandler] = useState<
+    IframeMessageHandler | undefined
+  >(undefined);
 
-  const handleUploadRequest = useCallback(
-    async (payload: UploadRequestPayload) => {
+  // Extract figure URL from query parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const figureUrl = urlParams.get("figure_url");
+    setFigureUrlFromQuery(figureUrl);
+  }, []);
+
+  // Set up message handler only after permission is granted
+  useEffect(() => {
+    const handler = new IframeMessageHandler(false); // Don't auto-send ready
+
+    const handleUploadRequest = async (payload: UploadRequestPayload) => {
+      // Only accept uploads for the approved figure URL
+      if (payload.figureUrl !== uploadState.approvedFigureUrl) {
+        console.warn(
+          "Upload request for unauthorized figure URL:",
+          payload.figureUrl
+        );
+        return;
+      }
+
       const fileCount = Object.keys(payload.files).filter(
         (path) => payload.files[path] !== null
       ).length;
 
-      setUploadState({
-        status: 'pending_approval',
-        figureUrl: payload.figureUrl,
+      // Start upload immediately since permission is already granted
+      setUploadState((prev) => ({
+        ...prev,
+        status: "uploading",
         files: payload.files,
         totalFiles: fileCount,
-      });
-    },
-    []
-  );
+        progress: 0,
+      }));
 
-  const [messageHandler, setMessageHandler] = useState<IframeMessageHandler | undefined>(undefined);
-  useEffect(() => {
-    const handler = new IframeMessageHandler();
-    handler.onMessage('UPLOAD_REQUEST', handleUploadRequest);
+      // Perform the upload
+      if (!apiKey) return;
+
+      try {
+        const result = await uploadFigureFiles(
+          apiKey,
+          payload.figureUrl,
+          payload.files,
+          (progress, currentFile, totalFiles, completedFiles) => {
+            setUploadState((prev) => ({
+              ...prev,
+              progress,
+              currentFile,
+              totalFiles,
+              completedFiles,
+            }));
+            handler.sendProgress(
+              progress,
+              currentFile,
+              totalFiles,
+              completedFiles
+            );
+          }
+        );
+
+        if (result.success) {
+          setUploadState((prev) => ({
+            ...prev,
+            status: "success",
+            message: result.message,
+            uploadedFiles: result.uploadedFiles,
+          }));
+          handler.sendSuccess(
+            result.message || "Upload completed successfully",
+            result.uploadedFiles || []
+          );
+
+          // Auto-return to ready state after 3 seconds
+          setTimeout(() => {
+            setUploadState((prev) => ({ ...prev, status: "ready" }));
+          }, 3000);
+        } else {
+          setUploadState((prev) => ({
+            ...prev,
+            status: "error",
+            message: result.message,
+          }));
+          handler.sendError(result.message || "Upload failed");
+        }
+      } catch (error) {
+        const errorMessage = `Upload failed: ${error}`;
+        setUploadState((prev) => ({
+          ...prev,
+          status: "error",
+          message: errorMessage,
+        }));
+        handler.sendError(errorMessage);
+      }
+    };
+
+    handler.onMessage("UPLOAD_REQUEST", handleUploadRequest);
     setMessageHandler(handler);
     return () => {
       handler.cleanup();
     };
-  }, [handleUploadRequest]);
+  }, [apiKey, uploadState.approvedFigureUrl]);
 
-  const handleApproveUpload = useCallback(async () => {
-    if (!messageHandler) return;
-    if (!uploadState.files || !uploadState.figureUrl || !apiKey) {
-      return;
+  useEffect(() => {
+    if (messageHandler && uploadState.status === "ready") {
+      messageHandler.sendReady();
     }
+  }, [messageHandler, uploadState.status]);
 
-    setUploadState((prev) => ({ ...prev, status: 'uploading', progress: 0 }));
+  const handleGrantPermission = useCallback(() => {
+    if (!figureUrlFromQuery) return;
 
-    try {
-      const result = await uploadFigureFiles(
-        apiKey,
-        uploadState.figureUrl,
-        uploadState.files,
-        (progress, currentFile, totalFiles, completedFiles) => {
-          setUploadState((prev) => ({
-            ...prev,
-            progress,
-            currentFile,
-            totalFiles,
-            completedFiles,
-          }));
-          messageHandler.sendProgress(progress, currentFile, totalFiles, completedFiles);
-        }
-      );
+    setUploadState({
+      status: "ready",
+      approvedFigureUrl: figureUrlFromQuery,
+    });
+  }, [figureUrlFromQuery]);
 
-      if (result.success) {
-        setUploadState({
-          status: 'success',
-          message: result.message,
-          uploadedFiles: result.uploadedFiles,
-        });
-        messageHandler.sendSuccess(
-          result.message || 'Upload completed successfully',
-          result.uploadedFiles || []
-        );
-      } else {
-        setUploadState({
-          status: 'error',
-          message: result.message,
-        });
-        messageHandler.sendError(result.message || 'Upload failed');
-      }
-    } catch (error) {
-      const errorMessage = `Upload failed: ${error}`;
-      setUploadState({
-        status: 'error',
-        message: errorMessage,
-      });
-      messageHandler.sendError(errorMessage);
-    }
-  }, [uploadState.files, uploadState.figureUrl, apiKey, messageHandler]);
-
-  const handleCancelUpload = useCallback(() => {
-    if (!messageHandler) return;
-    setUploadState({ status: 'cancelled' });
-    messageHandler.sendCancelled();
-  }, [messageHandler]);
-
-  const handleStartOver = useCallback(() => {
-    setUploadState({ status: 'waiting' });
+  const handleDenyPermission = useCallback(() => {
+    setUploadState({ status: "cancelled" });
   }, []);
 
-  const formatFileSize = (content: string | ArrayBuffer | null): string => {
-    if (content === null) return '0 B';
-    
-    let size: number;
-    if (typeof content === 'string') {
-      size = new TextEncoder().encode(content).length;
-    } else {
-      size = content.byteLength;
+  const handleRetryFromError = useCallback(() => {
+    setUploadState((prev) => ({ ...prev, status: "ready" }));
+  }, []);
+
+  const handleLoginClick = useCallback(() => {
+    const apiKey = window.prompt("Enter your Figpack API key:");
+    if (apiKey && apiKey.trim()) {
+      login(apiKey.trim());
     }
-
-    if (size < 1024) return `${size} B`;
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const getFileList = () => {
-    if (!uploadState.files) return [];
-    return Object.entries(uploadState.files)
-      .filter(([, content]) => content !== null)
-      .map(([path, content]) => ({
-        path,
-        size: formatFileSize(content),
-      }));
-  };
+  }, [login]);
 
   if (!isLoggedIn) {
     return (
-      <Box sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
-        <Typography variant="body2" color="text.secondary">
-          You must be logged in to upload files. Please log in using your API key
+      <Box
+        sx={{
+          height: "50px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          backgroundColor: "#fff3cd",
+          border: "1px solid #ffeaa7",
+        }}
+      >
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: "12px" }}
+        >
+          You must be logged in to upload files
+        </Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={handleLoginClick}
+          sx={{ minHeight: "24px", fontSize: "11px", px: 1 }}
+        >
+          Login
+        </Button>
+      </Box>
+    );
+  }
+
+  if (!figureUrlFromQuery) {
+    return (
+      <Box
+        sx={{
+          height: "50px",
+          display: "flex",
+          alignItems: "center",
+          px: 2,
+          backgroundColor: "#f8d7da",
+          border: "1px solid #f5c6cb",
+        }}
+      >
+        <Typography variant="body2" color="error" sx={{ fontSize: "12px" }}>
+          No figure URL provided in query parameters
         </Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
-      {uploadState.status === 'waiting' && (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <Typography variant="body1" color="text.secondary">
-            Waiting for upload request from parent window...
+    <Box
+      sx={{
+        height: "50px",
+        display: "flex",
+        alignItems: "center",
+        px: 2,
+        gap: 2,
+      }}
+    >
+      {uploadState.status === "awaiting_permission" && (
+        <>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleDenyPermission}
+            sx={{ minHeight: "24px", fontSize: "11px", px: 1 }}
+          >
+            Deny
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleGrantPermission}
+            sx={{ minHeight: "24px", fontSize: "11px", px: 1 }}
+          >
+            Allow
+          </Button>
+          <Typography variant="body2" sx={{ fontSize: "12px", flexGrow: 1 }}>
+            Grant permission to edit:
+            <Tooltip title={figureUrlFromQuery} arrow>
+              <span style={{ fontFamily: "monospace", marginLeft: "4px" }}>
+                {figureUrlFromQuery}
+              </span>
+            </Tooltip>
           </Typography>
-        </Box>
+        </>
       )}
 
-      {uploadState.status === 'pending_approval' && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Confirm File Upload
+      {uploadState.status === "ready" && (
+        <>
+          <Box
+            sx={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              backgroundColor: "#4caf50",
+            }}
+          />
+          <Typography variant="body2" sx={{ fontSize: "12px", flexGrow: 1 }}>
+            Ready for file uploads
           </Typography>
-
-          <Box sx={{ mb: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <Button variant="outlined" onClick={handleCancelUpload}>
-              Cancel
-            </Button>
-            <Button variant="contained" onClick={handleApproveUpload}>
-              Upload Files
-            </Button>
-          </Box>
-          
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Figure URL: {uploadState.figureUrl}
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "11px", color: "text.secondary" }}
+          >
+            {uploadState.approvedFigureUrl || ""}
           </Typography>
-
-          <Divider sx={{ my: 2 }} />
-
-          <Typography variant="subtitle1" gutterBottom>
-            Files to upload ({uploadState.totalFiles}):
-          </Typography>
-
-          <List dense>
-            {getFileList().map(({ path, size }) => (
-              <ListItem key={path} sx={{ py: 0.5 }}>
-                <ListItemText
-                  primary={path}
-                  secondary={size}
-                  primaryTypographyProps={{ fontFamily: 'monospace', fontSize: '0.9rem' }}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
+        </>
       )}
 
-      {uploadState.status === 'uploading' && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Uploading Files...
-          </Typography>
-
-          <Box sx={{ mb: 2 }}>
+      {uploadState.status === "uploading" && (
+        <>
+          <Box sx={{ flexGrow: 1 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+            >
+              <Typography variant="body2" sx={{ fontSize: "11px" }}>
+                Uploading:{" "}
+                {uploadState.currentFile ? uploadState.currentFile : "..."}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ fontSize: "10px", color: "text.secondary" }}
+              >
+                ({uploadState.completedFiles || 0}/{uploadState.totalFiles || 0}
+                , {Math.round(uploadState.progress || 0)}%)
+              </Typography>
+            </Box>
             <LinearProgress
               variant="determinate"
               value={uploadState.progress || 0}
-              sx={{ height: 8, borderRadius: 4 }}
+              sx={{ height: "3px", borderRadius: "2px" }}
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {Math.round(uploadState.progress || 0)}% complete
-            </Typography>
           </Box>
-
-          {uploadState.currentFile && (
-            <Typography variant="body2" color="text.secondary">
-              Uploading: {uploadState.currentFile}
-            </Typography>
-          )}
-
-          {uploadState.totalFiles && uploadState.completedFiles !== undefined && (
-            <Typography variant="body2" color="text.secondary">
-              {uploadState.completedFiles} of {uploadState.totalFiles} files completed
-            </Typography>
-          )}
-        </Paper>
+        </>
       )}
 
-      {uploadState.status === 'success' && (
-        <Paper sx={{ p: 3 }}>
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {uploadState.message || 'Upload completed successfully!'}
-          </Alert>
-
-          {uploadState.uploadedFiles && uploadState.uploadedFiles.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Uploaded files:
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {uploadState.uploadedFiles.map((file) => (
-                  <Chip
-                    key={file}
-                    label={file}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-                  />
-                ))}
-              </Box>
-            </Box>
-          )}
-
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Button variant="outlined" onClick={handleStartOver}>
-              Upload More Files
-            </Button>
-          </Box>
-        </Paper>
+      {uploadState.status === "success" && (
+        <>
+          <Box
+            sx={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              backgroundColor: "#4caf50",
+            }}
+          />
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "12px", flexGrow: 1, color: "#2e7d32" }}
+          >
+            {uploadState.uploadedFiles?.length || 0} files uploaded successfully
+          </Typography>
+        </>
       )}
 
-      {uploadState.status === 'error' && (
-        <Paper sx={{ p: 3 }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {uploadState.message || 'Upload failed'}
-          </Alert>
-
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Button variant="outlined" onClick={handleStartOver}>
-              Try Again
-            </Button>
-          </Box>
-        </Paper>
+      {uploadState.status === "error" && (
+        <>
+          <Box
+            sx={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              backgroundColor: "#f44336",
+            }}
+          />
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "12px", flexGrow: 1, color: "#d32f2f" }}
+          >
+            Upload failed: {uploadState.message}
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleRetryFromError}
+            sx={{ minHeight: "24px", fontSize: "11px", px: 1 }}
+          >
+            Retry
+          </Button>
+        </>
       )}
 
-      {uploadState.status === 'cancelled' && (
-        <Paper sx={{ p: 3 }}>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Upload cancelled by user
-          </Alert>
-
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Button variant="outlined" onClick={handleStartOver}>
-              Start Over
-            </Button>
-          </Box>
-        </Paper>
+      {uploadState.status === "cancelled" && (
+        <>
+          <Box
+            sx={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              backgroundColor: "#ff9800",
+            }}
+          />
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "12px", flexGrow: 1, color: "#f57c00" }}
+          >
+            Permission denied
+          </Typography>
+        </>
       )}
     </Box>
   );

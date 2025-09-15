@@ -2,15 +2,14 @@ import { useEffect, useState } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
 import { useExtensionDevUrls } from "./hooks/useExtensionDevUrls";
-import { useFigpackStatus } from "./hooks/useFigpackStatus";
+import { useFigureInfo } from "./hooks/useFigureInfo";
 import { useFigureUrl } from "./hooks/useFigureUrl";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
 import "./localStyles.css";
 // import { plugins } from "./main";
-import { useLocation } from "react-router-dom";
 import { FPViewContexts } from "./figpack-interface";
-import FPHeader from "./FPHeader/FPHeader";
+import FPHeader, { PutFigureFilesInterface } from "./FPHeader/FPHeader";
 import { useSavedFigureAnnotations } from "./hooks/useSavedFigureAnnotations";
 import {
   registeredFPExtensions,
@@ -20,15 +19,18 @@ import {
 function App() {
   const figureUrl = useFigureUrl();
   const { zarrData, refreshZarrData } = useZarrData(figureUrl);
-  const [headerIframeElement, setHeaderIframeElement] =
-    useState<HTMLIFrameElement | null>(null);
+  const [putFigureFilesInterface, setPutFigureFilesInterface] =
+    useState<PutFigureFilesInterface | null>(null);
   const {
     figureAnnotationsIsDirty,
     revertFigureAnnotations,
     saveFigureAnnotations,
-  } = useSavedFigureAnnotations(figureUrl, headerIframeElement);
+    curating,
+    setCurating,
+  } = useSavedFigureAnnotations(figureUrl, putFigureFilesInterface);
   const { width, height } = useWindowDimensions();
-  const { isExpired } = useFigpackStatus();
+
+  const figureInfoResult = useFigureInfo();
 
   // Set document title from zarr data
   useEffect(() => {
@@ -68,206 +70,102 @@ function App() {
     setContexts(contexts);
   }, [extensionLoadingStatus]);
 
-  const location = useLocation();
+  const isLocalFigure = figureUrl.startsWith("http://localhost:");
+  let headerHeight: number;
+  if (curating) {
+    headerHeight = isLocalFigure ? 30 : 100;
+  } else {
+    headerHeight = 0;
+  }
+  const statusBarHeight = 30;
 
-  // useEffect(() => {
-  //   // check if extensions are loaded
-  //   if (extensionLoadingStatus !== "loaded") return;
-  //   const contexts: FPViewContexts = {};
-  //   plugins.forEach((plugin) => {
-  //     plugin.contextCreators.forEach((c) => {
-  //       if (c.name in contexts) {
-  //         const allPluginsWithThisName = plugins
-  //           .filter((p) => p.contextCreators.some((cc) => cc.name === c.name))
-  //           .map((p) => p.pluginName);
-  //         throw new Error(
-  //           `Duplicate context creator name: ${c.name} (${allPluginsWithThisName.join(", ")})`,
-  //         );
-  //       }
-  //       contexts[c.name] = c.create();
-  //     });
-  //   });
-  //   const figpackExtensions = (window as any).figpackExtensions || {};
-  //   Object.keys(figpackExtensions).forEach((extensionName) => {
-  //     const extension = figpackExtensions[extensionName];
-  //     if (extension.contextCreators) {
-  //       extension.contextCreators.forEach((c: any) => {
-  //         if (c.name in contexts) {
-  //           const allExtensionsWithThisName = Object.keys(
-  //             figpackExtensions,
-  //           ).filter((en) =>
-  //             figpackExtensions[en].contextCreators?.some(
-  //               (cc: any) => cc.name === c.name,
-  //             ),
-  //           );
-  //           throw new Error(
-  //             `Duplicate context creator name: ${c.name} (${allExtensionsWithThisName.join(
-  //               ", ",
-  //             )})`,
-  //           );
-  //         }
-  //         contexts[c.name] = c.create();
-  //       });
-  //     }
-  //   });
-  //   setContexts(contexts);
-  // }, [extensionLoadingStatus]);
+  const header = (
+    <FPHeader
+      width={width}
+      height={headerHeight}
+      figureUrl={figureUrl}
+      figureInfoResult={figureInfoResult}
+      onPutFigureFilesInterface={setPutFigureFilesInterface}
+      curating={curating}
+    />
+  );
+
+  const fpView =
+    zarrData === null ? (
+      <div>Loading...</div>
+    ) : zarrData === undefined ? (
+      <div>Error loading data</div>
+    ) : extensionLoadingStatus !== "loaded" ? (
+      <div>Extension loading status: {extensionLoadingStatusString}</div>
+    ) : !contexts ? (
+      <div>Loading contexts...</div>
+    ) : figureInfoResult.isExpired ? (
+      <div
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: "24px",
+          color: "#d32f2f",
+        }}
+      >
+        This figure has expired.
+      </div>
+    ) : (
+      <FPView
+        zarrGroup={zarrData}
+        width={width}
+        height={height - statusBarHeight - headerHeight}
+        contexts={contexts}
+        FPView={FPView}
+      />
+    );
 
   const statusBar = (
     <StatusBar
       zarrData={zarrData || null}
       figureUrl={figureUrl}
+      figureInfoResult={figureInfoResult}
       onRefreshZarrData={refreshZarrData}
       figureAnnotationsIsDirty={figureAnnotationsIsDirty}
       revertFigureAnnotations={revertFigureAnnotations}
       saveFigureAnnotations={saveFigureAnnotations}
+      curating={curating}
+      setCurating={setCurating}
     />
   );
-
-  if (zarrData == null) {
-    return (
-      <>
-        <div>Loading...</div>
-      </>
-    );
-  }
-  if (zarrData === undefined) {
-    return (
-      <>
-        <div>Error loading data</div>
-        {statusBar}
-      </>
-    );
-  }
-
-  let headerHeight: number;
-  const queryParams = new URLSearchParams(location.search);
-  const editing = queryParams.get("edit") === "1";
-  if (editing) {
-    headerHeight = 100;
-  } else {
-    headerHeight = 0;
-  }
-  const header = (
-    <FPHeader
-      width={width}
-      height={headerHeight}
-      onIframeElement={setHeaderIframeElement}
-    />
-  );
-
-  const statusBarHeight = 30;
-  const adjustedHeight = height - statusBarHeight - headerHeight;
-
-  // Show extension loading status
-  if (extensionLoadingStatus === "loading") {
-    return (
-      <>
-        {header}
-        <div
-          style={{
-            position: "absolute",
-            top: headerHeight,
-            height: adjustedHeight,
-            width: width,
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: "18px",
-          }}
-        >
-          {extensionLoadingStatusString}
-        </div>
-        {statusBar}
-      </>
-    );
-  }
-
-  if (extensionLoadingStatus === "error") {
-    return (
-      <>
-        <div
-          style={{
-            position: "absolute",
-            top: headerHeight,
-            height: adjustedHeight,
-            width: width,
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: "18px",
-            color: "#d32f2f",
-          }}
-        >
-          {extensionLoadingStatusString}
-        </div>
-        {statusBar}
-      </>
-    );
-  }
-
-  // If figure has expired, show expiration message instead of the figure
-  if (isExpired) {
-    return (
-      <>
-        <div
-          style={{
-            position: "absolute",
-            top: headerHeight,
-            height: adjustedHeight,
-            width: width,
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: "24px",
-            color: "#d32f2f",
-          }}
-        >
-          This figure has expired.
-        </div>
-        {statusBar}
-      </>
-    );
-  }
-
-  if (!contexts) {
-    return (
-      <>
-        <div
-          style={{
-            position: "absolute",
-            top: headerHeight,
-            height: adjustedHeight,
-            width: width,
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: "18px",
-          }}
-        >
-          Loading contexts...
-        </div>
-        {statusBar}
-      </>
-    );
-  }
 
   return (
     <>
-      {header}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          height: headerHeight,
+          width: width,
+        }}
+      >
+        {header}
+      </div>
       <div
         style={{
           position: "absolute",
           top: headerHeight,
-          height: adjustedHeight,
+          height: height - statusBarHeight - headerHeight,
           width: width,
         }}
       >
-        <FPView
-          zarrGroup={zarrData}
-          width={width}
-          height={adjustedHeight}
-          contexts={contexts}
-          FPView={FPView}
-        />
+        {fpView}
       </div>
-      {statusBar}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          height: statusBarHeight,
+          width: width,
+        }}
+      >
+        {statusBar}
+      </div>
     </>
   );
 }

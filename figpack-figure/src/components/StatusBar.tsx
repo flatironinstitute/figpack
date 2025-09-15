@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ZarrGroup } from "src/figpack-interface";
-import { useFigpackStatus } from "../hooks/useFigpackStatus";
+import { FigureInfoResult } from "../hooks/useFigureInfo";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
 import FigureAnnotationsStatusComponent from "./FigureAnnotationsStatusComponent";
@@ -66,26 +66,31 @@ const ManageButton: React.FC<{ figpackManageUrl: string }> = ({
 export const StatusBar: React.FC<{
   zarrData: ZarrGroup | null;
   figureUrl: string;
+  figureInfoResult: FigureInfoResult | undefined;
   onRefreshZarrData: () => void;
   figureAnnotationsIsDirty: boolean;
   revertFigureAnnotations: () => void;
-  saveFigureAnnotations: () => void;
+  saveFigureAnnotations?: () => void;
+  curating: boolean;
+  setCurating: React.Dispatch<React.SetStateAction<boolean>>;
 }> = ({
   zarrData,
+  figureInfoResult,
   figureAnnotationsIsDirty,
   revertFigureAnnotations,
   saveFigureAnnotations,
+  curating,
+  setCurating,
 }) => {
-  const { isLoading, error, status, isExpired, timeUntilExpiration } =
-    useFigpackStatus();
   const { embedded } = useUrlParams();
 
   // Extract title and description from zarr data
   const title = zarrData?.attrs?.title;
   const description = zarrData?.attrs?.description;
 
-  const figpackManageUrl = status
-    ? status?.figpackManageUrl || "https://manage.figpack.org"
+  const figpackManageUrl = figureInfoResult?.figureInfo
+    ? figureInfoResult.figureInfo.figpackManageUrl ||
+      "https://manage.figpack.org"
     : undefined;
 
   const aboutButton = <AboutButton title={title} description={description} />;
@@ -102,38 +107,24 @@ export const StatusBar: React.FC<{
       figureAnnotationsIsDirty={figureAnnotationsIsDirty}
       revertFigureAnnotations={revertFigureAnnotations}
       saveFigureAnnotations={saveFigureAnnotations}
+      curating={curating}
+      setCurating={setCurating}
     />
   );
 
-  if (isLoading) {
-    return (
-      <div className="status-bar">
-        <span>Loading status...</span>
-        {aboutButton}
-      </div>
-    );
-  }
+  const figureInfo = figureInfoResult?.figureInfo;
 
-  if (error) {
-    return (
-      <div className="status-bar error">
-        <span>{error}</span>
-        {aboutButton}
-      </div>
-    );
-  }
-
-  if (status && status.status !== "completed") {
+  if (figureInfo?.status && figureInfo?.status !== "completed") {
     return (
       <div className="status-bar warning">
-        <span>Upload status: {status.status}</span>
+        <span>Upload status: {figureInfo.status}</span>
         {aboutButton}
         {manageButton}
       </div>
     );
   }
 
-  if (isExpired) {
+  if (figureInfoResult?.isExpired) {
     return (
       <div className="status-bar expired">
         <span>
@@ -145,10 +136,10 @@ export const StatusBar: React.FC<{
     );
   }
 
-  if (timeUntilExpiration) {
+  if (figureInfoResult?.timeUntilExpiration) {
     return (
       <div className="status-bar">
-        <span>Expires in: {timeUntilExpiration}</span>
+        <span>Expires in: {figureInfoResult.timeUntilExpiration}</span>
         {aboutButton}
         {manageButton}
         {figureAnnotationsStatusComponent}

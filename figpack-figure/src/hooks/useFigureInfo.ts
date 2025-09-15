@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-interface FigpackStatus {
+export type FigureInfo = {
   status: string;
   uploadStarted?: string;
   uploadCompleted?: string;
@@ -9,26 +9,26 @@ interface FigpackStatus {
   totalFiles?: number;
   figureManagementUrl?: string; // to phase out
   figpackManageUrl?: string; // new
-}
+};
 
-interface FigpackStatusResult {
+export type FigureInfoResult = {
   isLoading: boolean;
   error: string | null;
-  status: FigpackStatus | null;
+  figureInfo: FigureInfo | null;
   isExpired: boolean;
   expirationTime: Date | null;
   timeUntilExpiration: string | null;
-}
+};
 
 const queryParams = new URLSearchParams(window.location.search);
 const figureUrl = queryParams.get("figure");
 
 const disableLoad = figureUrl?.startsWith("http://localhost:"); // for local figures we are not going to try to load figpack.json
 
-export const useFigpackStatus = (): FigpackStatusResult => {
+export const useFigureInfo = (): FigureInfoResult => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<FigpackStatus | null>(null);
+  const [figureInfo, setFigureInfo] = useState<FigureInfo | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   const [expirationTime, setExpirationTime] = useState<Date | null>(null);
   const [timeUntilExpiration, setTimeUntilExpiration] = useState<string | null>(
@@ -36,7 +36,7 @@ export const useFigpackStatus = (): FigpackStatusResult => {
   );
 
   useEffect(() => {
-    const loadFigpackStatus = async () => {
+    const loadFigureInfo = async () => {
       if (disableLoad) {
         setIsLoading(false);
         return;
@@ -62,8 +62,8 @@ export const useFigpackStatus = (): FigpackStatusResult => {
           return;
         }
 
-        const data: FigpackStatus = await response.json();
-        setStatus(data);
+        const data: FigureInfo = await response.json();
+        setFigureInfo(data);
 
         if (data.status === "completed" && data.expiration) {
           const et = new Date(data.expiration);
@@ -79,7 +79,7 @@ export const useFigpackStatus = (): FigpackStatusResult => {
       }
     };
 
-    loadFigpackStatus();
+    loadFigureInfo();
   }, []);
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export const useFigpackStatus = (): FigpackStatusResult => {
   return {
     isLoading,
     error,
-    status,
+    figureInfo: figureInfo,
     isExpired,
     expirationTime,
     timeUntilExpiration,

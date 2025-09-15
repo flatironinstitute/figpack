@@ -1,6 +1,6 @@
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import HomePage from "./pages/HomePage/HomePage";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import "./App.css";
 import AdminPage from "./pages/AdminPage/AdminPage";
 import ManageFigurePage from "./pages/ManageFigurePage/ManageFigurePage";
@@ -15,10 +15,12 @@ import NavigationMenu from "./components/NavigationMenu";
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const showAppBar = location.pathname !== '/edit-figure-service';
   return (
     <AuthProvider>
       <BacklinksProvider>
-        <AppBar
+        {showAppBar && <AppBar
           position="fixed"
           sx={{
             zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -50,8 +52,15 @@ function App() {
             <NavigationMenu />
             <LoginButton />
           </Toolbar>
-        </AppBar>
-        <Container maxWidth="lg" sx={{ mt: 12, mb: 4 }}>
+        </AppBar>}
+        <Container 
+          maxWidth="lg" 
+          sx={{ 
+            mt: showAppBar ? 12 : 0, 
+            mb: showAppBar ? 4 : 0,
+            p: showAppBar ? undefined : 0
+          }}
+        >
           <Routes>
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/profile" element={<UserProfilePage />} />

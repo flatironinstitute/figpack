@@ -122,9 +122,13 @@ export class InMemoryFigureAnnotations implements FigureAnnotations {
     return this.items;
   }
   setAllItems(items: { [key: string]: string }): void {
-    const oldItems = this.items;
-    this.items = items;
-    for (const key in oldItems) {
+    // include both old and new keys
+    const allKeys = new Set<string>([
+      ...Object.keys(this.items),
+      ...Object.keys(items),
+    ]);
+    this.items = { ...items }; // make a copy
+    for (const key of allKeys) {
       const cbs = this._callbacks.get(key);
       if (cbs) {
         for (const cb of cbs) {

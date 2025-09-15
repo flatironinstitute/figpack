@@ -27,30 +27,30 @@ export interface UploadErrorPayload {
 
 // Messages from figpack-figure to figpack-manage
 export type ParentToIframeMessage = {
-  type: 'UPLOAD_REQUEST';
+  type: "UPLOAD_REQUEST";
   payload: UploadRequestPayload;
 };
 
 // Messages from figpack-manage to figpack-figure
-export type IframeToParentMessage = 
+export type IframeToParentMessage =
   | {
-      type: 'UPLOAD_PROGRESS';
+      type: "UPLOAD_PROGRESS";
       payload: UploadProgressPayload;
     }
   | {
-      type: 'UPLOAD_SUCCESS';
+      type: "UPLOAD_SUCCESS";
       payload: UploadSuccessPayload;
     }
   | {
-      type: 'UPLOAD_ERROR';
+      type: "UPLOAD_ERROR";
       payload: UploadErrorPayload;
     }
   | {
-      type: 'READY';
+      type: "READY";
       payload: Record<string, never>;
     }
   | {
-      type: 'USER_CANCELLED';
+      type: "USER_CANCELLED";
       payload: Record<string, never>;
     };
 
