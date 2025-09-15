@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { InMemoryFigureAnnotations } from "../main";
+import { PutFigureFilesInterface } from "src/FPHeader/FPHeader";
 
 export interface SavedFigureAnnotations {
   items: { [key: string]: string };
@@ -8,12 +9,13 @@ export interface SavedFigureAnnotations {
 
 export const useSavedFigureAnnotations = (
   figureUrl: string,
-  headerIframeElement: HTMLIFrameElement | null,
+  putFigureFilesInterface: PutFigureFilesInterface | null,
 ) => {
   const [savedFigureAnnotations, setSavedFigureAnnotations] = useState<
     SavedFigureAnnotations | null | undefined
   >(undefined);
   const { figureAnnotationItems } = useFigureAnnotationItems();
+  const [curating, setCurating] = useState(false);
 
   useEffect(() => {
     let canceled = false;
@@ -27,10 +29,10 @@ export const useSavedFigureAnnotations = (
         ? figureUrlWithoutIndexHtml.slice(0, -1)
         : figureUrlWithoutIndexHtml;
       const annotationsUrl =
-        figureUrlWithoutTrailingSlash + "/annotations.json";
+        figureUrlWithoutTrailingSlash + `/annotations.json?cb=${Date.now()}`;
       const a = await loadRemoteFigureAnnotations(annotationsUrl);
       if (canceled) return;
-      console.log("Loaded annotations:", a);
+      console.info("Loaded annotations:", a);
       setSavedFigureAnnotations(a);
       const x = (window as any).figpack_p1?.figureAnnotations;
       if (x && a) {
@@ -61,11 +63,15 @@ export const useSavedFigureAnnotations = (
   }, [savedFigureAnnotations]);
 
   const saveFigureAnnotations = useCallback(() => {
+    if (!putFigureFilesInterface) {
+      console.warn("No putFigureFilesInterface available");
+      return;
+    }
     const s = {
       ...{ ...(savedFigureAnnotations || {}) },
       items: figureAnnotationItems,
     };
-    uploadFigureAnnotationsLocal(figureUrl, s, headerIframeElement)
+    uploadFigureAnnotations(figureUrl, s, putFigureFilesInterface)
       .then(() => {
         setSavedFigureAnnotations(s);
       })
@@ -77,14 +83,18 @@ export const useSavedFigureAnnotations = (
   }, [
     figureUrl,
     figureAnnotationItems,
-    headerIframeElement,
     savedFigureAnnotations,
+    putFigureFilesInterface,
   ]);
 
   return {
     figureAnnotationsIsDirty,
     revertFigureAnnotations,
-    saveFigureAnnotations,
+    saveFigureAnnotations: putFigureFilesInterface
+      ? saveFigureAnnotations
+      : undefined,
+    curating,
+    setCurating,
   };
 };
 
@@ -164,10 +174,10 @@ const annotationItemsAreEqual = (
   return true;
 };
 
-const uploadFigureAnnotationsLocal = async (
+const uploadFigureAnnotations = async (
   figureUrl: string,
   annotations: SavedFigureAnnotations,
-  headerIframeElement: HTMLIFrameElement | null,
+  putFigureFilesInterface: PutFigureFilesInterface,
 ): Promise<void> => {
   const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
     ? figureUrl.slice(0, -"index.html".length)
@@ -188,137 +198,5 @@ const uploadFigureAnnotationsLocal = async (
     },
   ];
 
-  await figpackPutFigureFiles(files);
-};
-
-const figpackPutFigureFiles = async (
-  files: { url: string; headers: any; body: string | ArrayBuffer }[],
-) => {
-  for (const file of files) {
-    const response = await fetch(file.url, {
-      method: "PUT",
-      headers: file.headers,
-      body: file.body,
-    });
-    if (!response.ok) {
-      throw new Error(
-        `Failed to upload file to ${file.url} (status: ${response.status})`,
-      );
-    }
-  }
-};
-
-const uploadFigureAnnotations = async (
-  figureUrl: string,
-  annotations: SavedFigureAnnotations,
-  headerIframeElement: HTMLIFrameElement | null,
-): Promise<void> => {
-  if (!headerIframeElement) {
-    throw new Error("No iframe element available for uploading annotations");
-  }
-
-  return new Promise((resolve, reject) => {
-    // Get the current figure URL
-    const queryParams = new URLSearchParams(window.location.search);
-    const figureUrl = queryParams.get("figure");
-
-    let currentFigureUrl: string;
-    if (figureUrl) {
-      // Development mode: use the provided figure URL
-      currentFigureUrl = figureUrl.endsWith("/index.html")
-        ? figureUrl
-        : figureUrl.endsWith("/")
-          ? figureUrl
-          : figureUrl + "/";
-    } else {
-      // Production mode: derive from current URL
-      const baseUrl = window.location.href.split("?")[0];
-      currentFigureUrl = baseUrl.endsWith("/index.html")
-        ? baseUrl
-        : baseUrl.endsWith("/")
-          ? baseUrl
-          : baseUrl + "/";
-    }
-
-    // Convert annotations to JSON file content
-    const annotationsJson = JSON.stringify(annotations, null, 2);
-    const files = { "annotations.json": annotationsJson };
-
-    // Set up message listener for responses
-    const handleMessage = (event: MessageEvent) => {
-      // Validate origin for security
-      if (!isValidOrigin(event.origin)) {
-        return;
-      }
-
-      const message = event.data;
-      if (!message || !message.type) {
-        return;
-      }
-
-      switch (message.type) {
-        case "UPLOAD_SUCCESS":
-          window.removeEventListener("message", handleMessage);
-          resolve();
-          break;
-        case "UPLOAD_ERROR":
-          window.removeEventListener("message", handleMessage);
-          reject(new Error(message.payload?.error || "Upload failed"));
-          break;
-        case "USER_CANCELLED":
-          window.removeEventListener("message", handleMessage);
-          reject(new Error("Upload cancelled by user"));
-          break;
-        // We can ignore UPLOAD_PROGRESS messages for now
-      }
-    };
-
-    // Add message listener
-    window.addEventListener("message", handleMessage);
-
-    // Send upload request to iframe
-    const uploadMessage = {
-      type: "UPLOAD_REQUEST",
-      payload: {
-        figureUrl: currentFigureUrl,
-        files: files,
-      },
-    };
-
-    try {
-      headerIframeElement.contentWindow?.postMessage(uploadMessage, "*");
-    } catch (error) {
-      window.removeEventListener("message", handleMessage);
-      reject(new Error(`Failed to send upload request: ${error}`));
-    }
-
-    // Set a timeout to prevent hanging forever
-    setTimeout(() => {
-      window.removeEventListener("message", handleMessage);
-      reject(new Error("Upload request timed out"));
-    }, 30000); // 30 second timeout
-  });
-};
-
-// Helper function to validate message origins for security
-const isValidOrigin = (origin: string): boolean => {
-  // Allow localhost for development
-  if (
-    origin.startsWith("http://localhost:") ||
-    origin.startsWith("https://localhost:")
-  ) {
-    return true;
-  }
-
-  // Allow figpack manage domains
-  if (origin === "https://manage.figpack.org") {
-    return true;
-  }
-
-  // Allow any origin that ends with .figpack.org for subdomains
-  if (origin.endsWith(".figpack.org")) {
-    return true;
-  }
-
-  return false;
+  await putFigureFilesInterface.putFigureFiles(files);
 };

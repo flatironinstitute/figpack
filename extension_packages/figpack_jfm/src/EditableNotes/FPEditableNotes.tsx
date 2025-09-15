@@ -20,9 +20,7 @@ const FPEditableNotes: React.FC<Props> = ({ zarrGroup }) => {
   return (
     <TextEditView
       text={text}
-      onSave={(newText) => {
-        setText(newText);
-      }}
+      setText={setText}
     />
   );
 };
@@ -33,61 +31,39 @@ interface FigureAnnotations {
   onItemChanged: (key: string, callback: (value: string) => void) => () => void;
 }
 
+const obj = (window as any).figpack_p1?.figureAnnotations as FigureAnnotations;
+
 const useFigureAnnotationItem = (key: string) => {
   const [internalValue, setInternalValue] = React.useState<string>('');
-  const figureAnnotationsObj = useMemo(() => {
-    const obj = (window as any).figpack_p1?.figureAnnotations as FigureAnnotations;
-    if (!obj) {
-      console.warn("figureAnnotations object not found on window.figpack_p1");
-    }
-    return obj;
-  }, []);
   useEffect(() => {
-    if (!figureAnnotationsObj) return;
-    const currentValue = figureAnnotationsObj.getItem(key) || '';
+    if (!obj) return;
+    const currentValue = obj.getItem(key) || '';
     setInternalValue(currentValue);
-    const unsubscribe = figureAnnotationsObj.onItemChanged(key, (newValue) => {
+    const unsubscribe = obj.onItemChanged(key, (newValue) => {
       setInternalValue(newValue);
     });
     return () => {
       unsubscribe();
     };
-  }, [figureAnnotationsObj, key]);
-  const setValue = figureAnnotationsObj.setItem ? (newValue: string) => {
-    if (!figureAnnotationsObj) return;
-    if (!figureAnnotationsObj.setItem) return;
-    figureAnnotationsObj.setItem(key, newValue);
+  }, [key]);
+  const setValue = obj.setItem ? (newValue: string) => {
+    if (!obj) return;
+    if (!obj.setItem) return;
+    obj.setItem(key, newValue);
   } : undefined;
   return [internalValue, setValue] as const;
 }
 
 const TextEditView: FunctionComponent<{
   text: string;
-  onSave: (newText: string) => void;
-}> = ({ text, onSave }) => {
-  const [internalText, setInternalText] = React.useState(text);
-  const internalTextRef = useRef(internalText);
-  useEffect(() => {
-    internalTextRef.current = internalText;
-  }, [internalText]);
-  useEffect(() => {
-    setInternalText(text);
-  }, [text]);
-  // save every 300 ms if changed
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (internalTextRef.current !== text) {
-        onSave(internalTextRef.current);
-      }
-    }, 300);
-    return () => clearInterval(interval);
-  }, [text, onSave]);
+  setText: (newText: string) => void;
+}> = ({ text, setText }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <textarea
         style={{ flexGrow: 1, width: "100%", boxSizing: "border-box" }}
-        value={internalText}
-        onChange={(e) => setInternalText(e.target.value)}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
       />
     </div>
   );

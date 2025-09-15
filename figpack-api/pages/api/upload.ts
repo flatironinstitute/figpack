@@ -28,6 +28,10 @@ function validateFilePath(path: string): { valid: boolean } {
     return { valid: true };
   }
 
+  if (path === "annotations.json") {
+    return { valid: true };
+  }
+
   if (path.endsWith(".png") && path.startsWith("assets/neurosift-logo")) {
     return { valid: true };
   }

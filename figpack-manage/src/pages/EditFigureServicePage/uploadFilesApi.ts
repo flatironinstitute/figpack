@@ -39,7 +39,7 @@ interface FinalizeResponse {
 export async function getBatchSignedUrls(
   apiKey: string,
   figureUrl: string,
-  files: { [path: string]: string | ArrayBuffer | null }
+  files: { [relativePath: string]: string | ArrayBuffer | null }
 ): Promise<{ success: boolean; message?: string; signedUrls?: SignedUrlInfo[] }> {
   try {
     // Prepare files data for the batch request
@@ -56,7 +56,7 @@ export async function getBatchSignedUrls(
       } else if ("buffer" in content) {
         buf = (content as any).buffer;
       } else {
-        throw new Error("Unsupported file content type");
+        throw new Error(`Unsupported file content type for ${relativePath}: ${typeof content}`);
       }
       
       const size = buf.byteLength || buf.length || 0;
@@ -199,7 +199,7 @@ export async function finalizeFigureUpload(
 export async function uploadFigureFiles(
   apiKey: string,
   figureUrl: string,
-  files: { [path: string]: string | ArrayBuffer | null },
+  files: { [relativePath: string]: string | ArrayBuffer | null },
   onProgress?: (progress: number, currentFile?: string, totalFiles?: number, completedFiles?: number) => void
 ): Promise<{ success: boolean; message?: string; uploadedFiles?: string[] }> {
   const filePaths = Object.keys(files).filter(path => files[path] !== null);

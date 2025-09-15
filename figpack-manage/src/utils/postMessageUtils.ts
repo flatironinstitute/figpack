@@ -4,9 +4,11 @@ export class IframeMessageHandler {
   private parentOrigin: string | null = null;
   private messageHandlers: Map<string, (payload: unknown) => void> = new Map();
 
-  constructor() {
+  constructor(autoReady: boolean = true) {
     this.setupMessageListener();
-    this.notifyReady();
+    if (autoReady) {
+      this.notifyReady();
+    }
   }
 
   private setupMessageListener() {
@@ -125,6 +127,10 @@ export class IframeMessageHandler {
         payload: {},
       });
     }, 100);
+  }
+
+  public sendReady() {
+    this.notifyReady();
   }
 
   public cleanup() {
