@@ -6,7 +6,8 @@ import AdminPage from "./pages/AdminPage/AdminPage";
 import ManageFigurePage from "./pages/ManageFigurePage/ManageFigurePage";
 import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 import FiguresPage from "./pages/FiguresPage/FiguresPage";
-import UploadFilesPage from "./pages/UploadFilesPage/UploadFilesPage";
+import AnnotatePage from "./pages/AnnotatePage/AnnotatePage";
+import EditFigureServicePage from "./pages/EditFigureServicePage/EditFigureServicePage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BacklinksProvider } from "./contexts/BacklinksProvider";
 import LoginButton from "./components/LoginButton";
@@ -56,7 +57,8 @@ function App() {
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/figures" element={<FiguresPage />} />
             <Route path="/figure" element={<ManageFigurePage />} />
-            <Route path="/upload-files" element={<UploadFilesPage />} />
+            <Route path="/edit-figure-service" element={<EditFigureServicePage />} />
+            <Route path="/annotate" element={<AnnotatePage />} />
             <Route path="/" element={<HomePage />} />
           </Routes>
         </Container>

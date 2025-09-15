@@ -5,6 +5,10 @@
     <link rel="icon" type="image/png" href="/neurosift-logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>figpack figure</title>
+    <script>
+      // Allow script injection from trusted domains (see src/main.tsx)
+      window.script_injection_allowed_domains = ['https://manage.figpack.org', 'https://figpack.org'];
+    </script>
   </head>
   <body>
     <div id="root"></div>
