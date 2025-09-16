@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { FPViewComponent, FPViewContext, FPViewContextCreator, RenderParams, ZarrGroup } from "./figpack-interface";
@@ -203,6 +204,7 @@ type ComponentWrapperProps = {
   component: React.ComponentType<any>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   zarrGroup,
   width,

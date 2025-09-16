@@ -1,6 +1,6 @@
-import { FunctionComponent, useCallback, useEffect, useMemo } from "react";
-import { FigureAnnotationsAction, FigureAnnotationsState, FPViewContexts, ZarrGroup } from "../figpack-interface";
-import useProvideFPViewContext from "../useProvideFPViewContext";
+import { FunctionComponent, useMemo } from "react";
+import { FPViewContexts, ZarrGroup } from "../figpack-interface";
+import { useFigureAnnotations } from "../figpack-utils";
 import {
   SortingCuration,
   SortingCurationAction,
@@ -9,7 +9,6 @@ import {
 } from "./context-sorting-curation";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 import SortingCurationView from "./SortingCurationView/SortingCurationView";
-import { useFigureAnnotations } from "../figpack-utils";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -59,6 +58,7 @@ export const ProvideSortingCurationContext: React.FC<{
   children: React.ReactNode;
 }> = ({ contexts, children }) => {
   const { annotations, setAnnotation } = useFigureAnnotations(contexts, "/");
+  console.log('--- set setAnnotation:', setAnnotation);
   const sortingCuration: SortingCuration = useMemo(() => {
     try {
       return JSON.parse(annotations?.['sorting_curation'] || '{}');

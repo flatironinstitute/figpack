@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useDragSelectLayer } from "../core-utils";
 import {
   BaseCanvas,
@@ -246,7 +248,7 @@ const UnitLocationsWidget = (props: WidgetProps) => {
         ctxt.fill();
         ctxt.stroke();
       };
-      for (let unit of filteredUnits) {
+      for (const unit of filteredUnits) {
         const pt0 = transformPoint(transform, [unit.x, unit.y]);
         const pt = applyAffineTransform(affineTransform, {
           x: pt0[0],
@@ -290,7 +292,7 @@ const UnitLocationsWidget = (props: WidgetProps) => {
       const det = detAffineTransform(affineTransform);
       const radius2 = markerRadius / Math.sqrt(det);
       const ids: (number | string)[] = [];
-      for (let unit of filteredUnits) {
+      for (const unit of filteredUnits) {
         const pt = transformPoint(transform, [unit.x, unit.y]);
         if (
           rectangularRegionsIntersect(
@@ -313,7 +315,7 @@ const UnitLocationsWidget = (props: WidgetProps) => {
         }
       }
       if (ctrlKey) {
-        for (let id of ids) {
+        for (const id of ids) {
           unitIdSelectionDispatch({
             type: "TOGGLE_UNIT",
             targetUnit: id,
@@ -332,7 +334,7 @@ const UnitLocationsWidget = (props: WidgetProps) => {
   const handleClickPoint = useCallback(
     (x: Vec2, { ctrlKey }: { ctrlKey: boolean }) => {
       let somethingFound = false;
-      for (let unit of filteredUnits) {
+      for (const unit of filteredUnits) {
         const pt = transformPoint(transform, [unit.x, unit.y]);
         if (
           pointInRect(

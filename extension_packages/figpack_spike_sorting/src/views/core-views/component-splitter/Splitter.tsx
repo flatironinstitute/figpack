@@ -80,12 +80,6 @@ const Splitter: FunctionComponent<
     throw Error("Splitter must have at least one child.");
   }
 
-  if (!child2) {
-    return (
-      <child1.type {...(child1.props as any)} width={width} height={height} />
-    );
-  }
-
   const gripPositionFromLeft = positionFromRight
     ? size1 - gripPosition
     : gripPosition;
@@ -215,6 +209,13 @@ const Splitter: FunctionComponent<
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  if (!child2) {
+    return (
+      <child1.type {...(child1.props as any)} width={width} height={height} />
+    );
+  }
+
   return (
     <div className="splitter" style={{ ...style0, position: "relative" }}>
       <div

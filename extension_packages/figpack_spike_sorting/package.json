@@ -7,7 +7,8 @@
     "build": "vite build",
     "dev": "npm run build && concurrently \"npm run dev:watch\" \"npm run dev:serve\"",
     "dev:watch": "vite build --watch",
-    "dev:serve": "vite preview --port 5174"
+    "dev:serve": "vite preview --port 5174",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -27,7 +28,12 @@
     "concurrently": "^8.0.0",
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
-    "vite-plugin-css-injected-by-js": "^3.5.2"
+    "vite-plugin-css-injected-by-js": "^3.5.2",
+    "@eslint/js": "^9.33.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "typescript-eslint": "^8.39.1"
   },
   "peerDependencies": {
     "react": "^19.1.1",

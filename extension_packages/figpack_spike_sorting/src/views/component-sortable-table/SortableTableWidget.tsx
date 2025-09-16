@@ -44,7 +44,8 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
     [selectedUnitIds, orderedUnitIds, _visibleUnitIds],
   );
 
-  const handleHeaderClick = useCallback((columnName: string, column: SortableTableWidgetColumn) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleHeaderClick = useCallback((columnName: string, _column: SortableTableWidgetColumn) => {
     const newSortAscending = sortRule?.columnName === columnName ? !sortRule?.sortAscending : true;
     const newSortRule: SortingRule = {
       columnName,
