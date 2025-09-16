@@ -13,7 +13,11 @@ type Props = {
   height: number;
 };
 
-const PlaneSegmentationView: React.FC<Props> = ({ zarrGroup, width, height }) => {
+const PlaneSegmentationView: React.FC<Props> = ({
+  zarrGroup,
+  width,
+  height,
+}) => {
   const [client, setClient] = useState<PlaneSegmentationClient | null>(null);
   const [selectedRoiIds, setSelectedRoiIds] = useState<Set<number>>(new Set());
   const [brightness, setBrightness] = useState<number>(50);
@@ -45,7 +49,7 @@ const PlaneSegmentationView: React.FC<Props> = ({ zarrGroup, width, height }) =>
 
   // Handle ROI selection
   const handleRoiToggle = (roiId: number) => {
-    setSelectedRoiIds(prev => {
+    setSelectedRoiIds((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(roiId)) {
         newSet.delete(roiId);
@@ -66,13 +70,14 @@ const PlaneSegmentationView: React.FC<Props> = ({ zarrGroup, width, height }) =>
   };
 
   // Use the ROI interactions hook
-  const { handleMouseMove, handleMouseLeave, handleCanvasClick } = useRoiInteractions(
-    client,
-    scaleAndBounds,
-    handleRoiToggle,
-    handleSelectNone,
-    setHoveredRoiId
-  );
+  const { handleMouseMove, handleMouseLeave, handleCanvasClick } =
+    useRoiInteractions(
+      client,
+      scaleAndBounds,
+      handleRoiToggle,
+      handleSelectNone,
+      setHoveredRoiId,
+    );
 
   if (!client) {
     return <div>Loading...</div>;
@@ -83,7 +88,14 @@ const PlaneSegmentationView: React.FC<Props> = ({ zarrGroup, width, height }) =>
   }
 
   return (
-    <div style={{ display: "flex", width, height, fontFamily: "Arial, sans-serif" }}>
+    <div
+      style={{
+        display: "flex",
+        width,
+        height,
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
       {/* Left panel with ROI selection */}
       <RoiSelectionPanel
         ids={client.ids}
@@ -95,9 +107,23 @@ const PlaneSegmentationView: React.FC<Props> = ({ zarrGroup, width, height }) =>
       />
 
       {/* Main content area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "10px" }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          padding: "10px",
+        }}
+      >
         {/* Canvas */}
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <PlaneSegmentationCanvas
             client={client}
             scaleAndBounds={scaleAndBounds}

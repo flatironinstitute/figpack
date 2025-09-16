@@ -9,7 +9,13 @@ type Props = {
 };
 
 const FPPlaneSegmentation: React.FC<Props> = ({ zarrGroup, width, height }) => {
-  return <PlaneSegmentationView zarrGroup={zarrGroup} width={width} height={height} />;
+  return (
+    <PlaneSegmentationView
+      zarrGroup={zarrGroup}
+      width={width}
+      height={height}
+    />
+  );
 };
 
 export default FPPlaneSegmentation;

@@ -13,6 +13,22 @@ repos:
         entry: bash -c 'cd figpack-figure && npm run format:all'
         language: system
         pass_filenames: false
+      - id: npm-format-figpack-nwb
+        name: Format figpack_nwb package files
+        entry: bash -c 'cd extension_packages/figpack_nwb && npm run format'
+        language: system
+      - id: npm-format-figpack-jfm
+        name: Format figpack_jfm package files
+        entry: bash -c 'cd extension_packages/figpack_jfm && npm run format'
+        language: system
+      - id: npm-format-figpack-franklab
+        name: Format figpack_franklab package files
+        entry: bash -c 'cd extension_packages/figpack_franklab && npm run format'
+        language: system
+      - id: npm-format-figpack-spike-sorting
+        name: Format figpack_spike_sorting package files
+        entry: bash -c 'cd extension_packages/figpack_spike_sorting && npm run format'
+        language: system
       - id: check-figpack-interfaces
         name: Check figpack-interface.ts files are identical
         entry: scripts/check-figpack-interfaces.js
