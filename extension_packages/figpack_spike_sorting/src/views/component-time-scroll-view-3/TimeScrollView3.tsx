@@ -165,7 +165,17 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         hideTimeAxisLabels={hideTimeAxisLabels}
       />
     );
-  }, [canvasWidth, plotHeight, timeRange, margins, timeTicks, yAxisInfo, yTickSet, hideTimeAxisLabels, gridlineOpts]);
+  }, [
+    canvasWidth,
+    plotHeight,
+    timeRange,
+    margins,
+    timeTicks,
+    yAxisInfo,
+    yTickSet,
+    hideTimeAxisLabels,
+    gridlineOpts,
+  ]);
 
   const currentTimePixels = useMemo(
     () => (currentTime !== undefined ? timeToPixel(currentTime) : undefined),
@@ -312,7 +322,21 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         {selectionLayer}
       </div>
     );
-  }, [canvasWidth, plotHeight, handleKeyDown, handleWheel, handleMouseDown2, handleMouseUp2, handleMouseMove2, handleMouseOut2, requireClickToZoom, isViewClicked, axesLayer, cursorLayer, selectionLayer]);
+  }, [
+    canvasWidth,
+    plotHeight,
+    handleKeyDown,
+    handleWheel,
+    handleMouseDown2,
+    handleMouseUp2,
+    handleMouseMove2,
+    handleMouseOut2,
+    requireClickToZoom,
+    isViewClicked,
+    axesLayer,
+    cursorLayer,
+    selectionLayer,
+  ]);
 
   const timeScrollToolbar = useMemo(() => {
     return (

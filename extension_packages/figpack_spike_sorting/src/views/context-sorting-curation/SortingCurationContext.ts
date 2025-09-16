@@ -8,8 +8,7 @@ export type SortingCuration = {
   isClosed?: boolean;
 };
 
-export const emptySortingCuration: SortingCuration = {
-};
+export const emptySortingCuration: SortingCuration = {};
 
 export const sortingCurationReducer = (
   state: SortingCuration,
@@ -131,7 +130,10 @@ const SortingCurationContext = React.createContext<{
 
 export const useSortingCuration = () => {
   const c = useContext(SortingCurationContext);
-  if (!c) throw Error("useSortingCuration must be used within a SortingCurationContext.Provider");
+  if (!c)
+    throw Error(
+      "useSortingCuration must be used within a SortingCurationContext.Provider",
+    );
   return c;
 };
 

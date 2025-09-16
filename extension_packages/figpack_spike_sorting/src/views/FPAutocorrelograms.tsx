@@ -1,10 +1,9 @@
 import { FunctionComponent, useEffect, useState } from "react";
+import { FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
 import {
-  FPViewContext,
-  FPViewContexts,
-  ZarrGroup,
-} from "../figpack-interface";
-import { UnitSelectionAction, UnitSelectionContext } from "./context-unit-selection";
+  UnitSelectionAction,
+  UnitSelectionContext,
+} from "./context-unit-selection";
 import { UnitSelection } from "./context-unit-selection/UnitSelectionContext";
 import AutocorrelogramsView from "./view-autocorrelograms/AutocorrelogramsView";
 import { AutocorrelogramsViewData } from "./view-autocorrelograms/AutocorrelogramsViewData";
@@ -41,7 +40,10 @@ export const FPAutocorrelograms: FunctionComponent<Props> = ({
       }
 
       // Fetch the shared bin edges dataset
-      const binEdgesSecData = await zarrGroup.getDatasetData("bin_edges_sec", {});
+      const binEdgesSecData = await zarrGroup.getDatasetData(
+        "bin_edges_sec",
+        {},
+      );
 
       // Fetch the 2D bin counts dataset
       const binCountsData = await zarrGroup.getDatasetData("bin_counts", {});
@@ -107,7 +109,10 @@ export const ProvideUnitSelectionContext: React.FC<{
   context: FPViewContext;
   children: React.ReactNode;
 }> = ({ context, children }) => {
-  const { state, dispatch } = useProvideFPViewContext<UnitSelection, UnitSelectionAction>(context);
+  const { state, dispatch } = useProvideFPViewContext<
+    UnitSelection,
+    UnitSelectionAction
+  >(context);
 
   if (!dispatch || !state) {
     return <>Waiting for context...</>;

@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useState } from "react";
-import {
-  FPViewContext,
-  FPViewContexts,
-  ZarrGroup,
-} from "../figpack-interface";
+import { FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
 import { UnitMetricsGraphView } from "./view-unit-metrics-graph";
 import {
   UnitMetricsGraphViewData,
   isUnitMetricsGraphViewData,
 } from "./view-unit-metrics-graph";
-import { UnitMetricSelection, UnitMetricSelectionAction, UnitMetricSelectionContext } from "./context-unit-metrics-selection";
+import {
+  UnitMetricSelection,
+  UnitMetricSelectionAction,
+  UnitMetricSelectionContext,
+} from "./context-unit-metrics-selection";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 import { useProvideFPViewContext } from "../figpack-utils";
 
@@ -151,7 +151,10 @@ export const ProvideUnitMetricSelection: React.FC<{
   context: FPViewContext;
   children: React.ReactNode;
 }> = ({ context, children }) => {
-  const { state, dispatch } = useProvideFPViewContext<UnitMetricSelection, UnitMetricSelectionAction>(context);
+  const { state, dispatch } = useProvideFPViewContext<
+    UnitMetricSelection,
+    UnitMetricSelectionAction
+  >(context);
 
   if (!dispatch || !state) {
     return <>Waiting for unit metric selection context...</>;
@@ -168,4 +171,3 @@ export const ProvideUnitMetricSelection: React.FC<{
     </UnitMetricSelectionContext.Provider>
   );
 };
-

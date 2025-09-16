@@ -5,7 +5,7 @@ import {
   SortingCuration,
   SortingCurationAction,
   SortingCurationContext,
-  sortingCurationReducer
+  sortingCurationReducer,
 } from "./context-sorting-curation";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
 import SortingCurationView from "./SortingCurationView/SortingCurationView";
@@ -58,25 +58,32 @@ export const ProvideSortingCurationContext: React.FC<{
   children: React.ReactNode;
 }> = ({ contexts, children }) => {
   const { annotations, setAnnotation } = useFigureAnnotations(contexts, "/");
-  console.log('--- set setAnnotation:', setAnnotation);
+  console.log("--- set setAnnotation:", setAnnotation);
   const sortingCuration: SortingCuration = useMemo(() => {
     try {
-      return JSON.parse(annotations?.['sorting_curation'] || '{}');
+      return JSON.parse(annotations?.["sorting_curation"] || "{}");
     } catch (error) {
       console.error("Error parsing sorting_curation:", error);
       return {};
     }
   }, [annotations]);
 
-  const sortingCurationDispatch = useMemo(() => (action: SortingCurationAction) => {
-    if (!setAnnotation) return;
-    const newState = sortingCurationReducer(sortingCuration, action);
-    setAnnotation("sorting_curation", JSON.stringify(newState));
-  }, [setAnnotation, sortingCuration]);
+  const sortingCurationDispatch = useMemo(
+    () => (action: SortingCurationAction) => {
+      if (!setAnnotation) return;
+      const newState = sortingCurationReducer(sortingCuration, action);
+      setAnnotation("sorting_curation", JSON.stringify(newState));
+    },
+    [setAnnotation, sortingCuration],
+  );
 
   return (
     <SortingCurationContext.Provider
-      value={{ sortingCuration, sortingCurationDispatch, curating: !!setAnnotation }}
+      value={{
+        sortingCuration,
+        sortingCurationDispatch,
+        curating: !!setAnnotation,
+      }}
     >
       {children}
     </SortingCurationContext.Provider>
