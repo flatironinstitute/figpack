@@ -6,5 +6,5 @@ This package provides interactive 3D scene visualization using the Three.js libr
 
 from .three_d_view import ThreeDView
 
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 __all__ = ["ThreeDView"]

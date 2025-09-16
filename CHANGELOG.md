@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Remove chroma-js dependency
+- Move main plugin to figpack-figure main package (no longer a separate package)
+- Code cleanup
+
 ## [0.2.20] - 2025-09-16
 
 - Export as SVG for Timeseries Graph, Spectrogram, Multichannel Timeseries
