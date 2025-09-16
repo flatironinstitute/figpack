@@ -3,7 +3,11 @@ import { FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
 import RasterPlotView from "./view-raster-plot-4/RasterPlotView";
 import { RasterPlotDataClient } from "./view-raster-plot-4/RasterPlotDataClient";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
-import { TimeseriesSelectionAction, TimeseriesSelectionContext, TimeseriesSelectionState } from "../TimeseriesSelectionContext";
+import {
+  TimeseriesSelectionAction,
+  TimeseriesSelectionContext,
+  TimeseriesSelectionState,
+} from "../TimeseriesSelectionContext";
 import { useProvideFPViewContext } from "../figpack-utils";
 
 type Props = {
@@ -38,7 +42,10 @@ export const ProvideTimeseriesSelectionContext: React.FC<{
   context: FPViewContext;
   children: React.ReactNode;
 }> = ({ context, children }) => {
-  const { state, dispatch } = useProvideFPViewContext<TimeseriesSelectionState, TimeseriesSelectionAction>(context);
+  const { state, dispatch } = useProvideFPViewContext<
+    TimeseriesSelectionState,
+    TimeseriesSelectionAction
+  >(context);
 
   if (!dispatch || !state) {
     return <>Waiting for context...</>;

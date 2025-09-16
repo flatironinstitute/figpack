@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { FPViewComponent, FPViewContext, FPViewContextCreator, RenderParams, ZarrGroup } from "./figpack-interface";
+import {
+  FPViewComponent,
+  FPViewContext,
+  FPViewContextCreator,
+  RenderParams,
+  ZarrGroup,
+} from "./figpack-interface";
 import {
   UnitMetricSelection,
   unitMetricSelectionReducer,
@@ -23,7 +29,7 @@ import { FPSortingCuration } from "./views/FPSortingCuration";
 import { sortingCurationReducer } from "./views/context-sorting-curation";
 
 // Declare global types for figpack extension system
-export { };
+export {};
 
 declare global {
   interface Window {
@@ -59,7 +65,9 @@ const createUnitMetricSelectionContext = (): FPViewContext => {
 };
 
 const createUnitSelectionContext = (): FPViewContext => {
-  const stateRef: {current: UnitSelection} = {current: defaultUnitSelection};
+  const stateRef: { current: UnitSelection } = {
+    current: defaultUnitSelection,
+  };
   const listeners: ((newValue: UnitSelection) => void)[] = [];
 
   const dispatch = (action: any) => {
@@ -165,13 +173,13 @@ const createSortingCurationContext = (): FPViewContext => {
 //   ): void {
 //     container.innerHTML = `
 //       <div style="
-//         width: ${width}px; 
-//         height: ${height}px; 
-//         display: flex; 
-//         align-items: center; 
-//         justify-content: center; 
-//         background-color: #f8f9fa; 
-//         border: 1px solid #dee2e6; 
+//         width: ${width}px;
+//         height: ${height}px;
+//         display: flex;
+//         align-items: center;
+//         justify-content: center;
+//         background-color: #f8f9fa;
+//         border: 1px solid #dee2e6;
 //         color: #6c757d;
 //         font-family: system-ui, -apple-system, sans-serif;
 //         font-size: 14px;
@@ -226,10 +234,10 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
     onDataChange((newZarrGroup) => {
       setInternalZarrGroup(newZarrGroup);
     });
-
   }, [onResize, onDataChange]);
 
-  return (<Component
+  return (
+    <Component
       zarrGroup={internalZarrGroup}
       width={internalWidth}
       height={internalHeight}
@@ -240,7 +248,15 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
 
 const makeRenderFunction = (Component: React.ComponentType<any>) => {
   return (a: RenderParams) => {
-    const { container, zarrGroup, width, height, onResize, onDataChange, contexts } = a;
+    const {
+      container,
+      zarrGroup,
+      width,
+      height,
+      onResize,
+      onDataChange,
+      contexts,
+    } = a;
     const root = createRoot(container);
     root.render(
       <ComponentWrapper
@@ -251,9 +267,9 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
         onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
-      />
+      />,
     );
-  }
+  };
 };
 
 const registerExtension = () => {
@@ -267,24 +283,37 @@ const registerExtension = () => {
     { name: "spike_sorting.UnitMetricsGraph", component: FPUnitMetricsGraph },
     { name: "spike_sorting.UnitsTable", component: FPUnitsTable },
     { name: "spike_sorting.SortingCuration", component: FPSortingCuration },
-  ]
+  ];
 
-  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any).figpack_p1.registerFPViewComponent;
+  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
+    .figpack_p1.registerFPViewComponent;
   for (const comp of components) {
     registerFPViewComponent({
       name: comp.name,
       render: makeRenderFunction(comp.component),
-    })
+    });
   }
 
-  const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
+  const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (
+    window as any
+  ).figpack_p1.registerFPViewContextCreator;
 
-  registerFPViewContextCreator({ name: "unitSelection", create: createUnitSelectionContext });
-  registerFPViewContextCreator({ name: "unitMetricSelection", create: createUnitMetricSelectionContext });
-  registerFPViewContextCreator({ name: "sortingCuration", create: createSortingCurationContext });
+  registerFPViewContextCreator({
+    name: "unitSelection",
+    create: createUnitSelectionContext,
+  });
+  registerFPViewContextCreator({
+    name: "unitMetricSelection",
+    create: createUnitMetricSelectionContext,
+  });
+  registerFPViewContextCreator({
+    name: "sortingCuration",
+    create: createSortingCurationContext,
+  });
 
-  const registerFPExtension: (e: { name: string }) => void = (window as any).figpack_p1.registerFPExtension;
+  const registerFPExtension: (e: { name: string }) => void = (window as any)
+    .figpack_p1.registerFPExtension;
   registerFPExtension({ name: "figpack-spike-sorting" });
-}
+};
 
 registerExtension();

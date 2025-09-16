@@ -222,7 +222,10 @@ export const useSelectedUnitIds = () => {
   );
 
   const selectedUnitIdsArray = useMemo(
-    () => unitSelection.orderedUnitIds.filter((x) => unitSelection.selectedUnitIds.has(x)),
+    () =>
+      unitSelection.orderedUnitIds.filter((x) =>
+        unitSelection.selectedUnitIds.has(x),
+      ),
     [unitSelection.orderedUnitIds, unitSelection.selectedUnitIds],
   );
 

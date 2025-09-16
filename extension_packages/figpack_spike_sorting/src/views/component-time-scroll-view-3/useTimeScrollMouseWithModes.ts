@@ -141,7 +141,7 @@ const useTimeScrollMouseWithModes = (
       setCurrentTime,
       interactionMode,
       setVisibleTimeRange,
-      onCanvasClick
+      onCanvasClick,
     ],
   );
 

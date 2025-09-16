@@ -47,9 +47,7 @@ export const FPAverageWaveformsChild: FunctionComponent<Props> = ({
 
       for (let i = 0; i < numAverageWaveforms; i++) {
         const waveformName = `waveform_${i}`;
-        const waveformGroup = await zarrGroup.getGroup(
-          waveformName
-        );
+        const waveformGroup = await zarrGroup.getGroup(waveformName);
         if (!waveformGroup) {
           console.warn(`No group for ${waveformName}`);
           continue;

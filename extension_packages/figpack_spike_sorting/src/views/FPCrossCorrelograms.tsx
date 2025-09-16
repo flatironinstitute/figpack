@@ -37,7 +37,10 @@ export const FPCrossCorrelograms: FunctionComponent<Props> = ({
       }
 
       // Fetch the shared bin edges dataset
-      const binEdgesSecData = await zarrGroup.getDatasetData("bin_edges_sec", {});
+      const binEdgesSecData = await zarrGroup.getDatasetData(
+        "bin_edges_sec",
+        {},
+      );
 
       // Fetch the 2D bin counts dataset
       const binCountsData = await zarrGroup.getDatasetData("bin_counts", {});

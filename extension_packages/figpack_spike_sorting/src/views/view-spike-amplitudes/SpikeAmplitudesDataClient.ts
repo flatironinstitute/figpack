@@ -74,7 +74,9 @@ export class SpikeAmplitudesDataClient {
         }
         const subGroup = await zarrGroup.getGroup(sg.name);
         if (!subGroup) {
-          throw new Error(`Failed to load subsampled group at ${sg.name} in ${zarrGroup.path}`);
+          throw new Error(
+            `Failed to load subsampled group at ${sg.name} in ${zarrGroup.path}`,
+          );
         }
         const client = await SpikeAmplitudesDataClient.create(subGroup);
         subsampleClients[f] = client;
@@ -139,18 +141,16 @@ export class SpikeAmplitudesDataClient {
       }
     }
 
-    const timestampsData = await this.zarrGroup.getDatasetData(
-      `timestamps`,
-      { slice: [[startIndex, endIndex]] },
-    );
+    const timestampsData = await this.zarrGroup.getDatasetData(`timestamps`, {
+      slice: [[startIndex, endIndex]],
+    });
     const unitIndicesData = await this.zarrGroup.getDatasetData(
       `unit_indices`,
       { slice: [[startIndex, endIndex]] },
     );
-    const amplitudesData = await this.zarrGroup.getDatasetData(
-      `amplitudes`,
-      { slice: [[startIndex, endIndex]] },
-    );
+    const amplitudesData = await this.zarrGroup.getDatasetData(`amplitudes`, {
+      slice: [[startIndex, endIndex]],
+    });
 
     const rangeData = {
       timestamps: Array.from(timestampsData as Float32Array),

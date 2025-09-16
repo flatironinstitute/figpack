@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
-import {
-  allUnitSelectionState,
-  SortingRule
-} from "../context-unit-selection";
+import { allUnitSelectionState, SortingRule } from "../context-unit-selection";
 import "./SortableTableWidget.css";
 import {
   SortableTableProps,
   SortableTableWidgetColumn,
-  SortableTableWidgetRow
+  SortableTableWidgetRow,
 } from "./SortableTableWidgetTypes";
 
 const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
@@ -26,7 +23,9 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
     hideSelectionColumn,
   } = props;
 
-  const [sortRule, setSortRule] = useState<SortingRule | undefined>(primarySortRule);
+  const [sortRule, setSortRule] = useState<SortingRule | undefined>(
+    primarySortRule,
+  );
 
   const _visibleUnitIds = useMemo(() => {
     return visibleUnitIds && visibleUnitIds.length > 0
@@ -45,22 +44,26 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleHeaderClick = useCallback((columnName: string, _column: SortableTableWidgetColumn) => {
-    const newSortAscending = sortRule?.columnName === columnName ? !sortRule?.sortAscending : true;
-    const newSortRule: SortingRule = {
-      columnName,
-      sortAscending: newSortAscending,
-    };
-    setSortRule(newSortRule);
-    
-    if (selectionDispatch) {
-      selectionDispatch({
-        type: "UPDATE_SORT_FIELDS",
-        newSortField: columnName,
-        ascending: newSortAscending,
-      });
-    }
-  }, [sortRule, selectionDispatch]);
+  const handleHeaderClick = useCallback(
+    (columnName: string, _column: SortableTableWidgetColumn) => {
+      const newSortAscending =
+        sortRule?.columnName === columnName ? !sortRule?.sortAscending : true;
+      const newSortRule: SortingRule = {
+        columnName,
+        sortAscending: newSortAscending,
+      };
+      setSortRule(newSortRule);
+
+      if (selectionDispatch) {
+        selectionDispatch({
+          type: "UPDATE_SORT_FIELDS",
+          newSortField: columnName,
+          ascending: newSortAscending,
+        });
+      }
+    },
+    [sortRule, selectionDispatch],
+  );
 
   const handleSelectAll = useCallback(() => {
     if (selectionDispatch) {
@@ -79,7 +82,7 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
 
     if (!sortRule) return visibleRows;
 
-    const column = columns.find(c => c.columnName === sortRule.columnName);
+    const column = columns.find((c) => c.columnName === sortRule.columnName);
     if (!column) return visibleRows;
 
     return [...visibleRows].sort((a, b) => {
@@ -96,8 +99,8 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
   };
 
   return (
-    <div 
-      className="compact-table-container" 
+    <div
+      className="compact-table-container"
       style={{ height: height ? `${height}px` : "100%", overflow: "auto" }}
     >
       <table className="compact-table">
@@ -109,7 +112,9 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
                   type="checkbox"
                   checked={allUnitSelectionStatus === "all"}
                   ref={(input) => {
-                    if (input) input.indeterminate = allUnitSelectionStatus === "partial";
+                    if (input)
+                      input.indeterminate =
+                        allUnitSelectionStatus === "partial";
                   }}
                   onChange={handleSelectAll}
                   disabled={selectionDisabled}
@@ -125,7 +130,9 @@ const SortableTableWidget: FunctionComponent<SortableTableProps> = (props) => {
                 style={{ cursor: "pointer" }}
               >
                 {column.label}
-                <span className="sort-indicator">{getSortIndicator(column.columnName)}</span>
+                <span className="sort-indicator">
+                  {getSortIndicator(column.columnName)}
+                </span>
               </th>
             ))}
           </tr>

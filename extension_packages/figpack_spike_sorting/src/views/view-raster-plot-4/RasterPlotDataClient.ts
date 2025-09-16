@@ -123,10 +123,9 @@ export class RasterPlotDataClient {
       return emptyData;
     }
 
-    const timestampsData = await this.zarrGroup.getDatasetData(
-      `timestamps`,
-      { slice: [[startIndex, endIndex]] },
-    );
+    const timestampsData = await this.zarrGroup.getDatasetData(`timestamps`, {
+      slice: [[startIndex, endIndex]],
+    });
     const unitIndicesData = await this.zarrGroup.getDatasetData(
       `unit_indices`,
       { slice: [[startIndex, endIndex]] },

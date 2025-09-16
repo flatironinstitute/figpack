@@ -1,5 +1,11 @@
 import React, { useCallback, useContext } from "react";
-import { PanDirection, panTime, panTimeDeltaT, ZoomDirection, zoomTime } from "./helpers";
+import {
+  PanDirection,
+  panTime,
+  panTimeDeltaT,
+  ZoomDirection,
+  zoomTime,
+} from "./helpers";
 
 export type TimeseriesSelectionState = {
   startTimeSec: number | undefined;
