@@ -46,6 +46,7 @@ export const useProvideFPViewContext = <TState, TAction>(
 export const useFigureAnnotations = (
   contexts: FPViewContexts,
   path: string,
+  editable?: boolean,
 ) => {
   const { state: figureAnnotations, dispatch: figureAnnotationsDispatch } =
     useProvideFPViewContext<FigureAnnotationsState, FigureAnnotationsAction>(
@@ -53,8 +54,9 @@ export const useFigureAnnotations = (
     );
   useEffect(() => {
     if (!figureAnnotationsDispatch) return;
+    if (!editable) return;
     figureAnnotationsDispatch({ type: "reportViewWithAnnotations" });
-  }, [figureAnnotationsDispatch]);
+  }, [figureAnnotationsDispatch, editable]);
   const annotations = useMemo(
     () => figureAnnotations?.annotations[path],
     [figureAnnotations, path],

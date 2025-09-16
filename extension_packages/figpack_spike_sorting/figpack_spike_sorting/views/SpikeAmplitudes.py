@@ -10,6 +10,7 @@ from .SpikeAmplitudesItem import SpikeAmplitudesItem
 from .UnitsTable import UnitsTable, UnitsTableColumn, UnitsTableRow
 
 import figpack
+import figpack.views as fpv
 from ..spike_sorting_extension import spike_sorting_extension
 
 
@@ -104,11 +105,11 @@ class SpikeAmplitudes(figpack.ExtensionView):
                 columns=columns,
                 rows=rows,
             )
-            layout = Box(
+            layout = fpv.Box(
                 direction="horizontal",
                 items=[
-                    LayoutItem(view=units_table, max_size=150, title="Units"),
-                    LayoutItem(view=view, title="Spike Amplitudes"),
+                    fpv.LayoutItem(view=units_table, max_size=150, title="Units"),
+                    fpv.LayoutItem(view=view, title="Spike Amplitudes"),
                 ],
             )
             return layout

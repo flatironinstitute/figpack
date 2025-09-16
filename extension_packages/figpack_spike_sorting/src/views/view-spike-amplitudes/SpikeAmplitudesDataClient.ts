@@ -72,8 +72,9 @@ export class SpikeAmplitudesDataClient {
         if (!sg) {
           break;
         }
-        const subGroup = await zarrGroup.getGroup(sg.name);
+        const subGroup = await g.getGroup(sg.name);
         if (!subGroup) {
+          console.warn(g.subgroups);
           throw new Error(
             `Failed to load subsampled group at ${sg.name} in ${zarrGroup.path}`,
           );
