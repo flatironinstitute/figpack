@@ -7,7 +7,7 @@ import spikeinterface.extractors as se
 
 def main():
     recording, sorting = se.toy_example(
-        num_units=12, duration=300, seed=0, num_segments=1
+        num_units=5, duration=600, seed=0, num_segments=1
     )
     assert isinstance(recording, si.BaseRecording)
 
@@ -20,11 +20,7 @@ def main():
 This is an example of spike amplitudes created using figpack.
 """
 
-    view.show(
-        open_in_browser=True,
-        title=title,
-        description=description_md,
-    )
+    view.show(open_in_browser=True, title=title, description=description_md)
 
 
 def example_spike_amplitudes(

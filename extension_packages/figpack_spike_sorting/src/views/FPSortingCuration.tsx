@@ -25,7 +25,7 @@ export const FPSortingCuration: FunctionComponent<Props> = ({
 }) => {
   return (
     <ProvideUnitSelectionContext context={contexts.unitSelection}>
-      <ProvideSortingCurationContext contexts={contexts}>
+      <ProvideSortingCurationContext contexts={contexts} editable={true}>
         <FPSortingCurationChild
           zarrGroup={zarrGroup}
           contexts={contexts}
@@ -56,9 +56,13 @@ const FPSortingCurationChild: FunctionComponent<Props> = ({
 export const ProvideSortingCurationContext: React.FC<{
   contexts: FPViewContexts;
   children: React.ReactNode;
-}> = ({ contexts, children }) => {
-  const { annotations, setAnnotation } = useFigureAnnotations(contexts, "/");
-  console.log("--- set setAnnotation:", setAnnotation);
+  editable?: boolean;
+}> = ({ contexts, children, editable }) => {
+  const { annotations, setAnnotation } = useFigureAnnotations(
+    contexts,
+    "/",
+    editable,
+  );
   const sortingCuration: SortingCuration = useMemo(() => {
     try {
       return JSON.parse(annotations?.["sorting_curation"] || "{}");

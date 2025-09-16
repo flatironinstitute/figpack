@@ -1,10 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { visualizer } from 'rollup-plugin-visualizer'
 import path from "path";
+
+const plugins: any[] = [react()];
+if (process.env.ANALYZE) {
+  plugins.push(visualizer({ open: true }));
+}
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins,
   base: "./",
   build: {
     outDir: "../figpack/figpack-figure-dist",
