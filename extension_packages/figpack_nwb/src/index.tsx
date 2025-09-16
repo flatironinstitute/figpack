@@ -1,10 +1,15 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import FPPlaneSegmentation from './PlaneSegmentation/FPPlaneSegmentation';
-import { FPViewComponent, FPViewContext, RenderParams, ZarrGroup } from "./figpack-interface";
+import React, { FunctionComponent, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import FPPlaneSegmentation from "./PlaneSegmentation/FPPlaneSegmentation";
+import {
+  FPViewComponent,
+  FPViewContext,
+  RenderParams,
+  ZarrGroup,
+} from "./figpack-interface";
 
 // Declare global types for figpack extension system
-export { };
+export {};
 
 type ComponentWrapperProps = {
   zarrGroup: ZarrGroup;
@@ -37,10 +42,10 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
     onDataChange((newZarrGroup) => {
       setInternalZarrGroup(newZarrGroup);
     });
-
   }, [onResize, onDataChange]);
 
-  return (<Component
+  return (
+    <Component
       zarrGroup={internalZarrGroup}
       width={internalWidth}
       height={internalHeight}
@@ -51,7 +56,15 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
 
 const makeRenderFunction = (Component: React.ComponentType<any>) => {
   return (a: RenderParams) => {
-    const { container, zarrGroup, width, height, onResize, onDataChange, contexts } = a;
+    const {
+      container,
+      zarrGroup,
+      width,
+      height,
+      onResize,
+      onDataChange,
+      contexts,
+    } = a;
     const root = createRoot(container);
     root.render(
       <ComponentWrapper
@@ -62,22 +75,24 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
         onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
-      />
+      />,
     );
-  }
-}
+  };
+};
 
 const registerExtension = () => {
-  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any).figpack_p1.registerFPViewComponent;
+  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
+    .figpack_p1.registerFPViewComponent;
   registerFPViewComponent({
     name: "nwb.PlaneSegmentation",
-    render: makeRenderFunction(FPPlaneSegmentation)
-  })
-  
+    render: makeRenderFunction(FPPlaneSegmentation),
+  });
+
   // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
 
-  const registerFPExtension: (e: { name: string }) => void = (window as any).figpack_p1.registerFPExtension;
+  const registerFPExtension: (e: { name: string }) => void = (window as any)
+    .figpack_p1.registerFPExtension;
   registerFPExtension({ name: "figpack-nwb" });
-}
+};
 
 registerExtension();

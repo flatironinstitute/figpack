@@ -72,7 +72,7 @@ export const useFigureAnnotations = (
             });
           }
         : undefined,
-    [figureAnnotationsDispatch, path],
+    [figureAnnotationsDispatch, path, figureAnnotations?.editingAnnotations],
   );
 
   return { annotations, setAnnotation };

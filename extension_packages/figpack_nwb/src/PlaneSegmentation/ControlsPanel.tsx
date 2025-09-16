@@ -13,17 +13,19 @@ const ControlsPanel: React.FC<Props> = ({
   showLabels,
   onBrightnessChange,
   onShowLabelsChange,
-  controlHeight
+  controlHeight,
 }) => {
   return (
-    <div style={{ 
-      height: controlHeight, 
-      borderTop: "1px solid #ccc", 
-      padding: "10px",
-      display: "flex",
-      alignItems: "center",
-      gap: "20px"
-    }}>
+    <div
+      style={{
+        height: controlHeight,
+        borderTop: "1px solid #ccc",
+        padding: "10px",
+        display: "flex",
+        alignItems: "center",
+        gap: "20px",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <label>Brightness:</label>
         <input

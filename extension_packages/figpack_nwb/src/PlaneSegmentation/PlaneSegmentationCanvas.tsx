@@ -24,45 +24,52 @@ const PlaneSegmentationCanvas: React.FC<Props> = ({
   hoveredRoiId,
   onMouseMove,
   onMouseLeave,
-  onClick
+  onClick,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Simple coordinate transformation function
-  const coordToPixel = useCallback(createCoordToPixel(scaleAndBounds), [scaleAndBounds]);
+  const coordToPixel = useCallback(createCoordToPixel(scaleAndBounds), [
+    scaleAndBounds,
+  ]);
 
   // Precompute bounding rectangles for all ROIs in pixel space
   const roiBoundingRects = useMemo((): BoundingRect[] => {
     if (!client || !scaleAndBounds) return [];
-    
+
     const pixelSize = Math.max(1, Math.floor(scaleAndBounds.scale)) + 1;
-    
-    return client.imageMaskRois.map(roi => {
+
+    return client.imageMaskRois.map((roi) => {
       if (roi.x.length === 0) {
         return { id: roi.id, minX: 0, maxX: 0, minY: 0, maxY: 0 };
       }
-      
+
       // Find bounding box in coordinate space
-      let minX = roi.x[0], maxX = roi.x[0];
-      let minY = roi.y[0], maxY = roi.y[0];
-      
+      let minX = roi.x[0],
+        maxX = roi.x[0];
+      let minY = roi.y[0],
+        maxY = roi.y[0];
+
       for (let i = 1; i < roi.x.length; i++) {
         minX = Math.min(minX, roi.x[i]);
         maxX = Math.max(maxX, roi.x[i]);
         minY = Math.min(minY, roi.y[i]);
         maxY = Math.max(maxY, roi.y[i]);
       }
-      
+
       // Convert to pixel space and expand by pixel size
       const minPixel = coordToPixel({ xc: minX, yc: minY });
-      const maxPixel = coordToPixel({ xc: maxX + pixelSize / scaleAndBounds.scale, yc: maxY + pixelSize / scaleAndBounds.scale });
-      
+      const maxPixel = coordToPixel({
+        xc: maxX + pixelSize / scaleAndBounds.scale,
+        yc: maxY + pixelSize / scaleAndBounds.scale,
+      });
+
       return {
         id: roi.id,
         minX: minPixel.xp,
         maxX: maxPixel.xp,
         minY: minPixel.yp,
-        maxY: maxPixel.yp
+        maxY: maxPixel.yp,
       };
     });
   }, [client, scaleAndBounds, coordToPixel]);
@@ -92,48 +99,48 @@ const PlaneSegmentationCanvas: React.FC<Props> = ({
       const isSelected = selectedRoiIds.has(roi.id);
       const shouldGrayOut = selectedRoiIds.size > 0 && !isSelected;
       const isHovered = hoveredRoiId === roi.id;
-      
+
       const [r, g, b] = colors[roiIndex];
-      
+
       // Calculate brightness multiplier
       const brightnessMultiplier = brightness / 50; // 50 is normal
-      
+
       roi.x.forEach((x, pointIndex) => {
         const y = roi.y[pointIndex];
         const val = roi.val[pointIndex];
-        
+
         // Normalize value (assuming values are between 0 and some max)
         const maxVal = Math.max(...roi.val);
         const normalizedVal = maxVal > 0 ? val / maxVal : 0;
-        
+
         // Apply brightness scaling
         let intensity = normalizedVal * brightnessMultiplier;
         intensity = Math.max(0, Math.min(1, intensity)); // Clamp to [0, 1]
-        
+
         // Apply hover effect - make hovered ROI brighter
         if (isHovered) {
           intensity = Math.min(1, intensity * 1.5); // 50% brighter
         }
-        
+
         // Apply gray out effect
         let finalR = r * intensity;
         let finalG = g * intensity;
         let finalB = b * intensity;
-        
+
         if (shouldGrayOut && !isHovered) {
           // Convert to grayscale and dim (but not if hovered)
           const gray = (finalR * 0.299 + finalG * 0.587 + finalB * 0.114) * 0.3;
           finalR = finalG = finalB = gray;
         }
-        
+
         // Draw pixel using coordinate transformation
-        const pixel = coordToPixel({xc: x, yc: y});
+        const pixel = coordToPixel({ xc: x, yc: y });
         let pixelSize = Math.max(1, Math.floor(scaleAndBounds.scale)) + 1;
-        
+
         if (isHovered) {
           pixelSize += 1; // Make hovered pixels larger
         }
-        
+
         ctx.fillStyle = `rgb(${Math.round(finalR)}, ${Math.round(finalG)}, ${Math.round(finalB)})`;
         ctx.fillRect(pixel.xp, pixel.yp, pixelSize, pixelSize);
       });
@@ -143,48 +150,58 @@ const PlaneSegmentationCanvas: React.FC<Props> = ({
     ctx.font = "12px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    
+
     client.imageMaskRois.forEach((roi, roiIndex) => {
       if (roi.x.length === 0) return;
-      
+
       const isSelected = selectedRoiIds.has(roi.id);
       const shouldGrayOut = selectedRoiIds.size > 0 && !isSelected;
       const isHovered = hoveredRoiId === roi.id;
-      
+
       // Show label if labels are enabled OR if this ROI is hovered
       if (!showLabels && !isHovered) return;
-      
+
       // Get ROI color
       const [r, g, b] = colors[roiIndex];
-      let labelR = r, labelG = g, labelB = b;
-      
+      let labelR = r,
+        labelG = g,
+        labelB = b;
+
       if (shouldGrayOut && !isHovered) {
         // Convert to grayscale and dim for grayed out ROIs (but not if hovered)
         const gray = (r * 0.299 + g * 0.587 + b * 0.114) * 0.3;
         labelR = labelG = labelB = gray;
       }
-      
+
       // Calculate centroid using coordinate transformation
       const centroidX = roi.x.reduce((sum, x) => sum + x, 0) / roi.x.length;
       const centroidY = roi.y.reduce((sum, y) => sum + y, 0) / roi.y.length;
-      const centroidPixel = coordToPixel({xc: centroidX, yc: centroidY});
-      
+      const centroidPixel = coordToPixel({ xc: centroidX, yc: centroidY });
+
       // Add offset to position label slightly away from centroid
       const offsetX = 15; // pixels to the right
       const offsetY = -10; // pixels up
       const labelX = centroidPixel.xp + offsetX;
       const labelY = centroidPixel.yp + offsetY;
-      
+
       // Draw label background (semi-transparent black)
       ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
       const textWidth = ctx.measureText(roi.id.toString()).width;
-      ctx.fillRect(labelX - textWidth/2 - 2, labelY - 8, textWidth + 4, 16);
-      
+      ctx.fillRect(labelX - textWidth / 2 - 2, labelY - 8, textWidth + 4, 16);
+
       // Draw label text in ROI color
       ctx.fillStyle = `rgb(${Math.round(labelR)}, ${Math.round(labelG)}, ${Math.round(labelB)})`;
       ctx.fillText(roi.id.toString(), labelX, labelY);
     });
-  }, [client, selectedRoiIds, brightness, showLabels, hoveredRoiId, scaleAndBounds, coordToPixel]);
+  }, [
+    client,
+    selectedRoiIds,
+    brightness,
+    showLabels,
+    hoveredRoiId,
+    scaleAndBounds,
+    coordToPixel,
+  ]);
 
   return (
     <canvas

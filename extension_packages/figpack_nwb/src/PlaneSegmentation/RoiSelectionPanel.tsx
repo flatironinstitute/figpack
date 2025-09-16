@@ -15,25 +15,27 @@ const RoiSelectionPanel: React.FC<Props> = ({
   onRoiToggle,
   onSelectAll,
   onSelectNone,
-  panelWidth
+  panelWidth,
 }) => {
   return (
-    <div style={{ 
-      width: panelWidth, 
-      borderRight: "1px solid #ccc", 
-      padding: "10px",
-      overflowY: "auto",
-      backgroundColor: "#f5f5f5"
-    }}>
+    <div
+      style={{
+        width: panelWidth,
+        borderRight: "1px solid #ccc",
+        padding: "10px",
+        overflowY: "auto",
+        backgroundColor: "#f5f5f5",
+      }}
+    >
       <h4 style={{ margin: "0 0 10px 0" }}>ROIs ({ids.length})</h4>
       <div style={{ marginBottom: "10px" }}>
-        <button 
+        <button
           onClick={onSelectAll}
           style={{ marginRight: "5px", fontSize: "12px", padding: "2px 6px" }}
         >
           All
         </button>
-        <button 
+        <button
           onClick={onSelectNone}
           style={{ fontSize: "12px", padding: "2px 6px" }}
         >
@@ -41,9 +43,15 @@ const RoiSelectionPanel: React.FC<Props> = ({
         </button>
       </div>
       <div style={{ fontSize: "12px" }}>
-        {ids.map(id => (
+        {ids.map((id) => (
           <div key={id} style={{ marginBottom: "2px" }}>
-            <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={selectedRoiIds.has(id)}
