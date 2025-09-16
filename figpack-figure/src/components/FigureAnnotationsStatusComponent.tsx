@@ -5,7 +5,7 @@ type Props = {
   figureAnnotationsIsDirty: boolean;
   saveFigureAnnotations?: () => void;
   curating?: boolean;
-  setCurating?: React.Dispatch<React.SetStateAction<boolean>>;
+  setCurating?: (curating: boolean) => void;
 };
 
 const FigureAnnotationsStatusComponent: FunctionComponent<Props> = ({
@@ -24,7 +24,7 @@ const FigureAnnotationsStatusComponent: FunctionComponent<Props> = ({
       </div>
     );
   } else {
-    if (figureAnnotationsIsDirty) {
+    if (figureAnnotationsIsDirty && curating) {
       return (
         <div className="figure-annotations-status">
           {saveFigureAnnotations && (

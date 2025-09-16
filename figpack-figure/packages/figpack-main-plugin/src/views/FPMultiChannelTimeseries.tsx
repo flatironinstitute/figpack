@@ -1,6 +1,8 @@
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
 import {
+  TimeseriesSelectionAction,
   TimeseriesSelectionContext,
+  TimeseriesSelectionState,
   useTimeseriesSelection,
 } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { colorForUnitId } from "../core-utils/unit-colors";
@@ -12,7 +14,7 @@ import {
   paintOriginalChannelLine,
 } from "./MultiChannelTimeseries/timeseriesRendering";
 import { useBaseSpacingUnit } from "./MultiChannelTimeseries/spacingUtils";
-import useProvideFPViewContext from "../useProvideFPViewContext";
+import { useProvideFPViewContext } from "../figpack-utils";
 
 export const FPMultiChannelTimeseries: React.FC<{
   zarrGroup: ZarrGroup;
@@ -297,9 +299,12 @@ export const ProvideTimeseriesSelectionContext: React.FC<{
   context: FPViewContext;
   children: React.ReactNode;
 }> = ({ context, children }) => {
-  const { state, dispatch } = useProvideFPViewContext(context);
+  const { state, dispatch } = useProvideFPViewContext<
+    TimeseriesSelectionState,
+    TimeseriesSelectionAction
+  >(context);
 
-  if (!dispatch) {
+  if (!dispatch || !state) {
     return <>Waiting for context...</>;
   }
 

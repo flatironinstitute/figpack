@@ -4,10 +4,11 @@ import {
   FPViewContexts,
   ZarrGroup,
 } from "../figpack-interface";
+import { UnitSelectionAction, UnitSelectionContext } from "./context-unit-selection";
+import { UnitSelection } from "./context-unit-selection/UnitSelectionContext";
 import AutocorrelogramsView from "./view-autocorrelograms/AutocorrelogramsView";
 import { AutocorrelogramsViewData } from "./view-autocorrelograms/AutocorrelogramsViewData";
-import { UnitSelectionContext } from "./context-unit-selection";
-import useProvideFPViewContext from "../useProvideFPViewContext";
+import { useProvideFPViewContext } from "../figpack-utils";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -106,9 +107,9 @@ export const ProvideUnitSelectionContext: React.FC<{
   context: FPViewContext;
   children: React.ReactNode;
 }> = ({ context, children }) => {
-  const { state, dispatch } = useProvideFPViewContext(context);
+  const { state, dispatch } = useProvideFPViewContext<UnitSelection, UnitSelectionAction>(context);
 
-  if (!dispatch) {
+  if (!dispatch || !state) {
     return <>Waiting for context...</>;
   }
 

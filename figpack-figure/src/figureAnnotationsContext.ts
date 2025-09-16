@@ -1,21 +1,11 @@
-export type FigureAnnotationsState = {
-  annotations: {
-    [path: string]: {
-      [key: string]: string;
-    };
-  };
-};
-
-export type FigureAnnotationsAction =
-  | { type: "setAnnotation"; path: string; key: string; value: string }
-  | { type: "removeAnnotation"; path: string; key: string }
-  | { type: "clearAnnotations"; path: string }
-  | {
-      type: "setAllAnnotations";
-      annotations: { [path: string]: { [key: string]: string } };
-    };
+import {
+  FigureAnnotationsAction,
+  FigureAnnotationsState,
+} from "./figpack-interface";
 
 export const initialFigureAnnotationsState: FigureAnnotationsState = {
+  editingAnnotations: false,
+  containsViewWithAnnotations: false,
   annotations: {},
 };
 
@@ -25,32 +15,79 @@ export const figureAnnotationsReducer = (
 ): FigureAnnotationsState => {
   switch (action.type) {
     case "setAnnotation": {
-      const { path, key, value } = action;
-      const newAnnotations = { ...state.annotations };
-      if (!newAnnotations[path]) {
-        newAnnotations[path] = {};
+      if (!state.editingAnnotations) {
+        console.warn("Attempt to set annotation while not in editing mode");
+        return state;
       }
-      newAnnotations[path] = { ...newAnnotations[path], [key]: value };
-      return { ...state, annotations: newAnnotations };
+      const { path, key, value } = action;
+      return {
+        ...state,
+        annotations: {
+          ...state.annotations,
+          [path]: {
+            ...state.annotations[path],
+            [key]: value,
+          },
+        },
+      };
     }
     case "removeAnnotation": {
-      const { path, key } = action;
-      const newAnnotations = { ...state.annotations };
-      if (newAnnotations[path]) {
-        const a = { ...newAnnotations[path] };
-        delete a[key];
-        newAnnotations[path] = a;
+      if (!state.editingAnnotations) {
+        console.warn("Attempt to remove annotation while not in editing mode");
+        return state;
       }
-      return { ...state, annotations: newAnnotations };
+      const { path, key } = action;
+      if (!state.annotations[path] || !(key in state.annotations[path])) {
+        return state; // No change needed
+      }
+      const newAnnotationsForPath: { [key: string]: string } = {
+        ...state.annotations[path],
+      };
+      delete newAnnotationsForPath[key];
+      const newAnnotations = { ...state.annotations };
+      if (Object.keys(newAnnotationsForPath).length === 0) {
+        delete newAnnotations[path];
+      } else {
+        newAnnotations[path] = newAnnotationsForPath;
+      }
+      return {
+        ...state,
+        annotations: newAnnotations,
+      };
     }
     case "clearAnnotations": {
+      if (!state.editingAnnotations) {
+        console.warn("Attempt to clear annotations while not in editing mode");
+        return state;
+      }
       const { path } = action;
+      if (!state.annotations[path]) {
+        return state; // No change needed
+      }
       const newAnnotations = { ...state.annotations };
       delete newAnnotations[path];
-      return { ...state, annotations: newAnnotations };
+      return {
+        ...state,
+        annotations: newAnnotations,
+      };
     }
     case "setAllAnnotations": {
-      return { ...state, annotations: action.annotations };
+      return {
+        ...state,
+        annotations: action.annotations,
+      };
+    }
+    case "setEditingAnnotations": {
+      return {
+        ...state,
+        editingAnnotations: action.editing,
+      };
+    }
+    case "reportViewWithAnnotations": {
+      return {
+        ...state,
+        containsViewWithAnnotations: true,
+      };
     }
     default:
       return state;

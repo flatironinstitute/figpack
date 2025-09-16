@@ -9,9 +9,9 @@ import {
   UnitMetricsGraphViewData,
   isUnitMetricsGraphViewData,
 } from "./view-unit-metrics-graph";
-import { UnitMetricSelectionContext } from "./context-unit-metrics-selection";
+import { UnitMetricSelection, UnitMetricSelectionAction, UnitMetricSelectionContext } from "./context-unit-metrics-selection";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
-import useProvideFPViewContext from "../useProvideFPViewContext";
+import { useProvideFPViewContext } from "../figpack-utils";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -150,9 +150,9 @@ export const ProvideUnitMetricSelection: React.FC<{
   context: FPViewContext;
   children: React.ReactNode;
 }> = ({ context, children }) => {
-  const { state, dispatch } = useProvideFPViewContext(context);
+  const { state, dispatch } = useProvideFPViewContext<UnitMetricSelection, UnitMetricSelectionAction>(context);
 
-  if (!dispatch) {
+  if (!dispatch || !state) {
     return <>Waiting for unit metric selection context...</>;
   }
 

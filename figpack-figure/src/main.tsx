@@ -7,13 +7,13 @@ import {
   FPViewContextCreator,
   FPViewComponent,
   FPViewContext,
+  FigureAnnotationsState,
 } from "./figpack-interface.ts";
 import { registerMainPlugin } from "@figpack/main-plugin";
 import { FPView } from "@components/FPView.tsx";
 import { BrowserRouter } from "react-router-dom";
 import {
   figureAnnotationsReducer,
-  FigureAnnotationsState,
   initialFigureAnnotationsState,
 } from "./figureAnnotationsContext.ts";
 

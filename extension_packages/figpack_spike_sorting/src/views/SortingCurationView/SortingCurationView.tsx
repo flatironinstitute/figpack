@@ -1,4 +1,4 @@
-import { FunctionComponent, useCallback, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import { useSortingCuration } from "../context-sorting-curation/SortingCurationContext";
 import { useSelectedUnitIds } from "../context-unit-selection";
 
@@ -16,7 +16,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
     height
 }) => {
     const { selectedUnitIdsArray } = useSelectedUnitIds();
-    const { sortingCuration, sortingCurationDispatch } = useSortingCuration();
+    const { sortingCuration, sortingCurationDispatch, curating } = useSortingCuration();
     const { labelChoices = [], labelsByUnit = {}, mergeGroups = [], isClosed = false } = sortingCuration;
 
     const [newLabelInput, setNewLabelInput] = useState("");
@@ -24,7 +24,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
 
     // Initialize label choices with default options if empty
     const effectiveLabelChoices = useMemo(() => {
-        if (labelChoices.length === 0 && defaultLabelOptions.length > 0) {
+        if (labelChoices.length === 0 && defaultLabelOptions.length > 0 && curating) {
             // Initialize with default options
             sortingCurationDispatch({
                 type: "SET_LABEL_CHOICES",
@@ -33,7 +33,10 @@ const SortingCurationView: FunctionComponent<Props> = ({
             return defaultLabelOptions;
         }
         return labelChoices;
-    }, [labelChoices, defaultLabelOptions, sortingCurationDispatch]);
+    }, [labelChoices, defaultLabelOptions, sortingCurationDispatch, curating]);
+
+    useEffect(() => {
+    }, [effectiveLabelChoices]);
 
     // Calculate label selection state for each label
     const getLabelSelectionState = useCallback((label: string): LabelSelectionState => {
@@ -50,6 +53,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
 
     // Handle label toggle
     const handleLabelToggle = useCallback((label: string) => {
+        if (!curating) return;
         if (selectedUnitIdsArray.length === 0 || isClosed) return;
         
         sortingCurationDispatch({
@@ -57,10 +61,11 @@ const SortingCurationView: FunctionComponent<Props> = ({
             unitId: selectedUnitIdsArray,
             label
         });
-    }, [selectedUnitIdsArray, isClosed, sortingCurationDispatch]);
+    }, [selectedUnitIdsArray, isClosed, sortingCurationDispatch, curating]);
 
     // Handle adding new label choice
     const handleAddLabelChoice = useCallback(() => {
+        if (!curating) return;
         const trimmedLabel = newLabelInput.trim();
         if (trimmedLabel && !effectiveLabelChoices.includes(trimmedLabel)) {
             sortingCurationDispatch({
@@ -69,7 +74,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
             });
             setNewLabelInput("");
         }
-    }, [newLabelInput, effectiveLabelChoices, sortingCurationDispatch]);
+    }, [newLabelInput, effectiveLabelChoices, sortingCurationDispatch, curating]);
 
     // Check if a label is being used by any units
     const isLabelInUse = useCallback((label: string): boolean => {
@@ -78,6 +83,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
 
     // Handle removing label choice
     const handleRemoveLabelChoice = useCallback((labelToRemove: string) => {
+        if (!curating) return;
         if (isLabelInUse(labelToRemove)) {
             return; // Don't remove if label is in use
         }
@@ -85,7 +91,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
             type: "SET_LABEL_CHOICES",
             labelChoices: effectiveLabelChoices.filter(label => label !== labelToRemove)
         });
-    }, [effectiveLabelChoices, sortingCurationDispatch, isLabelInUse]);
+    }, [effectiveLabelChoices, sortingCurationDispatch, isLabelInUse, curating]);
 
     // Merge group helper functions
     const findMergeGroupForUnit = useCallback((unitId: number | string): (number | string)[] | undefined => {
@@ -122,32 +128,35 @@ const SortingCurationView: FunctionComponent<Props> = ({
 
     // Handle merge units
     const handleMergeUnits = useCallback(() => {
+        if (!curating) return;
         if (selectedUnitIdsArray.length < 2 || isClosed) return;
         
         sortingCurationDispatch({
             type: "MERGE_UNITS",
             unitIds: selectedUnitIdsArray
         });
-    }, [selectedUnitIdsArray, isClosed, sortingCurationDispatch]);
+    }, [selectedUnitIdsArray, isClosed, sortingCurationDispatch, curating]);
 
     // Handle unmerge units
     const handleUnmergeUnits = useCallback(() => {
+        if (!curating) return;
         if (selectedUnitIdsArray.length === 0 || isClosed) return;
         
         sortingCurationDispatch({
             type: "UNMERGE_UNITS",
             unitIds: selectedUnitIdsArray
         });
-    }, [selectedUnitIdsArray, isClosed, sortingCurationDispatch]);
+    }, [selectedUnitIdsArray, isClosed, sortingCurationDispatch, curating]);
 
     // Handle curation finalization
     const handleToggleCurationStatus = useCallback(() => {
+        if (!curating) return;
         if (isClosed) {
             sortingCurationDispatch({ type: "REOPEN_CURATION" });
         } else {
             sortingCurationDispatch({ type: "CLOSE_CURATION" });
         }
-    }, [isClosed, sortingCurationDispatch]);
+    }, [isClosed, sortingCurationDispatch, curating]);
 
     // Format selected units display
     const selectedUnitsDisplay = useMemo(() => {
@@ -276,7 +285,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
                         <div 
                             key={label} 
                             style={checkboxContainerStyle}
-                            onClick={() => handleLabelToggle(label)}
+                            onClick={curating ? () => handleLabelToggle(label) : undefined}
                         >
                             <input
                                 type="checkbox"
@@ -330,7 +339,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
                 {/* Merge/Unmerge controls */}
                 <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap" }}>
                     <button
-                        onClick={handleMergeUnits}
+                        onClick={curating ? handleMergeUnits : undefined}
                         style={{
                             ...buttonStyle,
                             backgroundColor: getSelectedUnitsMergeStatus.canMerge && !isClosed ? "#d4edda" : "#f8f9fa",
@@ -349,7 +358,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
                     </button>
                     
                     <button
-                        onClick={handleUnmergeUnits}
+                        onClick={curating ? handleUnmergeUnits : undefined}
                         style={{
                             ...buttonStyle,
                             backgroundColor: getSelectedUnitsMergeStatus.canUnmerge && !isClosed ? "#fff3cd" : "#f8f9fa",
@@ -411,7 +420,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
                                         {!isClosed && !labelInUse && (
                                             <span 
                                                 style={removeButtonStyle}
-                                                onClick={() => handleRemoveLabelChoice(label)}
+                                                onClick={curating ? (() => handleRemoveLabelChoice(label)) : undefined}
                                                 title="Remove label choice"
                                             >
                                                 ×
@@ -427,12 +436,12 @@ const SortingCurationView: FunctionComponent<Props> = ({
                                     type="text"
                                     value={newLabelInput}
                                     onChange={(e) => setNewLabelInput(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleAddLabelChoice()}
+                                    onKeyPress={(e) => e.key === 'Enter' && curating && handleAddLabelChoice()}
                                     placeholder="Add label..."
                                     style={inputStyle}
                                 />
                                 <button 
-                                    onClick={handleAddLabelChoice}
+                                    onClick={curating ? handleAddLabelChoice : undefined}
                                     style={buttonStyle}
                                     disabled={!newLabelInput.trim()}
                                 >
@@ -447,7 +456,7 @@ const SortingCurationView: FunctionComponent<Props> = ({
             {/* Curation Status */}
             <div style={statusStyle}>
                 <button 
-                    onClick={handleToggleCurationStatus}
+                    onClick={curating ? handleToggleCurationStatus : undefined}
                     style={statusButtonStyle}
                 >
                     {isClosed ? "Reopen Curation" : "Finalize Curation"}
