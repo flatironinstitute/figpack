@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FPView } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
 import { useExtensionDevUrls } from "./hooks/useExtensionDevUrls";
@@ -9,7 +9,9 @@ import { useZarrData } from "./hooks/useZarrData";
 import "./localStyles.css";
 // import { plugins } from "./main";
 import { FPViewContexts } from "./figpack-interface";
-import FPHeader, { PutFigureFilesInterface } from "./FPHeader/FPHeader";
+import UploadFilesPanel, {
+  PutFigureFilesInterface,
+} from "./UploadFilesPanel/UploadFilesPanel";
 import { useSavedFigureAnnotations } from "./hooks/useSavedFigureAnnotations";
 import {
   registeredFPExtensions,
@@ -90,18 +92,20 @@ function App() {
   }, [figureAnnotationsIsDirty]);
 
   const isLocalFigure = figureUrl.startsWith("http://localhost:");
-  let headerHeight: number;
-  if (figureAnnotations?.editingAnnotations) {
-    headerHeight = isLocalFigure ? 30 : 100;
-  } else {
-    headerHeight = 0;
-  }
-  const statusBarHeight = 30;
+  const uploadFilesPanelHeight = useMemo(() => {
+    if (figureAnnotations?.editingAnnotations) {
+      return isLocalFigure ? 30 : 100;
+    }
+    return 0;
+  }, [figureAnnotations, isLocalFigure]);
+  const statusBarHeight = useMemo(() => {
+    return 30;
+  }, []);
 
-  const header = (
-    <FPHeader
+  const uploadFilesPanel = (
+    <UploadFilesPanel
       width={width}
-      height={headerHeight}
+      height={uploadFilesPanelHeight}
       figureUrl={figureUrl}
       figureInfoResult={figureInfoResult}
       onPutFigureFilesInterface={setPutFigureFilesInterface}
@@ -133,7 +137,7 @@ function App() {
       <FPView
         zarrGroup={zarrData}
         width={width}
-        height={height - statusBarHeight - headerHeight}
+        height={height - statusBarHeight - uploadFilesPanelHeight}
         contexts={contexts}
         FPView={FPView}
       />
@@ -156,34 +160,37 @@ function App() {
   return (
     <>
       <div
+        className="fpview-container"
         style={{
           position: "absolute",
           top: 0,
-          height: headerHeight,
-          width: width,
-        }}
-      >
-        {header}
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: headerHeight,
-          height: height - statusBarHeight - headerHeight,
+          height: height - statusBarHeight - uploadFilesPanelHeight,
           width: width,
         }}
       >
         {fpView}
       </div>
       <div
+        className="status-bar-container"
         style={{
           position: "absolute",
-          bottom: 0,
+          top: height - statusBarHeight - uploadFilesPanelHeight,
           height: statusBarHeight,
           width: width,
         }}
       >
         {statusBar}
+      </div>
+      <div
+        className="upload-files-panel-container"
+        style={{
+          position: "absolute",
+          top: height - uploadFilesPanelHeight,
+          height: uploadFilesPanelHeight,
+          width: width,
+        }}
+      >
+        {uploadFilesPanel}
       </div>
     </>
   );
