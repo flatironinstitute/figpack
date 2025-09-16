@@ -4,7 +4,7 @@ import {
   FigureAnnotationsState,
   FPViewContexts,
 } from "../figpack-interface";
-import { PutFigureFilesInterface } from "../FPHeader/FPHeader";
+import { PutFigureFilesInterface } from "../UploadFilesPanel/UploadFilesPanel";
 import { useProvideFPViewContext } from "../figpack-utils";
 
 export interface SavedFigureAnnotations {

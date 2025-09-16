@@ -22,7 +22,7 @@ export type PutFigureFilesInterface = {
 const queryParams = new URLSearchParams(window.location.search);
 const manageDev = queryParams.get("manage_dev") === "1";
 
-const FPHeader: FunctionComponent<Props> = ({
+const UploadFilesPanel: FunctionComponent<Props> = ({
   width,
   height,
   figureUrl,
@@ -300,4 +300,4 @@ const createRemotePutFigureFilesInterface = (
 //   return false;
 // };
 
-export default FPHeader;
+export default UploadFilesPanel;
