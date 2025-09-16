@@ -7,7 +7,7 @@ This tutorial will guide you through creating spike sorting visualizations using
 Before starting this tutorial, make sure you have the required packages installed:
 
 ```bash
-pip install figpack spikeinterface
+pip install figpack figpack_spike_sorting spikeinterface
 ```
 
 ## Units Table

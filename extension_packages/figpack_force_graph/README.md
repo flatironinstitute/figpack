@@ -5,8 +5,16 @@ Force-directed graph visualization extension for figpack using the [force-graph]
 ## Installation
 
 ```bash
-pip install figpack_force_graph
+pip install -e .
 ```
+
+or
+
+```bash
+figpack extensions install figpack_force_graph
+```
+
+Note that this package is not available on PyPI.
 
 ## Usage
 
