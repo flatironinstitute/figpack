@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.20] - 2025-09-16
+
 - Export as SVG for Timeseries Graph, Spectrogram, Multichannel Timeseries
+- Annotations and curation
+- Linting/formatting for extensions
 
 ## [0.2.19] - 2025-09-12
 
