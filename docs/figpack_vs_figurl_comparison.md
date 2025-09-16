@@ -8,7 +8,7 @@ The core insight shared by both projects is that modern scientific visualization
 - **Interactive**: Allowing users to zoom, pan, and explore data dynamically
 - **Shareable**: Easily distributed via URLs or files
 - **Browser-based**: Accessible on any device without specialized software
-- **Programmatic**: Generaated from Python scripts for reproducibility
+- **Programmatic**: Generated from Python scripts for reproducibility
 
 ## Architectural Differences
 
