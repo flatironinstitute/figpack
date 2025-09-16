@@ -9,6 +9,7 @@ type Props = {
   height: number;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const initialFigureAnnotationsState: FigureAnnotationsState = {
   editingAnnotations: false,
   containsViewWithAnnotations: false,
