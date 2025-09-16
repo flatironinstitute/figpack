@@ -1,5 +1,10 @@
 import React, { FunctionComponent, useEffect, useMemo } from "react";
-import { FigureAnnotationsAction, FigureAnnotationsState, FPViewContexts, ZarrGroup } from "../figpack-interface";
+import {
+  FigureAnnotationsAction,
+  FigureAnnotationsState,
+  FPViewContexts,
+  ZarrGroup,
+} from "../figpack-interface";
 import { useProvideFPViewContext } from "../figpack-utils";
 
 type Props = {
@@ -17,33 +22,47 @@ export const initialFigureAnnotationsState: FigureAnnotationsState = {
 };
 
 const FPEditableNotes: React.FC<Props> = ({ zarrGroup, contexts }) => {
-  const {state: figureAnnotations, dispatch: figureAnnotationsDispatch} = useProvideFPViewContext<FigureAnnotationsState, FigureAnnotationsAction>(contexts?.figureAnnotations);
+  const { state: figureAnnotations, dispatch: figureAnnotationsDispatch } =
+    useProvideFPViewContext<FigureAnnotationsState, FigureAnnotationsAction>(
+      contexts?.figureAnnotations,
+    );
   useEffect(() => {
     if (!figureAnnotationsDispatch) return;
     figureAnnotationsDispatch({ type: "reportViewWithAnnotations" });
   }, [figureAnnotationsDispatch]);
-  const annotations = useMemo(() => (figureAnnotations?.annotations[zarrGroup.path]), [figureAnnotations, zarrGroup.path]);
+  const annotations = useMemo(
+    () => figureAnnotations?.annotations[zarrGroup.path],
+    [figureAnnotations, zarrGroup.path],
+  );
   const { text, setText } = useMemo(() => {
-    const text = annotations ? annotations['notes'] : undefined;
-    const setText = figureAnnotationsDispatch && figureAnnotations?.editingAnnotations ? (text: string) => {
-      figureAnnotationsDispatch({ type: "setAnnotation", path: zarrGroup.path, key: 'notes', value: text });
-    } : undefined;
-    return {text, setText}
-  }, [annotations, figureAnnotationsDispatch, figureAnnotations, zarrGroup.path]);
+    const text = annotations ? annotations["notes"] : undefined;
+    const setText =
+      figureAnnotationsDispatch && figureAnnotations?.editingAnnotations
+        ? (text: string) => {
+            figureAnnotationsDispatch({
+              type: "setAnnotation",
+              path: zarrGroup.path,
+              key: "notes",
+              value: text,
+            });
+          }
+        : undefined;
+    return { text, setText };
+  }, [
+    annotations,
+    figureAnnotationsDispatch,
+    figureAnnotations,
+    zarrGroup.path,
+  ]);
   if (!setText) {
     return (
       <div>
         <p>{text}</p>
-        <p style={{ color: 'red' }}>Read-only mode (cannot edit)</p>
+        <p style={{ color: "red" }}>Read-only mode (cannot edit)</p>
       </div>
     );
   }
-  return (
-    <TextEditView
-      text={text || ''}
-      setText={setText}
-    />
-  );
+  return <TextEditView text={text || ""} setText={setText} />;
 };
 
 const TextEditView: FunctionComponent<{
