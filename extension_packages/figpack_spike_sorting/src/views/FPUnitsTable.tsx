@@ -140,7 +140,7 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
 
   return (
     <ProvideUnitSelectionContext context={contexts.unitSelection}>
-      <ProvideSortingCurationContext context={contexts.sortingCuration}>
+      <ProvideSortingCurationContext contexts={contexts}>
         <UnitsTableView data={data} width={width} height={height} />
       </ProvideSortingCurationContext>
     </ProvideUnitSelectionContext>

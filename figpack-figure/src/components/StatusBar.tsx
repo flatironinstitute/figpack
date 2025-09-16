@@ -1,5 +1,9 @@
-import React, { useState } from "react";
-import { ZarrGroup } from "src/figpack-interface";
+import React, { useCallback, useState } from "react";
+import {
+  FigureAnnotationsAction,
+  FigureAnnotationsState,
+  ZarrGroup,
+} from "src/figpack-interface";
 import { FigureInfoResult } from "../hooks/useFigureInfo";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
@@ -71,16 +75,16 @@ export const StatusBar: React.FC<{
   figureAnnotationsIsDirty: boolean;
   revertFigureAnnotations: () => void;
   saveFigureAnnotations?: () => void;
-  curating: boolean;
-  setCurating: React.Dispatch<React.SetStateAction<boolean>>;
+  figureAnnotations?: FigureAnnotationsState;
+  figureAnnotationsDispatch?: (a: FigureAnnotationsAction) => void;
 }> = ({
   zarrData,
   figureInfoResult,
   figureAnnotationsIsDirty,
   revertFigureAnnotations,
   saveFigureAnnotations,
-  curating,
-  setCurating,
+  figureAnnotations,
+  figureAnnotationsDispatch,
 }) => {
   const { embedded } = useUrlParams();
 
@@ -102,13 +106,27 @@ export const StatusBar: React.FC<{
       <></>
     );
 
+  const curating = figureAnnotations?.editingAnnotations || false;
+  const setCurating = useCallback(
+    (curating: boolean) => {
+      if (!figureAnnotationsDispatch) return;
+      figureAnnotationsDispatch({
+        type: "setEditingAnnotations",
+        editing: curating,
+      });
+    },
+    [figureAnnotationsDispatch],
+  );
+
   const figureAnnotationsStatusComponent = (
     <FigureAnnotationsStatusComponent
       figureAnnotationsIsDirty={figureAnnotationsIsDirty}
       revertFigureAnnotations={revertFigureAnnotations}
       saveFigureAnnotations={saveFigureAnnotations}
       curating={curating}
-      setCurating={setCurating}
+      setCurating={
+        figureAnnotations?.containsViewWithAnnotations ? setCurating : undefined
+      }
     />
   );
 

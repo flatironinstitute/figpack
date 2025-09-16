@@ -2,6 +2,7 @@
 import { FunctionComponent, useEffect, useState } from "react";
 import { FigureInfoResult } from "src/hooks/useFigureInfo";
 import { ParentToIframeMessage } from "./uploadTypes";
+import { FigureAnnotationsState } from "src/figpack-interface";
 
 type Props = {
   width: number;
@@ -9,7 +10,7 @@ type Props = {
   figureUrl: string;
   figureInfoResult?: FigureInfoResult;
   onPutFigureFilesInterface?: (x: PutFigureFilesInterface) => void;
-  curating: boolean;
+  figureAnnotations?: FigureAnnotationsState;
 };
 
 export type PutFigureFilesInterface = {
@@ -27,7 +28,7 @@ const FPHeader: FunctionComponent<Props> = ({
   figureUrl,
   figureInfoResult,
   onPutFigureFilesInterface,
-  curating,
+  figureAnnotations,
 }) => {
   const [putFigureFilesInterface, setPutFigureFilesInterface] =
     useState<PutFigureFilesInterface | null>(null);
@@ -52,6 +53,8 @@ const FPHeader: FunctionComponent<Props> = ({
   const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>(
     null,
   );
+
+  const curating = figureAnnotations?.editingAnnotations || false;
 
   useEffect(() => {
     if (figureIsLocal && curating) {
@@ -83,7 +86,7 @@ const FPHeader: FunctionComponent<Props> = ({
           </div>
         </div>
       );
-    } else {
+    } else if (figpackManageUrl) {
       return (
         <iframe
           src={
@@ -96,6 +99,8 @@ const FPHeader: FunctionComponent<Props> = ({
           style={{ border: "none" }}
         ></iframe>
       );
+    } else {
+      return <div>Cannot curate: figpackManageUrl is not set</div>;
     }
   } else {
     return <></>;

@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useEffect, useMemo } from "react";
-import { FPViewContexts, ZarrGroup } from "../figpack-interface";
-import useProvideFPViewContext from "../useProvideFPViewContext";
+import { FigureAnnotationsAction, FigureAnnotationsState, FPViewContexts, ZarrGroup } from "../figpack-interface";
+import { useProvideFPViewContext } from "../figpack-utils";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -9,16 +9,26 @@ type Props = {
   height: number;
 };
 
+export const initialFigureAnnotationsState: FigureAnnotationsState = {
+  editingAnnotations: false,
+  containsViewWithAnnotations: false,
+  annotations: {},
+};
+
 const FPEditableNotes: React.FC<Props> = ({ zarrGroup, contexts }) => {
-  const {state: figureAnnotations, dispatch: figureAnnotationsDispatch} = useProvideFPViewContext(contexts.figureAnnotations);
-  const annotations = useMemo(() => (figureAnnotations.annotations[zarrGroup.path] || {}), [figureAnnotations, zarrGroup.path]);
+  const {state: figureAnnotations, dispatch: figureAnnotationsDispatch} = useProvideFPViewContext<FigureAnnotationsState, FigureAnnotationsAction>(contexts?.figureAnnotations);
+  useEffect(() => {
+    if (!figureAnnotationsDispatch) return;
+    figureAnnotationsDispatch({ type: "reportViewWithAnnotations" });
+  }, [figureAnnotationsDispatch]);
+  const annotations = useMemo(() => (figureAnnotations?.annotations[zarrGroup.path]), [figureAnnotations, zarrGroup.path]);
   const { text, setText } = useMemo(() => {
-    const text = annotations['notes'] || '';
-    const setText = figureAnnotationsDispatch ? (text: string) => {
+    const text = annotations ? annotations['notes'] : undefined;
+    const setText = figureAnnotationsDispatch && figureAnnotations?.editingAnnotations ? (text: string) => {
       figureAnnotationsDispatch({ type: "setAnnotation", path: zarrGroup.path, key: 'notes', value: text });
     } : undefined;
     return {text, setText}
-  }, [annotations, figureAnnotationsDispatch]);
+  }, [annotations, figureAnnotationsDispatch, figureAnnotations, zarrGroup.path]);
   if (!setText) {
     return (
       <div>
@@ -29,7 +39,7 @@ const FPEditableNotes: React.FC<Props> = ({ zarrGroup, contexts }) => {
   }
   return (
     <TextEditView
-      text={text}
+      text={text || ''}
       setText={setText}
     />
   );

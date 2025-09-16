@@ -137,3 +137,24 @@ export type FPViewComponentProps = {
   contexts: FPViewContexts;
   FPView: any; // For rendering nested views
 };
+
+export type FigureAnnotationsState = {
+  editingAnnotations?: boolean;
+  containsViewWithAnnotations?: boolean;
+  annotations: {
+    [path: string]: {
+      [key: string]: string;
+    };
+  };
+};
+
+export type FigureAnnotationsAction =
+  | { type: "setAnnotation"; path: string; key: string; value: string }
+  | { type: "removeAnnotation"; path: string; key: string }
+  | { type: "clearAnnotations"; path: string }
+  | {
+      type: "setAllAnnotations";
+      annotations: { [path: string]: { [key: string]: string } };
+    }
+  | { type: "setEditingAnnotations"; editing: boolean }
+  | { type: "reportViewWithAnnotations" };

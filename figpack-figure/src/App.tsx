@@ -64,20 +64,34 @@ function App() {
   }, [extensionLoadingStatus]);
 
   const {
+    figureAnnotations,
+    figureAnnotationsDispatch,
     figureAnnotationsIsDirty,
     revertFigureAnnotations,
     saveFigureAnnotations,
-    curating,
-    setCurating,
   } = useSavedFigureAnnotations(
     figureUrl,
     putFigureFilesInterface,
     contexts || undefined,
   );
 
+  // Add warning when navigating away with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (figureAnnotationsIsDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [figureAnnotationsIsDirty]);
+
   const isLocalFigure = figureUrl.startsWith("http://localhost:");
   let headerHeight: number;
-  if (curating) {
+  if (figureAnnotations?.editingAnnotations) {
     headerHeight = isLocalFigure ? 30 : 100;
   } else {
     headerHeight = 0;
@@ -91,7 +105,7 @@ function App() {
       figureUrl={figureUrl}
       figureInfoResult={figureInfoResult}
       onPutFigureFilesInterface={setPutFigureFilesInterface}
-      curating={curating}
+      figureAnnotations={figureAnnotations}
     />
   );
 
@@ -134,8 +148,8 @@ function App() {
       figureAnnotationsIsDirty={figureAnnotationsIsDirty}
       revertFigureAnnotations={revertFigureAnnotations}
       saveFigureAnnotations={saveFigureAnnotations}
-      curating={curating}
-      setCurating={setCurating}
+      figureAnnotations={figureAnnotations}
+      figureAnnotationsDispatch={figureAnnotationsDispatch}
     />
   );
 

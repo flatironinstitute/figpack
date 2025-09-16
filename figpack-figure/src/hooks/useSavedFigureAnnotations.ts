@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FPViewContexts } from "../figpack-interface";
+import {
+  FigureAnnotationsAction,
+  FigureAnnotationsState,
+  FPViewContexts,
+} from "../figpack-interface";
 import { PutFigureFilesInterface } from "../FPHeader/FPHeader";
-import useProvideFPViewContext from "../useProvideFPViewContext";
+import { useProvideFPViewContext } from "../figpack-utils";
 
 export interface SavedFigureAnnotations {
   annotations: { [path: string]: { [key: string]: string } };
@@ -13,12 +17,13 @@ export const useSavedFigureAnnotations = (
   contexts: FPViewContexts | undefined,
 ) => {
   const { state: figureAnnotations, dispatch: figureAnnotationsDispatch } =
-    useProvideFPViewContext(contexts?.figureAnnotations);
+    useProvideFPViewContext<FigureAnnotationsState, FigureAnnotationsAction>(
+      contexts?.figureAnnotations,
+    );
 
   const [savedFigureAnnotations, setSavedFigureAnnotations] = useState<
     SavedFigureAnnotations | null | undefined
   >(undefined);
-  const [curating, setCurating] = useState(false);
 
   useEffect(() => {
     if (!figureAnnotationsDispatch) return;
@@ -41,7 +46,7 @@ export const useSavedFigureAnnotations = (
       setSavedFigureAnnotations(a);
       figureAnnotationsDispatch({
         type: "setAllAnnotations",
-        value: a.annotations,
+        annotations: a.annotations || {},
       });
     };
     load();
@@ -70,6 +75,10 @@ export const useSavedFigureAnnotations = (
       console.warn("No putFigureFilesInterface available");
       return;
     }
+    if (!figureAnnotations) {
+      console.warn("No figureAnnotations available");
+      return;
+    }
     const s = {
       annotations: figureAnnotations.annotations,
     };
@@ -85,13 +94,13 @@ export const useSavedFigureAnnotations = (
   }, [figureUrl, figureAnnotations, putFigureFilesInterface]);
 
   return {
+    figureAnnotations,
+    figureAnnotationsDispatch,
     figureAnnotationsIsDirty,
     revertFigureAnnotations,
     saveFigureAnnotations: putFigureFilesInterface
       ? saveFigureAnnotations
       : undefined,
-    curating,
-    setCurating,
   };
 };
 

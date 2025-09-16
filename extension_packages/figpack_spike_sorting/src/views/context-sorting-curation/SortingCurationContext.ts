@@ -119,10 +119,12 @@ const defaultSortingCurationContext = {
   sortingCurationDispatch: (_action: SortingCurationAction) => {
     console.warn("No sortingCurationDispatch function provided.");
   },
+  curating: false,
 };
 
 const SortingCurationContext = React.createContext<{
   sortingCuration: SortingCuration;
+  curating: boolean;
   sortingCurationDispatch: (action: SortingCurationAction) => void;
 }>(defaultSortingCurationContext);
 

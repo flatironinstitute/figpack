@@ -10,7 +10,7 @@ export type TimeseriesSelectionState = {
   currentTime: number | undefined;
 };
 
-type TimeseriesSelectionAction =
+export type TimeseriesSelectionAction =
   | {
       type: "initializeTimeseries";
       startTimeSec: number;
