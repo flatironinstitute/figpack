@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   FigureAnnotationsAction,
   FigureAnnotationsState,
+  FPViewContext,
 } from "./figpack-interface";
 
 export const initialFigureAnnotationsState: FigureAnnotationsState = {
@@ -92,4 +94,33 @@ export const figureAnnotationsReducer = (
     default:
       return state;
   }
+};
+
+export const createFigureAnnotationsContext = (): FPViewContext => {
+  const stateRef: { current: FigureAnnotationsState } = {
+    current: initialFigureAnnotationsState,
+  };
+  const listeners: ((newValue: FigureAnnotationsState) => void)[] = [];
+
+  const dispatch = (action: any) => {
+    stateRef.current = figureAnnotationsReducer(stateRef.current, action);
+    listeners.forEach((callback) => {
+      callback(stateRef.current);
+    });
+  };
+
+  const onChange = (callback: (newValue: FigureAnnotationsState) => void) => {
+    listeners.push(callback);
+    return () => {
+      const idx = listeners.indexOf(callback);
+      if (idx >= 0) listeners.splice(idx, 1);
+    };
+  };
+
+  return {
+    stateRef,
+    dispatch,
+    onChange,
+    createNew: createFigureAnnotationsContext,
+  };
 };
