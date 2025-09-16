@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { FigureAnnotationsAction, FigureAnnotationsState, FPViewContexts } from "./figpack-interface";
+import {
+  FigureAnnotationsAction,
+  FigureAnnotationsState,
+  FPViewContexts,
+} from "./figpack-interface";
 
 type TypedFPViewContext<TState, TAction> = {
   stateRef: { current: TState };
@@ -9,9 +13,14 @@ type TypedFPViewContext<TState, TAction> = {
 };
 
 export const useProvideFPViewContext = <TState, TAction>(
-  context?: TypedFPViewContext<TState, TAction>
-): { state: TState | undefined; dispatch: ((action: TAction) => void) | undefined } => {
-  const [internalState, setInternalState] = useState<TState | undefined>(context?.stateRef.current);
+  context?: TypedFPViewContext<TState, TAction>,
+): {
+  state: TState | undefined;
+  dispatch: ((action: TAction) => void) | undefined;
+} => {
+  const [internalState, setInternalState] = useState<TState | undefined>(
+    context?.stateRef.current,
+  );
   const stateRef = context?.stateRef;
   const onChange = context?.onChange;
   useEffect(() => {
@@ -34,10 +43,13 @@ export const useProvideFPViewContext = <TState, TAction>(
   };
 };
 
-export const useFigureAnnotations = (contexts: FPViewContexts, path: string) => {
+export const useFigureAnnotations = (
+  contexts: FPViewContexts,
+  path: string,
+) => {
   const { state: figureAnnotations, dispatch: figureAnnotationsDispatch } =
     useProvideFPViewContext<FigureAnnotationsState, FigureAnnotationsAction>(
-      contexts?.figureAnnotations
+      contexts?.figureAnnotations,
     );
   useEffect(() => {
     if (!figureAnnotationsDispatch) return;
@@ -45,20 +57,23 @@ export const useFigureAnnotations = (contexts: FPViewContexts, path: string) => 
   }, [figureAnnotationsDispatch]);
   const annotations = useMemo(
     () => figureAnnotations?.annotations[path],
-    [figureAnnotations, path]
+    [figureAnnotations, path],
   );
   const setAnnotation = useMemo(
-    () => figureAnnotations?.editingAnnotations ? ((key: string, value: string) => {
-      if (!figureAnnotationsDispatch) return;
-      figureAnnotationsDispatch({
-        type: "setAnnotation",
-        path,
-        key,
-        value,
-      });
-    }) : undefined,
-    [figureAnnotationsDispatch, path, figureAnnotations?.editingAnnotations]
+    () =>
+      figureAnnotations?.editingAnnotations
+        ? (key: string, value: string) => {
+            if (!figureAnnotationsDispatch) return;
+            figureAnnotationsDispatch({
+              type: "setAnnotation",
+              path,
+              key,
+              value,
+            });
+          }
+        : undefined,
+    [figureAnnotationsDispatch, path, figureAnnotations?.editingAnnotations],
   );
 
   return { annotations, setAnnotation };
-}
+};
