@@ -57,7 +57,7 @@ export const useFigureAnnotations = (contexts: FPViewContexts, path: string) => 
         value,
       });
     }) : undefined,
-    [figureAnnotationsDispatch, path]
+    [figureAnnotationsDispatch, path, figureAnnotations?.editingAnnotations]
   );
 
   return { annotations, setAnnotation };
