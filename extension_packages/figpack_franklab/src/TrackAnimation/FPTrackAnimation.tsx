@@ -14,7 +14,12 @@ import {
 import { useTrackAnimationClient } from "./useTrackAnimationClient";
 import { ZarrGroup } from "../figpack-interface";
 import { FPViewContext, FPViewContexts } from "../figpack-interface";
-import { TimeseriesSelectionAction, TimeseriesSelectionContext, TimeseriesSelectionState, useTimeseriesSelection } from "../TimeseriesSelectionContext";
+import {
+  TimeseriesSelectionAction,
+  TimeseriesSelectionContext,
+  TimeseriesSelectionState,
+  useTimeseriesSelection,
+} from "../TimeseriesSelectionContext";
 import { useProvideFPViewContext } from "../figpack-utils";
 
 type Props = {
@@ -204,7 +209,10 @@ export const ProvideTimeseriesSelectionContext: React.FC<{
   context: FPViewContext;
   children: React.ReactNode;
 }> = ({ context, children }) => {
-  const { state, dispatch } = useProvideFPViewContext<TimeseriesSelectionState, TimeseriesSelectionAction>(context);
+  const { state, dispatch } = useProvideFPViewContext<
+    TimeseriesSelectionState,
+    TimeseriesSelectionAction
+  >(context);
 
   if (!state || !dispatch) {
     return <>Waiting for context...</>;

@@ -99,10 +99,9 @@ export class TrackAnimationClient {
     if (frame >= this.totalRecordingFrameLength) return undefined;
 
     // Load timestamp for this frame
-    const data = await this.zarrGroup.getDatasetData(
-      "timestamps",
-      { slice: [[frame, frame + 1]] },
-    );
+    const data = await this.zarrGroup.getDatasetData("timestamps", {
+      slice: [[frame, frame + 1]],
+    });
 
     if (!data || data.length === 0) return undefined;
 
@@ -122,9 +121,12 @@ export class TrackAnimationClient {
     }
 
     // Get frame bounds up to the current frame to compute cumulative sum
-    const frameBoundsData = await this.zarrGroup.getDatasetData("frame_bounds", {
-      slice: [[0, frame + 1]],
-    });
+    const frameBoundsData = await this.zarrGroup.getDatasetData(
+      "frame_bounds",
+      {
+        slice: [[0, frame + 1]],
+      },
+    );
 
     if (!frameBoundsData || frameBoundsData.length === 0) return null;
 

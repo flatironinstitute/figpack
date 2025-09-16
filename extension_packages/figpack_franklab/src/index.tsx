@@ -1,10 +1,16 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { FPViewComponent, FPViewContext, RenderParams, ZarrGroup } from "./figpack-interface";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { FunctionComponent, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import {
+  FPViewComponent,
+  FPViewContext,
+  RenderParams,
+  ZarrGroup,
+} from "./figpack-interface";
 import { FPTrackAnimation } from "./TrackAnimation/FPTrackAnimation";
 
 // Declare global types for figpack extension system
-export { };
+export {};
 
 // declare global {
 //   interface Window {
@@ -20,7 +26,7 @@ export { };
 //     const { container, zarrGroup, width, height, onResize, contexts } = a;
 
 //     container.innerHTML = '';
-    
+
 //     try {
 //       const root = createRoot(container);
 //       root.render(
@@ -32,7 +38,7 @@ export { };
 //           contexts
 //         })
 //       );
-      
+
 //       return {
 //         destroy: () => {
 //           root.unmount();
@@ -48,13 +54,13 @@ export { };
 //   renderError: function(container: HTMLElement, width: number, height: number, message: string): void {
 //     container.innerHTML = `
 //       <div style="
-//         width: ${width}px; 
-//         height: ${height}px; 
-//         display: flex; 
-//         align-items: center; 
-//         justify-content: center; 
-//         background-color: #f8f9fa; 
-//         border: 1px solid #dee2e6; 
+//         width: ${width}px;
+//         height: ${height}px;
+//         display: flex;
+//         align-items: center;
+//         justify-content: center;
+//         background-color: #f8f9fa;
+//         border: 1px solid #dee2e6;
 //         color: #6c757d;
 //         font-family: system-ui, -apple-system, sans-serif;
 //         font-size: 14px;
@@ -87,6 +93,7 @@ type ComponentWrapperProps = {
   component: React.ComponentType<any>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   zarrGroup,
   width,
@@ -108,10 +115,10 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
     onDataChange((newZarrGroup) => {
       setInternalZarrGroup(newZarrGroup);
     });
-
   }, [onResize, onDataChange]);
 
-  return (<Component
+  return (
+    <Component
       zarrGroup={internalZarrGroup}
       width={internalWidth}
       height={internalHeight}
@@ -122,7 +129,15 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
 
 const makeRenderFunction = (Component: React.ComponentType<any>) => {
   return (a: RenderParams) => {
-    const { container, zarrGroup, width, height, onResize, onDataChange, contexts } = a;
+    const {
+      container,
+      zarrGroup,
+      width,
+      height,
+      onResize,
+      onDataChange,
+      contexts,
+    } = a;
     const root = createRoot(container);
     root.render(
       <ComponentWrapper
@@ -133,22 +148,24 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
         onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
-      />
+      />,
     );
-  }
-}
+  };
+};
 
 const registerExtension = () => {
-  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any).figpack_p1.registerFPViewComponent;
+  const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
+    .figpack_p1.registerFPViewComponent;
   registerFPViewComponent({
     name: "franklab.TrackAnimation",
-    render: makeRenderFunction(FPTrackAnimation)
-  })
-  
+    render: makeRenderFunction(FPTrackAnimation),
+  });
+
   // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
 
-  const registerFPExtension: (e: { name: string }) => void = (window as any).figpack_p1.registerFPExtension;
+  const registerFPExtension: (e: { name: string }) => void = (window as any)
+    .figpack_p1.registerFPExtension;
   registerFPExtension({ name: "figpack-franklab" });
-}
+};
 
 registerExtension();
