@@ -3,10 +3,19 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { FPViewContextCreator, FPViewComponent } from "./figpack-interface.ts";
+import {
+  FPViewContextCreator,
+  FPViewComponent,
+  FPViewContext,
+} from "./figpack-interface.ts";
 import { registerMainPlugin } from "@figpack/main-plugin";
 import { FPView } from "@components/FPView.tsx";
 import { BrowserRouter } from "react-router-dom";
+import {
+  figureAnnotationsReducer,
+  FigureAnnotationsState,
+  initialFigureAnnotationsState,
+} from "./figureAnnotationsContext.ts";
 
 export const registeredFPViewComponents: FPViewComponent[] = [];
 
@@ -55,102 +64,136 @@ const registerFPExtension = (extension: { name: string }) => {
   registeredFPExtensions.push(extension);
 };
 
-interface FigureAnnotations {
-  getItem: (key: string) => string | undefined;
-  setItem?: (key: string, value: string | undefined) => void;
-  onItemChanged: (key: string, callback: (value: string) => void) => () => void;
-}
+const createFigureAnnotationsContext = (): FPViewContext => {
+  const stateRef: { current: FigureAnnotationsState } = {
+    current: initialFigureAnnotationsState,
+  };
+  const listeners: ((newValue: FigureAnnotationsState) => void)[] = [];
 
-export class InMemoryFigureAnnotations implements FigureAnnotations {
-  private items: { [key: string]: string } = {};
-  private _callbacks: Map<string, Set<(value: string) => void>>;
-  private _allItemsCallbacks: Set<
-    (allItems: { [key: string]: string }) => void
-  >;
+  const dispatch = (action: any) => {
+    stateRef.current = figureAnnotationsReducer(stateRef.current, action);
+    listeners.forEach((callback) => {
+      callback(stateRef.current);
+    });
+  };
 
-  constructor() {
-    this._callbacks = new Map();
-    this._allItemsCallbacks = new Set();
-  }
-  getItem(key: string): string | undefined {
-    return this.items[key];
-  }
-  setItem(key: string, value: string | undefined): void {
-    if (value === undefined) {
-      delete this.items[key];
-    } else {
-      this.items[key] = value;
-    }
-    const cbs = this._callbacks.get(key);
-    if (cbs && value !== undefined) {
-      for (const cb of cbs) {
-        try {
-          cb(value);
-        } catch (e) {
-          console.error("Error in annotation callback:", e);
-        }
-      }
-    }
-    for (const cb of this._allItemsCallbacks) {
-      try {
-        cb(this.items);
-      } catch (e) {
-        console.error("Error in items changed callback:", e);
-      }
-    }
-  }
-  onItemChanged(key: string, callback: (value: string) => void): () => void {
-    let cbs = this._callbacks.get(key);
-    if (!cbs) {
-      cbs = new Set();
-      this._callbacks.set(key, cbs);
-    }
-    cbs.add(callback);
+  const onChange = (callback: (newValue: FigureAnnotationsState) => void) => {
+    listeners.push(callback);
     return () => {
-      cbs!.delete(callback);
+      const idx = listeners.indexOf(callback);
+      if (idx >= 0) listeners.splice(idx, 1);
     };
-  }
-  onItemsChanged(
-    callback: (allItems: { [key: string]: string }) => void,
-  ): () => void {
-    this._allItemsCallbacks.add(callback);
-    return () => {
-      this._allItemsCallbacks.delete(callback);
-    };
-  }
-  getAllItems(): { [key: string]: string } {
-    return this.items;
-  }
-  setAllItems(items: { [key: string]: string }): void {
-    // include both old and new keys
-    const allKeys = new Set<string>([
-      ...Object.keys(this.items),
-      ...Object.keys(items),
-    ]);
-    this.items = { ...items }; // make a copy
-    for (const key of allKeys) {
-      const cbs = this._callbacks.get(key);
-      if (cbs) {
-        for (const cb of cbs) {
-          try {
-            cb(this.items[key] || ""); // seems the `|| ""` is important here
-          } catch (e) {
-            console.error("Error in annotation callback:", e);
-          }
-        }
-      }
-    }
-    for (const cb of this._allItemsCallbacks) {
-      try {
-        cb(this.items);
-      } catch (e) {
-        console.error("Error in items changed callback:", e);
-      }
-    }
-  }
-}
+  };
 
-export const figureAnnotations = new InMemoryFigureAnnotations();
+  return {
+    stateRef,
+    dispatch,
+    onChange,
+    createNew: createFigureAnnotationsContext,
+  };
+};
+
+registerFPViewContextCreator({
+  name: "figureAnnotations",
+  create: createFigureAnnotationsContext,
+});
+
+// interface FigureAnnotations {
+//   getItem: (key: string) => string | undefined;
+//   setItem?: (key: string, value: string | undefined) => void;
+//   onItemChanged: (key: string, callback: (value: string) => void) => () => void;
+// }
+
+// export class InMemoryFigureAnnotations implements FigureAnnotations {
+//   private items: { [key: string]: string } = {};
+//   private _callbacks: Map<string, Set<(value: string) => void>>;
+//   private _allItemsCallbacks: Set<
+//     (allItems: { [key: string]: string }) => void
+//   >;
+
+//   constructor() {
+//     this._callbacks = new Map();
+//     this._allItemsCallbacks = new Set();
+//   }
+//   getItem(key: string): string | undefined {
+//     return this.items[key];
+//   }
+//   setItem(key: string, value: string | undefined): void {
+//     if (value === undefined) {
+//       delete this.items[key];
+//     } else {
+//       this.items[key] = value;
+//     }
+//     const cbs = this._callbacks.get(key);
+//     if (cbs && value !== undefined) {
+//       for (const cb of cbs) {
+//         try {
+//           cb(value);
+//         } catch (e) {
+//           console.error("Error in annotation callback:", e);
+//         }
+//       }
+//     }
+//     for (const cb of this._allItemsCallbacks) {
+//       try {
+//         cb(this.items);
+//       } catch (e) {
+//         console.error("Error in items changed callback:", e);
+//       }
+//     }
+//   }
+//   onItemChanged(key: string, callback: (value: string) => void): () => void {
+//     let cbs = this._callbacks.get(key);
+//     if (!cbs) {
+//       cbs = new Set();
+//       this._callbacks.set(key, cbs);
+//     }
+//     cbs.add(callback);
+//     return () => {
+//       cbs!.delete(callback);
+//     };
+//   }
+//   onItemsChanged(
+//     callback: (allItems: { [key: string]: string }) => void,
+//   ): () => void {
+//     this._allItemsCallbacks.add(callback);
+//     return () => {
+//       this._allItemsCallbacks.delete(callback);
+//     };
+//   }
+//   getAllItems(): { [key: string]: string } {
+//     return this.items;
+//   }
+//   setAllItems(items: { [key: string]: string }): void {
+//     // include both old and new keys
+//     const allKeys = new Set<string>([
+//       ...Object.keys(this.items),
+//       ...Object.keys(items),
+//     ]);
+//     this.items = { ...items }; // make a copy
+//     for (const key of allKeys) {
+//       const cbs = this._callbacks.get(key);
+//       if (cbs) {
+//         for (const cb of cbs) {
+//           try {
+//             cb(this.items[key] || ""); // seems the `|| ""` is important here
+//           } catch (e) {
+//             console.error("Error in annotation callback:", e);
+//           }
+//         }
+//       }
+//     }
+//     for (const cb of this._allItemsCallbacks) {
+//       try {
+//         cb(this.items);
+//       } catch (e) {
+//         console.error("Error in items changed callback:", e);
+//       }
+//     }
+//   }
+// }
+
+// export const figureAnnotations = new InMemoryFigureAnnotations();
 
 (window as any).figpack_p1 = {
   registerFPViewComponent,
@@ -159,7 +202,7 @@ export const figureAnnotations = new InMemoryFigureAnnotations();
   registeredFPViewComponents,
   registeredFPViewContextCreators,
   registeredFPExtensions,
-  figureAnnotations,
+  // figureAnnotations,
 };
 
 registerMainPlugin(FPView);

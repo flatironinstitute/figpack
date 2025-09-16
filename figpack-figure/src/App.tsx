@@ -21,13 +21,6 @@ function App() {
   const { zarrData, refreshZarrData } = useZarrData(figureUrl);
   const [putFigureFilesInterface, setPutFigureFilesInterface] =
     useState<PutFigureFilesInterface | null>(null);
-  const {
-    figureAnnotationsIsDirty,
-    revertFigureAnnotations,
-    saveFigureAnnotations,
-    curating,
-    setCurating,
-  } = useSavedFigureAnnotations(figureUrl, putFigureFilesInterface);
   const { width, height } = useWindowDimensions();
 
   const figureInfoResult = useFigureInfo();
@@ -69,6 +62,18 @@ function App() {
     });
     setContexts(contexts);
   }, [extensionLoadingStatus]);
+
+  const {
+    figureAnnotationsIsDirty,
+    revertFigureAnnotations,
+    saveFigureAnnotations,
+    curating,
+    setCurating,
+  } = useSavedFigureAnnotations(
+    figureUrl,
+    putFigureFilesInterface,
+    contexts || undefined,
+  );
 
   const isLocalFigure = figureUrl.startsWith("http://localhost:");
   let headerHeight: number;

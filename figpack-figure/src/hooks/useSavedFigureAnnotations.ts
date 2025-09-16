@@ -1,23 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { InMemoryFigureAnnotations } from "../main";
-import { PutFigureFilesInterface } from "src/FPHeader/FPHeader";
+import { FPViewContexts } from "../figpack-interface";
+import { PutFigureFilesInterface } from "../FPHeader/FPHeader";
+import useProvideFPViewContext from "../useProvideFPViewContext";
 
 export interface SavedFigureAnnotations {
-  items: { [key: string]: string };
+  annotations: { [path: string]: { [key: string]: string } };
 }
 
 export const useSavedFigureAnnotations = (
   figureUrl: string,
   putFigureFilesInterface: PutFigureFilesInterface | null,
+  contexts: FPViewContexts | undefined,
 ) => {
+  const { state: figureAnnotations, dispatch: figureAnnotationsDispatch } =
+    useProvideFPViewContext(contexts?.figureAnnotations);
+
   const [savedFigureAnnotations, setSavedFigureAnnotations] = useState<
     SavedFigureAnnotations | null | undefined
   >(undefined);
-  const { figureAnnotationItems } = useFigureAnnotationItems();
   const [curating, setCurating] = useState(false);
 
   useEffect(() => {
+    if (!figureAnnotationsDispatch) return;
     let canceled = false;
     const load = async () => {
       const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
@@ -31,36 +35,35 @@ export const useSavedFigureAnnotations = (
       const annotationsUrl =
         figureUrlWithoutTrailingSlash + `/annotations.json?cb=${Date.now()}`;
       const a = await loadRemoteFigureAnnotations(annotationsUrl);
+      if (!a) return;
       if (canceled) return;
       console.info("Loaded annotations:", a);
       setSavedFigureAnnotations(a);
-      const x = (window as any).figpack_p1?.figureAnnotations;
-      if (x && a) {
-        x.setAllItems({ ...a.items });
-      }
+      figureAnnotationsDispatch({
+        type: "setAllAnnotations",
+        value: a.annotations,
+      });
     };
     load();
     return () => {
       canceled = true;
     };
-  }, [figureUrl]);
+  }, [figureUrl, figureAnnotationsDispatch]);
 
   const figureAnnotationsIsDirty = useMemo(() => {
-    return !annotationItemsAreEqual(
-      savedFigureAnnotations?.items || null,
-      figureAnnotationItems,
+    return !annotationsAreEqual(
+      (savedFigureAnnotations || { annotations: {} }).annotations,
+      (figureAnnotations || { annotations: {} }).annotations,
     );
-  }, [savedFigureAnnotations, figureAnnotationItems]);
+  }, [savedFigureAnnotations, figureAnnotations]);
 
   const revertFigureAnnotations = useCallback(() => {
-    const x: InMemoryFigureAnnotations = (window as any).figpack_p1
-      ?.figureAnnotations;
-    if (!x) {
-      console.warn("No figureAnnotations object found");
-      return;
-    }
-    x.setAllItems(savedFigureAnnotations?.items || {});
-  }, [savedFigureAnnotations]);
+    if (!figureAnnotationsDispatch) return;
+    figureAnnotationsDispatch({
+      type: "setAllAnnotations",
+      annotations: (savedFigureAnnotations || { annotations: {} }).annotations,
+    });
+  }, [savedFigureAnnotations, figureAnnotationsDispatch]);
 
   const saveFigureAnnotations = useCallback(() => {
     if (!putFigureFilesInterface) {
@@ -68,8 +71,7 @@ export const useSavedFigureAnnotations = (
       return;
     }
     const s = {
-      ...{ ...(savedFigureAnnotations || {}) },
-      items: figureAnnotationItems,
+      annotations: figureAnnotations.annotations,
     };
     uploadFigureAnnotations(figureUrl, s, putFigureFilesInterface)
       .then(() => {
@@ -80,12 +82,7 @@ export const useSavedFigureAnnotations = (
         // You might want to show a user-facing error message here
         // For now, we'll just log the error
       });
-  }, [
-    figureUrl,
-    figureAnnotationItems,
-    savedFigureAnnotations,
-    putFigureFilesInterface,
-  ]);
+  }, [figureUrl, figureAnnotations, putFigureFilesInterface]);
 
   return {
     figureAnnotationsIsDirty,
@@ -115,11 +112,11 @@ const loadRemoteFigureAnnotations = async (
       return null;
     }
     if (
-      !data.items ||
-      typeof data.items !== "object" ||
-      Array.isArray(data.items)
+      !data.annotations ||
+      typeof data.annotations !== "object" ||
+      Array.isArray(data.annotations)
     ) {
-      console.warn(`Invalid annotations items format from ${url}`);
+      console.warn(`Invalid annotations format from ${url}`);
       return null;
     }
     return data;
@@ -129,47 +126,22 @@ const loadRemoteFigureAnnotations = async (
   }
 };
 
-const useFigureAnnotationItems = (): {
-  figureAnnotationItems: { [key: string]: string };
-} => {
-  const [figureAnnotationItems, setFigureAnnotationItems] = useState<{
-    [key: string]: string;
-  }>({});
-
-  useEffect(() => {
-    const x: InMemoryFigureAnnotations = (window as any).figpack_p1
-      ?.figureAnnotations;
-    if (!x) {
-      setFigureAnnotationItems({});
-      return;
-    }
-    setFigureAnnotationItems(x.getAllItems());
-    const cancelSubscribe = x.onItemsChanged((items) => {
-      setFigureAnnotationItems({ ...items }); // important to make a copy to trigger re-renders
-    });
-    return () => {
-      cancelSubscribe();
-    };
-  }, []);
-
-  return { figureAnnotationItems };
-};
-
-const annotationItemsAreEqual = (
-  a: { [key: string]: string } | null,
-  b: { [key: string]: string } | null | undefined,
+const annotationsAreEqual = (
+  a: { [path: string]: { [key: string]: string } },
+  b: { [path: string]: { [key: string]: string } },
 ): boolean => {
-  if (a === b) return true;
-  const aIsEmpty = !a || Object.keys(a).length === 0;
-  const bIsEmpty = !b || Object.keys(b).length === 0;
-  if (aIsEmpty && bIsEmpty) return true;
-  if (aIsEmpty !== bIsEmpty) return false;
-  if (!a || !b) return false;
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
+  const aKeys = Object.keys(a).sort();
+  const bKeys = Object.keys(b).sort();
   if (aKeys.length !== bKeys.length) return false;
-  for (const key of aKeys) {
-    if (a[key] !== b[key]) return false;
+  for (let i = 0; i < aKeys.length; i++) {
+    if (aKeys[i] !== bKeys[i]) return false;
+    const aSubKeys = Object.keys(a[aKeys[i]]).sort();
+    const bSubKeys = Object.keys(b[bKeys[i]]).sort();
+    if (aSubKeys.length !== bSubKeys.length) return false;
+    for (let j = 0; j < aSubKeys.length; j++) {
+      if (aSubKeys[j] !== bSubKeys[j]) return false;
+      if (a[aKeys[i]][aSubKeys[j]] !== b[bKeys[i]][bSubKeys[j]]) return false;
+    }
   }
   return true;
 };

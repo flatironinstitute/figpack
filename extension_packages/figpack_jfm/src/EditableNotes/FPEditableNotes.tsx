@@ -1,14 +1,24 @@
-import React, { FunctionComponent, useEffect, useMemo, useRef } from "react";
-import { ZarrGroup } from "../figpack-interface";
+import React, { FunctionComponent, useEffect, useMemo } from "react";
+import { FPViewContexts, ZarrGroup } from "../figpack-interface";
+import useProvideFPViewContext from "../useProvideFPViewContext";
 
 type Props = {
   zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
   width: number;
   height: number;
 };
 
-const FPEditableNotes: React.FC<Props> = ({ zarrGroup }) => {
-  const [text, setText] = useFigureAnnotationItem(zarrGroup.path + ':text');
+const FPEditableNotes: React.FC<Props> = ({ zarrGroup, contexts }) => {
+  const {state: figureAnnotations, dispatch: figureAnnotationsDispatch} = useProvideFPViewContext(contexts.figureAnnotations);
+  const annotations = useMemo(() => (figureAnnotations.annotations[zarrGroup.path] || {}), [figureAnnotations, zarrGroup.path]);
+  const { text, setText } = useMemo(() => {
+    const text = annotations['notes'] || '';
+    const setText = figureAnnotationsDispatch ? (text: string) => {
+      figureAnnotationsDispatch({ type: "setAnnotation", path: zarrGroup.path, key: 'notes', value: text });
+    } : undefined;
+    return {text, setText}
+  }, [annotations, figureAnnotationsDispatch]);
   if (!setText) {
     return (
       <div>
@@ -24,35 +34,6 @@ const FPEditableNotes: React.FC<Props> = ({ zarrGroup }) => {
     />
   );
 };
-
-interface FigureAnnotations {
-  getItem: (key: string) => string | undefined;
-  setItem?: (key: string, value: string | undefined) => void;
-  onItemChanged: (key: string, callback: (value: string) => void) => () => void;
-}
-
-const obj = (window as any).figpack_p1?.figureAnnotations as FigureAnnotations;
-
-const useFigureAnnotationItem = (key: string) => {
-  const [internalValue, setInternalValue] = React.useState<string>('');
-  useEffect(() => {
-    if (!obj) return;
-    const currentValue = obj.getItem(key) || '';
-    setInternalValue(currentValue);
-    const unsubscribe = obj.onItemChanged(key, (newValue) => {
-      setInternalValue(newValue);
-    });
-    return () => {
-      unsubscribe();
-    };
-  }, [key]);
-  const setValue = obj.setItem ? (newValue: string) => {
-    if (!obj) return;
-    if (!obj.setItem) return;
-    obj.setItem(key, newValue);
-  } : undefined;
-  return [internalValue, setValue] as const;
-}
 
 const TextEditView: FunctionComponent<{
   text: string;

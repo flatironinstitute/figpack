@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { FPViewContext } from "./figpack-interface";
 
-const useProvideFPViewContext = (context: FPViewContext) => {
-  const [internalState, setInternalState] = useState(context.stateRef.current);
-  const stateRef = context.stateRef;
-  const onChange = context.onChange;
+const useProvideFPViewContext = (context: FPViewContext | undefined) => {
+  const [internalState, setInternalState] = useState(context?.stateRef.current);
+  const stateRef = context?.stateRef;
+  const onChange = context?.onChange;
   useEffect(() => {
-    setInternalState(stateRef.current);
+    if (!stateRef || !onChange) return;
+    setInternalState(stateRef?.current);
     const unsubscribe = onChange((newState) => {
       setInternalState(newState);
     });
@@ -19,7 +20,7 @@ const useProvideFPViewContext = (context: FPViewContext) => {
   }
   return {
     state: internalState,
-    dispatch: context.dispatch,
+    dispatch: context?.dispatch,
   };
 };
 

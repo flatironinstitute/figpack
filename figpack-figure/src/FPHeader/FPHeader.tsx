@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FunctionComponent, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { FigureInfoResult } from "src/hooks/useFigureInfo";
 import { ParentToIframeMessage } from "./uploadTypes";
 
@@ -49,20 +48,15 @@ const FPHeader: FunctionComponent<Props> = ({
   }
 
   const figureIsLocal = figureUrl.startsWith("http://localhost:");
-  console.log("--- figureIsLocal=", figureIsLocal, figureUrl);
 
   const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>(
     null,
   );
 
-  console.log("---- 123");
   useEffect(() => {
-    console.log("-------------------------------- h");
     if (figureIsLocal && curating) {
-      console.log("--- using local putFigureFilesInterface");
       setPutFigureFilesInterface(createLocalPutFigureFilesInterface());
     } else {
-      console.log("--- using remote putFigureFilesInterface");
       setPutFigureFilesInterface(
         createRemotePutFigureFilesInterface(figureUrl, iframeElement),
       );
@@ -135,10 +129,6 @@ const createRemotePutFigureFilesInterface = (
   figureUrl: string,
   iframeElement: HTMLIFrameElement | null,
 ): PutFigureFilesInterface => {
-  console.log("--- createRemotePutFigureFilesInterface", {
-    figureUrl,
-    iframeElement,
-  });
   return {
     putFigureFiles: async (files) => {
       if (!iframeElement) {
