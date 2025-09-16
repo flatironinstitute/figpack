@@ -135,6 +135,22 @@ const RasterPlotView: FunctionComponent<Props> = ({
     right: number;
   } | null>(null);
 
+  const selectedUnitIndicesList = useMemo(() => {
+    const list: number[] = [];
+    if (onlyShowSelected) {
+      unitIds.forEach((unitId, index) => {
+        if (selectedUnitIds.has(unitId)) {
+          list.push(index);
+        }
+      });
+    }
+    return list;
+  }, [onlyShowSelected, selectedUnitIds, unitIds]);
+
+  const selectedUnitIdsList = useMemo(() => {
+    return selectedUnitIndicesList.map((index) => unitIds[index]);
+  }, [selectedUnitIndicesList, unitIds]);
+
   const drawHeatmap = useCallback(() => {
     if (!margins) return;
     const canvas = canvasRef.current;
@@ -268,23 +284,10 @@ const RasterPlotView: FunctionComponent<Props> = ({
     context,
     selectedUnitIds,
     onlyShowSelected,
+    unitIds,
+    selectedUnitIndicesList,
+    selectedUnitIdsList,
   ]);
-
-  const selectedUnitIndicesList = useMemo(() => {
-    const list: number[] = [];
-    if (onlyShowSelected) {
-      unitIds.forEach((unitId, index) => {
-        if (selectedUnitIds.has(unitId)) {
-          list.push(index);
-        }
-      });
-    }
-    return list;
-  }, [onlyShowSelected, selectedUnitIds, unitIds]);
-
-  const selectedUnitIdsList = useMemo(() => {
-    return selectedUnitIndicesList.map((index) => unitIds[index]);
-  }, [selectedUnitIndicesList, unitIds]);
 
   console.log(selectedUnitIds, selectedUnitIndicesList, selectedUnitIdsList);
 
@@ -394,15 +397,17 @@ const RasterPlotView: FunctionComponent<Props> = ({
     canvasHeight,
     margins,
     rangeData,
+    dataClient.metadata,
     visibleStartTimeSec,
     visibleEndTimeSec,
-    hoveredUnitId,
-    dataClient.metadata,
     isLoading,
     error,
-    context,
+    hoveredUnitId,
     selectedUnitIds,
     onlyShowSelected,
+    context,
+    selectedUnitIdsList,
+    selectedUnitIndicesList,
   ]);
 
   useEffect(() => {

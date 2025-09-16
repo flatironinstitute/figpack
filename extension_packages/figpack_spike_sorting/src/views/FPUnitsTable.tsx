@@ -54,8 +54,7 @@ export const FPUnitsTable: FunctionComponent<Props> = ({
             similarityScores = JSON.parse(scoresString);
           }
         } catch (err) {
-          // Similarity scores are optional, so we don't throw if they're not found
-          console.debug("No similarity scores found");
+          console.warn("No similarity scores data found: " + err);
         }
 
         if (canceled) return;

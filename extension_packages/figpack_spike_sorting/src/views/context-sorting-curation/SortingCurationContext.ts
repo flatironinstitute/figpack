@@ -116,6 +116,7 @@ export const sortingCurationReducer = (
 
 const defaultSortingCurationContext = {
   sortingCuration: emptySortingCuration,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   sortingCurationDispatch: (_action: SortingCurationAction) => {
     console.warn("No sortingCurationDispatch function provided.");
   },
