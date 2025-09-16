@@ -3,28 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "dev": "npm run build:packages && concurrently \"npm run dev:packages\" \"vite\"",
-    "dev:packages": "concurrently \"npm run dev:main-plugin\"",
-    "dev:main-plugin": "npm run dev --workspace=@figpack/main-plugin",
-    "build": "npm run build:packages && tsc -b && vite build",
-    "build:packages": "npm run build:main-plugin",
-    "build:main-plugin": "npm run build --workspace=@figpack/main-plugin",
-    "build:gui": "tsc -b && vite build",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
     "clean": "npm run clean --workspaces --if-present && rm -rf dist",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
-    "format:all": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\" \"packages/**/*.{ts,tsx,js,jsx}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@figpack/main-plugin": "file:./packages/figpack-main-plugin",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "@fortawesome/react-fontawesome": "^0.2.3",
     "@mui/material": "^7.3.1",

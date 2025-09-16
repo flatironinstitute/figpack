@@ -13,10 +13,8 @@ import UploadFilesPanel, {
   PutFigureFilesInterface,
 } from "./UploadFilesPanel/UploadFilesPanel";
 import { useSavedFigureAnnotations } from "./hooks/useSavedFigureAnnotations";
-import {
-  registeredFPExtensions,
-  registeredFPViewContextCreators,
-} from "./main";
+import { registeredFPViewContextCreators } from "./contextRegistry";
+import { registeredFPExtensions } from "./extensionRegistry";
 
 function App() {
   const figureUrl = useFigureUrl();

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FPView } from "@components/FPView.tsx";
-import { registerMainPlugin } from "@figpack/main-plugin";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -19,6 +18,7 @@ import {
   registeredFPExtensions,
   registerFPExtension,
 } from "./extensionRegistry.ts";
+import { registerMainPlugin } from "./figpack-main-plugin/index.tsx";
 
 registerFPViewContextCreator({
   name: "figureAnnotations",

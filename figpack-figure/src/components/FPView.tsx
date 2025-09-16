@@ -4,7 +4,7 @@ import {
   RenderParams,
   ZarrGroup,
 } from "../figpack-interface";
-import { registeredFPViewComponents } from "../main";
+import { registeredFPViewComponents } from "../viewComponentRegistry";
 
 export const FPView: React.FC<FPViewComponentProps> = (props) => {
   const { zarrGroup } = props;
