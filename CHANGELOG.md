@@ -5,6 +5,8 @@
 - Remove chroma-js dependency
 - Move main plugin to figpack-figure main package (no longer a separate package)
 - Code cleanup
+- MP4 codec for Zarr
+- Lossy video view in figpack_jfm extension
 
 ## [0.2.20] - 2025-09-16
 

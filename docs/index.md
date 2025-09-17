@@ -76,7 +76,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[Creating figures](creating_figures.md)**: Getting started with building visualizations
 - **[Basic Views Tutorial](basic_views_tutorial.md)**: Step-by-step guide to creating various types of figures
 - **[Spike Sorting Tutorial](spike_sorting_tutorial.md)**: Getting started with spike sorting visualizations
-- **[Extensions Tutorial](extensions_tutorial.md)**: Learn how to create views defined in figpack extensions
+- **[Miscellaneous Tutorial](misc_tutorial.md)**: Tutorial covering various figpack extensions
 - **[NWB Tutorial](nwb_tutorial.md)**: Guide to creating NWB visualizations using figpack's NWB extension
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
 - **[Figpack vs Figurl Comparison](figpack_vs_figurl_comparison.md)**: Comparison of approaches between figpack and figurl
@@ -104,7 +104,7 @@ installation
 creating_figures
 basic_views_tutorial
 spike_sorting_tutorial
-extensions_tutorial
+misc_tutorial
 nwb_tutorial
 show_function
 figpack_vs_figurl_comparison
