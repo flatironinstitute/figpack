@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ZarrGroup } from "../figpack-interface";
 import { ImageMaskRoi } from "./types";
 
@@ -10,7 +11,7 @@ export class PlaneSegmentationClient {
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
-    let ids: number[] = [];
+    const ids: number[] = [];
     try {
       const ds = await zarrGroup.getDataset("id");
       if (!ds) throw new Error("No id dataset found");

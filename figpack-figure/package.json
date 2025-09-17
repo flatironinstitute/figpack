@@ -20,6 +20,7 @@
     "@fortawesome/react-fontawesome": "^0.2.3",
     "@mui/material": "^7.3.1",
     "mathjs": "^14.6.0",
+    "mp4box": "^2.1.1",
     "numcodecs": "^0.3.2",
     "pako": "^2.1.0",
     "react": "^19.1.1",

@@ -2,6 +2,7 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import FPEditableNotes from "./EditableNotes/FPEditableNotes";
+import FPLossyVideo from "./LossyVideo/FPLossyVideo";
 import {
   FPViewComponent,
   FPViewContext,
@@ -88,6 +89,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "jfm.EditableNotes",
     render: makeRenderFunction(FPEditableNotes),
+  });
+  registerFPViewComponent({
+    name: "jfm.LossyVideo",
+    render: makeRenderFunction(FPLossyVideo),
   });
 
   // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;

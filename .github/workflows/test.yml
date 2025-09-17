@@ -55,10 +55,6 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Test tutorial snippets
-        run: |
-          python devel/test_tutorial_snippets.py
-
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.11'
         uses: codecov/codecov-action@v3

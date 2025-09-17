@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Extensions Tutorial Example Generator
+Misc Tutorial Example Generator
 
-Parses docs/extensions_tutorial.md, extracts Python code blocks that precede iframe elements,
+Parses docs/misc_tutorial.md, extracts Python code blocks that precede iframe elements,
 modifies them to save HTML files instead of showing interactively, and executes
 them to generate the tutorial example HTML files in docs/_build/html/tutorial_*/.
 """
@@ -172,11 +172,11 @@ def execute_code(code: str, folder_name: str) -> Tuple[bool, str, str]:
 
 def main():
     """Main function to generate all tutorial examples."""
-    print("🎯 Extensions Tutorial Example Generator")
+    print("🎯 Miscellaneous Tutorial Example Generator")
     print("=" * 50)
 
     # Read tutorial file
-    tutorial_path = Path(__file__).parent.parent / "extensions_tutorial.md"
+    tutorial_path = Path(__file__).parent.parent / "misc_tutorial.md"
 
     if not tutorial_path.exists():
         print(f"❌ Tutorial file not found: {tutorial_path}")
