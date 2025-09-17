@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.21] - 2025-09-17
+
 - Remove chroma-js dependency
 - Move main plugin to figpack-figure main package (no longer a separate package)
 - Code cleanup
