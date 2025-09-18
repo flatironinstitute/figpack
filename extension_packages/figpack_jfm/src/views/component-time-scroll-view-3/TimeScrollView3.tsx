@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "../context-timeseries-selection";
+} from "../../TimeseriesSelectionContext";
 import React, {
   FunctionComponent,
   useCallback,
@@ -24,7 +23,6 @@ import TimeScrollToolbar, {
 } from "./TimeScrollToolbar";
 import CustomActionsToolbar from "./CustomActionsToolbar";
 import suppressWheelScroll from "./supressWheelScroll";
-import ExportDialog from "./ExportDialog";
 
 type Props = {
   width: number;
@@ -54,13 +52,6 @@ type Props = {
   onCanvasClick?: (x: number, y: number) => void;
   hideNavToolbar?: boolean;
   hideTimeAxisLabels?: boolean;
-  drawForExport?: (
-    context: CanvasRenderingContext2D,
-    canvasWidth: number,
-    canvasHeight: number,
-    margins: { top: number; bottom: number; left: number; right: number },
-    o: { exporting?: boolean },
-  ) => Promise<any>;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -81,7 +72,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   onCanvasClick,
   hideNavToolbar = false,
   hideTimeAxisLabels = false,
-  drawForExport,
 }) => {
   const {
     visibleStartTimeSec,
@@ -176,16 +166,15 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       />
     );
   }, [
-    gridlineOpts,
     canvasWidth,
     plotHeight,
     timeRange,
     margins,
     timeTicks,
-    yAxisInfo?.showTicks,
-    yAxisInfo?.yLabel,
+    yAxisInfo,
     yTickSet,
     hideTimeAxisLabels,
+    gridlineOpts,
   ]);
 
   const currentTimePixels = useMemo(
@@ -216,7 +205,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   const divRef = useRef<HTMLDivElement | null>(null);
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode>("pan");
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const {
     isViewClicked,
@@ -284,14 +272,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     }
   }, [startTimeSec, endTimeSec, setVisibleTimeRange]);
 
-  const handleExportClick = useCallback(() => {
-    setIsExportDialogOpen(true);
-  }, []);
-
-  const handleCloseExportDialog = useCallback(() => {
-    setIsExportDialogOpen(false);
-  }, []);
-
   const selectionLayer = useMemo(() => {
     return (
       <TSV2SelectionLayer
@@ -343,9 +323,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       </div>
     );
   }, [
-    axesLayer,
-    cursorLayer,
-    selectionLayer,
     canvasWidth,
     plotHeight,
     handleKeyDown,
@@ -356,6 +333,9 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     handleMouseOut2,
     requireClickToZoom,
     isViewClicked,
+    axesLayer,
+    cursorLayer,
+    selectionLayer,
   ]);
 
   const timeScrollToolbar = useMemo(() => {
@@ -367,7 +347,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         onInteractionModeChange={setInteractionMode}
         currentTime={currentTime}
         onZoomToFit={handleZoomToFit}
-        onExport={drawForExport ? handleExportClick : undefined}
       />
     );
   }, [
@@ -376,8 +355,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     setInteractionMode,
     currentTime,
     handleZoomToFit,
-    drawForExport,
-    handleExportClick,
   ]);
 
   const customActionsToolbar = useMemo(() => {
@@ -402,18 +379,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
           {timeScrollToolbar}
           {customActionsToolbar}
         </div>
-      )}
-      {drawForExport && (
-        <ExportDialog
-          isOpen={isExportDialogOpen}
-          onClose={handleCloseExportDialog}
-          drawForExport={drawForExport}
-          visibleStartTimeSec={visibleStartTimeSec || 0}
-          visibleEndTimeSec={visibleEndTimeSec || 0}
-          yAxisInfo={yAxisInfo}
-          gridlineOpts={gridlineOpts}
-          hideTimeAxisLabels={hideTimeAxisLabels}
-        />
       )}
     </div>
   );

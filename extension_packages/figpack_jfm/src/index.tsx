@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import FPEditableNotes from "./EditableNotes/FPEditableNotes";
-import FPLossyVideo from "./LossyVideo/FPLossyVideo";
+import FPEditableNotes from "./views/EditableNotes/FPEditableNotes";
+import FPLossyVideo from "./views/LossyVideo/FPLossyVideo";
+import FPFmriBold from "./views/FmriBold/FPFmriBold";
 import {
   FPViewComponent,
   FPViewContext,
@@ -95,6 +96,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "jfm.LossyVideo",
     render: makeRenderFunction(FPLossyVideo),
+  });
+  registerFPViewComponent({
+    name: "jfm.FmriBold",
+    render: makeRenderFunction(FPFmriBold),
   });
 
   // Register custom Zarr decoder for 'mp4' codec

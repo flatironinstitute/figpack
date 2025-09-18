@@ -33,4 +33,4 @@ slice = slice[:, ::-1, :]
 slice_rgb = np.repeat(slice[:, :, :, np.newaxis], 3, axis=3)
 # make a LossyVideo
 v = jv.LossyVideo(slice_rgb, fps=10)
-v.show(title="fMRI Series", inline=False, open_in_browser=True)
+v.show(title="fMRI Series", open_in_browser=True)

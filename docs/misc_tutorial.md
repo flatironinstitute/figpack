@@ -217,6 +217,22 @@ v.show(title="Bouncing Balls Animation", open_in_browser=True)
 
 <iframe src="./tutorial_lossy_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
 
+### fMRI BOLD View
+
+The figpack_jfm extension includes a view for visualizing fMRI BOLD data from NIfTI files.
+
+````pythonpython
+import figpack_jfm.views as jv
+
+
+url = "https://s3.amazonaws.com/openneuro.org/ds006661/sub-001/func/sub-001_task-main_run-01_bold.nii.gz"
+
+v = jv.FmriBold.from_nii(url)
+v.show(title="fMRI BOLD Example", open_in_browser=True)
+````
+
+<iframe src="./tutorial_fmri_bold_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+
 ### fMRI Video Example
 
 Here's an example showing how to create a lossy video from an fMRI dataset:
@@ -257,7 +273,7 @@ slice = slice[:, ::-1, :]
 slice_rgb = np.repeat(slice[:, :, :, np.newaxis], 3, axis=3)
 # make a LossyVideo
 v = jv.LossyVideo(slice_rgb, fps=10)
-v.show(title="fMRI Series", inline=False, open_in_browser=True)
+v.show(title="fMRI Series", open_in_browser=True)
 ```
 
 <iframe src="./tutorial_fmri_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>

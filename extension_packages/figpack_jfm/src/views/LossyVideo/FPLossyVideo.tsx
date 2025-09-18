@@ -1,5 +1,5 @@
 import React from "react";
-import { ZarrGroup } from "../figpack-interface";
+import { ZarrGroup } from "../../figpack-interface";
 import LossyVideoView from "./LossyVideoView";
 
 type Props = {

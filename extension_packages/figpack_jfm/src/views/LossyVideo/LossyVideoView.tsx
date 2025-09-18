@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { ZarrGroup } from "../figpack-interface";
+import { ZarrGroup } from "../../figpack-interface";
 import { LossyVideoClient } from "./LossyVideoClient";
 import LossyVideoCanvas from "./LossyVideoCanvas";
 
