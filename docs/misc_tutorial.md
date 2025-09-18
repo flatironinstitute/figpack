@@ -221,7 +221,7 @@ v.show(title="Bouncing Balls Animation", open_in_browser=True)
 
 The figpack_jfm extension includes a view for visualizing fMRI BOLD data from NIfTI files.
 
-````python
+```python
 import figpack_jfm.views as jv
 
 
@@ -229,7 +229,7 @@ url = "https://s3.amazonaws.com/openneuro.org/ds006661/sub-001/func/sub-001_task
 
 v = jv.FmriBold.from_nii(url)
 v.show(title="fMRI BOLD Example", open_in_browser=True)
-````
+```
 
 <iframe src="./tutorial_fmri_bold_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
 
