@@ -159,8 +159,8 @@ const LossyVideoView: React.FC<Props> = ({ zarrGroup, width, height }) => {
         <LossyVideoCanvas
           client={client}
           currentFrame={currentFrame}
-          width={Math.min(width - 20, client.width)}
-          height={Math.min(canvasHeight - 20, client.height)}
+          width={width - 20}
+          height={canvasHeight - 20}
         />
       </div>
 
