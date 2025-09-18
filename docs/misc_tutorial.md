@@ -221,7 +221,7 @@ v.show(title="Bouncing Balls Animation", open_in_browser=True)
 
 The figpack_jfm extension includes a view for visualizing fMRI BOLD data from NIfTI files.
 
-````pythonpython
+````python
 import figpack_jfm.views as jv
 
 
