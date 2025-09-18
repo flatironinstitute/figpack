@@ -4,8 +4,8 @@ import {
   FigureAnnotationsState,
   FPViewContexts,
   ZarrGroup,
-} from "../figpack-interface";
-import { useProvideFPViewContext } from "../figpack-utils";
+} from "../../figpack-interface";
+import { useProvideFPViewContext } from "../../figpack-utils";
 
 type Props = {
   zarrGroup: ZarrGroup;

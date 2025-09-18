@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ZarrGroup } from "../figpack-interface";
+import { ZarrGroup } from "../../figpack-interface";
 
 export class LossyVideoClient {
   constructor(
