@@ -15,10 +15,14 @@ import UploadFilesPanel, {
 import { useSavedFigureAnnotations } from "./hooks/useSavedFigureAnnotations";
 import { registeredFPViewContextCreators } from "./contextRegistry";
 import { registeredFPExtensions } from "./extensionRegistry";
+import { customZarrDecoders } from "./customZarrDecodersRegistry";
 
 function App() {
   const figureUrl = useFigureUrl();
-  const { zarrData, refreshZarrData } = useZarrData(figureUrl);
+  const { zarrData, refreshZarrData } = useZarrData(
+    figureUrl,
+    customZarrDecoders,
+  );
   const [putFigureFilesInterface, setPutFigureFilesInterface] =
     useState<PutFigureFilesInterface | null>(null);
   const { width, height } = useWindowDimensions();

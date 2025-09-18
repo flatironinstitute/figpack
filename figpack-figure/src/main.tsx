@@ -19,6 +19,7 @@ import {
   registerFPExtension,
 } from "./extensionRegistry.ts";
 import { registerMainPlugin } from "./figpack-main-plugin/index.tsx";
+import { registerCustomZarrDecoder } from "./customZarrDecodersRegistry.ts";
 
 registerFPViewContextCreator({
   name: "figureAnnotations",
@@ -29,6 +30,7 @@ registerFPViewContextCreator({
   registerFPViewComponent,
   registerFPViewContextCreator,
   registerFPExtension,
+  registerCustomZarrDecoder,
   registeredFPViewComponents,
   registeredFPViewContextCreators,
   registeredFPExtensions,

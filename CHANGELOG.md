@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Support custom Zarr codecs defined in figpack extensions
+- Move mp4 decoder to figpack_jfm extension
+
 ## [0.2.21] - 2025-09-17
 
 - Remove chroma-js dependency

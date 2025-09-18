@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { ZarrGroup } from "../figpack-interface";
 import RemoteZarr from "../remote-zarr/RemoteZarrImpl";
 
-export const useZarrData = (figureUrl: string) => {
+export const useZarrData = (
+  figureUrl: string,
+  customDecoders?: { [key: string]: (chunk: ArrayBuffer) => Promise<any> },
+) => {
   const [zarrData, setZarrData] = useState<ZarrGroup | null | undefined>(null);
 
   const [refreshCode, setRefreshCode] = useState(0);
@@ -22,7 +26,11 @@ export const useZarrData = (figureUrl: string) => {
         ? figureUrlWithoutIndexHtml.slice(0, -1)
         : figureUrlWithoutIndexHtml;
       const dataUrl = figureUrlWithoutTrailingSlash + "/data.zarr";
-      const a = await RemoteZarr.createFromZarr(dataUrl);
+      const a = await RemoteZarr.createFromZarr(
+        dataUrl,
+        undefined,
+        customDecoders,
+      );
       const g = await a.getGroup("/");
       if (canceled) return;
       setZarrData(g);

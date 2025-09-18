@@ -1,6 +1,5 @@
 import { Blosc } from "numcodecs";
 import pako from "pako";
-import decodeMp4ToByteArray from "./decodeMp4ToByteArray";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const zarrDecodeChunkArray = async (
@@ -9,6 +8,7 @@ const zarrDecodeChunkArray = async (
   compressor?: any,
   filters?: any[],
   shape?: number[],
+  customDecoders?: { [key: string]: (chunk: ArrayBuffer) => Promise<any> },
 ): Promise<any> => {
   let ret: any = chunk;
   if (compressor) {
@@ -16,8 +16,8 @@ const zarrDecodeChunkArray = async (
       ret = await new Blosc().decode(chunk);
     } else if (compressor.id === "gzip") {
       ret = pako.inflate(chunk);
-    } else if (compressor.id === "mp4") {
-      ret = await decodeMp4ToByteArray(chunk);
+    } else if (customDecoders && compressor.id in customDecoders) {
+      ret = await customDecoders[compressor.id](chunk);
     } else {
       throw Error("Unhandled compressor " + compressor.id);
     }
