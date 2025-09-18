@@ -1,9 +1,9 @@
+import * as MP4Box from "mp4box";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const decodeMp4ToByteArray = async (
   mp4Data: ArrayBuffer,
 ): Promise<Uint8Array> => {
-  const MP4Box = await import("mp4box");
-
   const mp4boxInputFile = MP4Box.createFile();
 
   const bitmaps: ImageBitmap[] = [];

@@ -43,6 +43,9 @@ export class ZarrFileSystemClient {
   constructor(
     private url: string,
     private zmetadata: any,
+    private customDecoders?: {
+      [key: string]: (chunk: ArrayBuffer) => Promise<any>;
+    },
   ) {}
   async readJson(path: string): Promise<{ [key: string]: any } | undefined> {
     if (path in this.zmetadata.metadata) {
@@ -152,6 +155,7 @@ export class ZarrFileSystemClient {
             zarray.compressor,
             zarray.filters,
             zarray.chunks,
+            this.customDecoders,
           );
         } catch (e) {
           throw Error(`Failed to decode chunk array for ${path}: ${e}`);
@@ -192,6 +196,7 @@ class RemoteZarr implements ZarrFile {
   static async createFromZarr(
     url: string,
     zarrWriteDispatch?: ZarrWriteDispatch,
+    customDecoders?: { [key: string]: (chunk: ArrayBuffer) => Promise<any> },
   ) {
     // important that we always get an accurate version of .zmetadata, so we add a cache-buster
     const zmetadataUrl = `${url}/.zmetadata?cb=${Date.now()}`;
@@ -200,7 +205,11 @@ class RemoteZarr implements ZarrFile {
       throw new Error(`Failed to fetch Zarr metadata from ${zmetadataUrl}`);
     }
     const zmetadata = await zmetadataResponse.json();
-    const zarrFileSystemClient = new ZarrFileSystemClient(url, zmetadata);
+    const zarrFileSystemClient = new ZarrFileSystemClient(
+      url,
+      zmetadata,
+      customDecoders,
+    );
     const pathsByParentPath: { [key: string]: string[] } = {};
     for (const path in zmetadata.metadata) {
       if (path === ".zattrs" || path === ".zgroup") continue;

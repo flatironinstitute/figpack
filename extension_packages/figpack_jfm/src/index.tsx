@@ -9,6 +9,7 @@ import {
   RenderParams,
   ZarrGroup,
 } from "./figpack-interface";
+import decodeMp4ToByteArray from "./decodeMp4ToByteArray";
 
 // Declare global types for figpack extension system
 export {};
@@ -84,6 +85,7 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
 };
 
 const registerExtension = () => {
+  // Register view components
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
     .figpack_p1.registerFPViewComponent;
   registerFPViewComponent({
@@ -95,8 +97,19 @@ const registerExtension = () => {
     render: makeRenderFunction(FPLossyVideo),
   });
 
-  // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
+  // Register custom Zarr decoder for 'mp4' codec
+  const registerCustomZarrDecoder: (
+    name: string,
+    decoder: (chunk: ArrayBuffer) => Promise<any>,
+  ) => void = (window as any).figpack_p1.registerCustomZarrDecoder;
+  if (registerCustomZarrDecoder) {
+    registerCustomZarrDecoder("mp4", decodeMp4ToByteArray);
+  } else {
+    console.warn("No registerCustomZarrDecoder function found");
+    return;
+  }
 
+  // Register extension
   const registerFPExtension: (e: { name: string }) => void = (window as any)
     .figpack_p1.registerFPExtension;
   registerFPExtension({ name: "figpack-jfm" });
