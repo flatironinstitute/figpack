@@ -14,6 +14,8 @@ Views are the fundamental building blocks for figures in figpack. Each view type
 - Views are responsible for managing their data and serialization logic
 - Views can be nested within other views to create complex layouts
 
+For a complete guide on implementing new views, see [Creating a New View](creating_a_new_view.md).
+
 ### Serialization
 
 Views use a zarr-based serialization mechanism:
@@ -35,6 +37,8 @@ Every view requires a corresponding frontend implementation in the figpack-figur
   - Loading data from the zarr group (sometimes lazily for performance)
   - Rendering the view's content appropriately
   - Managing any interactive features
+
+For detailed instructions on implementing frontend components, see [Creating a New View](creating_a_new_view.md).
 
 ## Figures
 
@@ -136,6 +140,8 @@ Every view type in figpack requires a corresponding frontend implementation in f
 - Renders the view's content appropriately
 - Manages interactive features
 
+See [Creating a New View](creating_a_new_view.md) for step-by-step instructions on implementing custom views.
+
 ## Extensions
 
 The extension system allows developers to create custom views with specialized JavaScript rendering code:
@@ -145,6 +151,8 @@ The extension system allows developers to create custom views with specialized J
 - Each extension provides its own JavaScript implementation and optional utilities
 - Extensions are registered globally and can be reused across multiple views
 - Built-in support for external library integration and dependency management
+
+To learn how to create views within extensions, see the comprehensive guide: [Creating a New View](creating_a_new_view.md).
 
 ## Viewing Figures in Development Mode
 
@@ -174,6 +182,7 @@ The standard development setup involves:
 ```{toctree}
 :maxdepth: 2
 
+creating_a_new_view
 python-package
 figpack-figure
 figpack-manage

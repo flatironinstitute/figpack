@@ -83,6 +83,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[API Reference](api/index.md)**: Complete documentation of all components
 - **[Contributing](contributing.md)**: How to contribute to figpack
 - **[Developer Guide](developer_guide/index.md)**: In-depth information for extending figpack
+- **[Creating a New View](developer_guide/creating_a_new_view.md)**: Step-by-step guide to implementing custom views
 
 ## Development and Support
 
