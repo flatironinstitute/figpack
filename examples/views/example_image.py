@@ -34,7 +34,7 @@ def example_image():
     img_bytes = img_bytes.getvalue()
 
     # Note: you can also load from an image file
-    # view = Image.from_file('path_to_image.png')
+    # view = Image.from_image_file('path_to_image.png')
 
     return Image(img_bytes)
 

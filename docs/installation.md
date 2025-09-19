@@ -30,6 +30,7 @@ Figpack provides several extension packages with specialized visualization capab
 - **figpack_3d**: 3D visualization extension using Three.js
 - **figpack_force_graph**: Force-directed graph visualization extension  
 - **figpack_franklab**: Frank Lab specific neuroscience visualization tools
+- **figpack_experimental**: Experimental features and visualizations
 
 ### Installing Extension Packages
 
@@ -90,7 +91,7 @@ For development work on extension packages:
 
 ```bash
 git clone https://github.com/flatironinstitute/figpack.git
-cd figpack/extension_packages/figpack_spike_sorting  # or any other extension
+cd figpack/extension_packages/figpack_experimental  # or any other extension
 npm install  # if the extension has JavaScript components
 npm run build  # if the extension has JavaScript components
 pip install -e .
