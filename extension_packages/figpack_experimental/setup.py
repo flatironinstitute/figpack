@@ -1,5 +1,5 @@
 """
-Setup script for figpack_jfm package
+Setup script for figpack_experimental package
 """
 
 from setuptools import setup, find_packages
@@ -16,7 +16,7 @@ def read_readme():
 
 
 setup(
-    name="figpack_jfm",
+    name="figpack_experimental",
     version="0.1.3",
     description="Extension for figpack",
     long_description=read_readme(),
@@ -26,7 +26,7 @@ setup(
     url="https://github.com/flatironinstitute/figpack",
     packages=find_packages(),
     package_data={
-        "figpack_jfm": ["*.js"],
+        "figpack_experimental": ["*.js"],
     },
     include_package_data=True,
     install_requires=["figpack>=0.2.17", "imageio", "imageio-ffmpeg"],

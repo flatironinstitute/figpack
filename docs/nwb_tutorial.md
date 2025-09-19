@@ -22,7 +22,7 @@ import figpack_nwb.views as fpn
 nwb_url = "https://api.dandiarchive.org/api/assets/4660dd15-93b2-4e64-88b1-ba92871989b4/download/"
 path = "/processing/ophys/ImageSegmentation/PlaneSegmentation"
 
-view = fpn.PlaneSegmentation(nwb=nwb_url, path=path)
+view = fpn.PlaneSegmentation(nwb=nwb_url, path=path, use_local_cache=True)
 view.show(title="Plane Segmentation Example", open_in_browser=True)
 ```
 

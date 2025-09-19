@@ -1,7 +1,7 @@
 import numpy as np
 
 import figpack
-from .jfm_extension import jfm_extension
+from .experimental_extension import experimental_extension
 from .MP4Codec import MP4Codec
 
 
@@ -14,7 +14,9 @@ class LossyVideo(figpack.ExtensionView):
             data: Video data as a numpy array
             fps: Frames per second for the video
         """
-        super().__init__(extension=jfm_extension, view_type="jfm.LossyVideo")
+        super().__init__(
+            extension=experimental_extension, view_type="experimental.LossyVideo"
+        )
 
         self.data = data
         self.fps = fps

@@ -1,7 +1,7 @@
 import numpy as np
 
 import figpack
-from .jfm_extension import jfm_extension
+from .experimental_extension import experimental_extension
 
 
 class EditableNotes(figpack.ExtensionView):
@@ -16,7 +16,9 @@ class EditableNotes(figpack.ExtensionView):
         Args:
             initial_text: Initial text content for the editable notes
         """
-        super().__init__(extension=jfm_extension, view_type="jfm.EditableNotes")
+        super().__init__(
+            extension=experimental_extension, view_type="experimental.EditableNotes"
+        )
 
         self.initial_text = initial_text
 

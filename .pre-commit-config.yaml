@@ -17,9 +17,9 @@ repos:
         name: Format figpack_nwb package files
         entry: bash -c 'cd extension_packages/figpack_nwb && npm run format'
         language: system
-      - id: npm-format-figpack-jfm
-        name: Format figpack_jfm package files
-        entry: bash -c 'cd extension_packages/figpack_jfm && npm run format'
+      - id: npm-format-figpack-experimental
+        name: Format figpack_experimental package files
+        entry: bash -c 'cd extension_packages/figpack_experimental && npm run format'
         language: system
       - id: npm-format-figpack-franklab
         name: Format figpack_franklab package files

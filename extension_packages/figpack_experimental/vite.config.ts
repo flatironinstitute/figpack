@@ -12,7 +12,7 @@ export default defineConfig(({ command }) => {
   return {
     plugins: [react(), cssInjectedByJsPlugin()],
     root: __dirname,
-    publicDir: 'figpack_jfm', // Serve files from the figpack_jfm directory
+    publicDir: 'figpack_experimental', // Serve files from the figpack_experimental directory
     server: {
       port: 5174,
       cors: true,
@@ -28,11 +28,11 @@ export default defineConfig(({ command }) => {
     build: {
       lib: {
         entry: path.resolve(__dirname, 'src/index.tsx'),
-        name: 'figpackjfm',
+        name: 'figpackexperimental',
         formats: ['iife'],
-        fileName: () => 'figpack_jfm.js'
+        fileName: () => 'figpack_experimental.js'
       },
-      outDir: 'figpack_jfm',
+      outDir: 'figpack_experimental',
       emptyOutDir: false, // Don't clear the directory since it contains Python files
       rollupOptions: {
         output: {

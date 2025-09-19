@@ -1,5 +1,5 @@
 """
-figpack_jfm - Miscellaneous experimental visualizations
+figpack_experimental - Miscellaneous experimental visualizations
 """
 
 from .EditableNotes import EditableNotes

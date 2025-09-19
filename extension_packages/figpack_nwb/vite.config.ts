@@ -28,7 +28,7 @@ export default defineConfig(({ command }) => {
     build: {
       lib: {
         entry: path.resolve(__dirname, 'src/index.tsx'),
-        name: 'figpackjfm',
+        name: 'figpackexperimental',
         formats: ['iife'],
         fileName: () => 'figpack_nwb.js'
       },

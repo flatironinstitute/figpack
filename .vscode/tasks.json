@@ -8,7 +8,7 @@
         "Build Franklab Extension",
         "Build Spike Sorting Extension",
         "Build 3D Extension",
-        "Build JFM Extension",
+        "Build Experimental Extension",
         "Build NWB Extension"
       ],
       "group": {
@@ -35,9 +35,9 @@
       "problemMatcher": ["$tsc"]
     },
     {
-      "label": "Build JFM Extension",
+      "label": "Build Experimental Extension",
       "type": "shell",
-      "command": "cd extension_packages/figpack_jfm && npm run build",
+      "command": "cd extension_packages/figpack_experimental && npm run build",
       "problemMatcher": ["$tsc"]
     },
     {

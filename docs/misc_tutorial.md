@@ -140,15 +140,15 @@ The figpack_3d extension supports cubes, spheres, and cylinders with customizabl
 
 For more advanced usage, please refer to the [extension documentation](https://github.com/flatironinstitute/figpack/tree/main/extension_packages/figpack_3d).
 
-## figpack_jfm
+## figpack_experimental
 
-Some other miscellaneous views are provided in the figpack_jfm extension, including editable notes and lossy video display.
+Some other miscellaneous views are provided in the figpack_experimental extension, including editable notes and lossy video display.
 
 ### Installation
 After installing figpack, run:
 
 ```bash
-figpack extensions install --upgrade figpack_jfm
+figpack extensions install --upgrade figpack_experimental
 ```
 
 ### Lossy Video View
@@ -156,7 +156,7 @@ figpack extensions install --upgrade figpack_jfm
 Here's a simple example showing how to create and display a lossy video:
 
 ```python
-import figpack_jfm.views as fpj
+import figpack_experimental.views as fpj
 import numpy as np
 
 def create_circle(frame, center, radius, color):
@@ -219,10 +219,10 @@ v.show(title="Bouncing Balls Animation", open_in_browser=True)
 
 ### fMRI BOLD View
 
-The figpack_jfm extension includes a view for visualizing fMRI BOLD data from NIfTI files.
+The figpack_experimental extension includes a view for visualizing fMRI BOLD data from NIfTI files.
 
 ```python
-import figpack_jfm.views as jv
+import figpack_experimental.views as jv
 
 
 url = "https://s3.amazonaws.com/openneuro.org/ds006661/sub-001/func/sub-001_task-main_run-01_bold.nii.gz"
@@ -231,7 +231,7 @@ v = jv.FmriBold.from_nii(url)
 v.show(title="fMRI BOLD Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_fmri_bold_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe src="./tutorial_fmri_bold_example/index.html?embedded=1" width="100%" height="800" frameborder="0"></iframe>
 
 ### fMRI Video Example
 
@@ -242,7 +242,7 @@ import os
 import urllib.request
 import numpy as np
 import nibabel as nib
-import figpack_jfm.views as jv
+import figpack_experimental.views as jv
 
 
 url = "https://s3.amazonaws.com/openneuro.org/ds006661/sub-001/func/sub-001_task-main_run-01_bold.nii.gz"

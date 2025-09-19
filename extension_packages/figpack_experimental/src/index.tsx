@@ -90,15 +90,15 @@ const registerExtension = () => {
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
     .figpack_p1.registerFPViewComponent;
   registerFPViewComponent({
-    name: "jfm.EditableNotes",
+    name: "experimental.EditableNotes",
     render: makeRenderFunction(FPEditableNotes),
   });
   registerFPViewComponent({
-    name: "jfm.LossyVideo",
+    name: "experimental.LossyVideo",
     render: makeRenderFunction(FPLossyVideo),
   });
   registerFPViewComponent({
-    name: "jfm.FmriBold",
+    name: "experimental.FmriBold",
     render: makeRenderFunction(FPFmriBold),
   });
 
@@ -117,7 +117,7 @@ const registerExtension = () => {
   // Register extension
   const registerFPExtension: (e: { name: string }) => void = (window as any)
     .figpack_p1.registerFPExtension;
-  registerFPExtension({ name: "figpack-jfm" });
+  registerFPExtension({ name: "figpack-experimental" });
 };
 
 registerExtension();
