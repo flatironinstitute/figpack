@@ -33,7 +33,7 @@ class DataFrame(FigpackView):
 
         self.df = df
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the DataFrame data to a Zarr group
 

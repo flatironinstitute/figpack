@@ -37,7 +37,7 @@ def test_box_zarr_writing():
     group = figpack.Group(zarr.group(store=store))
 
     # Write box to zarr
-    box._write_to_zarr_group(group)
+    box.write_to_zarr_group(group)
 
     # Verify attributes
     assert group.attrs["view_type"] == "Box"

@@ -44,7 +44,7 @@ class Gallery(FigpackView):
             max(0, min(initial_item_index, len(items) - 1)) if items else 0
         )
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the Gallery data to a Zarr group
 
@@ -80,7 +80,7 @@ class Gallery(FigpackView):
 
             # Recursively write the child view to the subgroup
             # This allows any figpack view to be contained within a gallery item
-            item.view._write_to_zarr_group(item_group)
+            item.view.write_to_zarr_group(item_group)
 
         # Store the complete items metadata in the group attributes
         # This will be used by the frontend to render the gallery structure

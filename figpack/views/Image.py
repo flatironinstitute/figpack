@@ -70,7 +70,7 @@ class Image(FigpackView):
         except Exception as e:
             raise ValueError(f"Failed to download image from URL: {str(e)}")
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the image data to a Zarr group
 

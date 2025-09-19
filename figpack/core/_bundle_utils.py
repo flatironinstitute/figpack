@@ -58,7 +58,7 @@ def prepare_figure_bundle(
         # Write the view data to the Zarr group
         zarr_group = zarr.open_group(pathlib.Path(tmpdir) / "data.zarr", mode="w")
         zarr_group = Group(zarr_group)
-        view._write_to_zarr_group(zarr_group)
+        view.write_to_zarr_group(zarr_group)
 
         # Add title and description as attributes on the top-level zarr group
         zarr_group.attrs["title"] = title

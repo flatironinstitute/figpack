@@ -101,14 +101,14 @@ class UnitMetricsGraph(figpack.ExtensionView):
         self.metrics = metrics
         self.height = height
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the UnitMetricsGraph data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Set view properties
         if self.height is not None:

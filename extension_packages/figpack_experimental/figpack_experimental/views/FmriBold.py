@@ -69,14 +69,14 @@ class FmriBold(figpack.ExtensionView):
             data, resolution=resolution, temporal_resolution=temporal_resolution
         )
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         group.attrs["resolution"] = self.resolution
         group.attrs["temporal_resolution"] = self.temporal_resolution

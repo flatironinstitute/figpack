@@ -114,14 +114,14 @@ class TrackAnimation(figpack.ExtensionView):
         self.track_bin_height = track_bin_height
         self.track_bin_width = track_bin_width
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the track animation data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Store spatial binning parameters
         group.attrs["bin_height"] = self.bin_height

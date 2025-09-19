@@ -18,11 +18,11 @@ Views are the fundamental building blocks for figures in figpack. Each view type
 
 Views use a zarr-based serialization mechanism:
 
-- Every view must implement a `_write_to_zarr_group` method
+- Every view must implement a `write_to_zarr_group` method
 - This method serializes the view's data to disk, either as:
   - A top-level zarr group (for standalone figures)
   - A nested zarr group (when embedded in another view)
-- Parent views can call `_write_to_zarr_group` on their child views during serialization
+- Parent views can call `write_to_zarr_group` on their child views during serialization
 - The serialized data becomes part of the figure bundle
 - Figure bundles can be stored locally or uploaded to the cloud
 

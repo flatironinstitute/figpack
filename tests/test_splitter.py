@@ -62,7 +62,7 @@ def test_write_to_zarr(sample_layout_items):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    splitter._write_to_zarr_group(group)
+    splitter.write_to_zarr_group(group)
 
     # Check basic attributes
     assert group.attrs["view_type"] == "Splitter"
@@ -102,7 +102,7 @@ def test_nested_splitter(sample_layout_items):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    outer_splitter._write_to_zarr_group(group)
+    outer_splitter.write_to_zarr_group(group)
 
     # Verify nested structure
     assert group.attrs["view_type"] == "Splitter"

@@ -25,14 +25,14 @@ class PlaneSegmentation(figpack.ExtensionView):
         self.path = path
         self.use_local_cache = use_local_cache
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         import lindi
 

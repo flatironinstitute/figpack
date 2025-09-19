@@ -26,7 +26,7 @@ class MatplotlibFigure(FigpackView):
         """
         self.fig = fig
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the matplotlib figure data to a Zarr group
 

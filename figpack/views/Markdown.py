@@ -23,7 +23,7 @@ class Markdown(FigpackView):
         """
         self.content = content
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the markdown data to a Zarr group
 

@@ -155,11 +155,11 @@ class FigpackView:
 
         _save_figure(self, output_path, title=title)
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the view data to a Zarr group. Must be implemented by subclasses.
 
         Args:
             group: Zarr group to write data into
         """
-        raise NotImplementedError("Subclasses must implement _write_to_zarr_group")
+        raise NotImplementedError("Subclasses must implement write_to_zarr_group")

@@ -219,7 +219,7 @@ class ForceGraphView(figpack.ExtensionView):
 
         self.links.append(link)
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the force graph data to a Zarr group.
 
@@ -227,7 +227,7 @@ class ForceGraphView(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         # Call parent method to set extension metadata
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Create graph data structure
         graph_data = {"nodes": self.nodes, "links": self.links}

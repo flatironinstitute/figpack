@@ -71,14 +71,14 @@ class Autocorrelograms(figpack.ExtensionView):
         view = Autocorrelograms(autocorrelograms=ac_items)
         return view
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the Autocorrelograms data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Store the number of autocorrelograms
         num_autocorrelograms = len(self.autocorrelograms)

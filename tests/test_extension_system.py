@@ -148,7 +148,7 @@ class TestExtensionSystem:
 
         # Serialize to zarr
         group = zarr.group()
-        view._write_to_zarr_group(group)
+        view.write_to_zarr_group(group)
 
         # Check attributes
         assert group.attrs["view_type"] == "test.ViewType"

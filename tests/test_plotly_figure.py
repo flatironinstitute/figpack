@@ -32,7 +32,7 @@ def test_write_to_zarr_basic(sample_plotly_figure):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check basic attributes and data array
     assert group.attrs["view_type"] == "plotly.PlotlyFigure"
@@ -71,7 +71,7 @@ def test_write_to_zarr_complex_data():
     group = figpack.Group(root.create_group("test"))
 
     # Should not raise any exceptions
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Verify data was stored
     assert "figure_data" in group
@@ -106,7 +106,7 @@ def test_write_to_zarr_figure_methods():
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Verify to_dict was called
     mock_fig.to_dict.assert_called_once()

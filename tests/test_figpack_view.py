@@ -11,15 +11,15 @@ from figpack.core.figpack_view import FigpackView
 class TestFigpackView:
     """Test cases for FigpackView class"""
 
-    def test_write_to_zarr_group_abstract(self):
-        """Test that _write_to_zarr_group raises NotImplementedError"""
+    def testwrite_to_zarr_group_abstract(self):
+        """Test that write_to_zarr_group raises NotImplementedError"""
         view = FigpackView()
         group = zarr.group()
 
         with pytest.raises(NotImplementedError) as exc_info:
-            view._write_to_zarr_group(group)
+            view.write_to_zarr_group(group)
 
-        assert "Subclasses must implement _write_to_zarr_group" in str(exc_info.value)
+        assert "Subclasses must implement write_to_zarr_group" in str(exc_info.value)
 
     def test_show_with_title_and_description(self):
         """Test show method with title and description"""

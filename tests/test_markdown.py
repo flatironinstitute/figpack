@@ -25,7 +25,7 @@ def test_markdown_zarr_write():
     store = zarr.storage.MemoryStore()
     group = figpack.Group(zarr.group(store=store))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Markdown"
 
@@ -45,7 +45,7 @@ def test_markdown_empty_content():
     store = zarr.storage.MemoryStore()
     group = figpack.Group(zarr.group(store=store))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Markdown"
 
@@ -76,7 +76,7 @@ def test():
     store = zarr.storage.MemoryStore()
     group = figpack.Group(zarr.group(store=store))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Markdown"
 
@@ -97,7 +97,7 @@ def test_markdown_array_properties():
     store = zarr.storage.MemoryStore()
     group = figpack.Group(zarr.group(store=store))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Verify array properties
     assert group["content_data"].dtype == np.uint8

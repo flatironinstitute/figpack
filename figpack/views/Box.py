@@ -42,7 +42,7 @@ class Box(FigpackView):
         self.items = items
         self.title = title
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the Box layout data to a Zarr group
 
@@ -73,7 +73,7 @@ class Box(FigpackView):
             item_group = group.create_group(item_name)
 
             # Recursively write the child view to the subgroup
-            item.view._write_to_zarr_group(item_group)
+            item.view.write_to_zarr_group(item_group)
 
         # Store the items metadata
         group.attrs["items"] = items_metadata

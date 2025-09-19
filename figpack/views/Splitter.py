@@ -36,7 +36,7 @@ class Splitter(FigpackView):
         self.item2 = item2
         self.split_pos = max(0.1, min(0.9, split_pos))  # Clamp between 0.1 and 0.9
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the Splitter layout data to a Zarr group
 
@@ -61,7 +61,7 @@ class Splitter(FigpackView):
 
         # Create subgroups for each item's view
         item1_group = group.create_group("item1")
-        self.item1.view._write_to_zarr_group(item1_group)
+        self.item1.view.write_to_zarr_group(item1_group)
 
         item2_group = group.create_group("item2")
-        self.item2.view._write_to_zarr_group(item2_group)
+        self.item2.view.write_to_zarr_group(item2_group)

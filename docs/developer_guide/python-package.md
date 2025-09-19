@@ -42,7 +42,7 @@ class FigpackView:
     def save(self, output_path: str, *, title: str):
         """Save as figure bundle"""
 
-    def _write_to_zarr_group(self, group: figpack.Group):
+    def write_to_zarr_group(self, group: figpack.Group):
         """Serialize data - implemented by subclasses"""
         raise NotImplementedError
 ```
@@ -77,12 +77,12 @@ else:
 
 ## Data Serialization with Zarr
 
-### The \_write_to_zarr_group Pattern
+### The \write_to_zarr_group Pattern
 
-Every view must implement `_write_to_zarr_group()` to serialize its data:
+Every view must implement `write_to_zarr_group()` to serialize its data:
 
 ```python
-def _write_to_zarr_group(self, group: figpack.Group) -> None:
+def write_to_zarr_group(self, group: figpack.Group) -> None:
     # 1. Set view type for frontend routing
     group.attrs["view_type"] = "TimeseriesGraph"
 
@@ -96,7 +96,7 @@ def _write_to_zarr_group(self, group: figpack.Group) -> None:
     # 4. Handle nested structures
     for i, series in enumerate(self._series):
         series_group = group.create_group(f"series_{i}")
-        series._write_to_zarr_group(series_group)
+        series.write_to_zarr_group(series_group)
 ```
 
 ### Best Practices
@@ -128,7 +128,7 @@ class BarChart(figpack.FigpackView):
         if len(self.categories) != len(self.values):
             raise ValueError("Categories and values must have same length")
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         group.attrs["view_type"] = "BarChart"
         group.attrs["title"] = self.title
         group.attrs["categories"] = self.categories
@@ -141,7 +141,7 @@ class BarChart(figpack.FigpackView):
 
 - [ ] Inherit from `FigpackView`
 - [ ] Validate inputs in `__init__`
-- [ ] Implement `_write_to_zarr_group()`
+- [ ] Implement `write_to_zarr_group()`
 - [ ] Set `view_type` attribute
 - [ ] Use appropriate data types
 - [ ] Handle edge cases gracefully
@@ -160,14 +160,14 @@ class TimeseriesGraph(FigpackView):
         series = TGLineSeries(name=name, t=t, y=y, color=color, **kwargs)
         self._series.append(series)
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         group.attrs["view_type"] = "TimeseriesGraph"
         group.attrs["series_names"] = [s.name for s in self._series]
 
         # Store each series in its own subgroup
         for series in self._series:
             series_group = group.create_group(series.name)
-            series._write_to_zarr_group(series_group)
+            series.write_to_zarr_group(series_group)
 ```
 
 ## Domain-Specific Extensions
@@ -188,7 +188,7 @@ class SpikeRaster(FigpackView):
         self.unit_ids = unit_ids
         # Domain-specific processing
 
-    def _write_to_zarr_group(self, group: figpack.Group):
+    def write_to_zarr_group(self, group: figpack.Group):
         group.attrs["view_type"] = "SpikeRaster"
         # Serialize spike data efficiently
 ```
@@ -255,7 +255,7 @@ export FIGPACK_DEV=1
 ### Robust Implementation
 
 ```python
-def _write_to_zarr_group(self, group: figpack.Group) -> None:
+def write_to_zarr_group(self, group: figpack.Group) -> None:
     try:
         # Validate data
         if self.data is None:

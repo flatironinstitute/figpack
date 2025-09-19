@@ -109,12 +109,12 @@ class RasterPlot(figpack.ExtensionView):
         else:
             return view
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Store view parameters
         group.attrs["start_time_sec"] = self.start_time_sec

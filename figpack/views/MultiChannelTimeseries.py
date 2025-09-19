@@ -174,7 +174,7 @@ class MultiChannelTimeseries(FigpackView):
         else:  # len(shape) == 3
             return (chunk_timepoints, 2, n_channels)
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the multi-channel timeseries data to a Zarr group
 

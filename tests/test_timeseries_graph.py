@@ -262,7 +262,7 @@ def test_zarr_storage():
     store = zarr.storage.MemoryStore()
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
-    graph._write_to_zarr_group(group)
+    graph.write_to_zarr_group(group)
 
     # Verify general attributes
     assert group.attrs["view_type"] == "TimeseriesGraph"

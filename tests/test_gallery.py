@@ -16,7 +16,7 @@ from figpack.core.figpack_view import FigpackView
 class DummyView(FigpackView):
     """Dummy view for testing"""
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         group.attrs["view_type"] = "DummyView"
         group.attrs["test_value"] = 42
 
@@ -71,7 +71,7 @@ def test_gallery_write_to_zarr():
     group = figpack.Group(root.create_group("test_gallery"))
 
     # Write gallery to zarr
-    gallery._write_to_zarr_group(group)
+    gallery.write_to_zarr_group(group)
 
     # Verify basic attributes
     assert group.attrs["view_type"] == "Gallery"

@@ -160,7 +160,7 @@ class TimeseriesGraph(FigpackView):
             )
         )
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the graph data to a Zarr group
 
@@ -170,13 +170,13 @@ class TimeseriesGraph(FigpackView):
         for series in self._series:
             series_group = group.create_group(series.name)
             if isinstance(series, TGLineSeries):
-                series._write_to_zarr_group(series_group)
+                series.write_to_zarr_group(series_group)
             elif isinstance(series, TGMarkerSeries):
-                series._write_to_zarr_group(series_group)
+                series.write_to_zarr_group(series_group)
             elif isinstance(series, TGIntervalSeries):
-                series._write_to_zarr_group(series_group)
+                series.write_to_zarr_group(series_group)
             elif isinstance(series, TGUniformSeries):
-                series._write_to_zarr_group(series_group)
+                series.write_to_zarr_group(series_group)
             else:
                 raise ValueError(f"Unknown series type: {type(series)}")
 
@@ -215,7 +215,7 @@ class TGLineSeries:
         self.width = width
         self.dash = dash
 
-    def _write_to_zarr_group(
+    def write_to_zarr_group(
         self,
         group: Group,
     ) -> None:
@@ -248,7 +248,7 @@ class TGMarkerSeries:
         self.radius = radius
         self.shape = shape
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the marker series data to a Zarr dataset
 
@@ -287,7 +287,7 @@ class TGIntervalSeries:
         self.color = color
         self.alpha = alpha
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the interval series data to a Zarr dataset
 
@@ -492,7 +492,7 @@ class TGUniformSeries:
         else:  # len(shape) == 3
             return (chunk_timepoints, 2, n_channels)
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the uniform series data to a Zarr group
 

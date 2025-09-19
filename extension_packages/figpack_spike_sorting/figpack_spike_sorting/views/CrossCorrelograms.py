@@ -80,14 +80,14 @@ class CrossCorrelograms(figpack.ExtensionView):
         view = CrossCorrelograms(cross_correlograms=cc_items, hide_unit_selector=False)
         return view
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the CrossCorrelograms data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Set view properties
         if self.hide_unit_selector is not None:

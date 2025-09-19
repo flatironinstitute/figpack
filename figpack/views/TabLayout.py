@@ -32,7 +32,7 @@ class TabLayout(FigpackView):
             max(0, min(initial_tab_index, len(items) - 1)) if items else 0
         )
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the TabLayout data to a Zarr group
 
@@ -61,7 +61,7 @@ class TabLayout(FigpackView):
             item_group = group.create_group(item_name)
 
             # Recursively write the child view to the subgroup
-            item.view._write_to_zarr_group(item_group)
+            item.view.write_to_zarr_group(item_group)
 
         # Store the items metadata
         group.attrs["items"] = items_metadata

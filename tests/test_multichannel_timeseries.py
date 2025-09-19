@@ -175,7 +175,7 @@ def test_zarr_storage(tmp_path):
     group = figpack.Group(root.create_group("test"))
 
     # Write data
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Verify metadata
     assert group.attrs["view_type"] == "MultiChannelTimeseries"
@@ -210,7 +210,7 @@ def test_zarr_chunking(tmp_path):
     group = figpack.Group(root.create_group("test"))
 
     # Write data
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check original data chunking
     assert group["data"].chunks[1] == 4  # Channel dimension

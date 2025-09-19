@@ -44,14 +44,14 @@ class UnitsTable(figpack.ExtensionView):
         self.similarity_scores = similarity_scores or []
         self.height = height
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the UnitsTable data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Set view properties
         if self.height is not None:

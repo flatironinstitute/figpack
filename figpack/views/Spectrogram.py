@@ -186,7 +186,7 @@ class Spectrogram(FigpackView):
 
         return (chunk_timepoints, n_frequencies)
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the spectrogram data to a Zarr group
 
