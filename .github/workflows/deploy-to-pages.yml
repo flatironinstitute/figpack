@@ -63,7 +63,7 @@ jobs:
           npm install
           npm run build
           pip install -e .
-          cd ../figpack_jfm
+          cd ../figpack_experimental
           npm install
           npm run build
           pip install -e .

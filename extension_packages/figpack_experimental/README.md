@@ -1,4 +1,4 @@
-# figpack_jfm
+# figpack_experimental
 
 Miscellaneous experimental visualizations
 

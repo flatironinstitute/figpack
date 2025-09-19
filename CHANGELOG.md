@@ -3,7 +3,8 @@
 ## [Unreleased]
 
 - Support custom Zarr codecs defined in figpack extensions
-- Move mp4 decoder to figpack_jfm extension
+- Move mp4 decoder to figpack_experimental extension
+- Rename jfm -> experimental in figpack_experimental extension
 
 ## [0.2.21] - 2025-09-17
 
@@ -11,7 +12,7 @@
 - Move main plugin to figpack-figure main package (no longer a separate package)
 - Code cleanup
 - MP4 codec for Zarr
-- Lossy video view in figpack_jfm extension
+- Lossy video view in figpack_experimental extension
 
 ## [0.2.20] - 2025-09-16
 
@@ -27,7 +28,7 @@
 - Removed extension registry (no longer needed)
 - Added support for editing figures - annotations, curations, etc
 - Created SortingCuration view
-- Created figpack_jfm extension for experimental views (editable notes view)
+- Created figpack_experimental extension for experimental views (editable notes view)
 - Created figpack_nwb extension for viewing NWB items - starting with PlaneSegmentation
 - Cachebust for cases where we know data may change (e.g., annotations)
 - Build wheels for figpack extensions and host them on github pages, with extensions cli for managing installs

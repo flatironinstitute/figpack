@@ -1,7 +1,7 @@
 import numpy as np
 
 import figpack
-from .jfm_extension import jfm_extension
+from .experimental_extension import experimental_extension
 
 
 class FmriBold(figpack.ExtensionView):
@@ -11,7 +11,9 @@ class FmriBold(figpack.ExtensionView):
         """
         Initialize an fMRI BOLD view
         """
-        super().__init__(extension=jfm_extension, view_type="jfm.FmriBold")
+        super().__init__(
+            extension=experimental_extension, view_type="experimental.FmriBold"
+        )
         self.resolution = resolution
         self.temporal_resolution = temporal_resolution
 

@@ -10,6 +10,7 @@ class PlaneSegmentation(figpack.ExtensionView):
         *,
         nwb: str,
         path: str,
+        use_local_cache: bool = False,
     ):
         """
         Initialize a PlaneSegmentation view
@@ -22,6 +23,7 @@ class PlaneSegmentation(figpack.ExtensionView):
 
         self.nwb = nwb
         self.path = path
+        self.use_local_cache = use_local_cache
 
     def _write_to_zarr_group(self, group: figpack.Group) -> None:
         """
@@ -34,7 +36,14 @@ class PlaneSegmentation(figpack.ExtensionView):
 
         import lindi
 
-        f = lindi.LindiH5pyFile.from_hdf5_file(self.nwb)
+        if self.use_local_cache:
+            import tempfile
+
+            tmp = tempfile.gettempdir()
+            local_cache = lindi.LocalCache(cache_dir=tmp + "/figpack_lindi_cache")
+        else:
+            local_cache = None
+        f = lindi.LindiH5pyFile.from_hdf5_file(self.nwb, local_cache=local_cache)
         obj = f[self.path]
 
         neurodata_type = obj.attrs["neurodata_type"]

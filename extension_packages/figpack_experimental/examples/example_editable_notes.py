@@ -1,4 +1,4 @@
-import figpack_jfm.views as fpj
+import figpack_experimental.views as fpj
 
 
 def main():
