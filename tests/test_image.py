@@ -34,7 +34,7 @@ def test_image_zarr_write_with_bytes():
     store = zarr.storage.MemoryStore()
     group = figpack.Group(zarr.group(store=store))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Image"
     assert "image_data" in group
@@ -54,7 +54,7 @@ def test_image_zarr_write_with_missing_file():
     store = zarr.storage.MemoryStore()
     group = figpack.Group(zarr.group(store=store))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     assert group.attrs["view_type"] == "Image"
     assert "error" in group.attrs

@@ -30,7 +30,7 @@ def test_write_to_zarr_basic(sample_figure):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check basic attributes
     assert group.attrs["view_type"] == "MatplotlibFigure"
@@ -69,7 +69,7 @@ def test_write_to_zarr_error_handling():
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check error handling
     assert len(group["svg_data"][:]) == 0
@@ -91,7 +91,7 @@ def test_write_to_zarr_custom_size(sample_figure):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Verify custom dimensions were stored correctly
     assert group.attrs["figure_width_inches"] == 10.0
@@ -112,7 +112,7 @@ def test_write_to_zarr_svg_options(sample_figure):
         root = zarr.group(store=store)
         group = figpack.Group(root.create_group("test"))
 
-        view._write_to_zarr_group(group)
+        view.write_to_zarr_group(group)
 
         # Verify savefig was called with correct options
         mock_savefig.assert_called_once()
@@ -130,4 +130,4 @@ def test_write_to_zarr_compression(sample_figure):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)

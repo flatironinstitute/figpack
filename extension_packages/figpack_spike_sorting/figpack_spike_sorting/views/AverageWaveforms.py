@@ -100,14 +100,14 @@ class AverageWaveforms(figpack.ExtensionView):
         view = AverageWaveforms(average_waveforms=average_waveform_items)
         return view
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the AverageWaveforms data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Store the number of average waveforms
         group.attrs["num_average_waveforms"] = len(self.average_waveforms)

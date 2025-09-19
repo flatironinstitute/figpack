@@ -26,14 +26,14 @@ class PlotlyFigure(figpack.ExtensionView):
 
         self.fig = fig
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the plotly figure data to a Zarr group
 
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Convert the plotly figure to a dictionary
         fig_dict = self.fig.to_dict()

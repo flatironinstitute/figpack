@@ -78,7 +78,7 @@ def test_write_to_zarr_basic(sample_dataframe):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check basic attributes
     assert group.attrs["view_type"] == "DataFrame"
@@ -115,7 +115,7 @@ def test_write_to_zarr_empty_dataframe(empty_dataframe):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check basic attributes
     assert group.attrs["view_type"] == "DataFrame"
@@ -138,7 +138,7 @@ def test_write_to_zarr_mixed_types(mixed_types_dataframe):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check basic attributes
     assert group.attrs["view_type"] == "DataFrame"
@@ -177,7 +177,7 @@ def test_column_info_structure(sample_dataframe):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     import json
 
@@ -200,7 +200,7 @@ def test_csv_roundtrip(sample_dataframe):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Extract CSV data
     csv_data_array = group["csv_data"]
@@ -220,7 +220,7 @@ def test_csv_roundtrip(sample_dataframe):
 
 
 def test_error_handling():
-    """Test error handling in _write_to_zarr_group"""
+    """Test error handling in write_to_zarr_group"""
     # Create a mock DataFrame that will raise an exception
     mock_df = MagicMock()
     mock_df.to_csv.side_effect = Exception("CSV conversion failed")
@@ -234,7 +234,7 @@ def test_error_handling():
     group = figpack.Group(root.create_group("test"))
 
     # Should not raise exception, but should store error info
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check error attributes
     assert "error" in group.attrs
@@ -267,7 +267,7 @@ def test_dtype_mapping():
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     import json
 
@@ -302,7 +302,7 @@ def test_large_dataframe():
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    view._write_to_zarr_group(group)
+    view.write_to_zarr_group(group)
 
     # Check that it completed successfully
     assert group.attrs["view_type"] == "DataFrame"

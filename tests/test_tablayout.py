@@ -68,7 +68,7 @@ def test_write_to_zarr(sample_tab_items):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    layout._write_to_zarr_group(group)
+    layout.write_to_zarr_group(group)
 
     # Check basic attributes
     assert group.attrs["view_type"] == "TabLayout"
@@ -114,7 +114,7 @@ def test_nested_tablayout(sample_tab_items):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    outer_layout._write_to_zarr_group(group)
+    outer_layout.write_to_zarr_group(group)
 
     # Verify nested structure
     assert group.attrs["view_type"] == "TabLayout"
@@ -145,7 +145,7 @@ def test_tablayout_with_different_view_types(sample_tab_items):
     root = zarr.group(store=store)
     group = figpack.Group(root.create_group("test"))
 
-    layout._write_to_zarr_group(group)
+    layout.write_to_zarr_group(group)
 
     # Verify each tab has the correct view type
     assert group["tab_0"].attrs["view_type"] == "Box"

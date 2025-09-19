@@ -217,7 +217,7 @@ class ThreeDView(figpack.ExtensionView):
 
         self.objects.append(obj)
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the 3D scene data to a Zarr group.
 
@@ -225,7 +225,7 @@ class ThreeDView(figpack.ExtensionView):
             group: Zarr group to write data into
         """
         # Call parent method to set extension metadata
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         # Create scene data structure
         scene_data = {"objects": self.objects}

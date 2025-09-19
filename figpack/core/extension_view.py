@@ -23,10 +23,10 @@ class ExtensionView(FigpackView):
         self.extension = extension
         self.view_type = view_type
 
-    def _write_to_zarr_group(self, group: Group) -> None:
+    def write_to_zarr_group(self, group: Group) -> None:
         """
         Write the extension view metadata to a Zarr group.
-        Subclasses should call super()._write_to_zarr_group(group) first,
+        Subclasses should call super().write_to_zarr_group(group) first,
         then add their own data.
 
         Args:
