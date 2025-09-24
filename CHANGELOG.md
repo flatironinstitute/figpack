@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
+## [0.2.22] - 2025-09-24
+
 - Support custom Zarr codecs defined in figpack extensions
 - Move mp4 decoder to figpack_experimental extension
 - Rename jfm -> experimental in figpack_experimental extension
+- Fix ephemeral bug
+- Fix bug where manage figure button was not showing up
 
 ## [0.2.21] - 2025-09-17
 

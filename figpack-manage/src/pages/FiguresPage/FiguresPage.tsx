@@ -45,6 +45,7 @@ import { useBacklinks } from "../../hooks/useBacklinks";
 import type { FigureListItem, FigureListParams } from "./figuresApi";
 import { getFigures } from "./figuresApi";
 import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
+import { useNavigate } from "react-router-dom";
 
 const FiguresPage: React.FC = () => {
   const theme = useTheme();
@@ -202,6 +203,8 @@ const FiguresPage: React.FC = () => {
   ) => {
     setPage(value);
   };
+
+  const navigate = useNavigate();
 
   const handleShowAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowAll(event.target.checked);
@@ -418,7 +421,12 @@ const FiguresPage: React.FC = () => {
                         <TableCell>
                           <Box>
                             <Link
-                              href={figure.figpackManageUrl}
+                              onClick={() => {
+                                const newUrl = `/figure?figure_url=${encodeURIComponent(
+                                  figure.figureUrl
+                                )}`;
+                                navigate(newUrl);
+                              }}
                               sx={{
                                 fontWeight: "medium",
                                 mb: 0.5,
@@ -428,6 +436,7 @@ const FiguresPage: React.FC = () => {
                                 "&:hover": {
                                   textDecoration: "underline",
                                 },
+                                cursor: "pointer",
                               }}
                             >
                               {figure.title || figure.figureUrl}
@@ -576,7 +585,12 @@ const FiguresPage: React.FC = () => {
                             <Tooltip title="Manage Figure">
                               <IconButton
                                 component="a"
-                                href={figure.figpackManageUrl}
+                                onClick={() => {
+                                  const newUrl = `/figure?figure_url=${encodeURIComponent(
+                                    figure.figureUrl
+                                  )}`;
+                                  navigate(newUrl);
+                                }}
                                 size="small"
                                 color="primary"
                               >

@@ -100,11 +100,9 @@ export const StatusBar: React.FC<{
   const aboutButton = <AboutButton title={title} description={description} />;
 
   const manageButton =
-    !embedded && status && figpackManageUrl ? (
+    !embedded && figpackManageUrl ? (
       <ManageButton figpackManageUrl={figpackManageUrl} />
-    ) : (
-      <></>
-    );
+    ) : null;
 
   const curating = figureAnnotations?.editingAnnotations || false;
   const setCurating = useCallback(

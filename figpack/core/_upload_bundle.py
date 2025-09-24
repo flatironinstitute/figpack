@@ -3,9 +3,7 @@ import json
 import pathlib
 import threading
 import time
-import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta, timezone
 
 import requests
 
