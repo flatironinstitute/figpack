@@ -62,11 +62,14 @@ class FigpackView:
         if upload is None:
             upload = os.environ.get("FIGPACK_UPLOAD") == "1"
         else:
-            if upload is True and ephemeral is True:
-                # ephemeral is reserved for the case where we don't specify upload
-                # and we are in a notebook in a remote environment such as
-                # colab or jupyterhub
-                raise ValueError("ephemeral cannot be set if upload is set")
+            if upload is True:
+                if ephemeral is True:
+                    # ephemeral is reserved for the case where we don't specify upload
+                    # and we are in a notebook in a remote environment such as
+                    # colab or jupyterhub
+                    raise ValueError("ephemeral cannot be set if upload is set")
+                else:
+                    ephemeral = False  # if we excplicitly set upload=True, force ephemeral=False
 
         # determine inline
         if inline is None:
