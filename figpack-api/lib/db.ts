@@ -21,7 +21,27 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => {
+    const options = {
+      // Connection pool settings
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
+      
+      // Heartbeat settings
+      heartbeatFrequencyMS: 10000, // Send a ping every 10 seconds
+      
+      // Retry settings
+      retryWrites: true, // Retry failed writes
+      retryReads: true, // Retry failed reads
+      
+      // Additional stability settings
+      maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+      minPoolSize: 2, // Maintain at least 2 connections
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, options).then((mongoose) => {
+      console.log('MongoDB connected successfully');
       return mongoose;
     });
   }
@@ -30,6 +50,7 @@ async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error('MongoDB connection failed:', e);
     throw e;
   }
 

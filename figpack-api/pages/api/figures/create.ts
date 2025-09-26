@@ -3,6 +3,7 @@ import { validateApiKey } from "../../../lib/adminAuth";
 import connectDB, { Figure, IFigure, Bucket } from "../../../lib/db";
 import { updateFigureJson } from "../../../lib/figureJsonManager";
 import { figpackManageUrl, setCorsHeaders } from "../../../lib/config";
+import { withDatabaseResilience } from "../../../lib/retryUtils";
 
 interface CreateFigureRequest {
   figureHash: string;
@@ -71,7 +72,9 @@ export default async function handler(
 
     // Get bucket information (default to "figpack-figures")
     const targetBucketName = bucketName || "figpack-figures";
-    const targetBucket = await Bucket.findOne({ name: targetBucketName });
+    const targetBucket = await withDatabaseResilience(async () => {
+      return await Bucket.findOne({ name: targetBucketName });
+    });
 
     if (!targetBucket) {
       return res.status(400).json({
@@ -139,7 +142,9 @@ export default async function handler(
       }`;
       const channel = ephemeral ? "ephemeral" : "default";
       const candidateFigureUrl = `${targetBucket.bucketBaseUrl}/figures/${channel}/${candidateaFigureString}/index.html`;
-      existingFigure = await Figure.findOne({ figureUrl: candidateFigureUrl });
+      existingFigure = await withDatabaseResilience(async () => {
+        return await Figure.findOne({ figureUrl: candidateFigureUrl });
+      });
       if (!existingFigure) {
         figureUrlToUse = candidateFigureUrl;
         break; // Found a unique figureString
@@ -210,7 +215,9 @@ export default async function handler(
       isEphemeral: ephemeral || false,
     });
 
-    await newFigure.save();
+    await withDatabaseResilience(async () => {
+      return await newFigure.save();
+    });
 
     // Update figpack.json in the figure directory
     try {

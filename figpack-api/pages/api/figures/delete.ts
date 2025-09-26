@@ -12,6 +12,7 @@ interface DeleteFigureRequest {
 interface DeleteFigureResponse {
   success: boolean;
   message?: string;
+  numFilesDeleted?: number;
 }
 
 export default async function handler(
@@ -52,6 +53,9 @@ export default async function handler(
       });
     }
 
+    // Connect to database
+    await connectDB();
+
     // Authenticate API key
     const authResult = await validateApiKey(apiKey);
     if (!authResult.isValid) {
@@ -60,9 +64,6 @@ export default async function handler(
         message: "Invalid API key",
       });
     }
-
-    // Connect to database
-    await connectDB();
 
     // Find the figure
     const figure = await Figure.findOne({ figureUrl });
@@ -103,19 +104,39 @@ export default async function handler(
       }),
     };
 
+    const bucketBaseUrl = dbBucket.bucketBaseUrl;
+    const prefix = `${bucketBaseUrl}/`;
+    if (!figureUrl.startsWith(prefix)) {
+      throw new Error(`Figure URL must start with ${prefix}`);
+    }
     const figureUrlWithoutIndexHtml = figureUrl.endsWith("/index.html")
       ? figureUrl.slice(0, -"/index.html".length)
       : figureUrl;
-    const prefix = `figures/default/${figureUrlWithoutIndexHtml}/`;
+    const keyPrefix =
+      figureUrlWithoutIndexHtml.slice(prefix.length) + "/";
+
+
     let continuationToken: string | undefined;
     const objectsToDelete: string[] = [];
 
     do {
-      const result = await listObjects(s3Bucket, prefix, { continuationToken });
+      const result = await listObjects(s3Bucket, keyPrefix, { continuationToken });
       objectsToDelete.push(...result.objects.map((obj) => obj.Key));
       continuationToken = result.continuationToken;
     } while (continuationToken);
 
+    // let's double check that the strings are withing the figure's directory
+    for (const key of objectsToDelete) {
+      const url0 = `${bucketBaseUrl}/${key}`;
+      if (!url0.startsWith(figureUrlWithoutIndexHtml)) {
+        return res.status(500).json({
+          success: false,
+          message: `Internal error: Attempting to delete key outside of figure directory: ${key}`,
+        });
+      }
+    }
+
+    // Delete the objects
     if (objectsToDelete.length > 0) {
       await deleteObjects(s3Bucket, objectsToDelete);
     }
@@ -125,7 +146,7 @@ export default async function handler(
 
     return res
       .status(200)
-      .json({ success: true, message: "Figure deleted successfully" });
+      .json({ success: true, message: "Figure deleted successfully", numFilesDeleted: objectsToDelete.length });
   } catch (error) {
     console.error("Error deleting figure:", error);
     return res.status(500).json({
