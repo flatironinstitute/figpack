@@ -2,7 +2,7 @@
 
 The `show()` function is the core display function in figpack, used to visualize any figpack view component. It provides flexible options for displaying visualizations either locally or remotely, with intelligent environment detection and configuration.
 
-The function automatically adapts its behavior based on the execution environment. In a Jupyter notebook, it defaults to displaying visualizations inline within notebook cells. In Google Colab or JupyterHub, it automatically switches to upload mode with ephemeral figures to ensure accessibility. When running standalone Python scripts, it opens visualizations in a browser window by default.
+The function automatically adapts its behavior based on the execution environment. In a Jupyter notebook, it defaults to displaying visualizations inline within notebook cells. In Google Colab or JupyterHub (or when FIGPACK_REMOTE_ENV is set to 1), it automatically switches to upload mode with ephemeral figures to ensure accessibility. When running standalone Python scripts, it opens visualizations in a browser window by default.
 
 These behaviors can be customized through both function parameters and environment variables, giving you full control over how your visualizations are displayed while maintaining sensible defaults for common use cases.
 
@@ -71,6 +71,8 @@ The function's behavior can be controlled through environment variables. These p
 - `FIGPACK_OPEN_IN_BROWSER`: Set to "1" to automatically open figures in browser. This should not be set in CI environments or headless servers.
 
 - `FIGPACK_API_KEY`: Required for non-ephemeral figure uploads. This key authenticates your uploads to the figpack servers. Not required for ephemeral figures in cloud environments.
+
+- `FIGPACK_REMOTE_ENV`: Set to "1" to indicate running in a remote/cloud environment (like Colab or JupyterHub). This forces `ephemeral=True` when uploading, when upload is not explicitly set. Set to "0" to indicate a local environment, which forces `ephemeral=False`.
 
 - `FIGPACK_DEV`: Set to "1" to enable development mode. This changes several behaviors to be more suitable for local development, like using fixed ports and disabling uploads.
 
