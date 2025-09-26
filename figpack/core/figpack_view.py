@@ -96,6 +96,7 @@ class FigpackView:
             ephemeral = False  # default to False
             if os.environ.get("FIGPACK_REMOTE_ENV") == "1":
                 ephemeral = True
+                upload = True
             elif os.environ.get("FIGPACK_REMOTE_ENV") == "0":
                 ephemeral = False
             elif _is_in_notebook():
