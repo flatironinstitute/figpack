@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.24] - 2025-09-24
+
+- Support FIGPACK_REMOTE_ENV environment variable to indicate remote/cloud environment (Colab/JupyterHub) or local environment for purposes of determining ephemeral behavior
+
 ## [0.2.23] - 2025-09-24
 
 - Hardening of api for create/upload/finalize figure (retries, etc)

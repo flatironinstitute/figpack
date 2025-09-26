@@ -60,16 +60,23 @@ class FigpackView:
 
         # determine upload
         if upload is None:
-            upload = os.environ.get("FIGPACK_UPLOAD") == "1"
-        else:
-            if upload is True:
-                if ephemeral is True:
-                    # ephemeral is reserved for the case where we don't specify upload
-                    # and we are in a notebook in a remote environment such as
-                    # colab or jupyterhub
-                    raise ValueError("ephemeral cannot be set if upload is set")
-                else:
-                    ephemeral = False  # if we excplicitly set upload=True, force ephemeral=False
+            if os.environ.get("FIGPACK_UPLOAD") == "1":
+                upload = True
+            elif os.environ.get("FIGPACK_UPLOAD") == "0":
+                upload = False
+
+        if upload is True:
+            if ephemeral is True:
+                # ephemeral is reserved for the case where we don't specify upload
+                # and we are in a notebook in a remote environment such as
+                # colab or jupyterhub
+                raise ValueError(
+                    "ephemeral cannot be set to True if upload is set to True"
+                )
+            else:
+                ephemeral = (
+                    False  # if we excplicitly set upload=True, force ephemeral=False
+                )
 
         # determine inline
         if inline is None:
@@ -85,9 +92,13 @@ class FigpackView:
             open_in_browser = os.environ.get("FIGPACK_OPEN_IN_BROWSER") == "1"
 
         # determine ephemeral
-        if ephemeral is None:
+        if ephemeral is None and not upload:
             ephemeral = False  # default to False
-            if _is_in_notebook():
+            if os.environ.get("FIGPACK_REMOTE_ENV") == "1":
+                ephemeral = True
+            elif os.environ.get("FIGPACK_REMOTE_ENV") == "0":
+                ephemeral = False
+            elif _is_in_notebook():
                 if _is_in_colab():
                     # if we are in a notebook and in colab, we should show as uploaded ephemeral
                     print("Detected Google Colab notebook environment.")
