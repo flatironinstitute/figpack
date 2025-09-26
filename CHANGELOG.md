@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.23] - 2025-09-24
+
+- Hardening of api for create/upload/finalize figure (retries, etc)
+- Implement MountainLayout view
+
 ## [0.2.22] - 2025-09-24
 
 - Support custom Zarr codecs defined in figpack extensions

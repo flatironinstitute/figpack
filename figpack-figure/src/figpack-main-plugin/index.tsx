@@ -18,6 +18,7 @@ import { FPGallery } from "./views/FPGallery";
 import { FPImage } from "./views/FPImage";
 import { FPMarkdown } from "./views/FPMarkdown";
 import { FPMatplotlibFigure } from "./views/FPMatplotlibFigure";
+import { FPMountainLayout } from "./views/FPMountainLayout";
 import { FPMultiChannelTimeseries } from "./views/FPMultiChannelTimeseries";
 import { FPSpectrogram } from "./views/FPSpectrogram";
 import { FPSplitter } from "./views/FPSplitter";
@@ -146,6 +147,11 @@ export const registerMainPlugin = (FPView: any) => {
   registerFPViewComponent({
     name: "Gallery",
     render: makeRenderFunction(FPGallery, FPView),
+  });
+
+  registerFPViewComponent({
+    name: "MountainLayout",
+    render: makeRenderFunction(FPMountainLayout, FPView),
   });
 
   registerFPViewComponent({

@@ -277,3 +277,90 @@ v.show(title="fMRI Series", open_in_browser=True)
 ```
 
 <iframe src="./tutorial_fmri_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+
+## MountainLayout
+
+The MountainLayout provides a workspace-style interface with a left panel for view buttons and controls, and a right panel with dual tab workspaces (north and south). This layout is ideal for applications that need to manage multiple views in a workspace environment.
+
+### Basic Usage
+
+Here's a simple example showing how to create a MountainLayout:
+
+```python
+import numpy as np
+import figpack.views as vv
+
+def create_mountain_layout():
+    """Create a mountain layout with multiple views and a control panel"""
+    
+    # Create some sample views
+    ts_graph = vv.TimeseriesGraph(y_label="Signal")
+    t = np.linspace(0, 10, 1000)
+    y = np.sin(2 * np.pi * t)
+    ts_graph.add_line_series(name="sine wave", t=t, y=y, color="blue")
+    
+    # Create an image view
+    image_data = np.random.rand(100, 100, 3)
+    image_uint8 = (image_data * 255).astype(np.uint8)
+    from PIL import Image
+    import io
+    pil_image = Image.fromarray(image_uint8)
+    png_buffer = io.BytesIO()
+    pil_image.save(png_buffer, format='PNG')
+    png_bytes = png_buffer.getvalue()
+    image_view = vv.Image(png_bytes)
+    
+    # Create a control panel
+    control_content = """
+# Control Panel
+
+This control panel appears in the bottom-left area.
+
+- **Feature 1**: Some control option
+- **Feature 2**: Another control option
+- **Feature 3**: Yet another control option
+"""
+    control_view = vv.Markdown(control_content)
+    
+    # Create mountain layout items
+    items = [
+        vv.MountainLayoutItem(label="Sine Wave", view=ts_graph),
+        vv.MountainLayoutItem(label="Random Image", view=image_view),
+        vv.MountainLayoutItem(
+            label="Controls", 
+            view=control_view, 
+            is_control=True, 
+            control_height=200
+        )
+    ]
+    
+    # Create the mountain layout
+    mountain_layout = vv.MountainLayout(items=items)
+    return mountain_layout
+
+# Create and display the layout
+layout = create_mountain_layout()
+layout.show(title="Mountain Layout Example", open_in_browser=True)
+```
+
+<iframe src="./tutorial_mountain_layout_example/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+
+### Key Features
+
+- **Left Panel**: Contains view buttons (top) and control views (bottom)
+- **Right Panel**: Split into north and south tab workspaces
+- **Interactive Tabs**: Click view buttons to open views in the focused workspace
+- **Tab Management**: Views can be closed and reopened, with proper tab switching
+- **Focus Indication**: Visual feedback shows which workspace (north/south) is currently focused
+- **Control Views**: Special views marked with `is_control=True` appear in the bottom-left panel
+
+### MountainLayoutItem Properties
+
+Each item in the mountain layout can have the following properties:
+
+- `label` (required): Display name for the view button
+- `view` (required): The figpack view to contain
+- `is_control` (optional): Whether this is a control view (appears in bottom panel)
+- `control_height` (optional): Height in pixels for control views
+
+The MountainLayout is perfect for creating dashboard-like interfaces where users need to manage multiple views in an organized workspace environment.
