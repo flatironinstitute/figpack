@@ -6,6 +6,8 @@ from .Image import Image
 from .LayoutItem import LayoutItem
 from .Markdown import Markdown
 from .MatplotlibFigure import MatplotlibFigure
+from .MountainLayout import MountainLayout
+from .MountainLayoutItem import MountainLayoutItem
 from .MultiChannelTimeseries import MultiChannelTimeseries
 from .Spectrogram import Spectrogram
 from .Splitter import Splitter
