@@ -8,6 +8,7 @@ import {
   BatchUploadResponse,
   ValidationError,
 } from "../../types";
+import { withDatabaseResilience } from "../../lib/retryUtils";
 
 function isZarrChunk(fileName: string): boolean {
   // Check if filename consists only of numbers and dots
@@ -139,7 +140,9 @@ export default async function handler(
     }
 
     // Find the figure first to check if it's ephemeral
-    const figure = await Figure.findOne({ figureUrl });
+    const figure = await withDatabaseResilience(async () => {
+      return await Figure.findOne({ figureUrl });
+    });
     if (!figure) {
       return res.status(404).json({
         success: false,
@@ -189,7 +192,9 @@ export default async function handler(
     // Determine which bucket to use based on the figure URL
     const bucketName = figure.bucket || "figpack-figures";
 
-    const dbBucket = await DBBucket.findOne({ name: bucketName });
+    const dbBucket = await withDatabaseResilience(async () => {
+      return await DBBucket.findOne({ name: bucketName });
+    });
 
     if (!dbBucket) {
       return res.status(400).json({
@@ -260,7 +265,9 @@ export default async function handler(
     }
 
     // Update figure's uploadUpdated timestamp
-    await Figure.findOneAndUpdate({ figureUrl }, { uploadUpdated: Date.now() });
+    await withDatabaseResilience(async () => {
+      return await Figure.findOneAndUpdate({ figureUrl }, { uploadUpdated: Date.now() });
+    });
 
     return res.status(200).json({
       success: true,

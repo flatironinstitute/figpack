@@ -3,6 +3,7 @@ import { validateApiKey } from "../../../lib/adminAuth";
 import connectDB, { Figure, IFigure } from "../../../lib/db";
 import { updateFigureJson } from "../../../lib/figureJsonManager";
 import { setCorsHeaders } from "../../../lib/config";
+import { withDatabaseResilience } from "../../../lib/retryUtils";
 
 interface FinalizeFigureRequest {
   figureUrl: string;
@@ -51,7 +52,9 @@ export default async function handler(
     }
 
     // Find the figure first to check if it's ephemeral
-    const figure = await Figure.findOne({ figureUrl });
+    const figure = await withDatabaseResilience(async () => {
+      return await Figure.findOne({ figureUrl });
+    });
 
     if (!figure) {
       return res.status(404).json({
@@ -116,11 +119,13 @@ export default async function handler(
     };
 
     // Update the figure
-    const updatedFigure = await Figure.findOneAndUpdate(
-      { figureUrl },
-      updateData,
-      { new: true }
-    );
+    const updatedFigure = await withDatabaseResilience(async () => {
+      return await Figure.findOneAndUpdate(
+        { figureUrl },
+        updateData,
+        { new: true }
+      );
+    });
 
     if (!updatedFigure) {
       return res.status(500).json({

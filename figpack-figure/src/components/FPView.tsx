@@ -75,6 +75,8 @@ export const ComponentWrapper: React.FC<
       // Create the onResize callback registration function
       const onResize = (callback: (width: number, height: number) => void) => {
         resizeCallbackRef.current = callback;
+        // Call it immediately with current size
+        callback(width, height);
       };
 
       // Create the onDataChange callback registration function
@@ -105,8 +107,6 @@ export const ComponentWrapper: React.FC<
       } catch (err) {
         console.warn(`Error in extension resize callback: ${err}`);
       }
-    } else {
-      console.log("no resizeCallbackRef.current");
     }
   }, [width, height]);
 

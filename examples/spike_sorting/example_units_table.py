@@ -50,15 +50,19 @@ def example_units_table(
             )
         )
     dummy_similarity_scores: List[ssv.UnitSimilarityScore] = []
-    for id1 in sorting.get_unit_ids():
-        for id2 in sorting.get_unit_ids():
-            if id2 != id1:
-                if np.random.random() < 0.5:
-                    dummy_similarity_scores.append(
-                        ssv.UnitSimilarityScore(
-                            unit_id1=id1, unit_id2=id2, similarity=np.random.random()
-                        )
+    unit_ids = sorting.get_unit_ids()
+    for i, id1 in enumerate(unit_ids):
+        for j, id2 in enumerate(unit_ids):
+            if j > i:  # Only include pairs where id2 > id1 to avoid duplicates
+                # Use a deterministic formula based on unit IDs
+                similarity = 0.1 + 0.8 * (
+                    1 / (1 + abs(i - j))
+                )  # Will be between 0.1 and 0.9
+                dummy_similarity_scores.append(
+                    ssv.UnitSimilarityScore(
+                        unit_id1=id1, unit_id2=id2, similarity=similarity
                     )
+                )
     view = ssv.UnitsTable(
         columns=columns,
         rows=rows,
