@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.25] - 2025-09-25
+
+- Fix bug where FIGPACK_REMOTE_ENV=1 was not forcing upload=True
+
 ## [0.2.24] - 2025-09-24
 
 - Support FIGPACK_REMOTE_ENV environment variable to indicate remote/cloud environment (Colab/JupyterHub) or local environment for purposes of determining ephemeral behavior
