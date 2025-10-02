@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add example rotator to docs index page
+
 ## [0.2.26] - 2025-10-02
 
 - Box Layout - do not leave room for empty titles

@@ -4,6 +4,8 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 [Star this project on GitHub](https://github.com/flatironinstitute/figpack)
 
+<iframe src="./example_rotator.html" width="100%" height="400" frameborder="0"></iframe>
+
 ## Overview
 
 **figpack** is a Python package for creating interactive scientific visualizations that can be displayed directly in web browsers and easily shared. Unlike traditional plotting libraries, figpack produces **self-contained HTML bundles** that include both the rendering logic and the underlying data. This makes figures portable, reproducible, and suitable for long-term archiving (for example, uploading to Zenodo).
