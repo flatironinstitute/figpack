@@ -135,6 +135,8 @@ class TimeseriesGraph(FigpackView):
         channel_names: Optional[List[str]] = None,
         colors: Optional[List[str]] = None,
         width: float = 1.0,
+        channel_spacing: Optional[float] = None,
+        auto_channel_spacing: Optional[float] = None,
     ) -> None:
         """
         Add a uniform timeseries to the graph with optional multi-channel support
@@ -147,6 +149,8 @@ class TimeseriesGraph(FigpackView):
             channel_names: Optional list of channel names
             colors: Optional list of colors for each channel
             width: Line width
+            channel_spacing: Vertical spacing between channels
+            auto_channel_spacing: sets channel spacing to this multiple of the estimated RMS noise level
         """
         self._series.append(
             TGUniformSeries(
@@ -157,6 +161,8 @@ class TimeseriesGraph(FigpackView):
                 channel_names=channel_names,
                 colors=colors,
                 width=width,
+                channel_spacing=channel_spacing,
+                auto_channel_spacing=auto_channel_spacing,
             )
         )
 
@@ -312,6 +318,8 @@ class TGUniformSeries:
         channel_names: Optional[List[str]] = None,
         colors: Optional[List[str]] = None,
         width: float = 1.0,
+        channel_spacing: Optional[float] = None,
+        auto_channel_spacing: Optional[float] = None,
     ):
         assert sampling_frequency_hz > 0, "Sampling frequency must be positive"
 
@@ -331,6 +339,19 @@ class TGUniformSeries:
         self.start_time_sec = start_time_sec
         self.sampling_frequency_hz = sampling_frequency_hz
         self.data = data.astype(np.float32)  # Ensure float32 for efficiency
+
+        if auto_channel_spacing is not None:
+            if channel_spacing is not None:
+                raise ValueError(
+                    "Specify either channel_spacing or auto_channel_spacing, not both."
+                )
+            # Estimate RMS noise level across all channels using median absolute deviation
+            mad = np.median(np.abs(self.data - np.median(self.data, axis=0)), axis=0)
+            rms_estimate = mad / 0.6745  # Convert MAD to RMS estimate
+            channel_spacing = auto_channel_spacing * np.median(rms_estimate)
+            if channel_spacing <= 0:
+                channel_spacing = 1.0  # Fallback to default spacing if estimate fails
+        self.channel_spacing = channel_spacing
 
         # Set channel names
         if channel_names is None:
@@ -511,6 +532,9 @@ class TGUniformSeries:
         n_timepoints, n_channels = self.data.shape
         group.attrs["n_timepoints"] = n_timepoints
         group.attrs["n_channels"] = n_channels
+
+        if self.channel_spacing is not None:
+            group.attrs["channel_spacing"] = self.channel_spacing
 
         # Store original data with optimal chunking
         original_chunks = self._calculate_optimal_chunk_size(self.data.shape)

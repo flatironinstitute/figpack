@@ -417,6 +417,9 @@ const paintOriginalChannels = (
   for (let channelIndex = 0; channelIndex < series.nChannels; channelIndex++) {
     const color = series.colors[channelIndex] || "blue";
     const dataArray = visibleData.data[channelIndex];
+    const offset = series.channelSpacing
+      ? -channelIndex * series.channelSpacing
+      : 0;
 
     context.strokeStyle = color;
     context.lineWidth = series.width;
@@ -425,7 +428,7 @@ const paintOriginalChannels = (
     context.beginPath();
     for (let i = 0; i < visibleData.length; i++) {
       const time = visibleData.startTimeSec + i / visibleData.samplingFrequency;
-      const value = dataArray[i];
+      const value = dataArray[i] + offset;
       const x = timeToPixel(time);
       const y = valueToPixel(value);
 
@@ -458,6 +461,9 @@ const paintDownsampledChannels = (
   for (let channelIndex = 0; channelIndex < series.nChannels; channelIndex++) {
     const color = series.colors[channelIndex] || "blue";
     const minMaxData = visibleData.data[channelIndex];
+    const offset = series.channelSpacing
+      ? -channelIndex * series.channelSpacing
+      : 0;
 
     context.strokeStyle = color;
     context.lineWidth = series.width;
@@ -466,8 +472,8 @@ const paintDownsampledChannels = (
     context.beginPath();
     for (let i = 0; i < visibleData.length; i++) {
       const time = visibleData.startTimeSec + i / visibleData.samplingFrequency;
-      const minValue = minMaxData[i * 2];
-      const maxValue = minMaxData[i * 2 + 1];
+      const minValue = minMaxData[i * 2] + offset;
+      const maxValue = minMaxData[i * 2 + 1] + offset;
       const x = timeToPixel(time);
       const yMin = valueToPixel(minValue);
       const yMax = valueToPixel(maxValue);
@@ -690,6 +696,7 @@ type UniformSeries = {
   nChannels: number;
   downsampleFactors: number[];
   zarrGroup: ZarrGroup;
+  channelSpacing?: number;
 };
 
 const useTimeseriesGraphClient = (zarrGroup: ZarrGroup) => {
@@ -807,6 +814,7 @@ class TimeseriesGraphClient {
           nChannels: attrs["n_channels"] || 0,
           downsampleFactors: attrs["downsample_factors"] || [],
           zarrGroup: seriesGroup,
+          channelSpacing: attrs["channel_spacing"],
         });
       } else {
         console.warn(
@@ -944,9 +952,13 @@ const createDraw = ({
               visibleStartTimeSec,
               visibleEndTimeSec,
             );
-            // Collect y-limits from all channels
-            for (const channelData of uniformData.data) {
-              updateYLimits(Array.from(channelData));
+            // Collect y-limits from all channels including offsets
+            for (let ch = 0; ch < uniformData.data.length; ch++) {
+              const offset = s.channelSpacing ? -ch * s.channelSpacing : 0;
+              const values = Array.from(uniformData.data[ch]).map(
+                (v) => v + offset,
+              );
+              updateYLimits(values);
             }
           } else {
             uniformData = await loadDownsampledData(
@@ -955,9 +967,13 @@ const createDraw = ({
               visibleStartTimeSec,
               visibleEndTimeSec,
             );
-            // Collect y-limits from min/max values of all channels
-            for (const channelMinMaxData of uniformData.data) {
-              updateYLimits(Array.from(channelMinMaxData));
+            // Collect y-limits from min/max values of all channels including offsets
+            for (let ch = 0; ch < uniformData.data.length; ch++) {
+              const offset = s.channelSpacing ? -ch * s.channelSpacing : 0;
+              const values = Array.from(uniformData.data[ch]).map(
+                (v) => v + offset,
+              );
+              updateYLimits(values);
             }
           }
           loadedSeriesData.push({ series: s, data: uniformData });
