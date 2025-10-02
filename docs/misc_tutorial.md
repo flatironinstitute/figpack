@@ -140,6 +140,14 @@ The figpack_3d extension supports cubes, spheres, and cylinders with customizabl
 
 For more advanced usage, please refer to the [extension documentation](https://github.com/flatironinstitute/figpack/tree/main/extension_packages/figpack_3d).
 
+### Mesh View
+
+See the example in [extension_packages/figpack_3d/examples/sphere_mesh_example.py](https://github.com/flatironinstitute/figpack/tree/main/extension_packages/figpack_3d/examples/sphere_mesh_example.py).
+
+Click the various tabs in the following:
+
+<iframe src="https://figures.figpack.org/figures/default/3203970f506d660f861cdd9b364767a49e56c3aa/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+
 ## figpack_experimental
 
 Some other miscellaneous views are provided in the figpack_experimental extension, including editable notes and lossy video display.
