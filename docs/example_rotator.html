@@ -79,6 +79,7 @@
         let isPlaying = true;
         let currentIndex = 0;
         let urls = [];
+        let viewCount = 0;
         
         // Shuffle array using Fisher-Yates algorithm
         function shuffleArray(array) {
@@ -127,6 +128,12 @@
         function nextUrl() {
             currentIndex = (currentIndex + 1) % urls.length;
             loadCurrentUrl();
+            viewCount++;
+            
+            if (viewCount >= 5 && isPlaying) {
+                pauseRotation();
+                viewCount = 0; // Reset counter for next play session
+            }
         }
         
         // Function to go to previous URL
@@ -154,6 +161,7 @@
         function startRotation() {
             if (!isPlaying) {
                 isPlaying = true;
+                viewCount = 0; // Reset view counter when starting
                 nextUrl();
                 intervalId = setInterval(nextUrl, 5000);
                 playBtn.classList.add('hidden');
