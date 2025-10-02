@@ -2,7 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.27] - 2025-10-02
+
 - Add example rotator to docs index page
+- Add channel_spacing and auto_channel_spacing to TimeseriesGraph uniform data
 
 ## [0.2.26] - 2025-10-02
 
