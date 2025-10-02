@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "figpack"
-version = "0.2.25"
+version = "0.2.26"
 description = "A Python package for creating shareable, interactive visualizations in the browser"
 readme = "README.md"
 requires-python = ">=3.8"

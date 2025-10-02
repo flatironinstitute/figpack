@@ -242,7 +242,20 @@ function calculateLayout(
     return results;
   }
 
-  const titleHeight = showTitles ? TITLE_BAR_HEIGHT : 0;
+  const titleHeights: number[] = [];
+  for (const item of items) {
+    if (collapsedItems.has(item.name)) {
+      titleHeights.push(TITLE_BAR_HEIGHT);
+    } else if (showTitles) {
+      if (item.title) {
+        titleHeights.push(TITLE_BAR_HEIGHT);
+      } else {
+        titleHeights.push(0);
+      }
+    } else {
+      titleHeights.push(0);
+    }
+  }
 
   // Calculate available space
   if (direction === "horizontal") {
@@ -260,18 +273,17 @@ function calculateLayout(
         x: currentX,
         y: 0,
         width,
-        height: isCollapsed ? titleHeight : containerHeight,
-        titleHeight,
+        height: isCollapsed ? titleHeights[i] : containerHeight,
+        titleHeight: titleHeights[i],
       });
 
       currentX += width + MARGIN;
     }
   } else {
     // Calculate heights for vertical layout
+    const totalTitleHeight = titleHeights.reduce((a, b) => a + b, 0);
     const availableHeight =
-      containerHeight -
-      (items.length - 1) * MARGIN -
-      items.length * titleHeight;
+      containerHeight - (items.length - 1) * MARGIN - totalTitleHeight;
     const heights = calculateSizes(availableHeight, items, collapsedItems);
 
     let currentY = 0;
@@ -284,12 +296,12 @@ function calculateLayout(
         x: 0,
         y: currentY,
         width,
-        height: isCollapsed ? titleHeight : titleHeight + heights[i],
-        titleHeight,
+        height: isCollapsed ? titleHeights[i] : titleHeights[i] + heights[i],
+        titleHeight: titleHeights[i],
       });
 
       currentY +=
-        (isCollapsed ? titleHeight : titleHeight + heights[i]) + MARGIN;
+        (isCollapsed ? titleHeights[i] : titleHeights[i] + heights[i]) + MARGIN;
     }
   }
 

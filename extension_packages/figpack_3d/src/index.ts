@@ -5,6 +5,7 @@
 
 import * as THREE from "three";
 import { FPViewComponent, RenderParams } from "./figpack-interface";
+import { renderMeshView } from "./MeshView";
 
 // Declare global types for figpack extension system
 declare global {
@@ -350,9 +351,15 @@ const renderError = (
 const registerExtension = () => {
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
     .figpack_p1.registerFPViewComponent;
+  
   registerFPViewComponent({
     name: "3d.ThreeDView",
     render: renderThreeDView,
+  });
+  
+  registerFPViewComponent({
+    name: "3d.MeshView",
+    render: renderMeshView,
   });
 
   // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
