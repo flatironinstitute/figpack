@@ -19,6 +19,8 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	@if [ "$@" = "html" ]; then \
+		echo "Generating example rotator..."; \
+		python devel/generate_example_rotator.py; \
 		echo "Generating basic views tutorial examples..."; \
 		python devel/generate_basic_views_tutorial_examples.py; \
 		echo "Generating spike sorting tutorial examples..."; \
@@ -27,6 +29,8 @@ help:
 		python devel/generate_misc_tutorial_examples.py; \
 		echo "Generating NWB tutorial examples..."; \
 		python devel/generate_nwb_tutorial_examples.py; \
+		echo "Copying example_rotator.* to build directory..."; \
+		cp example_rotator.* "$(BUILDDIR)/html/"; \
 	fi
 
 # Custom targets for development

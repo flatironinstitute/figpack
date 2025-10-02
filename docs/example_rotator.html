@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial Examples Rotator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #rotatingIframe {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            display: block;
+        }
+        
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 5px;
+            z-index: 1000;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .control-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .control-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="prevBtn" class="control-btn">Prev</button>
+        <button id="playBtn" class="control-btn hidden">Play</button>
+        <button id="pauseBtn" class="control-btn">Pause</button>
+        <button id="nextBtn" class="control-btn">Next</button>
+    </div>
+    
+    <iframe id="rotatingIframe"></iframe>
+    
+    <script>
+        const iframe = document.getElementById('rotatingIframe');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        let intervalId = null;
+        let isPlaying = true;
+        let currentIndex = 0;
+        let urls = [];
+        
+        // Shuffle array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+        
+        // Load URLs from text file
+        async function loadUrls() {
+            try {
+                const response = await fetch('./example_rotator.txt');
+                const text = await response.text();
+                const originalUrls = text.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+                
+                // Create randomized circular ordering
+                urls = shuffleArray(originalUrls);
+                
+                // Start the rotator once URLs are loaded
+                initializeRotator();
+            } catch (error) {
+                console.error('Failed to load URLs:', error);
+            }
+        }
+        
+        // Initialize rotator after URLs are loaded
+        function initializeRotator() {
+            // Load first iframe immediately
+            loadCurrentUrl();
+            
+            // Start rotating every 5 seconds
+            intervalId = setInterval(nextUrl, 5000);
+        }
+        
+        // Function to update iframe source
+        function loadCurrentUrl() {
+            iframe.src = urls[currentIndex];
+        }
+        
+        // Function to go to next URL
+        function nextUrl() {
+            currentIndex = (currentIndex + 1) % urls.length;
+            loadCurrentUrl();
+        }
+        
+        // Function to go to previous URL
+        function prevUrl() {
+            currentIndex = (currentIndex - 1 + urls.length) % urls.length;
+            loadCurrentUrl();
+        }
+        
+        // Manual navigation functions that pause if playing
+        function manualNext() {
+            if (isPlaying) {
+                pauseRotation();
+            }
+            nextUrl();
+        }
+        
+        function manualPrev() {
+            if (isPlaying) {
+                pauseRotation();
+            }
+            prevUrl();
+        }
+        
+        // Function to start rotation
+        function startRotation() {
+            if (!isPlaying) {
+                isPlaying = true;
+                nextUrl();
+                intervalId = setInterval(nextUrl, 5000);
+                playBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+            }
+        }
+        
+        // Function to pause rotation
+        function pauseRotation() {
+            if (isPlaying) {
+                isPlaying = false;
+                clearInterval(intervalId);
+                intervalId = null;
+                playBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+            }
+        }
+        
+        // Event listeners
+        playBtn.addEventListener('click', startRotation);
+        pauseBtn.addEventListener('click', pauseRotation);
+        prevBtn.addEventListener('click', manualPrev);
+        nextBtn.addEventListener('click', manualNext);
+        
+        // Load URLs and start the rotator
+        loadUrls();
+    </script>
+</body>
+</html>
