@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.26] - 2025-10-02
+
+- Box Layout - do not leave room for empty titles
+- figpack_3d - mesh view with sphere example
+
 ## [0.2.25] - 2025-09-25
 
 - Fix bug where FIGPACK_REMOTE_ENV=1 was not forcing upload=True
