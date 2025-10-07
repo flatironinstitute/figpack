@@ -137,6 +137,7 @@ class TimeseriesGraph(FigpackView):
         width: float = 1.0,
         channel_spacing: Optional[float] = None,
         auto_channel_spacing: Optional[float] = None,
+        timestamps_for_inserting_nans: Optional[np.ndarray] = None,
     ) -> None:
         """
         Add a uniform timeseries to the graph with optional multi-channel support
@@ -151,6 +152,7 @@ class TimeseriesGraph(FigpackView):
             width: Line width
             channel_spacing: Vertical spacing between channels
             auto_channel_spacing: sets channel spacing to this multiple of the estimated RMS noise level
+            timestamps_for_inserting_nans: Optional array of timestamps used to determine where to insert NaNs in the data
         """
         self._series.append(
             TGUniformSeries(
@@ -163,6 +165,7 @@ class TimeseriesGraph(FigpackView):
                 width=width,
                 channel_spacing=channel_spacing,
                 auto_channel_spacing=auto_channel_spacing,
+                timestamps_for_inserting_nans=timestamps_for_inserting_nans,
             )
         )
 
@@ -320,6 +323,7 @@ class TGUniformSeries:
         width: float = 1.0,
         channel_spacing: Optional[float] = None,
         auto_channel_spacing: Optional[float] = None,
+        timestamps_for_inserting_nans: Optional[np.ndarray] = None,
     ):
         assert sampling_frequency_hz > 0, "Sampling frequency must be positive"
 
@@ -340,16 +344,27 @@ class TGUniformSeries:
         self.sampling_frequency_hz = sampling_frequency_hz
         self.data = data.astype(np.float32)  # Ensure float32 for efficiency
 
+        if timestamps_for_inserting_nans is not None:
+            self.data = insert_nans_based_on_timestamps(
+                self.data,
+                start_time_sec=start_time_sec,
+                sampling_frequency_hz=sampling_frequency_hz,
+                timestamps=timestamps_for_inserting_nans,
+            )
+
         if auto_channel_spacing is not None:
             if channel_spacing is not None:
                 raise ValueError(
                     "Specify either channel_spacing or auto_channel_spacing, not both."
                 )
             # Estimate RMS noise level across all channels using median absolute deviation
-            mad = np.median(np.abs(self.data - np.median(self.data, axis=0)), axis=0)
+            # Use nanmedian to handle NaN values properly
+            mad = np.nanmedian(
+                np.abs(self.data - np.nanmedian(self.data, axis=0)), axis=0
+            )
             rms_estimate = mad / 0.6745  # Convert MAD to RMS estimate
-            channel_spacing = auto_channel_spacing * np.median(rms_estimate)
-            if channel_spacing <= 0:
+            channel_spacing = auto_channel_spacing * np.nanmedian(rms_estimate)
+            if channel_spacing <= 0 or np.isnan(channel_spacing):
                 channel_spacing = 1.0  # Fallback to default spacing if estimate fails
         self.channel_spacing = channel_spacing
 
@@ -559,3 +574,25 @@ class TGUniformSeries:
                 data=downsampled_array,
                 chunks=ds_chunks,
             )
+
+
+def insert_nans_based_on_timestamps(
+    x: np.ndarray,
+    *,
+    start_time_sec: float,
+    sampling_frequency_hz: float,
+    timestamps: np.ndarray,
+):
+    end_timestamps = timestamps[-1]
+    ret_length = int((end_timestamps - start_time_sec) * sampling_frequency_hz) + 1
+
+    # Handle both 1D and 2D (multi-channel) data
+    if x.ndim == 1:
+        ret = np.nan * np.ones((ret_length,), dtype=x.dtype)
+    else:  # x.ndim == 2
+        n_channels = x.shape[1]
+        ret = np.nan * np.ones((ret_length, n_channels), dtype=x.dtype)
+
+    indices = ((timestamps - start_time_sec) * sampling_frequency_hz).astype(int)
+    ret[indices] = x
+    return ret
