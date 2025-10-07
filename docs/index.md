@@ -20,7 +20,11 @@ Although primarily motivated by applications in **neurophysiology** (e.g., spike
 
 ```{raw} html
 <div class="assistant-container">
-  <iframe class="assistant-iframe"></iframe>
+  <iframe
+    class="assistant-iframe"
+    src="https://figpack-assistant.vercel.app/chat"
+    allow="clipboard-read; clipboard-write"
+  ></iframe>
 </div>
 <button class="assistant-toggle">Open Assistant</button>
 <script>
