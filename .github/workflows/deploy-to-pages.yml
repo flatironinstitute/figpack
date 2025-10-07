@@ -75,6 +75,7 @@ jobs:
       - name: Build documentation
         run: |
           cd docs
+          python generate_doc_pages.py
           sphinx-build -b html . _build/html
           python devel/generate_example_rotator.py
           python devel/generate_basic_views_tutorial_examples.py
