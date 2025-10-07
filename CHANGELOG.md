@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.28] - 2025-10-07
+
+- Implement timestamps_for_inserting_nans parameter for uniform data in TimeseriesGraph view
+
 ## [0.2.27] - 2025-10-02
 
 - Add example rotator to docs index page
