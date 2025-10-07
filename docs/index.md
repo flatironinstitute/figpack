@@ -35,7 +35,7 @@ Although primarily motivated by applications in **neurophysiology** (e.g., spike
 
       // Load iframe content only when first opened
       if (isShowing && !iframeLoaded) {
-        iframe.src = 'https://magland.github.io/figpack-assistant/chat';
+        iframe.src = 'https://figpack-assistant.vercel.app/chat';
         iframeLoaded = true;
       }
     });
