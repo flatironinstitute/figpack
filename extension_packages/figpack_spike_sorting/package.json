@@ -1,6 +1,6 @@
 {
   "name": "figpack_spike_sorting",
-  "version": "1.0.0",
+  "version": "0.1.5",
   "description": "A figpack extension package for Spike Sorting visualizations",
   "type": "module",
   "scripts": {

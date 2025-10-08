@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.29] - 2025-10-08
+
 - Figpack Slides extension package!
 - Enhanced markdown
 - Iframe view
