@@ -15,6 +15,7 @@ import {
 import { FPBox } from "./views/FPBox";
 import { FPDataFrame } from "./views/FPDataFrame";
 import { FPGallery } from "./views/FPGallery";
+import { FPIframe } from "./views/FPIframe";
 import { FPImage } from "./views/FPImage";
 import { FPMarkdown } from "./views/FPMarkdown";
 import { FPMatplotlibFigure } from "./views/FPMatplotlibFigure";
@@ -168,6 +169,11 @@ export const registerMainPlugin = () => {
   registerFPViewComponent({
     name: "Image",
     render: makeRenderFunction(FPImage, renderFPView),
+  });
+
+  registerFPViewComponent({
+    name: "Iframe",
+    render: makeRenderFunction(FPIframe, renderFPView),
   });
 
   registerFPViewComponent({

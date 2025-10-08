@@ -15,6 +15,25 @@ type Props = {
   contexts: FPViewContexts;
 };
 
+// Helper functions for URL query parameter
+const getSlideFromUrl = (): number | null => {
+  const params = new URLSearchParams(window.location.search);
+  const slideParam = params.get("slide");
+  if (slideParam) {
+    const slideNum = parseInt(slideParam, 10);
+    if (!isNaN(slideNum) && slideNum > 0) {
+      return slideNum - 1; // Convert to 0-based index
+    }
+  }
+  return null;
+};
+
+const updateUrlSlide = (slideIndex: number) => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("slide", String(slideIndex + 1)); // Convert to 1-based for URL
+  window.history.replaceState({}, "", url.toString());
+};
+
 const FPSlides: React.FC<Props> = ({
   zarrGroup,
   width,
@@ -23,10 +42,30 @@ const FPSlides: React.FC<Props> = ({
   renderFPView,
 }) => {
   const slideGroups = useSlideGroups(zarrGroup);
-  const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
+
+  // Initialize from URL or default to 0
+  const [currentSlideIndex, setCurrentSlideIndex] = React.useState(() => {
+    const urlSlide = getSlideFromUrl();
+    return urlSlide !== null ? urlSlide : 0;
+  });
+
   const slideZarrGroup = slideGroups[currentSlideIndex] || null;
 
   const totalSlides = slideGroups.length;
+
+  // Validate and adjust slide index when slideGroups change
+  React.useEffect(() => {
+    if (totalSlides > 0 && currentSlideIndex >= totalSlides) {
+      setCurrentSlideIndex(totalSlides - 1);
+    }
+  }, [totalSlides, currentSlideIndex]);
+
+  // Update URL when slide index changes
+  React.useEffect(() => {
+    if (totalSlides > 0) {
+      updateUrlSlide(currentSlideIndex);
+    }
+  }, [currentSlideIndex, totalSlides]);
 
   // Navigation functions
   const goToNextSlide = React.useCallback(() => {
