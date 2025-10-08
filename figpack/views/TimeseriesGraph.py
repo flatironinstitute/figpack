@@ -71,6 +71,13 @@ class TimeseriesGraph(FigpackView):
             width: Line width
             dash: Dash pattern as [dash_length, gap_length]
         """
+        if isinstance(t, list):
+            t = np.array(t)
+        if isinstance(y, list):
+            y = np.array(y)
+        assert t.ndim == 1, "Time array must be 1-dimensional"
+        assert y.ndim == 1, "Y array must be 1-dimensional"
+        assert len(t) == len(y), "Time and Y arrays must have the same length"
         self._series.append(
             TGLineSeries(name=name, t=t, y=y, color=color, width=width, dash=dash)
         )
@@ -96,6 +103,13 @@ class TimeseriesGraph(FigpackView):
             radius: Marker radius
             shape: Marker shape ("circle", "square", etc.)
         """
+        if isinstance(t, list):
+            t = np.array(t)
+        if isinstance(y, list):
+            y = np.array(y)
+        assert t.ndim == 1, "Time array must be 1-dimensional"
+        assert y.ndim == 1, "Y array must be 1-dimensional"
+        assert len(t) == len(y), "Time and Y arrays must have the same length"
         self._series.append(
             TGMarkerSeries(name=name, t=t, y=y, color=color, radius=radius, shape=shape)
         )
@@ -119,6 +133,18 @@ class TimeseriesGraph(FigpackView):
             color: Fill color
             alpha: Transparency (0-1)
         """
+        if isinstance(t_start, list):
+            t_start = np.array(t_start)
+        if isinstance(t_end, list):
+            t_end = np.array(t_end)
+        assert t_start.ndim == 1, "Start time array must be 1-dimensional"
+        assert t_end.ndim == 1, "End time array must be 1-dimensional"
+        assert len(t_start) == len(
+            t_end
+        ), "Start and end time arrays must have the same length"
+        assert np.all(
+            t_start <= t_end
+        ), "Start times must be less than or equal to end times"
         self._series.append(
             TGIntervalSeries(
                 name=name, t_start=t_start, t_end=t_end, color=color, alpha=alpha
@@ -154,6 +180,8 @@ class TimeseriesGraph(FigpackView):
             auto_channel_spacing: sets channel spacing to this multiple of the estimated RMS noise level
             timestamps_for_inserting_nans: Optional array of timestamps used to determine where to insert NaNs in the data
         """
+        if isinstance(data, list):
+            data = np.array(data)
         self._series.append(
             TGUniformSeries(
                 name=name,

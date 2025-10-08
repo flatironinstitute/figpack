@@ -11,6 +11,8 @@ export const FPMarkdown: React.FC<{
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fontSize = zarrGroup.attrs["font_size"] || undefined;
+
   useEffect(() => {
     const loadContent = async () => {
       try {
@@ -77,6 +79,7 @@ export const FPMarkdown: React.FC<{
           justifyContent: "center",
           color: "#666",
           backgroundColor: "#f5f5f5",
+          fontSize,
         }}
       >
         Loading markdown...
@@ -95,6 +98,7 @@ export const FPMarkdown: React.FC<{
         backgroundColor: "#ffffff",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontSize,
       }}
     >
       <ReactMarkdown>{content}</ReactMarkdown>

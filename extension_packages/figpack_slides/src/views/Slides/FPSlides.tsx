@@ -25,7 +25,6 @@ const FPSlides: React.FC<Props> = ({
   const slideGroups = useSlideGroups(zarrGroup);
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
   const slideZarrGroup = slideGroups[currentSlideIndex] || null;
-  console.log("FPSlides: slideGroups =", slideGroups);
 
   const totalSlides = slideGroups.length;
 
@@ -66,6 +65,7 @@ const FPSlides: React.FC<Props> = ({
     <div style={{ width, height, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1 }}>
         <FPSlide
+          key={currentSlideIndex}
           zarrGroup={slideZarrGroup}
           width={width}
           height={slideHeight}
@@ -163,7 +163,6 @@ const useSlideGroups = (zarrGroup: ZarrGroup): ZarrGroup[] => {
       while (true) {
         const slideGroup = await zarrGroup.getGroup(`slide_${i + 1}`);
         if (!slideGroup) break;
-        console.log("Found slide group:", slideGroup);
         groups.push(slideGroup);
         i++;
       }

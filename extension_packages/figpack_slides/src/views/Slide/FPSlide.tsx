@@ -80,10 +80,9 @@ const FPSlide: React.FC<Props> = ({
   return (
     <div
       style={{
+        position: "relative",
         width,
         height,
-        display: "flex",
-        flexDirection: "column",
         overflow: "hidden",
       }}
     >
@@ -91,67 +90,78 @@ const FPSlide: React.FC<Props> = ({
       {header && (
         <div
           style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width,
             height: header.height,
             backgroundColor: header.background_color,
-            flexShrink: 0,
           }}
         />
       )}
 
-      {/* Content Area */}
+      {/* Content Area Background */}
       <div
         style={{
-          flex: 1,
+          position: "absolute",
+          top: headerHeight,
+          left: 0,
+          width,
+          height: contentAreaHeight,
           backgroundColor: backgroundColor || "white",
-          padding: "20px",
-          boxSizing: "border-box",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
         }}
-      >
-        {/* Title */}
-        {title && showTitle && (
-          <div
-            style={{
-              height: `${titleHeight}px`,
-              fontSize: `${titleFontSize}px`,
-              fontFamily: title.font_family || undefined,
-              color: title.color || undefined,
-              marginBottom: "20px",
-            }}
-          >
-            {title.text}
-          </div>
-        )}
+      />
 
-        {/* Content View */}
+      {/* Title */}
+      {title && showTitle && (
         <div
           style={{
-            flex: 1,
-            minHeight: 0,
+            position: "absolute",
+            top: headerHeight + 20,
+            left: 20,
+            width: width - 40,
+            height: titleFontSize,
+            fontSize: `${titleFontSize}px`,
+            fontFamily: title.font_family || undefined,
+            color: title.color || undefined,
+          }}
+        >
+          {title.text}
+        </div>
+      )}
+
+      {/* Content View */}
+      {contentGroup && (
+        <div
+          style={{
+            position: "absolute",
+            top: headerHeight + titleHeight + 20,
+            left: 20,
+            width: width - 40,
+            height: viewWrapperHeight,
             overflow: "hidden",
           }}
         >
-          {contentGroup && (
-            <FPViewWrapper
-              zarrGroup={contentGroup}
-              width={width - contentPadding}
-              height={viewWrapperHeight}
-              contexts={contexts}
-              renderFPView={renderFPView}
-            />
-          )}
+          <FPViewWrapper
+            zarrGroup={contentGroup}
+            width={width - 40}
+            height={viewWrapperHeight}
+            contexts={contexts}
+            renderFPView={renderFPView}
+          />
         </div>
-      </div>
+      )}
 
       {/* Footer */}
       {footer && (
         <div
           style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            width,
             height: footer.height,
             backgroundColor: footer.background_color,
-            flexShrink: 0,
           }}
         />
       )}
