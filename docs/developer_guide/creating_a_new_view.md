@@ -43,8 +43,8 @@ class MyView(figpack.ExtensionView):
         # Store metadata in attributes if needed
         group.attrs["some_metadata"] = "value"
         
-        # Create datasets with appropriate chunking for efficiency
-        group.create_dataset("data", data=self.data, chunks=True)
+        # Create dataset
+        group.create_dataset("data", data=self.data)
 ```
 
 Key points about the Python component:
