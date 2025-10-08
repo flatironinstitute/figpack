@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.30] - 2025-10-08
+
+- Fix bug when using zarr 3, remove "chunks=True" from create_dataset calls
+
 ## [0.2.29] - 2025-10-08
 
 - Figpack Slides extension package!

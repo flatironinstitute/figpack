@@ -42,7 +42,7 @@ class Markdown(FigpackView):
         content_array = np.frombuffer(content_bytes, dtype=np.uint8)
 
         # Store the markdown content as a zarr array
-        group.create_dataset("content_data", data=content_array, chunks=True)
+        group.create_dataset("content_data", data=content_array)
 
         # Store content size in attrs
         group.attrs["data_size"] = len(content_bytes)

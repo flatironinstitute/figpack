@@ -37,7 +37,7 @@ class Iframe(FigpackView):
         url_array = np.frombuffer(url_bytes, dtype=np.uint8)
 
         # Store the URL as a zarr array
-        group.create_dataset("url_data", data=url_array, chunks=True)
+        group.create_dataset("url_data", data=url_array)
 
         # Store URL size in attrs
         group.attrs["data_size"] = len(url_bytes)

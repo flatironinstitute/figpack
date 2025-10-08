@@ -100,9 +100,9 @@ class MeshView(figpack.ExtensionView):
         super().write_to_zarr_group(group)
 
         # Store mesh geometry
-        group.create_dataset("vertices", data=self.vertices, chunks=True)
-        group.create_dataset("faces", data=self.faces, chunks=True)
-        group.create_dataset("scalars", data=self.scalars, chunks=True)
+        group.create_dataset("vertices", data=self.vertices)
+        group.create_dataset("faces", data=self.faces)
+        group.create_dataset("scalars", data=self.scalars)
 
         # Store configuration as attributes
         config = {
