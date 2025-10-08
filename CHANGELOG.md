@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Figpack Slides extension package!
+- Enhanced markdown
+- Iframe view
+
 ## [0.2.28] - 2025-10-07
 
 - Implement timestamps_for_inserting_nans parameter for uniform data in TimeseriesGraph view
