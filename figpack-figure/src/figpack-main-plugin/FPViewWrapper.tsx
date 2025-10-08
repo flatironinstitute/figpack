@@ -1,33 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  FPViewComponentProps,
-  RenderParams,
-  ZarrGroup,
-} from "../figpack-interface";
-import { registeredFPViewComponents } from "../viewComponentRegistry";
+import { FPViewContexts, RenderParams, ZarrGroup } from "./figpack-interface";
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const renderFPView = (params: RenderParams) => {
-  const zarrGroup = params.zarrGroup;
-  const viewType = zarrGroup.attrs["view_type"];
-  const W = registeredFPViewComponents.find((v) => v.name === viewType);
-  if (!W) {
-    if (params.container) {
-      params.container.innerHTML = `<div><h1>Unsupported view type: ${viewType}</h1></div>`;
-    }
-    return;
-  }
-
-  const ret = W.render(params);
-  return ret;
-};
-
-export const FPView2: React.FC<FPViewComponentProps> = ({
-  zarrGroup,
-  width,
-  height,
-  contexts,
-}) => {
+const FPViewWrapper: React.FC<{
+  zarrGroup: ZarrGroup;
+  width: number;
+  height: number;
+  contexts: FPViewContexts;
+  renderFPView: (params: RenderParams) => void;
+}> = ({ zarrGroup, width, height, contexts, renderFPView }) => {
+  console.log("=== FPViewWrapper body", zarrGroup.attrs.view_type);
   const [error, setError] = useState<string | null>(null);
   const resizeCallbackRef = useRef<
     ((width: number, height: number) => void) | null
@@ -37,8 +18,8 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
   );
   const [container, setContainer] = useState<HTMLElement | null>(null);
 
-  // Render the extension when available
   useEffect(() => {
+    console.log("=== FPViewWrapper useEffect 1", zarrGroup.attrs.view_type);
     if (!container) return;
     try {
       // Clear the container
@@ -57,7 +38,7 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
       };
 
       if (!zarrGroup) {
-        setError("FPView: No zarrGroup provided");
+        setError("FPViewFileWrapper: No zarrGroup provided (2)");
         return;
       }
 
@@ -73,7 +54,7 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
       });
     } catch (err) {
       setError(
-        `Error rendering view ${zarrGroup.attrs.view_type} in FPView: ${err}`,
+        `Error rendering view ${zarrGroup.attrs.view_type} in FPViewWrapper: ${err}`,
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,26 +62,28 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
 
   // Handle resize by calling the registered callback
   useEffect(() => {
+    console.log("=== FPViewWrapper useEffect 2");
     if (resizeCallbackRef.current) {
       try {
         resizeCallbackRef.current(width, height);
       } catch (err) {
-        console.warn(`Error in extension resize callback: ${err}`);
+        console.warn(`Error in resize callback: ${err}`);
       }
     }
   }, [width, height]);
 
   // Handle data updates
   useEffect(() => {
+    console.log("=== FPViewWrapper useEffect 3");
     if (dataChangeCallbackRef.current) {
       if (!zarrGroup) {
-        setError("FPView: No zarrGroup provided");
+        setError("FPViewFileWrapper: No zarrGroup provided (1)");
         return;
       }
       try {
         dataChangeCallbackRef.current(zarrGroup);
       } catch (err) {
-        console.warn(`Error in extension data change callback: ${err}`);
+        console.warn(`Error in data change callback: ${err}`);
       }
     } else {
       console.log("no dataChangeCallbackRef.current");
@@ -143,3 +126,5 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
     />
   );
 };
+
+export default FPViewWrapper;

@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState, useCallback, useRef } from "react";
-import { FPViewContexts, ZarrGroup } from "../figpack-interface";
+import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
+import FPViewWrapper from "../FPViewWrapper";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar
 const MIN_PANE_SIZE = 50; // Minimum size for each pane
@@ -10,8 +10,8 @@ export const FPSplitter: React.FC<{
   contexts: FPViewContexts;
   width: number;
   height: number;
-  FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, contexts, width, height, FPView }) => {
+  renderFPView: (params: RenderParams) => void;
+}> = ({ zarrGroup, contexts, width, height, renderFPView }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const initialSplitPos = zarrGroup.attrs["split_pos"] || 0.5;
   const item1Metadata = useMemo(
@@ -186,7 +186,7 @@ export const FPSplitter: React.FC<{
     }
   }, [direction, width, height, splitPos]);
 
-  if (!FPView) {
+  if (!renderFPView) {
     return (
       <div
         style={{
@@ -198,7 +198,7 @@ export const FPSplitter: React.FC<{
           color: "#666",
         }}
       >
-        FPView is not defined in FPSplitter.
+        renderFPView is not defined in FPSplitter.
       </div>
     );
   }
@@ -221,7 +221,7 @@ export const FPSplitter: React.FC<{
           width={pane1Style.width}
           height={pane1Style.height}
           contexts={contexts}
-          FPView={FPView}
+          renderFPView={renderFPView}
         />
       </div>
 
@@ -236,7 +236,7 @@ export const FPSplitter: React.FC<{
           width={pane2Style.width}
           height={pane2Style.height}
           contexts={contexts}
-          FPView={FPView}
+          renderFPView={renderFPView}
         />
       </div>
     </div>
@@ -249,8 +249,8 @@ const SplitterItem: React.FC<{
   width: number;
   height: number;
   contexts: FPViewContexts;
-  FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, itemName, width, height, contexts, FPView }) => {
+  renderFPView: (params: RenderParams) => void;
+}> = ({ zarrGroup, itemName, width, height, contexts, renderFPView }) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
@@ -290,12 +290,12 @@ const SplitterItem: React.FC<{
   }
 
   return (
-    <FPView
+    <FPViewWrapper
       zarrGroup={childGroup}
       width={width}
       height={height}
       contexts={contexts}
-      FPView={FPView}
+      renderFPView={renderFPView}
     />
   );
 };

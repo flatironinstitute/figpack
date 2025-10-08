@@ -25,6 +25,7 @@ import { FPSplitter } from "./views/FPSplitter";
 import { FPTabLayout } from "./views/FPTabLayout";
 import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
 import { createRoot } from "react-dom/client";
+import { renderFPView } from "@components/FPView";
 
 export {
   // eslint-disable-next-line react-refresh/only-export-components
@@ -47,7 +48,7 @@ type ComponentWrapperProps = {
   onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: { [key: string]: FPViewContext };
   component: React.ComponentType<any>;
-  FPView: any;
+  renderFPView: (params: RenderParams) => void;
 };
 
 const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
@@ -58,7 +59,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   onDataChange,
   contexts,
   component: Component,
-  FPView,
+  renderFPView,
 }) => {
   const [internalWidth, setInternalWidth] = useState(width);
   const [internalHeight, setInternalHeight] = useState(height);
@@ -80,14 +81,14 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
       width={internalWidth}
       height={internalHeight}
       contexts={contexts}
-      FPView={FPView}
+      renderFPView={renderFPView}
     />
   );
 };
 
 const makeRenderFunction = (
   Component: React.ComponentType<any>,
-  FPView: any,
+  renderFPView: (params: RenderParams) => void,
 ) => {
   return (a: RenderParams) => {
     const {
@@ -109,74 +110,74 @@ const makeRenderFunction = (
         onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
-        FPView={FPView}
+        renderFPView={renderFPView}
       />,
     );
   };
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const registerMainPlugin = (FPView: any) => {
+export const registerMainPlugin = () => {
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
     .figpack_p1.registerFPViewComponent;
   registerFPViewComponent({
     name: "TimeseriesGraph",
-    render: makeRenderFunction(FPTimeseriesGraph, FPView),
+    render: makeRenderFunction(FPTimeseriesGraph, renderFPView),
   });
 
   registerFPViewComponent({
     name: "MultiChannelTimeseries",
-    render: makeRenderFunction(FPMultiChannelTimeseries, FPView),
+    render: makeRenderFunction(FPMultiChannelTimeseries, renderFPView),
   });
 
   registerFPViewComponent({
     name: "Box",
-    render: makeRenderFunction(FPBox, FPView),
+    render: makeRenderFunction(FPBox, renderFPView),
   });
 
   registerFPViewComponent({
     name: "Splitter",
-    render: makeRenderFunction(FPSplitter, FPView),
+    render: makeRenderFunction(FPSplitter, renderFPView),
   });
 
   registerFPViewComponent({
     name: "TabLayout",
-    render: makeRenderFunction(FPTabLayout, FPView),
+    render: makeRenderFunction(FPTabLayout, renderFPView),
   });
 
   registerFPViewComponent({
     name: "Gallery",
-    render: makeRenderFunction(FPGallery, FPView),
+    render: makeRenderFunction(FPGallery, renderFPView),
   });
 
   registerFPViewComponent({
     name: "MountainLayout",
-    render: makeRenderFunction(FPMountainLayout, FPView),
+    render: makeRenderFunction(FPMountainLayout, renderFPView),
   });
 
   registerFPViewComponent({
     name: "Markdown",
-    render: makeRenderFunction(FPMarkdown, FPView),
+    render: makeRenderFunction(FPMarkdown, renderFPView),
   });
 
   registerFPViewComponent({
     name: "MatplotlibFigure",
-    render: makeRenderFunction(FPMatplotlibFigure, FPView),
+    render: makeRenderFunction(FPMatplotlibFigure, renderFPView),
   });
 
   registerFPViewComponent({
     name: "Image",
-    render: makeRenderFunction(FPImage, FPView),
+    render: makeRenderFunction(FPImage, renderFPView),
   });
 
   registerFPViewComponent({
     name: "DataFrame",
-    render: makeRenderFunction(FPDataFrame, FPView),
+    render: makeRenderFunction(FPDataFrame, renderFPView),
   });
 
   registerFPViewComponent({
     name: "Spectrogram",
-    render: makeRenderFunction(FPSpectrogram, FPView),
+    render: makeRenderFunction(FPSpectrogram, renderFPView),
   });
 
   const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FPView } from "./components/FPView";
+import { FPView2 } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
 import { useExtensionDevUrls } from "./hooks/useExtensionDevUrls";
 import { useFigureInfo } from "./hooks/useFigureInfo";
@@ -115,9 +115,11 @@ function App() {
     />
   );
 
-  const fpView =
+  const fpView2 =
     zarrData === null ? (
       <div>Loading...</div>
+    ) : zarrData === undefined ? (
+      <div>zarrData is undefined</div>
     ) : zarrData === undefined ? (
       <div>Error loading data</div>
     ) : extensionLoadingStatus !== "loaded" ? (
@@ -136,12 +138,11 @@ function App() {
         This figure has expired.
       </div>
     ) : (
-      <FPView
+      <FPView2
         zarrGroup={zarrData}
         width={width}
         height={height - statusBarHeight - uploadFilesPanelHeight}
         contexts={contexts}
-        FPView={FPView}
       />
     );
 
@@ -170,7 +171,7 @@ function App() {
           width: width,
         }}
       >
-        {fpView}
+        {fpView2}
       </div>
       <div
         className="status-bar-container"
