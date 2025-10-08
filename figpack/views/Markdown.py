@@ -2,8 +2,8 @@
 Markdown view for figpack - displays markdown content
 """
 
+from typing import Optional
 import numpy as np
-import zarr
 
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
@@ -14,7 +14,7 @@ class Markdown(FigpackView):
     A markdown content visualization component
     """
 
-    def __init__(self, content: str):
+    def __init__(self, content: str, *, font_size: Optional[int] = None):
         """
         Initialize a Markdown view
 
@@ -22,6 +22,7 @@ class Markdown(FigpackView):
             content: The markdown content to display
         """
         self.content = content
+        self.font_size = font_size
 
     def write_to_zarr_group(self, group: Group) -> None:
         """
@@ -32,6 +33,9 @@ class Markdown(FigpackView):
         """
         # Set the view type
         group.attrs["view_type"] = "Markdown"
+
+        if self.font_size is not None:
+            group.attrs["font_size"] = self.font_size
 
         # Convert string content to numpy array of bytes
         content_bytes = self.content.encode("utf-8")

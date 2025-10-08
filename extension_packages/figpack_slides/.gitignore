@@ -1,4 +1,4 @@
-figpack_experimental/*.js
+figpack_slides/*.js
 
 # Node.js
 node_modules/
