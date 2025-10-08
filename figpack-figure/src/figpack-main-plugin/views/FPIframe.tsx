@@ -1,46 +1,43 @@
 import React, { useEffect, useState } from "react";
 import { ZarrGroup } from "../figpack-interface";
-import MarkdownContent from "./MarkdownContent";
 
-export const FPMarkdown: React.FC<{
+export const FPIframe: React.FC<{
   zarrGroup: ZarrGroup;
   width: number;
   height: number;
 }> = ({ zarrGroup, width, height }) => {
-  const [content, setContent] = useState<string>("");
+  const [url, setUrl] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fontSize = zarrGroup.attrs["font_size"] || undefined;
-
   useEffect(() => {
-    const loadContent = async () => {
+    const loadUrl = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Get the markdown content from the zarr array
-        const data = await zarrGroup.getDatasetData("content_data", {});
+        // Get the URL from the zarr array
+        const data = await zarrGroup.getDatasetData("url_data", {});
         if (!data || data.length === 0) {
-          throw new Error("Empty markdown content");
+          throw new Error("Empty URL data");
         }
 
         // Convert the uint8 array back to string
         const uint8Array = new Uint8Array(data);
         const decoder = new TextDecoder("utf-8");
-        const markdownContent = decoder.decode(uint8Array);
-        setContent(markdownContent);
+        const urlString = decoder.decode(uint8Array);
+        setUrl(urlString);
       } catch (err) {
-        console.error("Failed to load markdown:", err);
+        console.error("Failed to load iframe URL:", err);
         setError(
-          `Failed to load markdown: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to load iframe URL: ${err instanceof Error ? err.message : String(err)}`,
         );
       } finally {
         setLoading(false);
       }
     };
 
-    loadContent();
+    loadUrl();
   }, [zarrGroup]);
 
   if (error) {
@@ -60,7 +57,7 @@ export const FPMarkdown: React.FC<{
       >
         <div>
           <div style={{ marginBottom: "10px", fontWeight: "bold" }}>
-            Markdown Load Error
+            Iframe Load Error
           </div>
           <div style={{ fontSize: "14px" }}>{error}</div>
         </div>
@@ -79,29 +76,23 @@ export const FPMarkdown: React.FC<{
           justifyContent: "center",
           color: "#666",
           backgroundColor: "#f5f5f5",
-          fontSize,
         }}
       >
-        Loading markdown...
+        Loading iframe...
       </div>
     );
   }
 
   return (
-    <div
+    <iframe
+      src={url}
+      width={width}
+      height={height}
       style={{
-        width,
-        height,
-        overflow: "auto",
-        padding: "16px",
-        boxSizing: "border-box",
-        backgroundColor: "#ffffff",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        fontSize,
+        border: "none",
+        display: "block",
       }}
-    >
-      <MarkdownContent content={content} />
-    </div>
+      title="Figpack Iframe"
+    />
   );
 };

@@ -2,6 +2,7 @@ from .Box import Box
 from .DataFrame import DataFrame
 from .Gallery import Gallery
 from .GalleryItem import GalleryItem
+from .Iframe import Iframe
 from .Image import Image
 from .LayoutItem import LayoutItem
 from .Markdown import Markdown
