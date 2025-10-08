@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState, useCallback } from "react";
-import { FPViewContexts, ZarrGroup } from "../figpack-interface";
+import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
+import FPViewWrapper from "../FPViewWrapper";
 
 interface MountainLayoutItemData {
   name: string;
@@ -34,8 +34,8 @@ export const FPMountainLayout: React.FC<{
   width: number;
   height: number;
   contexts: FPViewContexts;
-  FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, width, height, contexts, FPView }) => {
+  renderFPView: (params: RenderParams) => void;
+}> = ({ zarrGroup, width, height, contexts, renderFPView }) => {
   const itemsMetadata: MountainLayoutItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
     [zarrGroup],
@@ -242,7 +242,7 @@ export const FPMountainLayout: React.FC<{
                   width={LEFT_PANEL_WIDTH}
                   height={controlPanelHeight - 32}
                   contexts={contexts}
-                  FPView={FPView}
+                  renderFPView={renderFPView}
                 />
               </div>
             ))}
@@ -275,7 +275,7 @@ export const FPMountainLayout: React.FC<{
             onFocus={() => setWorkspaceFocus("north")}
             zarrGroup={zarrGroup}
             contexts={contexts}
-            FPView={FPView}
+            renderFPView={renderFPView}
           />
         </div>
 
@@ -295,7 +295,7 @@ export const FPMountainLayout: React.FC<{
             onFocus={() => setWorkspaceFocus("south")}
             zarrGroup={zarrGroup}
             contexts={contexts}
-            FPView={FPView}
+            renderFPView={renderFPView}
           />
         </div>
       </div>
@@ -316,7 +316,7 @@ const TabWorkspace: React.FC<{
   onFocus: () => void;
   zarrGroup: ZarrGroup;
   contexts: FPViewContexts;
-  FPView: React.ComponentType<any>;
+  renderFPView: (params: RenderParams) => void;
 }> = ({
   tabs,
   activeTabIndex,
@@ -328,7 +328,7 @@ const TabWorkspace: React.FC<{
   onFocus,
   zarrGroup,
   contexts,
-  FPView,
+  renderFPView,
 }) => {
   const contentHeight = height - TAB_HEIGHT;
   const hasActiveTabs = tabs.length > 0 && activeTabIndex >= 0;
@@ -420,7 +420,7 @@ const TabWorkspace: React.FC<{
             width={width}
             height={contentHeight}
             contexts={contexts}
-            FPView={FPView}
+            renderFPView={renderFPView}
           />
         ) : (
           <div
@@ -451,8 +451,8 @@ const MountainLayoutItemContent: React.FC<{
   width: number;
   height: number;
   contexts: FPViewContexts;
-  FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, itemName, width, height, contexts, FPView }) => {
+  renderFPView: (params: RenderParams) => void;
+}> = ({ zarrGroup, itemName, width, height, contexts, renderFPView }) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
@@ -492,12 +492,12 @@ const MountainLayoutItemContent: React.FC<{
   }
 
   return (
-    <FPView
+    <FPViewWrapper
       zarrGroup={childGroup}
       width={width}
       height={height}
       contexts={contexts}
-      FPView={FPView}
+      renderFPView={renderFPView}
     />
   );
 };

@@ -118,6 +118,7 @@ export type RenderParams = {
   onResize: (callback: (width: number, height: number) => void) => void;
   onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: FPViewContexts;
+  renderFPView: (params: RenderParams) => void;
 };
 
 export type FPViewComponent = {
@@ -135,7 +136,6 @@ export type FPViewComponentProps = {
   width: number; // Available width
   height: number; // Available height
   contexts: FPViewContexts;
-  FPView: any; // For rendering nested views
 };
 
 export type FigureAnnotationsState = {

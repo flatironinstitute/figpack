@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import FPPlaneSegmentation from "./PlaneSegmentation/FPPlaneSegmentation";
+import FPSlide from "./views/Slide/FPSlide";
+import FPSlides from "./views/Slides/FPSlides";
+import FPTitleSlideContent from "./views/TitleSlideContent/FPTitleSlideContent";
 import {
   FPViewComponent,
   FPViewContext,
@@ -20,6 +22,7 @@ type ComponentWrapperProps = {
   onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: { [key: string]: FPViewContext };
   component: React.ComponentType<any>;
+  renderFPView: (params: RenderParams) => void;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -31,6 +34,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   onDataChange,
   contexts,
   component: Component,
+  renderFPView,
 }) => {
   const [internalWidth, setInternalWidth] = useState(width);
   const [internalHeight, setInternalHeight] = useState(height);
@@ -52,6 +56,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
       width={internalWidth}
       height={internalHeight}
       contexts={contexts}
+      renderFPView={renderFPView}
     />
   );
 };
@@ -66,6 +71,7 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
       onResize,
       onDataChange,
       contexts,
+      renderFPView,
     } = a;
     const root = createRoot(container);
     root.render(
@@ -77,24 +83,33 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
         onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
+        renderFPView={renderFPView}
       />,
     );
   };
 };
 
 const registerExtension = () => {
+  // Register view components
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)
     .figpack_p1.registerFPViewComponent;
   registerFPViewComponent({
-    name: "nwb.PlaneSegmentation",
-    render: makeRenderFunction(FPPlaneSegmentation),
+    name: "slides.Slides",
+    render: makeRenderFunction(FPSlides),
+  });
+  registerFPViewComponent({
+    name: "slides.Slide",
+    render: makeRenderFunction(FPSlide),
+  });
+  registerFPViewComponent({
+    name: "slides.TitleSlideContent",
+    render: makeRenderFunction(FPTitleSlideContent),
   });
 
-  // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
-
+  // Register extension
   const registerFPExtension: (e: { name: string }) => void = (window as any)
     .figpack_p1.registerFPExtension;
-  registerFPExtension({ name: "figpack-nwb" });
+  registerFPExtension({ name: "figpack-slides" });
 };
 
 registerExtension();

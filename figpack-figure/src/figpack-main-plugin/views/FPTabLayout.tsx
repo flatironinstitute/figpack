@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { FPViewContexts, ZarrGroup } from "../figpack-interface";
+import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import FPViewWrapper from "../FPViewWrapper";
 
 interface TabLayoutItemData {
   name: string;
@@ -14,14 +14,14 @@ export const FPTabLayout: React.FC<{
   width: number;
   height: number;
   contexts: FPViewContexts;
-  FPView: React.ComponentType<any>;
+  renderFPView: (params: RenderParams) => void;
   eachItemGetsTimeseriesSelectionContext?: boolean;
 }> = ({
   zarrGroup,
   width,
   height,
   contexts,
-  FPView,
+  renderFPView,
   eachItemGetsTimeseriesSelectionContext,
 }) => {
   const initialItemIndex = zarrGroup.attrs["initial_item_index"] || 0;
@@ -47,7 +47,7 @@ export const FPTabLayout: React.FC<{
     );
   }, [validActiveItemIndex, itemsMetadata]);
 
-  if (!FPView) {
+  if (!renderFPView) {
     return (
       <div
         style={{
@@ -146,7 +146,7 @@ export const FPTabLayout: React.FC<{
               width={width}
               height={contentHeight}
               contexts={contexts}
-              FPView={FPView}
+              renderFPView={renderFPView}
               eachItemGetsTimeseriesSelectionContext={
                 eachItemGetsTimeseriesSelectionContext
               }
@@ -166,7 +166,7 @@ const TabLayoutItemContent: React.FC<{
   width: number;
   height: number;
   contexts: FPViewContexts;
-  FPView: React.ComponentType<any>;
+  renderFPView: (params: RenderParams) => void;
   eachItemGetsTimeseriesSelectionContext?: boolean;
 }> = ({
   zarrGroup,
@@ -174,7 +174,7 @@ const TabLayoutItemContent: React.FC<{
   width,
   height,
   contexts,
-  FPView,
+  renderFPView,
   eachItemGetsTimeseriesSelectionContext,
 }) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
@@ -226,7 +226,7 @@ const TabLayoutItemContent: React.FC<{
     );
   }
 
-  if (!FPView) {
+  if (!renderFPView) {
     return (
       <div
         style={{
@@ -238,18 +238,18 @@ const TabLayoutItemContent: React.FC<{
           color: "#666",
         }}
       >
-        FPView is not defined in TabLayoutItemContent.
+        renderFPView is not defined in TabLayoutItemContent.
       </div>
     );
   }
 
   return (
-    <FPView
+    <FPViewWrapper
       zarrGroup={childGroup}
       width={width}
       height={height}
       contexts={contexts2}
-      FPView={FPView}
+      renderFPView={renderFPView}
     />
   );
 };

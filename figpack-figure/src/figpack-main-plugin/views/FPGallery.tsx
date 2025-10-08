@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FPViewContexts, ZarrGroup } from "../figpack-interface";
+import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
 import React from "react";
 import { FPTabLayout } from "./FPTabLayout";
 
@@ -8,15 +8,15 @@ export const FPGallery: React.FC<{
   width: number;
   height: number;
   contexts: FPViewContexts;
-  FPView: React.ComponentType<any>;
-}> = ({ zarrGroup, width, height, contexts, FPView }) => {
+  renderFPView: (params: RenderParams) => void;
+}> = ({ zarrGroup, width, height, contexts, renderFPView }) => {
   return (
     <FPTabLayout
       zarrGroup={zarrGroup}
       width={width}
       height={height}
       contexts={contexts}
-      FPView={FPView}
+      renderFPView={renderFPView}
       eachItemGetsTimeseriesSelectionContext={true}
     />
   );

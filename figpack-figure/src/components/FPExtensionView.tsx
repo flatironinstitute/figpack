@@ -55,6 +55,11 @@ export const FPExtensionView: React.FC<
         resizeCallbackRef.current = callback;
       };
 
+      if (!zarrGroup) {
+        setError("FPExtensionView: No zarrGroup provided");
+        return;
+      }
+
       // Call the extension's render method
       const instance = extension.render({
         container,
@@ -66,7 +71,7 @@ export const FPExtensionView: React.FC<
       });
       viewInstanceRef.current = instance || null;
     } catch (err) {
-      setError(`Error rendering extension: ${err}`);
+      setError(`Error rendering ${extensionName}: ${err}`);
     }
 
     // Cleanup function

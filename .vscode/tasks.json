@@ -9,7 +9,8 @@
         "Build Spike Sorting Extension",
         "Build 3D Extension",
         "Build Experimental Extension",
-        "Build NWB Extension"
+        "Build NWB Extension",
+        "Build Slides Extension"
       ],
       "group": {
         "kind": "build",
@@ -44,6 +45,12 @@
       "label": "Build NWB Extension",
       "type": "shell",
       "command": "cd extension_packages/figpack_nwb && npm run build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Build Slides Extension",
+      "type": "shell",
+      "command": "cd extension_packages/figpack_slides && npm run build",
       "problemMatcher": ["$tsc"]
     }
   ]

@@ -115,6 +115,12 @@ class FigpackView:
         if _dev is None:
             _dev = os.environ.get("FIGPACK_DEV") == "1"
 
+        if port is None and os.environ.get("FIGPACK_PORT"):
+            try:
+                port = int(os.environ.get("FIGPACK_PORT"))
+            except Exception:
+                pass
+
         # determine wait_for_input
         if wait_for_input is None:
             wait_for_input = not _is_in_notebook()
