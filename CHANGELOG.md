@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Table of contents for figpack slides
+- In full screen mode, hide the status bar
+
 ## [0.2.30] - 2025-10-08
 
 - Fix bug when using zarr 3, remove "chunks=True" from create_dataset calls
