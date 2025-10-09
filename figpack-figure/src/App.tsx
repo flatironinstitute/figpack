@@ -29,6 +29,20 @@ function App() {
 
   const figureInfoResult = useFigureInfo();
 
+  // Track fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   // Set document title from zarr data
   useEffect(() => {
     if (zarrData && zarrData.attrs) {
@@ -101,8 +115,8 @@ function App() {
     return 0;
   }, [figureAnnotations, isLocalFigure]);
   const statusBarHeight = useMemo(() => {
-    return 30;
-  }, []);
+    return isFullscreen ? 0 : 30;
+  }, [isFullscreen]);
 
   const uploadFilesPanel = (
     <UploadFilesPanel

@@ -1,11 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { FunctionComponent, useEffect } from "react";
 import {
   FPViewContexts,
   RenderParams,
   ZarrGroup,
 } from "../../figpack-interface";
 import FPSlide from "../Slide/FPSlide";
+import { getSlideFromUrl, updateUrlSlide } from "./urlUtils";
+import {
+  useSlideGroups,
+  useSlideTitles,
+  useKeyboardNavigation,
+  useFullscreen,
+} from "./hooks";
+import { OUTLINE_WIDTH, NAVIGATION_HEIGHT } from "./constants";
+import OutlinePanel from "./OutlinePanel";
+import NavigationBar from "./NavigationBar";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -13,25 +23,6 @@ type Props = {
   height: number;
   renderFPView: (params: RenderParams) => void;
   contexts: FPViewContexts;
-};
-
-// Helper functions for URL query parameter
-const getSlideFromUrl = (): number | null => {
-  const params = new URLSearchParams(window.location.search);
-  const slideParam = params.get("slide");
-  if (slideParam) {
-    const slideNum = parseInt(slideParam, 10);
-    if (!isNaN(slideNum) && slideNum > 0) {
-      return slideNum - 1; // Convert to 0-based index
-    }
-  }
-  return null;
-};
-
-const updateUrlSlide = (slideIndex: number) => {
-  const url = new URL(window.location.href);
-  url.searchParams.set("slide", String(slideIndex + 1)); // Convert to 1-based for URL
-  window.history.replaceState({}, "", url.toString());
 };
 
 const FPSlides: React.FC<Props> = ({
@@ -42,6 +33,7 @@ const FPSlides: React.FC<Props> = ({
   renderFPView,
 }) => {
   const slideGroups = useSlideGroups(zarrGroup);
+  const slideTitles = useSlideTitles(slideGroups);
 
   // Initialize from URL or default to 0
   const [currentSlideIndex, setCurrentSlideIndex] = React.useState(() => {
@@ -49,7 +41,8 @@ const FPSlides: React.FC<Props> = ({
     return urlSlide !== null ? urlSlide : 0;
   });
 
-  const slideZarrGroup = slideGroups[currentSlideIndex] || null;
+  const [isOutlineOpen, setIsOutlineOpen] = React.useState(false);
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   const totalSlides = slideGroups.length;
 
@@ -77,155 +70,139 @@ const FPSlides: React.FC<Props> = ({
   }, []);
 
   // Keyboard navigation
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === "ArrowRight" ||
-        e.key === "PageDown" ||
-        e.key === " " ||
-        e.key === "Enter"
-      ) {
-        e.preventDefault();
-        goToNextSlide();
-      } else if (
-        e.key === "ArrowLeft" ||
-        e.key === "PageUp" ||
-        e.key === "Backspace"
-      ) {
-        e.preventDefault();
-        goToPreviousSlide();
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        setCurrentSlideIndex(0);
-      } else if (e.key === "End") {
-        e.preventDefault();
-        setCurrentSlideIndex(totalSlides - 1);
-      }
-    };
+  useKeyboardNavigation(
+    totalSlides,
+    goToNextSlide,
+    goToPreviousSlide,
+    setCurrentSlideIndex,
+  );
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goToNextSlide, goToPreviousSlide, totalSlides]);
-
-  if (!slideZarrGroup) {
-    return <div>Slide not found</div>;
-  }
-
-  const navigationHeight = 40;
-  const slideHeight = height - navigationHeight;
+  const slideHeight = isFullscreen ? height : height - NAVIGATION_HEIGHT;
   const showNavigation = totalSlides > 1;
+  const effectiveSlideWidth = isOutlineOpen ? width - OUTLINE_WIDTH : width;
+
+  const [slideIndicesThatHaveBeenVisible, setSlideIndicesThatHaveBeenVisible] =
+    React.useState<Set<number>>(emptySet);
+
+  useEffect(() => {
+    if (!slideIndicesThatHaveBeenVisible.has(currentSlideIndex)) {
+      setSlideIndicesThatHaveBeenVisible((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(currentSlideIndex);
+        // also add the next slide (preloading)
+        if (currentSlideIndex + 1 < totalSlides) {
+          newSet.add(currentSlideIndex + 1);
+        }
+        return newSet;
+      });
+    }
+  }, [currentSlideIndex, slideIndicesThatHaveBeenVisible, totalSlides]);
+
+  // Track which slides have been visible
 
   return (
-    <div style={{ width, height, display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: 1 }}>
-        <FPSlide
-          key={currentSlideIndex}
-          zarrGroup={slideZarrGroup}
-          width={width}
-          height={slideHeight}
-          contexts={contexts}
-          renderFPView={renderFPView}
-        />
-      </div>
-      {showNavigation && (
-        <div
-          style={{
-            height: navigationHeight,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "30px",
-            backgroundColor: "transparent",
-          }}
-        >
-          <button
-            onClick={goToPreviousSlide}
-            disabled={currentSlideIndex === 0}
-            style={{
-              padding: "4px 8px",
-              fontSize: "18px",
-              backgroundColor: "transparent",
-              color: currentSlideIndex === 0 ? "#ccc" : "#666",
-              border: "none",
-              cursor: currentSlideIndex === 0 ? "default" : "pointer",
-              opacity: currentSlideIndex === 0 ? 0.3 : 0.6,
-              transition: "opacity 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              if (currentSlideIndex !== 0) {
-                e.currentTarget.style.opacity = "1";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (currentSlideIndex !== 0) {
-                e.currentTarget.style.opacity = "0.6";
-              }
-            }}
-          >
-            ‹
-          </button>
-          <span
-            style={{
-              fontSize: "11px",
-              color: "#999",
-              minWidth: "60px",
-              textAlign: "center",
-            }}
-          >
-            {currentSlideIndex + 1} / {totalSlides}
-          </span>
-          <button
-            onClick={goToNextSlide}
-            disabled={currentSlideIndex === totalSlides - 1}
-            style={{
-              padding: "4px 8px",
-              fontSize: "18px",
-              backgroundColor: "transparent",
-              color: currentSlideIndex === totalSlides - 1 ? "#ccc" : "#666",
-              border: "none",
-              cursor:
-                currentSlideIndex === totalSlides - 1 ? "default" : "pointer",
-              opacity: currentSlideIndex === totalSlides - 1 ? 0.3 : 0.6,
-              transition: "opacity 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              if (currentSlideIndex !== totalSlides - 1) {
-                e.currentTarget.style.opacity = "1";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (currentSlideIndex !== totalSlides - 1) {
-                e.currentTarget.style.opacity = "1";
-              }
-            }}
-          >
-            ›
-          </button>
+    <div
+      style={{
+        width,
+        height,
+        display: "flex",
+        flexDirection: "row",
+        position: "relative",
+      }}
+    >
+      {/* Outline Panel */}
+      <OutlinePanel
+        isOpen={isOutlineOpen}
+        height={height}
+        slideTitles={slideTitles}
+        currentSlideIndex={currentSlideIndex}
+        onSlideSelect={setCurrentSlideIndex}
+      />
+
+      {/* Slide Content */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          marginLeft: isOutlineOpen ? OUTLINE_WIDTH : 0,
+          transition: "margin-left 0.6s ease-in-out",
+        }}
+      >
+        <div style={{ flex: 1, position: "relative" }}>
+          {slideGroups.map((sg, ii) => (
+            <SlideWrapper
+              key={ii}
+              isVisible={ii === currentSlideIndex}
+              hasBeenVisible={slideIndicesThatHaveBeenVisible.has(ii)}
+              width={effectiveSlideWidth}
+              height={slideHeight}
+              zarrGroup={sg}
+              contexts={contexts}
+              renderFPView={renderFPView}
+            />
+          ))}
         </div>
-      )}
+        {showNavigation && !isFullscreen && (
+          <NavigationBar
+            currentSlideIndex={currentSlideIndex}
+            totalSlides={totalSlides}
+            isFullscreen={isFullscreen}
+            onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
+            onToggleFullscreen={toggleFullscreen}
+            onPrevious={goToPreviousSlide}
+            onNext={goToNextSlide}
+          />
+        )}
+      </div>
     </div>
   );
 };
 
-const useSlideGroups = (zarrGroup: ZarrGroup): ZarrGroup[] => {
-  const [slideGroups, setSlideGroups] = React.useState<ZarrGroup[]>([]);
-
-  React.useEffect(() => {
-    const loadSlides = async () => {
-      const groups: ZarrGroup[] = [];
-      let i = 0;
-      while (true) {
-        const slideGroup = await zarrGroup.getGroup(`slide_${i + 1}`);
-        if (!slideGroup) break;
-        groups.push(slideGroup);
-        i++;
-      }
-      setSlideGroups(groups);
-    };
-    loadSlides();
-  }, [zarrGroup]);
-
-  return slideGroups;
+const SlideWrapper: FunctionComponent<{
+  isVisible: boolean;
+  hasBeenVisible?: boolean;
+  width: number;
+  height: number;
+  zarrGroup: ZarrGroup;
+  contexts: FPViewContexts;
+  renderFPView: (params: RenderParams) => void;
+}> = ({
+  isVisible,
+  hasBeenVisible,
+  width,
+  height,
+  zarrGroup,
+  contexts,
+  renderFPView,
+}) => {
+  if (!isVisible && !hasBeenVisible) {
+    return <span style={{ display: "none" }} />;
+  }
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width,
+        height,
+        opacity: isVisible ? 1 : 0,
+        transition: "opacity 0.3s ease-in-out",
+        pointerEvents: isVisible ? "auto" : "none",
+      }}
+    >
+      <FPSlide
+        zarrGroup={zarrGroup}
+        width={width}
+        height={height}
+        contexts={contexts}
+        renderFPView={renderFPView}
+      />
+    </div>
+  );
 };
+
+const emptySet = new Set<number>();
 
 export default FPSlides;
