@@ -53,6 +53,7 @@ const FPTitleSlideContent: React.FC<Props> = ({ zarrGroup, width, height }) => {
             fontFamily: title.font_family || undefined,
             color: title.color || undefined,
             marginBottom: "20px",
+            marginTop: "50px",
           }}
         >
           {title.text}

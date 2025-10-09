@@ -79,18 +79,33 @@ const FPSlides: React.FC<Props> = ({
   // Keyboard navigation
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === "PageDown") {
+      if (
+        e.key === "ArrowRight" ||
+        e.key === "PageDown" ||
+        e.key === " " ||
+        e.key === "Enter"
+      ) {
         e.preventDefault();
         goToNextSlide();
-      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+      } else if (
+        e.key === "ArrowLeft" ||
+        e.key === "PageUp" ||
+        e.key === "Backspace"
+      ) {
         e.preventDefault();
         goToPreviousSlide();
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        setCurrentSlideIndex(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        setCurrentSlideIndex(totalSlides - 1);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goToNextSlide, goToPreviousSlide]);
+  }, [goToNextSlide, goToPreviousSlide, totalSlides]);
 
   if (!slideZarrGroup) {
     return <div>Slide not found</div>;
