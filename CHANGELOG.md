@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.31] - 2025-10-08
+
 - Table of contents for figpack slides
 - In full screen mode, hide the status bar
 
