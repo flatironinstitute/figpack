@@ -1,7 +1,7 @@
 import os
 import base64
 from typing import List
-from attr import dataclass
+from dataclasses import dataclass
 from ..views.Slides import Slides
 
 
