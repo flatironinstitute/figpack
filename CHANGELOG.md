@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.32] - 2025-10-10
+
 - Parse markdown in figpack_slides
 - Description field in figpack_view.save()
+- Fix rendering issue for uniform data in TimeseriesGraph view (need canceled flag in draw options)
 
 ## [0.2.31] - 2025-10-08
 

@@ -112,7 +112,14 @@ const FmriBoldTimeSeries: React.FC<Props> = ({
     if (!draw) return;
     if (canvasWidth <= 0) return;
     if (canvasHeight <= 0) return;
-    draw(context, canvasWidth, canvasHeight, margins, { exporting: false });
+    const opts = {
+      exporting: false,
+      canceled: false,
+    };
+    draw(context, canvasWidth, canvasHeight, margins, opts);
+    return () => {
+      opts.canceled = true;
+    };
   }, [context, margins, draw, canvasWidth, canvasHeight]);
 
   const yAxisInfo = useMemo(() => {
@@ -164,6 +171,7 @@ const createDraw = ({
     margins: { left: number; right: number; top: number; bottom: number },
     o: {
       exporting?: boolean;
+      canceled?: boolean;
     },
   ) => {
     if (!o.exporting) {

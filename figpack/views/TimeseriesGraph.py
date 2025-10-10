@@ -577,7 +577,7 @@ class TGUniformSeries:
         group.attrs["n_channels"] = n_channels
 
         if self.channel_spacing is not None:
-            group.attrs["channel_spacing"] = self.channel_spacing
+            group.attrs["channel_spacing"] = float(self.channel_spacing)
 
         # Store original data with optimal chunking
         original_chunks = self._calculate_optimal_chunk_size(self.data.shape)
