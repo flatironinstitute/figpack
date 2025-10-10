@@ -166,7 +166,7 @@ class FigpackView:
             _local_figure_name=_local_figure_name if _dev else None,
         )
 
-    def save(self, output_path: str, *, title: str) -> None:
+    def save(self, output_path: str, *, title: str, description: str = "") -> None:
         """
         Save as figure either to a folder or to a .tar.gz file
         Args:
@@ -174,7 +174,7 @@ class FigpackView:
         """
         from ._save_figure import _save_figure
 
-        _save_figure(self, output_path, title=title)
+        _save_figure(self, output_path, title=title, description=description)
 
     def write_to_zarr_group(self, group: Group) -> None:
         """

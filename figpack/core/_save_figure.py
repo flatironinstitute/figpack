@@ -5,7 +5,9 @@ from ._bundle_utils import prepare_figure_bundle
 from .figpack_view import FigpackView
 
 
-def _save_figure(view: FigpackView, output_path: str, *, title: str):
+def _save_figure(
+    view: FigpackView, output_path: str, *, title: str, description: str = ""
+) -> None:
     """
     Save the figure to a folder or a .tar.gz file
 
@@ -19,7 +21,7 @@ def _save_figure(view: FigpackView, output_path: str, *, title: str):
     ):
         # It's a .tar.gz file
         with tempfile.TemporaryDirectory(prefix="figpack_save_") as tmpdir:
-            prepare_figure_bundle(view, tmpdir, title=title)
+            prepare_figure_bundle(view, tmpdir, title=title, description=description)
             # Create tar.gz file
             import tarfile
 
@@ -28,4 +30,6 @@ def _save_figure(view: FigpackView, output_path: str, *, title: str):
     else:
         # It's a folder
         output_path.mkdir(parents=True, exist_ok=True)
-        prepare_figure_bundle(view, str(output_path), title=title)
+        prepare_figure_bundle(
+            view, str(output_path), title=title, description=description
+        )

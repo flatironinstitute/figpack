@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Parse markdown in figpack_slides
+- Description field in figpack_view.save()
+
 ## [0.2.31] - 2025-10-08
 
 - Table of contents for figpack slides
