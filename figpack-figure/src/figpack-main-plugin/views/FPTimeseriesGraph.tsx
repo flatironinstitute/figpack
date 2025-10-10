@@ -82,9 +82,16 @@ export const FPTimeseriesGraphChild: React.FC<{
     if (!context) return;
     if (!margins) return;
     if (!draw) return;
-    draw(context, canvasWidth, canvasHeight, margins, {
+    const opts = {
       exporting: false,
-    }).then((yr) => setYRange(yr));
+      canceled: false,
+    };
+    draw(context, canvasWidth, canvasHeight, margins, opts).then((yr) =>
+      setYRange(yr),
+    );
+    return () => {
+      opts.canceled = true;
+    };
   }, [context, margins, draw, canvasWidth, canvasHeight]);
 
   const yAxisInfo = useMemo(() => {
@@ -885,6 +892,7 @@ const createDraw = ({
     margins: { left: number; right: number; top: number; bottom: number },
     o: {
       exporting?: boolean;
+      canceled?: boolean;
     },
   ) => {
     if (!o.exporting) {
@@ -952,6 +960,7 @@ const createDraw = ({
               visibleStartTimeSec,
               visibleEndTimeSec,
             );
+            if (o.canceled) return;
             // Collect y-limits from all channels including offsets
             for (let ch = 0; ch < uniformData.data.length; ch++) {
               const offset = s.channelSpacing ? -ch * s.channelSpacing : 0;
@@ -967,6 +976,7 @@ const createDraw = ({
               visibleStartTimeSec,
               visibleEndTimeSec,
             );
+            if (o.canceled) return;
             // Collect y-limits from min/max values of all channels including offsets
             for (let ch = 0; ch < uniformData.data.length; ch++) {
               const offset = s.channelSpacing ? -ch * s.channelSpacing : 0;

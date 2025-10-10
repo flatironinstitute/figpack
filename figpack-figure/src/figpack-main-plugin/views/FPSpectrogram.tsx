@@ -184,7 +184,11 @@ const FPSpectrogramChild: React.FC<{
     if (canvasWidth <= 0) return;
     if (canvasHeight <= 0) return;
     if (!margins) return;
-    draw(context, canvasWidth, canvasHeight, margins, { exporting: false });
+    const opts = { exporting: false, canceled: false };
+    draw(context, canvasWidth, canvasHeight, margins, opts);
+    return () => {
+      opts.canceled = true;
+    };
   }, [
     context,
     visibleData,
@@ -196,6 +200,7 @@ const FPSpectrogramChild: React.FC<{
     margins,
     yRange,
     brightness,
+    draw,
   ]);
 
   const yAxisInfo = useMemo(() => {
@@ -258,7 +263,7 @@ const createDrawFunction =
     canvasWidth: number,
     canvasHeight: number,
     margins: { top: number; right: number; bottom: number; left: number },
-    o: { exporting?: boolean },
+    o: { exporting?: boolean; canceled?: boolean },
   ) => {
     // Clear the canvas
     if (!o.exporting) {
