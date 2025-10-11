@@ -10,6 +10,7 @@ import {
   RenderParams,
   ZarrGroup,
 } from "./figpack-interface";
+import { FPMarkdown } from "./views/Markdown/FPMarkdown";
 
 // Declare global types for figpack extension system
 export {};
@@ -104,6 +105,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "slides.TitleSlideContent",
     render: makeRenderFunction(FPTitleSlideContent),
+  });
+  registerFPViewComponent({
+    name: "slides.Markdown",
+    render: makeRenderFunction(FPMarkdown),
   });
 
   // Register extension

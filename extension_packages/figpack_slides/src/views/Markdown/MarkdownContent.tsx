@@ -35,7 +35,6 @@ const MarkdownContent: FunctionComponent<MarkdownContentProps> = ({
     },
     [],
   );
-  console.log("MarkdownContent render", { content, doRehypeRaw });
   return (
     <ReactMarkdown
       remarkPlugins={remarkPlugins}

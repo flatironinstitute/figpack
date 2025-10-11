@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ZarrGroup } from "../figpack-interface";
-import ReactMarkdown from "react-markdown";
+import { ZarrGroup } from "../../figpack-interface";
+import MarkdownContent from "./MarkdownContent";
 
 export const FPMarkdown: React.FC<{
   zarrGroup: ZarrGroup;
@@ -101,7 +101,7 @@ export const FPMarkdown: React.FC<{
         fontSize,
       }}
     >
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <MarkdownContent content={content} />
     </div>
   );
 };

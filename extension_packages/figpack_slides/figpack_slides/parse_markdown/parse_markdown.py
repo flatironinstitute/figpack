@@ -5,22 +5,6 @@ from dataclasses import dataclass
 from ..views.Slides import Slides
 
 
-def parse_key_value_assignment(line: str):
-    ind = line.find(" <- ")
-    if ind == -1:
-        return None, None
-    key = line[:ind].strip()
-    if " " in key:
-        return None, None
-    value = line[ind + 4 :].strip()
-    return key, value
-
-
-def is_key_value_assignment(line: str):
-    key, value = parse_key_value_assignment(line)
-    return key is not None and value is not None
-
-
 @dataclass
 class ParsedSlideSection:
     metadata: dict
@@ -31,6 +15,7 @@ class ParsedSlideSection:
 class ParsedSlide:
     title: str
     slide_type: str
+    metadata: dict
     sections: List[ParsedSlideSection]
 
 
@@ -45,7 +30,9 @@ def parse_markdown_to_slides(md_content: str, create_slide) -> Slides:
         if not lines:
             continue
 
-        parsed_slide = ParsedSlide(title="", slide_type="normal", sections=[])
+        parsed_slide = ParsedSlide(
+            title="", slide_type="normal", sections=[], metadata={}
+        )
 
         parsed_slide.sections.append(
             ParsedSlideSection(
@@ -53,20 +40,65 @@ def parse_markdown_to_slides(md_content: str, create_slide) -> Slides:
                 content="",
             )
         )
+        in_slide_metadata_block = False
+        in_section_metadata_block = False
+        slide_metadata_yaml_lines = []
+        section_metadata_yaml_lines = []
         for line in lines:
             if line.startswith("# ") and parsed_slide.title == "":
                 parsed_slide.title = line.lstrip("# ").strip()
-            elif line == "section-break":
+            elif line == "* * *":
                 parsed_slide.sections.append(
                     ParsedSlideSection(metadata={}, content="")
                 )
-            elif is_key_value_assignment(line):
-                key, value = parse_key_value_assignment(line)
-                if key and value:
-                    if key == "slide-type":
-                        parsed_slide.slide_type = value
-                    else:
-                        parsed_slide.sections[-1].metadata[key] = value
+            elif line == "```yaml slide-metadata":
+                if in_slide_metadata_block:
+                    raise ValueError("Nested slide-metadata blocks are not allowed.")
+                if in_section_metadata_block:
+                    raise ValueError(
+                        "Cannot start slide-metadata block inside section-metadata block."
+                    )
+                in_slide_metadata_block = True
+                slide_metadata_yaml_lines = []
+            elif line == "```yaml section-metadata":
+                if in_section_metadata_block:
+                    raise ValueError("Nested section-metadata blocks are not allowed.")
+                if in_slide_metadata_block:
+                    raise ValueError(
+                        "Cannot start section-metadata block inside slide-metadata block."
+                    )
+                in_section_metadata_block = True
+                section_metadata_yaml_lines = []
+            elif in_slide_metadata_block:
+                if line == "```":
+                    in_slide_metadata_block = False
+                    # Parse YAML content
+                    import yaml
+
+                    metadata = yaml.safe_load("\n".join(slide_metadata_yaml_lines))
+                    if isinstance(metadata, dict):
+                        for key, value in metadata.items():
+                            if key == "slide-type":
+                                parsed_slide.slide_type = str(value)
+                            else:
+                                # Apply to the first section's metadata
+                                parsed_slide.metadata[key] = str(value)
+                    slide_metadata_yaml_lines = []
+                else:
+                    slide_metadata_yaml_lines.append(line)
+            elif in_section_metadata_block:
+                if line == "```":
+                    in_section_metadata_block = False
+                    # Parse YAML content
+                    import yaml
+
+                    metadata = yaml.safe_load("\n".join(section_metadata_yaml_lines))
+                    if isinstance(metadata, dict):
+                        for key, value in metadata.items():
+                            parsed_slide.sections[-1].metadata[key] = str(value)
+                    section_metadata_yaml_lines = []
+                else:
+                    section_metadata_yaml_lines.append(line)
             else:
                 if parsed_slide.sections[-1].content:
                     parsed_slide.sections[-1].content += "\n" + line

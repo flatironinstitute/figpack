@@ -26,7 +26,8 @@
     "typescript": "^5.0.0",
     "typescript-eslint": "^8.39.1",
     "vite": "^5.0.0",
-    "vite-plugin-css-injected-by-js": "^3.5.2"
+    "vite-plugin-css-injected-by-js": "^3.5.2",
+    "@types/react-syntax-highlighter": "^15.5.13"
   },
   "peerDependencies": {
     "react": "^19.1.1",
@@ -41,5 +42,12 @@
   ],
   "author": "figpack contributors",
   "license": "Apache-2.0",
-  "dependencies": {}
+  "dependencies": {
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "react-syntax-highlighter": "^15.6.1"
+  }
 }
