@@ -21,8 +21,8 @@ export const FPMarkdown: React.FC<{
 
         // Get the markdown content from the zarr array
         const data = await zarrGroup.getDatasetData("content_data", {});
-        if (!data || data.length === 0) {
-          throw new Error("Empty markdown content");
+        if (data === undefined) {
+          throw new Error("Dataset 'content_data' not found");
         }
 
         // Convert the uint8 array back to string

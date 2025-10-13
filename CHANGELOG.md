@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.33] - 2025-10-13
+
 - Remove advanced markdown processing in main Markdown view (keep it simple)
 - Add advanced markdown processing in figpack_slides extension
 
