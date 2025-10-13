@@ -18,6 +18,7 @@ https://figures.figpack.org/figures/default/3203970f506d660f861cdd9b364767a49e56
 ./tutorial_lossy_video_example/index.html?embedded=1
 ./tutorial_fmri_bold_example/index.html?embedded=1
 ./tutorial_fmri_video_example/index.html?embedded=1
+./tutorial_multi_channel_intervals_example/index.html?embedded=1
 ./tutorial_mountain_layout_example/index.html?embedded=1
 ./nwb_tutorial_plane_segmentation/index.html?embedded=1
 ./spike_sorting_tutorial_units_table/index.html?embedded=1
