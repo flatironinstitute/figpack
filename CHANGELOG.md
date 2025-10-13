@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- New multi channel intervals view in figpack_experimental extension
+
 ## [0.2.33] - 2025-10-13
 
 - Remove advanced markdown processing in main Markdown view (keep it simple)
