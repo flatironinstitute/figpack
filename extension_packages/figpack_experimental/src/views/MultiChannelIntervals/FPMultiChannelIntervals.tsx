@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import TimeScrollView3 from "../component-time-scroll-view-3/TimeScrollView3";
 import {
   TimeseriesSelectionAction,
   TimeseriesSelectionContext,
@@ -17,6 +16,7 @@ import {
   useIntervalData,
 } from "./useMultiChannelIntervalsData";
 import { createDrawFunction } from "./renderMultiChannelInterval";
+import MultiChannelIntervalsCanvas from "./MultiChannelIntervalsCanvas";
 
 export const FPMultiChannelIntervals: React.FC<{
   zarrGroup: ZarrGroup;
@@ -280,12 +280,12 @@ const FPMultiChannelIntervalsChild: React.FC<{
     if (!metadata) return;
 
     // If no interval selected, find the first interval after current time
-    if (currentIntervalIndex === null && currentTime !== undefined) {
+    if (currentIntervalIndex === null) {
       // Find the closest next interval
       let closestIdx = -1;
       for (let i = 0; i < metadata.nIntervals; i++) {
         const intervalStart = metadata.intervalStartTimesSec[i];
-        if (intervalStart > currentTime) {
+        if (currentTime === undefined || intervalStart > currentTime) {
           closestIdx = i;
           break;
         }
@@ -380,39 +380,6 @@ const FPMultiChannelIntervalsChild: React.FC<{
     return <div>No metadata available</div>;
   }
 
-  if (currentIntervalIndex === null) {
-    // No interval selected - show message but keep timeline visible
-    const timeScrollViewHeight = height - 60; // Leave space for timeline bar
-
-    return (
-      <div style={{ width, height, position: "relative" }}>
-        <div
-          style={{
-            width,
-            height: timeScrollViewHeight,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "16px",
-          }}
-        >
-          <div>
-            No interval at current timepoint. Use Prev/Next or click the
-            timeline to navigate.
-          </div>
-        </div>
-        <TimelineBar
-          width={width}
-          height={60}
-          metadata={metadata}
-          currentTime={currentTime}
-          setCurrentTime={setCurrentTime}
-        />
-      </div>
-    );
-  }
-
   if (dataLoading) {
     return <div>Loading interval data...</div>;
   }
@@ -421,7 +388,7 @@ const FPMultiChannelIntervalsChild: React.FC<{
 
   return (
     <div style={{ width, height, position: "relative" }}>
-      <TimeScrollView3
+      <MultiChannelIntervalsCanvas
         width={width}
         height={timeScrollViewHeight}
         onCanvasElement={(canvas, canvasWidth, canvasHeight, margins) => {
@@ -543,7 +510,7 @@ const TimelineBar: React.FC<{
       const x2 = timeToPixel(intervalEnd);
 
       ctx.fillStyle = "#4a90e2";
-      ctx.fillRect(x1, 10, x2 - x1, height - 20);
+      ctx.fillRect(x1, 10, Math.max(1, x2 - x1), height - 20);
     }
 
     // Draw current time indicator
