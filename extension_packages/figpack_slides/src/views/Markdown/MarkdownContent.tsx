@@ -15,7 +15,7 @@ interface MarkdownContentProps {
 
 const MarkdownContent: FunctionComponent<MarkdownContentProps> = ({
   content,
-  doRehypeRaw,
+  doRehypeRaw = true,
 }) => {
   const rehypePlugins = useMemo(() => {
     const plugins: any[] = [rehypeKatex];
@@ -53,14 +53,7 @@ const MarkdownContent: FunctionComponent<MarkdownContentProps> = ({
           );
         },
         img({ alt, ...props }) {
-          console.log("Rendering image:", { alt, props });
-          return (
-            <img
-              alt={alt}
-              style={{ maxWidth: "100%", height: "auto" }}
-              {...props}
-            />
-          );
+          return <img alt={alt} {...props} />;
         },
         code(props) {
           const { children, className, ...rest } = props;

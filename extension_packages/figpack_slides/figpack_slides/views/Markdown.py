@@ -31,7 +31,7 @@ class Markdown(FigpackView):
             group: Zarr group to write data into
         """
         # Set the view type
-        group.attrs["view_type"] = "Markdown"
+        group.attrs["view_type"] = "slides.Markdown"
 
         if self.font_size is not None:
             group.attrs["font_size"] = self.font_size
