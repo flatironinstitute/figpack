@@ -307,12 +307,9 @@ interval_duration_sec = 0.1  # 100 ms interval in the middle
 # Calculate number of timepoints per window
 n_timepoints = int(window_duration_sec * sampling_frequency_hz)
 
-# Generate synthetic data
-# We'll create intervals that appear at different times in a longer recording
-recording_duration_sec = 20.0
-time_spacing = recording_duration_sec / n_intervals
-
 # Create arrays for window and interval times
+recording_duration_sec = 6000.0
+time_spacing = recording_duration_sec / n_intervals
 window_start_times_sec = np.array([i * time_spacing for i in range(n_intervals)])
 interval_start_times_sec = (
     window_start_times_sec + (window_duration_sec - interval_duration_sec) / 2
@@ -323,10 +320,7 @@ interval_end_times_sec = interval_start_times_sec + interval_duration_sec
 data = np.zeros((n_intervals, n_timepoints, n_channels), dtype=np.float32)
 
 for interval_idx in range(n_intervals):
-    # Time array for this window
     t = np.linspace(0, window_duration_sec, n_timepoints)
-
-    # Calculate where the interval is within the window
     interval_start_idx = int(
         (interval_start_times_sec[interval_idx] - window_start_times_sec[interval_idx])
         * sampling_frequency_hz
@@ -336,21 +330,38 @@ for interval_idx in range(n_intervals):
         * sampling_frequency_hz
     )
 
+    # Create different patterns for different interval groups
+    interval_type = interval_idx % 3  # Cycle through 3 types
+    
     for ch in range(n_channels):
         # Each channel has a different frequency sine wave
-        freq = 5 + ch * 3  # 5, 8, 11, 14 Hz
-        baseline = np.sin(2 * np.pi * freq * t)
-
-        # Add random noise
+        freq = 5 + ch * 2
+        baseline = 0.5 * np.sin(2 * np.pi * freq * t)
         noise = np.random.randn(n_timepoints) * 0.2
 
-        # Add a burst during the interval
+        # Add a prominent burst during the interval that varies by type
         burst = np.zeros(n_timepoints)
-        burst[interval_start_idx:interval_end_idx] = (
-            np.sin(2 * np.pi * 20 * t[interval_start_idx:interval_end_idx]) * 2
-        )
+        interval_t = t[interval_start_idx:interval_end_idx]
+        
+        if interval_type == 0:
+            # High amplitude oscillation burst
+            burst[interval_start_idx:interval_end_idx] = (
+                3.0 * np.sin(2 * np.pi * 40 * interval_t)
+            )
+        elif interval_type == 1:
+            # Rising ramp burst
+            burst[interval_start_idx:interval_end_idx] = (
+                4.0 * (interval_t - interval_t[0]) / interval_duration_sec
+            )
+        else:
+            # Gaussian envelope burst
+            center = (interval_start_idx + interval_end_idx) / 2
+            width = (interval_end_idx - interval_start_idx) / 4
+            envelope = np.exp(-((np.arange(interval_start_idx, interval_end_idx) - center) ** 2) / (2 * width ** 2))
+            burst[interval_start_idx:interval_end_idx] = (
+                3.5 * envelope * np.sin(2 * np.pi * 35 * interval_t)
+            )
 
-        # Combine signals with channel offset for visualization
         data[interval_idx, :, ch] = baseline + noise + burst
 
 # Create channel IDs
