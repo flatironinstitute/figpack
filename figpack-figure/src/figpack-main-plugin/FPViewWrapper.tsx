@@ -8,7 +8,6 @@ const FPViewWrapper: React.FC<{
   contexts: FPViewContexts;
   renderFPView: (params: RenderParams) => void;
 }> = ({ zarrGroup, width, height, contexts, renderFPView }) => {
-  console.log("=== FPViewWrapper body", zarrGroup.attrs.view_type);
   const [error, setError] = useState<string | null>(null);
   const resizeCallbackRef = useRef<
     ((width: number, height: number) => void) | null
@@ -19,7 +18,6 @@ const FPViewWrapper: React.FC<{
   const [container, setContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    console.log("=== FPViewWrapper useEffect 1", zarrGroup.attrs.view_type);
     if (!container) return;
     try {
       // Clear the container
@@ -62,7 +60,6 @@ const FPViewWrapper: React.FC<{
 
   // Handle resize by calling the registered callback
   useEffect(() => {
-    console.log("=== FPViewWrapper useEffect 2");
     if (resizeCallbackRef.current) {
       try {
         resizeCallbackRef.current(width, height);
@@ -74,7 +71,6 @@ const FPViewWrapper: React.FC<{
 
   // Handle data updates
   useEffect(() => {
-    console.log("=== FPViewWrapper useEffect 3");
     if (dataChangeCallbackRef.current) {
       if (!zarrGroup) {
         setError("FPViewFileWrapper: No zarrGroup provided (1)");
