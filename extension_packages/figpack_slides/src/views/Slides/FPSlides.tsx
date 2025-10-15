@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { FunctionComponent, useEffect } from "react";
+import React, { FunctionComponent, useEffect, useCallback } from "react";
 import {
   FPViewContexts,
   RenderParams,
@@ -44,6 +43,11 @@ const FPSlides: React.FC<Props> = ({
   const [isOutlineOpen, setIsOutlineOpen] = React.useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
+  // Fragment state management
+  const [currentFragmentIndex, setCurrentFragmentIndex] = React.useState(0);
+  const [numFragmentsInCurrentSlide, setNumFragmentsInCurrentSlide] =
+    React.useState(0);
+
   const totalSlides = slideGroups.length;
 
   // Validate and adjust slide index when slideGroups change
@@ -60,20 +64,76 @@ const FPSlides: React.FC<Props> = ({
     }
   }, [currentSlideIndex, totalSlides]);
 
-  // Navigation functions
-  const goToNextSlide = React.useCallback(() => {
-    setCurrentSlideIndex((prev) => Math.min(prev + 1, totalSlides - 1));
-  }, [totalSlides]);
-
-  const goToPreviousSlide = React.useCallback(() => {
-    setCurrentSlideIndex((prev) => Math.max(prev - 1, 0));
+  // Callback for slides to register their fragment count
+  const handleRegisterNumFragments = useCallback((count: number) => {
+    setNumFragmentsInCurrentSlide(count);
   }, []);
+
+  // Create fragment context to pass through contexts
+  const fragmentContext = React.useMemo(
+    () => ({
+      currentSlideIndex,
+      numFragmentsInCurrentSlide,
+      currentFragmentIndex,
+      isPresentationMode: isFullscreen,
+      registerNumFragments: handleRegisterNumFragments,
+    }),
+    [
+      currentSlideIndex,
+      currentFragmentIndex,
+      isFullscreen,
+      handleRegisterNumFragments,
+      numFragmentsInCurrentSlide,
+    ],
+  );
+
+  console.log("--- fragmentContext", fragmentContext);
+
+  // Add fragment context to contexts
+  const contextsWithFragment = React.useMemo(
+    () => ({
+      ...contexts,
+      fragment: fragmentContext,
+    }),
+    [contexts, fragmentContext],
+  );
+
+  // Navigation functions with fragment awareness
+  const goToNext = React.useCallback(() => {
+    if (isFullscreen && currentFragmentIndex < numFragmentsInCurrentSlide - 1) {
+      // In presentation mode, advance fragment if there are more fragments
+      setCurrentFragmentIndex((prev) => prev + 1);
+    } else {
+      // Otherwise, go to next slide and reset fragment index
+      setCurrentSlideIndex((prev) => Math.min(prev + 1, totalSlides - 1));
+      setCurrentFragmentIndex(0);
+      setNumFragmentsInCurrentSlide(1); // reset fragment count for new slide
+    }
+  }, [
+    isFullscreen,
+    currentFragmentIndex,
+    numFragmentsInCurrentSlide,
+    totalSlides,
+  ]);
+
+  const goToPrevious = React.useCallback(() => {
+    if (isFullscreen && currentFragmentIndex > 0) {
+      // In presentation mode, go back to previous fragment
+      setCurrentFragmentIndex((prev) => prev - 1);
+    } else {
+      // Otherwise, go to previous slide
+      setCurrentSlideIndex((prev) => Math.max(prev - 1, 0));
+      // Note: We don't know how many fragments the previous slide has, so start at 0
+      setCurrentFragmentIndex(0);
+      setNumFragmentsInCurrentSlide(1); // reset fragment count for new slide
+    }
+  }, [isFullscreen, currentFragmentIndex]);
 
   // Keyboard navigation
   useKeyboardNavigation(
     totalSlides,
-    goToNextSlide,
-    goToPreviousSlide,
+    goToNext,
+    goToPrevious,
     setCurrentSlideIndex,
   );
 
@@ -138,7 +198,9 @@ const FPSlides: React.FC<Props> = ({
               width={effectiveSlideWidth}
               height={slideHeight}
               zarrGroup={sg}
-              contexts={contexts}
+              contexts={
+                ii === currentSlideIndex ? contextsWithFragment : contexts
+              }
               renderFPView={renderFPView}
             />
           ))}
@@ -150,8 +212,8 @@ const FPSlides: React.FC<Props> = ({
             isFullscreen={isFullscreen}
             onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
             onToggleFullscreen={toggleFullscreen}
-            onPrevious={goToPreviousSlide}
-            onNext={goToNextSlide}
+            onPrevious={goToPrevious}
+            onNext={goToNext}
           />
         )}
       </div>
