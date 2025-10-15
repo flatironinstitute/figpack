@@ -136,7 +136,6 @@ export type FPViewComponentProps = {
   width: number; // Available width
   height: number; // Available height
   contexts: FPViewContexts;
-  renderFPView: (params: RenderParams) => void; // For rendering nested views
 };
 
 export type FigureAnnotationsState = {
