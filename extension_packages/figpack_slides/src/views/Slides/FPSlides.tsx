@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { FunctionComponent, useEffect, useCallback } from "react";
 import {
   FPViewContexts,
@@ -199,7 +200,9 @@ const FPSlides: React.FC<Props> = ({
               height={slideHeight}
               zarrGroup={sg}
               contexts={
-                ii === currentSlideIndex ? contextsWithFragment : contexts
+                ii === currentSlideIndex
+                  ? (contextsWithFragment as any)
+                  : contexts
               }
               renderFPView={renderFPView}
             />
