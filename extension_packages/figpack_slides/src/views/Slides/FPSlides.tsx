@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { FunctionComponent, useEffect, useCallback } from "react";
+import React, {
+  FunctionComponent,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   FPViewContexts,
   RenderParams,
@@ -32,6 +37,9 @@ const FPSlides: React.FC<Props> = ({
   contexts,
   renderFPView,
 }) => {
+  const nativeWidth = zarrGroup.attrs?.["slide_width"] || 1920;
+  const nativeHeight = zarrGroup.attrs?.["slide_height"] || 1080;
+
   const slideGroups = useSlideGroups(zarrGroup);
   const slideTitles = useSlideTitles(slideGroups);
 
@@ -87,8 +95,6 @@ const FPSlides: React.FC<Props> = ({
       numFragmentsInCurrentSlide,
     ],
   );
-
-  console.log("--- fragmentContext", fragmentContext);
 
   // Add fragment context to contexts
   const contextsWithFragment = React.useMemo(
@@ -205,6 +211,8 @@ const FPSlides: React.FC<Props> = ({
                   : contexts
               }
               renderFPView={renderFPView}
+              nativeWidth={nativeWidth}
+              nativeHeight={nativeHeight}
             />
           ))}
         </div>
@@ -232,6 +240,8 @@ const SlideWrapper: FunctionComponent<{
   zarrGroup: ZarrGroup;
   contexts: FPViewContexts;
   renderFPView: (params: RenderParams) => void;
+  nativeWidth: number;
+  nativeHeight: number;
 }> = ({
   isVisible,
   hasBeenVisible,
@@ -240,18 +250,39 @@ const SlideWrapper: FunctionComponent<{
   zarrGroup,
   contexts,
   renderFPView,
+  nativeWidth,
+  nativeHeight,
 }) => {
+  const { scale, dx, dy } = useMemo(() => {
+    const scaleX = width / nativeWidth;
+    const scaleY = height / nativeHeight;
+    const scale = Math.min(scaleX, scaleY);
+    const dx = (height - nativeHeight * scale) / 2;
+    const dy = (width - nativeWidth * scale) / 2;
+    return { scale, dx, dy };
+  }, [width, height, nativeWidth, nativeHeight]);
   if (!isVisible && !hasBeenVisible) {
     return <span style={{ display: "none" }} />;
   }
+  console.log("---", {
+    scale,
+    width,
+    height,
+    nativeWidth,
+    nativeHeight,
+    dx,
+    dy,
+  });
   return (
     <div
       style={{
         position: "absolute",
-        top: 0,
-        left: 0,
-        width,
-        height,
+        top: dx,
+        left: dy,
+        width: nativeWidth * scale,
+        height: nativeHeight * scale,
+        scale,
+        transformOrigin: "top left",
         opacity: isVisible ? 1 : 0,
         transition: "opacity 0.3s ease-in-out",
         pointerEvents: isVisible ? "auto" : "none",
@@ -259,8 +290,8 @@ const SlideWrapper: FunctionComponent<{
     >
       <FPSlide
         zarrGroup={zarrGroup}
-        width={width}
-        height={height}
+        width={nativeWidth}
+        height={nativeHeight}
         contexts={contexts}
         renderFPView={renderFPView}
       />
