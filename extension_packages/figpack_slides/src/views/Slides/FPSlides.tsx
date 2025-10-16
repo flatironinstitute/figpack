@@ -284,7 +284,7 @@ const SlideWrapper: FunctionComponent<{
         scale,
         transformOrigin: "top left",
         opacity: isVisible ? 1 : 0,
-        transition: "opacity 0.3s ease-in-out",
+        // transition: "opacity 0.3s ease-in-out",
         pointerEvents: isVisible ? "auto" : "none",
       }}
     >
