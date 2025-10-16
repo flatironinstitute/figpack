@@ -13,7 +13,6 @@ from .content_processors import (
     process_remote_image,
     process_markdown_content,
 )
-from .custom_views import get_custom_view
 from .create_theme_default_1 import Theme
 
 
