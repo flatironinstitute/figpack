@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_slides",
-    version="0.1.13",
+    version="0.1.14",
     description="Extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",

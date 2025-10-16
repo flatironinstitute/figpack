@@ -9,4 +9,4 @@ from .parse_markdown.parse_markdown import (
     embed_images_as_base64,
 )
 
-__version__ = "0.1.13"
+__version__ = "0.1.14"
