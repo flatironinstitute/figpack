@@ -26,3 +26,9 @@ class Slides(figpack.ExtensionView):
         for i, slide in enumerate(self.slides):
             slide_group = group.create_group(f"slide_{i + 1}")
             slide.write_to_zarr_group(slide_group)
+
+    @property
+    def title(self) -> str:
+        if len(self.slides) == 0:
+            return "Empty Presentation"
+        return self.slides[0].title.text

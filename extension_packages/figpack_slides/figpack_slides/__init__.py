@@ -3,10 +3,20 @@ figpack_slides
 """
 
 from .parse_markdown.parse_markdown import (
-    parse_markdown_to_slides,
+    create_presentation,
     ParsedSlide,
     ParsedSlideSection,
     embed_images_as_base64,
 )
 
-__version__ = "0.1.14"
+from .theme_default_1 import create_theme_default_1
+
+__version__ = "0.2.1"
+
+__all__ = [
+    "create_presentation",
+    "ParsedSlide",
+    "ParsedSlideSection",
+    "embed_images_as_base64",
+    "create_theme_default_1",
+]
