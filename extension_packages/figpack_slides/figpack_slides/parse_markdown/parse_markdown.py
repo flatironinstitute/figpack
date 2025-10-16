@@ -19,8 +19,7 @@ class ParsedSlide:
     sections: List[ParsedSlideSection]
 
 
-def parse_markdown_to_slides(md_content: str, create_slide) -> Slides:
-    """Parse markdown content into slide data structures."""
+def create_presentation(md_content: str, *, theme) -> Slides:
     # Split by --- to get individual slides
     raw_slides = md_content.split("\n---\n")
 
@@ -106,7 +105,7 @@ def parse_markdown_to_slides(md_content: str, create_slide) -> Slides:
                     parsed_slide.sections[-1].content = line
         parsed_slides.append(parsed_slide)
 
-    return Slides(slides=[create_slide(slide) for slide in parsed_slides])
+    return Slides(slides=[theme.create_slide(slide) for slide in parsed_slides])
 
 
 def embed_images_as_base64(markdown_content: str, base_dir: str) -> str:
