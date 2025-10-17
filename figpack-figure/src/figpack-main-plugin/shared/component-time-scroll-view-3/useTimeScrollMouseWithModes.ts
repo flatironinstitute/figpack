@@ -2,6 +2,40 @@ import { useCallback, useRef, useState } from "react";
 import { useTimeRange } from "../../shared/context-timeseries-selection";
 import { InteractionMode } from "./TimeScrollToolbar";
 
+/**
+ * Gets mouse coordinates relative to an element, accounting for CSS scale transforms
+ * on ancestor elements.
+ */
+function getTransformAwareMousePosition(
+  e: React.MouseEvent,
+  element: HTMLElement,
+): { x: number; y: number } {
+  const rect = element.getBoundingClientRect();
+
+  // Get the cumulative scale factor from all ancestor transforms
+  let cumulativeScale = 1;
+  let currentElement: HTMLElement | null = element;
+
+  while (currentElement) {
+    const style = window.getComputedStyle(currentElement);
+    const scale = style.scale;
+    if (scale && scale !== "none") {
+      cumulativeScale *= parseFloat(scale);
+    }
+
+    currentElement = currentElement.parentElement;
+  }
+
+  console.log("---- cumulative scale:", cumulativeScale);
+
+  // Calculate mouse position relative to the element
+  // and adjust for the cumulative scale
+  const x = (e.clientX - rect.left) / cumulativeScale;
+  const y = (e.clientY - rect.top) / cumulativeScale;
+
+  return { x, y };
+}
+
 type MouseData = {
   mouseDownAchorX: number | null;
   mouseDownAnchorTime: number | null;
@@ -63,7 +97,10 @@ const useTimeScrollMouseWithModes = (
     (e: React.MouseEvent) => {
       setIsViewClicked(true);
       if (!e.shiftKey && !e.ctrlKey && !e.altKey) {
-        const x = e.clientX - e.currentTarget.getBoundingClientRect().x;
+        const { x } = getTransformAwareMousePosition(
+          e,
+          e.currentTarget as HTMLElement,
+        );
 
         if (interactionMode === "select-zoom") {
           mouseData.current.selectionStartX = x;
@@ -88,7 +125,10 @@ const useTimeScrollMouseWithModes = (
   const handleMouseUp = useCallback(
     (e: React.MouseEvent) => {
       if (!e.shiftKey && !e.ctrlKey && !e.altKey) {
-        const x = e.clientX - e.currentTarget.getBoundingClientRect().x;
+        const { x, y } = getTransformAwareMousePosition(
+          e,
+          e.currentTarget as HTMLElement,
+        );
 
         if (
           interactionMode === "select-zoom" &&
@@ -108,7 +148,6 @@ const useTimeScrollMouseWithModes = (
             setCurrentTime(t0);
 
             if (onCanvasClick) {
-              const y = e.clientY - e.currentTarget.getBoundingClientRect().y;
               onCanvasClick(x, y);
             }
           }
@@ -126,7 +165,6 @@ const useTimeScrollMouseWithModes = (
             setCurrentTime(t0);
 
             if (onCanvasClick) {
-              const y = e.clientY - e.currentTarget.getBoundingClientRect().y;
               onCanvasClick(x, y);
             }
           }
@@ -146,7 +184,10 @@ const useTimeScrollMouseWithModes = (
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      const x = e.clientX - e.currentTarget.getBoundingClientRect().x;
+      const { x } = getTransformAwareMousePosition(
+        e,
+        e.currentTarget as HTMLElement,
+      );
       const t0 = pixelToTime(x);
       setHoverTime(t0);
 

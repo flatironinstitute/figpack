@@ -13,6 +13,7 @@ import {
   TimeseriesSelectionState,
 } from "./shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { FPBox } from "./views/FPBox";
+import { FPCaptionedView } from "./views/FPCaptionedView";
 import { FPDataFrame } from "./views/FPDataFrame";
 import { FPGallery } from "./views/FPGallery";
 import { FPIframe } from "./views/FPIframe";
@@ -134,6 +135,11 @@ export const registerMainPlugin = () => {
   registerFPViewComponent({
     name: "Box",
     render: makeRenderFunction(FPBox, renderFPView),
+  });
+
+  registerFPViewComponent({
+    name: "CaptionedView",
+    render: makeRenderFunction(FPCaptionedView, renderFPView),
   });
 
   registerFPViewComponent({

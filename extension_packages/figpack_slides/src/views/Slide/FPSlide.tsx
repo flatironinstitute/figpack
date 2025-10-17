@@ -94,7 +94,7 @@ const FPSlide: React.FC<Props> = ({
             top: 0,
             left: 0,
             width,
-            height: header.height,
+            height: headerHeight,
             backgroundColor: header.background_color,
           }}
         />
@@ -117,9 +117,9 @@ const FPSlide: React.FC<Props> = ({
         <div
           style={{
             position: "absolute",
-            top: headerHeight + 20,
-            left: 20,
-            width: width - 40,
+            top: headerHeight + contentPadding / 2,
+            left: contentPadding / 2,
+            width: width - contentPadding,
             height: titleFontSize,
             fontSize: `${titleFontSize}px`,
             fontFamily: title.font_family || undefined,
@@ -135,16 +135,16 @@ const FPSlide: React.FC<Props> = ({
         <div
           style={{
             position: "absolute",
-            top: headerHeight + titleHeight + 20,
-            left: 20,
-            width: width - 40,
+            top: headerHeight + titleHeight + contentPadding / 2,
+            left: contentPadding / 2,
+            width: width - contentPadding,
             height: viewWrapperHeight,
             overflow: "hidden",
           }}
         >
           <FPViewWrapper
             zarrGroup={contentGroup}
-            width={width - 40}
+            width={width - contentPadding}
             height={viewWrapperHeight}
             contexts={contexts}
             renderFPView={renderFPView}
@@ -157,10 +157,10 @@ const FPSlide: React.FC<Props> = ({
         <div
           style={{
             position: "absolute",
-            bottom: 0,
+            top: height - footerHeight,
             left: 0,
             width,
-            height: footer.height,
+            height: footerHeight,
             backgroundColor: footer.background_color,
           }}
         />
