@@ -32,6 +32,7 @@ export type TimeseriesSelectionAction =
   | {
       type: "setCurrentTime";
       currentTime: number | undefined;
+      ensureVisible?: boolean;
     }
   | {
       type: "zoomVisibleTimeRange";
@@ -89,8 +90,12 @@ export const useTimeseriesSelection = () => {
   );
 
   const setCurrentTime = useCallback(
-    (currentTime: number | undefined) => {
-      dispatch({ type: "setCurrentTime", currentTime });
+    (currentTime: number | undefined, o?: { ensureVisible?: boolean }) => {
+      dispatch({
+        type: "setCurrentTime",
+        currentTime,
+        ensureVisible: o?.ensureVisible,
+      });
     },
     [dispatch],
   );

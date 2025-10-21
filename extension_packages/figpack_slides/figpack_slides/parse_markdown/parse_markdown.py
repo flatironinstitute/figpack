@@ -17,6 +17,7 @@ class ParsedSlide:
     slide_type: str
     metadata: dict
     sections: List[ParsedSlideSection]
+    overlays: List[str]
 
 
 def create_presentation(md_content: str, *, theme) -> Slides:
@@ -30,7 +31,7 @@ def create_presentation(md_content: str, *, theme) -> Slides:
             continue
 
         parsed_slide = ParsedSlide(
-            title="", slide_type="normal", sections=[], metadata={}
+            title="", slide_type="normal", sections=[], metadata={}, overlays=[]
         )
 
         parsed_slide.sections.append(
@@ -41,8 +42,10 @@ def create_presentation(md_content: str, *, theme) -> Slides:
         )
         in_slide_metadata_block = False
         in_section_metadata_block = False
+        in_slide_overlay_block = False
         slide_metadata_yaml_lines = []
         section_metadata_yaml_lines = []
+        slide_overlay_svg_lines = []
         for line in lines:
             if line.startswith("# ") and parsed_slide.title == "":
                 parsed_slide.title = line.lstrip("# ").strip()
@@ -66,8 +69,25 @@ def create_presentation(md_content: str, *, theme) -> Slides:
                     raise ValueError(
                         "Cannot start section-metadata block inside slide-metadata block."
                     )
+                if in_slide_overlay_block:
+                    raise ValueError(
+                        "Cannot start section-metadata block inside slide-overlay block."
+                    )
                 in_section_metadata_block = True
                 section_metadata_yaml_lines = []
+            elif line == "```svg slide-overlay":
+                if in_slide_overlay_block:
+                    raise ValueError("Nested slide-overlay blocks are not allowed.")
+                if in_slide_metadata_block:
+                    raise ValueError(
+                        "Cannot start slide-overlay block inside slide-metadata block."
+                    )
+                if in_section_metadata_block:
+                    raise ValueError(
+                        "Cannot start slide-overlay block inside section-metadata block."
+                    )
+                in_slide_overlay_block = True
+                slide_overlay_svg_lines = []
             elif in_slide_metadata_block:
                 if line == "```":
                     in_slide_metadata_block = False
@@ -98,6 +118,18 @@ def create_presentation(md_content: str, *, theme) -> Slides:
                     section_metadata_yaml_lines = []
                 else:
                     section_metadata_yaml_lines.append(line)
+            elif in_slide_overlay_block:
+                if line == "```":
+                    in_slide_overlay_block = False
+                    # Process and sanitize SVG content
+                    svg_content = "\n".join(slide_overlay_svg_lines).strip()
+                    if svg_content:
+                        sanitized_svg = _sanitize_svg(svg_content)
+                        if sanitized_svg:
+                            parsed_slide.overlays.append(sanitized_svg)
+                    slide_overlay_svg_lines = []
+                else:
+                    slide_overlay_svg_lines.append(line)
             else:
                 if parsed_slide.sections[-1].content:
                     parsed_slide.sections[-1].content += "\n" + line
@@ -106,6 +138,42 @@ def create_presentation(md_content: str, *, theme) -> Slides:
         parsed_slides.append(parsed_slide)
 
     return Slides(slides=[theme.create_slide(slide) for slide in parsed_slides])
+
+
+def _sanitize_svg(svg_content: str) -> str:
+    """
+    Sanitize SVG content by removing potentially dangerous elements.
+
+    Args:
+        svg_content: Raw SVG content string
+
+    Returns:
+        Sanitized SVG content, or empty string if invalid
+    """
+    import re
+
+    # Strip whitespace
+    svg_content = svg_content.strip()
+
+    # Basic validation - should contain SVG-like tags
+    if not svg_content or not ("<" in svg_content and ">" in svg_content):
+        return ""
+
+    # Remove script tags and their content (case-insensitive)
+    svg_content = re.sub(
+        r"<script[^>]*>.*?</script>", "", svg_content, flags=re.IGNORECASE | re.DOTALL
+    )
+    svg_content = re.sub(r"<script[^>]*/?>", "", svg_content, flags=re.IGNORECASE)
+
+    # Remove on* event handlers (onclick, onload, etc.)
+    svg_content = re.sub(
+        r'\s+on\w+\s*=\s*["\'][^"\']*["\']', "", svg_content, flags=re.IGNORECASE
+    )
+    svg_content = re.sub(
+        r"\s+on\w+\s*=\s*[^\s>]+", "", svg_content, flags=re.IGNORECASE
+    )
+
+    return svg_content.strip()
 
 
 def embed_images_as_base64(markdown_content: str, base_dir: str) -> str:

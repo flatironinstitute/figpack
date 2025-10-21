@@ -14,6 +14,7 @@ import { useProvideFPViewContext } from "../../figpack-utils";
 import {
   useMultiChannelIntervalsMetadata,
   useIntervalData,
+  useSampleDataMinMax,
 } from "./useMultiChannelIntervalsData";
 import { createDrawFunction } from "./renderMultiChannelInterval";
 import MultiChannelIntervalsCanvas from "./MultiChannelIntervalsCanvas";
@@ -52,6 +53,7 @@ const FPMultiChannelIntervalsChild: React.FC<{
     number | null
   >(null);
   const [verticalSpacing, setVerticalSpacing] = useState<number>(3);
+  const [amplitudeScaleFactor, setAmplitudeScaleFactor] = useState<number>(1);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [canvasWidth, setCanvasWidth] = useState<number>(width);
   const [canvasHeight, setCanvasHeight] = useState<number>(height);
@@ -70,25 +72,38 @@ const FPMultiChannelIntervalsChild: React.FC<{
     metadata?.nChannels || 0,
   );
 
+  // Load sample data for computing min/max from first 100 intervals
+  const { dataMinMax, loading: dataMinMaxLoading } = useSampleDataMinMax(
+    zarrGroup,
+    metadata?.nIntervals || 0,
+    metadata?.nTimepoints || 0,
+    metadata?.nChannels || 0,
+    100, // Load first 100 intervals
+  );
+
+  const { dataMin, dataMax } = useMemo(() => {
+    if (!dataMinMax) return { dataMin: 0, dataMax: 10 };
+
+    const rawDataMin = dataMinMax.dataMin;
+    const rawDataMax = dataMinMax.dataMax;
+
+    // Apply amplitude scale factor while preserving center
+    const center = (rawDataMin + rawDataMax) / 2;
+    const range = rawDataMax - rawDataMin;
+    const scaledRange = range / amplitudeScaleFactor;
+    const dataMin = center - scaledRange / 2;
+    const dataMax = center + scaledRange / 2;
+
+    return { dataMin, dataMax };
+  }, [dataMinMax, amplitudeScaleFactor]);
+
   // Calculate base spacing unit
   const baseSpacingUnit = useMemo(() => {
     if (!intervalData || !metadata) return 0;
 
-    let dataMin = Infinity;
-    let dataMax = -Infinity;
-
-    for (let ch = 0; ch < metadata.nChannels; ch++) {
-      const channelData = intervalData[ch];
-      for (let i = 0; i < channelData.length; i++) {
-        const value = channelData[i];
-        if (value < dataMin) dataMin = value;
-        if (value > dataMax) dataMax = value;
-      }
-    }
-
     const dataRange = dataMax - dataMin;
     return dataRange * 0.3;
-  }, [intervalData, metadata]);
+  }, [intervalData, metadata, dataMin, dataMax]);
 
   const actualVerticalSpacing = verticalSpacing * baseSpacingUnit;
 
@@ -123,6 +138,9 @@ const FPMultiChannelIntervalsChild: React.FC<{
     (time: number | undefined): number | null => {
       if (time === undefined || !metadata) return null;
 
+      let closestIntervalIndex: number | null = null;
+      let closestDistance = Infinity;
+
       for (let i = 0; i < metadata.nIntervals; i++) {
         const windowStart = metadata.windowStartTimesSec[i];
         const windowDuration =
@@ -130,11 +148,17 @@ const FPMultiChannelIntervalsChild: React.FC<{
         const windowEnd = windowStart + windowDuration;
 
         if (time >= windowStart && time <= windowEnd) {
-          return i;
+          const intervalStart = metadata.intervalStartTimesSec[i];
+          const distance = Math.abs(time - intervalStart);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIntervalIndex = i;
+          }
         }
       }
 
-      return null;
+      return closestIntervalIndex;
     },
     [metadata],
   );
@@ -149,18 +173,6 @@ const FPMultiChannelIntervalsChild: React.FC<{
   const yRange = useMemo(() => {
     if (!intervalData || !metadata) return { yMin: 0, yMax: 10 };
 
-    let dataMin = Infinity;
-    let dataMax = -Infinity;
-
-    for (let ch = 0; ch < metadata.nChannels; ch++) {
-      const channelData = intervalData[ch];
-      for (let i = 0; i < channelData.length; i++) {
-        const value = channelData[i];
-        if (value < dataMin) dataMin = value;
-        if (value > dataMax) dataMax = value;
-      }
-    }
-
     const dataRange = dataMax - dataMin;
     const totalVerticalOffset =
       (metadata.nChannels - 1) * actualVerticalSpacing;
@@ -170,7 +182,7 @@ const FPMultiChannelIntervalsChild: React.FC<{
       yMin: dataMin - padding,
       yMax: dataMax + totalVerticalOffset + padding,
     };
-  }, [intervalData, metadata, actualVerticalSpacing]);
+  }, [intervalData, metadata, actualVerticalSpacing, dataMin, dataMax]);
 
   // Create draw function
   const draw = useMemo(() => {
@@ -244,7 +256,7 @@ const FPMultiChannelIntervalsChild: React.FC<{
       const clickTime = windowStart + fraction * (windowEnd - windowStart);
 
       // Set the current time
-      setCurrentTime(clickTime);
+      setCurrentTime(clickTime, { ensureVisible: true });
     },
     [currentIntervalIndex, metadata, canvasWidth, margins, setCurrentTime],
   );
@@ -265,14 +277,21 @@ const FPMultiChannelIntervalsChild: React.FC<{
         }
       }
       if (closestIdx >= 0) {
-        setCurrentTime(metadata.intervalStartTimesSec[closestIdx]);
+        setCurrentTime(metadata.intervalStartTimesSec[closestIdx], {
+          ensureVisible: true,
+        });
       } else if (metadata.nIntervals > 0) {
         // Go to last interval if current time is before all intervals
-        setCurrentTime(metadata.intervalStartTimesSec[metadata.nIntervals - 1]);
+        setCurrentTime(
+          metadata.intervalStartTimesSec[metadata.nIntervals - 1],
+          { ensureVisible: true },
+        );
       }
     } else if (currentIntervalIndex !== null && currentIntervalIndex > 0) {
       const newIndex = currentIntervalIndex - 1;
-      setCurrentTime(metadata.intervalStartTimesSec[newIndex]);
+      setCurrentTime(metadata.intervalStartTimesSec[newIndex], {
+        ensureVisible: true,
+      });
     }
   }, [currentIntervalIndex, metadata, currentTime, setCurrentTime]);
 
@@ -291,17 +310,23 @@ const FPMultiChannelIntervalsChild: React.FC<{
         }
       }
       if (closestIdx >= 0) {
-        setCurrentTime(metadata.intervalStartTimesSec[closestIdx]);
+        setCurrentTime(metadata.intervalStartTimesSec[closestIdx], {
+          ensureVisible: true,
+        });
       } else if (metadata.nIntervals > 0) {
         // Go to first interval if current time is after all intervals
-        setCurrentTime(metadata.intervalStartTimesSec[0]);
+        setCurrentTime(metadata.intervalStartTimesSec[0], {
+          ensureVisible: true,
+        });
       }
     } else if (
       currentIntervalIndex !== null &&
       currentIntervalIndex < metadata.nIntervals - 1
     ) {
       const newIndex = currentIntervalIndex + 1;
-      setCurrentTime(metadata.intervalStartTimesSec[newIndex]);
+      setCurrentTime(metadata.intervalStartTimesSec[newIndex], {
+        ensureVisible: true,
+      });
     }
   }, [currentIntervalIndex, metadata, currentTime, setCurrentTime]);
 
@@ -310,38 +335,43 @@ const FPMultiChannelIntervalsChild: React.FC<{
     const actions = [
       {
         id: "prev-interval",
-        label: "◀ Prev",
+        label: "◀",
         onClick: handleNavigatePreviousEnhanced,
         tooltip: "Previous interval",
         disabled: false, // Always enabled now
+        type: "button" as const,
       },
       {
         id: "interval-display",
         label:
           currentIntervalIndex !== null && metadata
             ? `${currentIntervalIndex + 1} / ${metadata.nIntervals}`
-            : "No interval",
+            : "",
         onClick: () => {},
         tooltip: "Current interval",
+        type: "display" as const,
       },
       {
         id: "next-interval",
-        label: "Next ▶",
+        label: "▶",
         onClick: handleNavigateNextEnhanced,
         tooltip: "Next interval",
         disabled: false, // Always enabled now
+        type: "button" as const,
       },
       {
         id: "spacer",
         label: "|",
         onClick: () => {},
         tooltip: "",
+        type: "divider" as const,
       },
       {
         id: "decrease-spacing",
         label: "−",
         onClick: () => setVerticalSpacing((prev) => Math.max(0, prev - 1)),
         tooltip: "Decrease vertical spacing",
+        type: "button" as const,
       },
       {
         id: "spacing-display",
@@ -351,12 +381,42 @@ const FPMultiChannelIntervalsChild: React.FC<{
           verticalSpacing === 0
             ? "No spacing"
             : `Spacing: ${verticalSpacing}x base unit`,
+        type: "display" as const,
       },
       {
         id: "increase-spacing",
         label: "+",
         onClick: () => setVerticalSpacing((prev) => Math.min(10, prev + 1)),
         tooltip: "Increase vertical spacing",
+        type: "button" as const,
+      },
+      {
+        id: "spacer-2",
+        label: "|",
+        onClick: () => {},
+        tooltip: "",
+        type: "divider" as const,
+      },
+      {
+        id: "decrease-amplitude",
+        label: "−",
+        onClick: () => setAmplitudeScaleFactor((prev) => prev / 1.2),
+        tooltip: "Decrease amplitude",
+        type: "button" as const,
+      },
+      {
+        id: "amplitude-display",
+        label: `${amplitudeScaleFactor.toFixed(1)}x`,
+        onClick: () => {},
+        tooltip: `Amplitude scale: ${amplitudeScaleFactor.toFixed(2)}x`,
+        type: "display" as const,
+      },
+      {
+        id: "increase-amplitude",
+        label: "+",
+        onClick: () => setAmplitudeScaleFactor((prev) => prev * 1.2),
+        tooltip: "Increase amplitude",
+        type: "button" as const,
       },
     ];
     return actions;
@@ -364,6 +424,7 @@ const FPMultiChannelIntervalsChild: React.FC<{
     currentIntervalIndex,
     metadata,
     verticalSpacing,
+    amplitudeScaleFactor,
     handleNavigatePreviousEnhanced,
     handleNavigateNextEnhanced,
   ]);
@@ -380,7 +441,7 @@ const FPMultiChannelIntervalsChild: React.FC<{
     return <div>No metadata available</div>;
   }
 
-  if (dataLoading) {
+  if (dataLoading || dataMinMaxLoading) {
     return <div>Loading interval data...</div>;
   }
 

@@ -56,6 +56,7 @@ def build_title_slide(parsed_slide: fps.ParsedSlide, theme: Theme) -> fpsv.Title
             else None
         ),
         background_color=style.title_slide_background_color,
+        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
     )
 
 
@@ -96,6 +97,7 @@ def build_standard_slide(parsed_slide: fps.ParsedSlide, theme: Theme) -> fpsv.Sl
         header=style.get_header(),
         footer=style.get_footer(),
         background_color=style.standard_slide_background_color,
+        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
     )
 
 
@@ -144,6 +146,7 @@ def build_tabs_on_right_slide(
         header=style.get_header(),
         footer=style.get_footer(),
         background_color=style.standard_slide_background_color,
+        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
     )
 
 

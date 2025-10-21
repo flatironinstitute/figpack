@@ -264,15 +264,6 @@ const SlideWrapper: FunctionComponent<{
   if (!isVisible && !hasBeenVisible) {
     return <span style={{ display: "none" }} />;
   }
-  console.log("---", {
-    scale,
-    width,
-    height,
-    nativeWidth,
-    nativeHeight,
-    dx,
-    dy,
-  });
   return (
     <div
       style={{
