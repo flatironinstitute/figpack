@@ -26,8 +26,6 @@ function getTransformAwareMousePosition(
     currentElement = currentElement.parentElement;
   }
 
-  console.log("---- cumulative scale:", cumulativeScale);
-
   // Calculate mouse position relative to the element
   // and adjust for the cumulative scale
   const x = (e.clientX - rect.left) / cumulativeScale;

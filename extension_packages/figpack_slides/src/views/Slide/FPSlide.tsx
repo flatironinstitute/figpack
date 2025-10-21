@@ -60,6 +60,7 @@ const FPSlide: React.FC<Props> = ({
   );
 
   const contentGroup = useContentGroup(zarrGroup);
+  const overlays = useOverlays(zarrGroup);
 
   const showTitle = title && !hideTitle;
 
@@ -165,6 +166,26 @@ const FPSlide: React.FC<Props> = ({
           }}
         />
       )}
+
+      {/* Overlays */}
+      {overlays && overlays.length > 0 && (
+        <svg
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width,
+            height,
+            pointerEvents: "none",
+          }}
+          viewBox={`0 0 ${width} ${height}`}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {overlays.map((overlay, index) => (
+            <g key={index} dangerouslySetInnerHTML={{ __html: overlay }} />
+          ))}
+        </svg>
+      )}
     </div>
   );
 };
@@ -183,6 +204,47 @@ const useContentGroup = (zarrGroup: ZarrGroup): ZarrGroup | null => {
   }, [zarrGroup]);
 
   return contentGroup;
+};
+
+const useOverlays = (zarrGroup: ZarrGroup): string[] | null => {
+  const [overlays, setOverlays] = React.useState<string[] | null>(null);
+
+  React.useEffect(() => {
+    const loadOverlays = async () => {
+      const numOverlays = zarrGroup.attrs["num_overlays"] as number | undefined;
+      if (!numOverlays) {
+        setOverlays(null);
+        return;
+      }
+
+      try {
+        const overlaysGroup = await zarrGroup.getGroup("overlays");
+        if (!overlaysGroup) {
+          setOverlays(null);
+          return;
+        }
+
+        const loadedOverlays: string[] = [];
+        for (let i = 0; i < numOverlays; i++) {
+          const data = await overlaysGroup.getDatasetData(String(i), {});
+          if (data !== undefined) {
+            const uint8Array = new Uint8Array(data);
+            const decoder = new TextDecoder("utf-8");
+            const svgContent = decoder.decode(uint8Array);
+            loadedOverlays.push(svgContent);
+          }
+        }
+        setOverlays(loadedOverlays);
+      } catch (err) {
+        console.error("Failed to load overlays:", err);
+        setOverlays(null);
+      }
+    };
+
+    loadOverlays();
+  }, [zarrGroup]);
+
+  return overlays;
 };
 
 export default FPSlide;

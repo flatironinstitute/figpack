@@ -155,3 +155,82 @@ export const useIntervalData = (
 
   return { intervalData, loading, error };
 };
+
+export const useSampleDataMinMax = (
+  zarrGroup: ZarrGroup,
+  nIntervals: number,
+  nTimepoints: number,
+  nChannels: number,
+  maxSampleIntervals: number = 100,
+) => {
+  const [dataMinMax, setDataMinMax] = useState<{
+    dataMin: number;
+    dataMax: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (nIntervals === 0 || nTimepoints === 0 || nChannels === 0) {
+      setLoading(false);
+      return;
+    }
+
+    let canceled = false;
+
+    const loadSampleData = async () => {
+      try {
+        const numIntervalsToLoad = Math.min(maxSampleIntervals, nIntervals);
+
+        // Load data for first N intervals: shape is [numIntervalsToLoad, nTimepoints, nChannels]
+        const rawData = await zarrGroup.getDatasetData("data", {
+          slice: [
+            [0, numIntervalsToLoad],
+            [0, nTimepoints],
+            [0, nChannels],
+          ],
+        });
+
+        if (canceled) return;
+
+        if (!rawData) {
+          throw new Error("Failed to load sample data");
+        }
+
+        // Calculate min and max across all loaded data
+        let dataMin = Infinity;
+        let dataMax = -Infinity;
+
+        for (let i = 0; i < rawData.length; i++) {
+          const value = rawData[i] as number;
+          if (value < dataMin) dataMin = value;
+          if (value > dataMax) dataMax = value;
+        }
+
+        setDataMinMax({ dataMin, dataMax });
+        setError(null);
+      } catch (err) {
+        if (!canceled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load sample data for min/max",
+          );
+          setDataMinMax(null);
+        }
+      } finally {
+        if (!canceled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSampleData();
+
+    return () => {
+      canceled = true;
+    };
+  }, [zarrGroup, nIntervals, nTimepoints, nChannels, maxSampleIntervals]);
+
+  return { dataMinMax, loading, error };
+};

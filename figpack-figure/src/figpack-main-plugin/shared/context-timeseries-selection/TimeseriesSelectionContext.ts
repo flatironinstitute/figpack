@@ -32,6 +32,7 @@ export type TimeseriesSelectionAction =
   | {
       type: "setCurrentTime";
       currentTime: number | undefined;
+      ensureVisible?: boolean;
     }
   | {
       type: "zoomVisibleTimeRange";
@@ -189,10 +190,38 @@ export const timeseriesSelectionReducer = (
       };
     }
     case "setCurrentTime": {
-      return {
-        ...state,
-        currentTime: action.currentTime,
-      };
+      if (action.ensureVisible) {
+        let newVisibleStartTimeSec = state.visibleStartTimeSec;
+        let newVisibleEndTimeSec = state.visibleEndTimeSec;
+        if (
+          newVisibleStartTimeSec !== undefined &&
+          newVisibleEndTimeSec !== undefined &&
+          action.currentTime !== undefined
+        ) {
+          if (action.currentTime < newVisibleStartTimeSec) {
+            const visibleSpan = newVisibleEndTimeSec - newVisibleStartTimeSec;
+            const a = visibleSpan * 0.1;
+            newVisibleStartTimeSec = action.currentTime - a;
+            newVisibleEndTimeSec = newVisibleStartTimeSec + visibleSpan;
+          } else if (action.currentTime > newVisibleEndTimeSec) {
+            const visibleSpan = newVisibleEndTimeSec - newVisibleStartTimeSec;
+            const a = visibleSpan * 0.1;
+            newVisibleEndTimeSec = action.currentTime + a;
+            newVisibleStartTimeSec = newVisibleEndTimeSec - visibleSpan;
+          }
+        }
+        return {
+          ...state,
+          currentTime: action.currentTime,
+          visibleStartTimeSec: newVisibleStartTimeSec,
+          visibleEndTimeSec: newVisibleEndTimeSec,
+        };
+      } else {
+        return {
+          ...state,
+          currentTime: action.currentTime,
+        };
+      }
     }
     default:
       return state;
@@ -241,8 +270,12 @@ export const useTimeseriesSelection = () => {
   );
 
   const setCurrentTime = useCallback(
-    (currentTime: number | undefined) => {
-      dispatch({ type: "setCurrentTime", currentTime });
+    (currentTime: number | undefined, o?: { ensureVisible?: boolean }) => {
+      dispatch({
+        type: "setCurrentTime",
+        currentTime,
+        ensureVisible: o?.ensureVisible,
+      });
     },
     [dispatch],
   );

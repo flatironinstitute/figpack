@@ -1,6 +1,7 @@
 doc-pages.json
 *.nii.gz
 stats.html
+figpack-presentation/
 
 figpack-blog
 

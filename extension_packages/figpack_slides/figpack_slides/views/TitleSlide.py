@@ -68,6 +68,7 @@ class TitleSlide(Slide):
         subtitle: Optional[str | SlideText] = None,
         author: Optional[str | SlideText] = None,
         background_color: str = "white",
+        overlays: Optional[list[str]] = None,
     ):
         self.title = title
         self.subtitle = subtitle
@@ -84,4 +85,5 @@ class TitleSlide(Slide):
             header=None,
             footer=None,
             background_color=self.background_color,
+            overlays=overlays,
         )

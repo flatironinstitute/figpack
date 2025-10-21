@@ -11,6 +11,8 @@ export type CustomToolbarAction = {
   isActive?: boolean;
   tooltip?: string;
   component?: React.ReactNode; // Add support for custom React components
+  disabled?: boolean;
+  type?: "button" | "display" | "divider";
 };
 
 type Props = {

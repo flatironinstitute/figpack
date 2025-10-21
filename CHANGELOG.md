@@ -2,9 +2,13 @@
 
 ## [Unreleased]
 
+## [0.2.34] - 2025-10-21
+
 - New multi channel intervals view in figpack_experimental extension
 - New CaptionedView view in main figpack package
 - Fix spacing in slides
+- Add ensureVisible option to setCurrentTime, and use this in MultiChannelIntervals view
+- Enhance MultiChannelIntervals
 
 ## [0.2.33] - 2025-10-13
 
