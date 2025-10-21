@@ -1,3 +1,12 @@
 .wy-nav-content {
     max-width: 1200px !important;
 }
+
+/* Hide sidebar and adjust layout when in embed mode */
+.embed-mode .wy-nav-side {
+    display: none !important;
+}
+
+.embed-mode .wy-nav-content-wrap {
+    margin-left: 0 !important;
+}

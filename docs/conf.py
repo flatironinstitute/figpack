@@ -31,6 +31,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_css_files = ["custom.css", "figpack_assistant.css"]
+html_js_files = ["embed.js"]
 
 # Copy additional files to the build directory
 html_extra_path = ["doc-pages.json"]

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Implement embed=true query parameter for docs for embedding in presentations
+
 ## [0.2.34] - 2025-10-21
 
 - New multi channel intervals view in figpack_experimental extension
