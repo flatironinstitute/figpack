@@ -15,14 +15,14 @@ import figpack
 class CustomJSONEncoder(json.JSONEncoder):
     """Custom JSON encoder that handles numpy arrays and other types"""
 
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, (np.integer, np.floating)):
-            return obj.item()
-        elif hasattr(obj, "isoformat"):  # Handle datetime-like objects
-            return obj.isoformat()
-        return super().default(obj)
+    def default(self, o):
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        elif isinstance(o, (np.integer, np.floating)):
+            return o.item()
+        elif hasattr(o, "isoformat"):  # Handle datetime-like objects
+            return o.isoformat()
+        return super().default(o)
 
 
 def _download_force_graph_library():
@@ -181,7 +181,7 @@ class ForceGraphView(figpack.ExtensionView):
             color: Color of the node
             **kwargs: Additional node properties
         """
-        node = {"id": node_id}
+        node: Dict[str, Any] = {"id": node_id}
         if name is not None:
             node["name"] = name
         if val is not None:
@@ -210,7 +210,7 @@ class ForceGraphView(figpack.ExtensionView):
             width: Width of the link
             **kwargs: Additional link properties
         """
-        link = {"source": source, "target": target}
+        link: Dict[str, Any] = {"source": source, "target": target}
         if color is not None:
             link["color"] = color
         if width is not None:

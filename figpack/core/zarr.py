@@ -33,13 +33,13 @@ class Group:
         if _check_zarr_version() == 2:
             self._zarr_group.create_dataset(name, **kwargs)
         elif _check_zarr_version() == 3:
-            self._zarr_group.create_array(name, **kwargs)
+            self._zarr_group.create_array(name, **kwargs)  # type: ignore
         else:
             raise RuntimeError("Unsupported Zarr version")
 
     @property
     def attrs(self) -> Dict[str, Any]:
-        return self._zarr_group.attrs
+        return self._zarr_group.attrs  # type: ignore
 
     def __getitem__(self, key: str) -> Any:
         return self._zarr_group[key]

@@ -16,8 +16,8 @@ if not os.path.exists(local_fname):
 else:
     print(f"{local_fname} already exists. Skipping download.")
 
-img = nib.load(local_fname)
-data = img.get_fdata()
+img = nib.load(local_fname)  # type: ignore
+data = img.get_fdata()  # type: ignore
 # scale to 0-255, and bring 99th percentile to 255
 pct_99 = np.percentile(data, 99)
 data = np.clip(data, 0, pct_99)

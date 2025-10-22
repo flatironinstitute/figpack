@@ -1,3 +1,4 @@
+from typing import Optional, Union
 import hashlib
 import json
 import pathlib
@@ -114,6 +115,7 @@ def _upload_single_file_with_signed_url(
         else:
             break
 
+    assert last_exception is not None
     raise last_exception
 
 
@@ -154,10 +156,10 @@ def _compute_deterministic_figure_hash(tmpdir_path: pathlib.Path) -> str:
 
 def _create_or_get_figure(
     figure_hash: str,
-    api_key: str,
-    total_files: int = None,
-    total_size: int = None,
-    title: str = None,
+    api_key: Optional[str],
+    total_files: Optional[int] = None,
+    total_size: Optional[int] = None,
+    title: Optional[str] = None,
     ephemeral: bool = False,
 ) -> dict:
     """
@@ -178,7 +180,7 @@ def _create_or_get_figure(
     if not ephemeral and api_key is None:
         raise ValueError("API key is required for non-ephemeral figures")
 
-    payload = {
+    payload: dict[str, Union[str, int]] = {
         "figureHash": figure_hash,
         "figpackVersion": __version__,
         "bucket": FIGPACK_BUCKET,
@@ -252,8 +254,8 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
 
 def _upload_bundle(
     tmpdir: str,
-    api_key: str,
-    title: str = None,
+    api_key: Optional[str],
+    title: Optional[str] = None,
     ephemeral: bool = False,
     use_consolidated_metadata_only: bool = False,
 ) -> str:
@@ -329,7 +331,9 @@ def _upload_bundle(
 
             # Get signed URLs for this batch
             try:
-                signed_urls_map = _get_batch_signed_urls(figure_url, batch, api_key)
+                signed_urls_map = _get_batch_signed_urls(
+                    figure_url, batch, api_key if api_key else ""
+                )
             except Exception as e:
                 print(f"Failed to get signed URLs for batch {batch_num}: {e}")
                 raise
@@ -400,7 +404,9 @@ def _upload_bundle(
     try:
         # Use batch API for manifest
         manifest_batch = [("manifest.json", temp_file_path)]
-        signed_urls_map = _get_batch_signed_urls(figure_url, manifest_batch, api_key)
+        signed_urls_map = _get_batch_signed_urls(
+            figure_url, manifest_batch, api_key if api_key else ""
+        )
 
         if "manifest.json" not in signed_urls_map:
             raise Exception("No signed URL returned for manifest.json")
@@ -418,7 +424,7 @@ def _upload_bundle(
 
     # Finalize the figure upload
     print("Finalizing figure...")
-    _finalize_figure(figure_url, api_key)
+    _finalize_figure(figure_url, api_key if api_key else "")
     print("Upload completed successfully")
 
     return figure_url

@@ -45,6 +45,7 @@ class PlaneSegmentation(figpack.ExtensionView):
             local_cache = None
         f = lindi.LindiH5pyFile.from_hdf5_file(self.nwb, local_cache=local_cache)
         obj = f[self.path]
+        assert isinstance(obj, lindi.LindiH5pyGroup)
 
         neurodata_type = obj.attrs["neurodata_type"]
         if neurodata_type != "PlaneSegmentation":
@@ -75,11 +76,11 @@ class PlaneSegmentation(figpack.ExtensionView):
         image_mask = obj["image_mask"]
         assert isinstance(image_mask, lindi.LindiH5pyDataset)
         image_mask_data = image_mask[()]
-        chunk1 = 500 if image_mask.shape[0] > 500 else image_mask.shape[0]
+        chunk1 = 500 if image_mask.shape[0] > 500 else image_mask.shape[0]  # type: ignore
         chunks = (
-            [chunk1, image_mask.shape[1], image_mask.shape[2]]
+            [chunk1, image_mask.shape[1], image_mask.shape[2]]  # type: ignore
             if image_mask.ndim == 3
-            else [image_mask.shape[0], image_mask.shape[1]]
+            else [image_mask.shape[0], image_mask.shape[1]]  # type: ignore
         )
         group.create_dataset("image_mask", data=image_mask_data, chunks=chunks)
 

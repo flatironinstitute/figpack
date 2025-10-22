@@ -2,7 +2,7 @@
 Box view for figpack - a layout container that handles other views
 """
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import List, Literal, Optional
 
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
@@ -21,7 +21,7 @@ class Box(FigpackView):
         show_titles: bool = True,
         items: List[LayoutItem],
         title: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize a Box layout view
 

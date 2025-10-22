@@ -2,7 +2,7 @@
 RasterPlot view for figpack - displays multiple raster plots
 """
 
-from typing import List
+from typing import List, Any
 import numpy as np
 
 from .RasterPlotItem import RasterPlotItem
@@ -54,7 +54,8 @@ class RasterPlot(figpack.ExtensionView):
             f = lindi.LindiH5pyFile.from_hdf5_file(nwb_url_or_path_or_h5py)
         else:
             f = nwb_url_or_path_or_h5py
-        X = f[units_path]
+        X: Any = f[units_path]
+        assert X, "Units table not found at the specified path"
         spike_times = X["spike_times"]
         spike_times_index = X["spike_times_index"]
         id = X["id"]

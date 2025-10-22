@@ -2,7 +2,7 @@
 SpikeAmplitudes view for figpack - displays spike amplitudes over time
 """
 
-from typing import List
+from typing import List, Any
 
 import numpy as np
 
@@ -54,7 +54,8 @@ class SpikeAmplitudes(figpack.ExtensionView):
             f = lindi.LindiH5pyFile.from_hdf5_file(nwb_url_or_path_or_h5py)
         else:
             f = nwb_url_or_path_or_h5py
-        X = f[units_path]
+        X: Any = f[units_path]
+        assert X, "Units table not found at the specified path"
         spike_amplitudes = X["spike_amplitudes"]
         # spike_amplitudes_index = X["spike_amplitudes_index"] # presumably the same as spike_times_index
         spike_times = X["spike_times"]

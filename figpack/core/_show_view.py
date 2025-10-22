@@ -19,7 +19,7 @@ def _is_in_notebook() -> bool:
     """
     try:
         # Check if IPython is available and we're in a notebook
-        from IPython import get_ipython
+        from IPython import get_ipython  # type: ignore
 
         ipython = get_ipython()
         if ipython is None:

@@ -47,8 +47,8 @@ class FmriBold(figpack.ExtensionView):
                 return FmriBold.from_nii(local_fname)
         else:
             local_fname = nii_fname_or_url
-        img = nib.load(local_fname)
-        data = img.get_fdata().astype(np.uint16)
+        img = nib.load(local_fname)  # type: ignore
+        data = img.get_fdata().astype(np.uint16)  # type: ignore
 
         # ndim = img.header['dim'][0]
         # W = img.header['dim'][1]
@@ -56,11 +56,11 @@ class FmriBold(figpack.ExtensionView):
         # num_slices = img.header['dim'][3]
         # T = img.header['dim'][4]
         resolution = [
-            img.header["pixdim"][1],
-            img.header["pixdim"][2],
-            img.header["pixdim"][3],
+            img.header["pixdim"][1],  # type: ignore
+            img.header["pixdim"][2],  # type: ignore
+            img.header["pixdim"][3],  # type: ignore
         ]
-        temporal_resolution = img.header["pixdim"][4]
+        temporal_resolution = img.header["pixdim"][4]  # type: ignore
 
         # We want T x W x H x num_slices
         data = np.transpose(data, (3, 0, 1, 2))

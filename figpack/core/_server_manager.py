@@ -45,7 +45,7 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
         """Reject PUT requests when file upload is not enabled."""
         self.send_error(405, "Method Not Allowed")
 
-    def log_message(self, fmt, *args):
+    def log_message(self, format, *args):
         pass
 
 
@@ -189,6 +189,7 @@ class ProcessServerManager:
             and self._server_thread.is_alive()
             and (allow_origin is None or self._allow_origin == allow_origin)
         ):
+            assert self._port is not None
             return f"http://localhost:{self._port}", self._port
 
         # Stop existing server if settings are incompatible
@@ -209,7 +210,7 @@ class ProcessServerManager:
         if enable_file_upload:
             from ._file_handler import FileUploadCORSRequestHandler
 
-            def handler_factory(*args, **kwargs):
+            def handler_factory_enable_upload(*args, **kwargs):
                 return FileUploadCORSRequestHandler(
                     *args,
                     directory=str(temp_dir),
@@ -219,6 +220,11 @@ class ProcessServerManager:
                     **kwargs,
                 )
 
+            assert port is not None
+            self._server = ThreadingHTTPServer(
+                ("0.0.0.0", port), handler_factory_enable_upload
+            )
+
         else:
 
             def handler_factory(*args, **kwargs):
@@ -226,7 +232,8 @@ class ProcessServerManager:
                     *args, directory=str(temp_dir), allow_origin=allow_origin, **kwargs
                 )
 
-        self._server = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)
+            assert port is not None
+            self._server = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)
         self._port = port
         self._allow_origin = allow_origin
 

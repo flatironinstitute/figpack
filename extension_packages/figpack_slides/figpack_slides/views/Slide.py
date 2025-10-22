@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional
+from typing import Any, Optional, Dict
 
 import figpack
 from .slides_extension import slides_extension
@@ -104,7 +104,7 @@ class Slide(figpack.ExtensionView):
         super().write_to_zarr_group(group)
 
         if self.title is not None:
-            title_data = {"text": self.title.text}
+            title_data: Dict[str, Any] = {"text": self.title.text}
             if self.title.font_size is not None:
                 title_data["font_size"] = self.title.font_size
             if self.title.font_family is not None:

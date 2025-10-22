@@ -5,6 +5,7 @@ This example creates synthetic multi-channel timeseries data with intervals,
 useful for visualizing events or epochs in electrophysiology data.
 """
 
+from typing import List, Union
 import numpy as np
 from figpack_experimental.views import MultiChannelIntervals
 
@@ -91,7 +92,7 @@ for interval_idx in range(n_intervals):
         data[interval_idx, :, ch] = baseline + noise + burst
 
 # Create channel IDs
-channel_ids = [f"Channel {i+1}" for i in range(n_channels)]
+channel_ids: List[Union[str, int]] = [f"Channel {i+1}" for i in range(n_channels)]
 
 # Create the view
 view = MultiChannelIntervals(

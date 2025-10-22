@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Improve Python typing throughout
+
 ## [0.2.35] - 2025-10-22
 
 - Implement embed=true query parameter for docs for embedding in presentations

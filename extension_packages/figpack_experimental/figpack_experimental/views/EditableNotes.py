@@ -29,7 +29,7 @@ class EditableNotes(figpack.ExtensionView):
         Args:
             group: Zarr group to write data into
         """
-        super()._write_to_zarr_group(group)
+        super().write_to_zarr_group(group)
 
         group.create_dataset("text", data=text_to_bytes(self.initial_text))
 

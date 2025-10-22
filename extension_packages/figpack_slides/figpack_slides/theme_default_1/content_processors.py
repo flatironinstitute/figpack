@@ -5,13 +5,13 @@ Handles markdown files, iframes, images, URLs, etc.
 
 import os
 import re
-from typing import Optional
+from typing import Optional, Union
 import figpack.views as fpv
 import figpack_slides.views as fpsv
 import figpack_slides as fps
 
 
-def process_iframe(content: str) -> fpv.Iframe:
+def process_iframe(content: str) -> Union[fpv.Iframe, fpsv.Markdown]:
     """Extract URL from iframe tag and create Iframe view."""
     match = re.search(r'src="([^"]+)"', content)
     if match:
