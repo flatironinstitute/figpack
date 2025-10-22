@@ -38,6 +38,27 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 
 Apache-2.0
 
+## Citation
+
+If you use figpack in your research, please cite it:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17419621.svg)](https://doi.org/10.5281/zenodo.17419621)
+
+```bibtex
+@software{magland_figpack_2025,
+  author       = {Magland, Jeremy},
+  title        = {figpack},
+  year         = 2025,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.17419621},
+  url          = {https://doi.org/10.5281/zenodo.17419621}
+}
+```
+
+Or in APA format:
+
+> Magland, J. (2025). figpack (Version 0.2.35) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17419621
+
 ## Contributing
 
 Visit the [GitHub repository](https://github.com/flatironinstitute/figpack) for issues, contributions, and the latest updates.
