@@ -2,9 +2,12 @@
 
 ## [Unreleased]
 
+## [0.2.35] - 2025-10-22
+
 - Implement embed=true query parameter for docs for embedding in presentations
 - Slides: box layout on right
 - Documentation: Lazy iframes
+- Add CITATION.cff and create github release for zenodo doi
 
 ## [0.2.34] - 2025-10-21
 

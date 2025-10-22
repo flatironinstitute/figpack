@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+title: figpack
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Jeremy
+    family-names: Magland
+    email: jmagland@flatironinstitute.org
+    affiliation: Flatiron Institute
+repository-code: 'https://github.com/flatironinstitute/figpack'
+url: 'https://flatironinstitute.github.io/figpack'
+abstract: >-
+  A Python package for creating shareable, interactive
+  visualizations in the browser. figpack produces
+  self-contained HTML bundles that include both the
+  rendering logic and the underlying data, making figures
+  portable, reproducible, and suitable for long-term
+  archiving.
+keywords:
+  - visualization
+  - plotting
+  - timeseries
+  - interactive
+  - scientific-visualization
+  - data-visualization
+  - neurophysiology
+  - spike-sorting
+  - browser-based
+  - zarr
+  - reproducible-research
+  - shareable-figures
+  - python
+  - web-visualization
+  - interactive-figures
+  - scientific-computing
+  - data-analysis
+license: Apache-2.0
+version: 0.2.35
+date-released: '2025-10-22'
+# DOI: Add DOI here after creating a Zenodo release
+# Example: 10.5281/zenodo.XXXXXXX

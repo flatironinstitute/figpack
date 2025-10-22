@@ -156,3 +156,28 @@ jobs:
           git config --local user.name "GitHub Action"
           git tag -a ${{ steps.get_version.outputs.version }} -m "Release ${{ steps.get_version.outputs.version }}"
           git push origin ${{ steps.get_version.outputs.version }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          body: |
+            ## figpack ${{ steps.get_version.outputs.version }}
+            
+            This release has been automatically published to PyPI.
+            
+            ### Installation
+            ```bash
+            pip install figpack==${{ steps.get_version.outputs.version }}
+            ```
+            
+            ### Documentation
+            - [Documentation](https://flatironinstitute.github.io/figpack)
+            - [PyPI Package](https://pypi.org/project/figpack/${{ steps.get_version.outputs.version }}/)
+            
+            See [CHANGELOG.md](https://github.com/flatironinstitute/figpack/blob/main/CHANGELOG.md) for details about changes in this release.
+          draft: false
+          prerelease: false
