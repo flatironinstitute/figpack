@@ -26,4 +26,4 @@ view = fpn.PlaneSegmentation(nwb=nwb_url, path=path, use_local_cache=True)
 view.show(title="Plane Segmentation Example", open_in_browser=True)
 ```
 
-<iframe src="./nwb_tutorial_plane_segmentation/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="./nwb_tutorial_plane_segmentation/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>

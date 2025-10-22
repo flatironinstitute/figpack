@@ -150,6 +150,56 @@ def build_tabs_on_right_slide(
     )
 
 
+def build_box_layout_on_right_slide(
+    parsed_slide: fps.ParsedSlide, theme: Theme
+) -> fpsv.Slide:
+    """Build a slide with a box layout on the right side."""
+    title = parsed_slide.title
+    sections = parsed_slide.sections
+    style = theme.style
+
+    if len(sections) < 2:
+        raise ValueError("Box-layout-on-right slide must have at least two sections.")
+
+    # First section goes on the left
+    left_content = process_section(sections[0], theme)
+
+    # Remaining sections become box layout on the right
+    box_items: List[fpv.LayoutItem] = []
+    for section in sections[1:]:
+        box_items.append(
+            fpv.LayoutItem(
+                view=process_section(section, theme),
+                stretch=1,
+            )
+        )
+
+    # Create horizontal layout with left content and box layout on right
+    content = fpv.Box(
+        direction="horizontal",
+        items=[
+            fpv.LayoutItem(view=left_content, stretch=1),
+            fpv.LayoutItem(
+                view=fpv.Box(direction="vertical", items=box_items), stretch=1
+            ),
+        ],
+    )
+
+    return fpsv.Slide(
+        title=fpsv.SlideText(
+            text=title or "",
+            font_size=style.standard_slide_title_font_size,
+            font_family="SANS-SERIF",
+            color=style.standard_slide_text_color,
+        ),
+        content=content,
+        header=style.get_header(),
+        footer=style.get_footer(),
+        background_color=style.standard_slide_background_color,
+        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
+    )
+
+
 def process_section(section: fps.ParsedSlideSection, theme: Theme):
     """Process a slide section and return appropriate view."""
     content = section.content.strip()

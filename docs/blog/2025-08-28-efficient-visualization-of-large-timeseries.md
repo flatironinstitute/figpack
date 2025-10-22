@@ -15,7 +15,7 @@ For instance, consider an electrophysiology recording with hundreds of channels 
 
 Here's a live example showing 15 channels of data with 5 million timepoints each (try zooming and panning):
 
-<iframe src="https://figures.figpack.org/figures/default/c63233908d3b492e1526085e82c71ffb63469c51/index.html" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="https://figures.figpack.org/figures/default/c63233908d3b492e1526085e82c71ffb63469c51/index.html" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
 
 ## Technical Deep Dive
 

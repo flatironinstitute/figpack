@@ -32,7 +32,7 @@ view.show(title="Markdown Example", open_in_browser=True)
 
 ```
 
-<iframe src="./tutorial_markdown_example/index.html?embedded=1" width="100%" height="350" frameborder="0"></iframe>
+<iframe data-src="./tutorial_markdown_example/index.html?embedded=1" width="100%" height="350" frameborder="0" loading="lazy"></iframe>
 
 ## Image View
 
@@ -66,7 +66,7 @@ view = vv.Image(img_bytes.getvalue())
 view.show(title="Image Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_image_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
+<iframe data-src="./tutorial_image_example/index.html?embedded=1" width="100%" height="300" frameborder="0" loading="lazy"></iframe>
 
 ## Simple TimeseriesGraph
 
@@ -94,7 +94,7 @@ graph.add_line_series(
 graph.show(title="Simple Timeseries", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_simple_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_simple_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## Multiple Series
 
@@ -154,7 +154,7 @@ graph.add_interval_series(
 graph.show(title="Multi-Series Plot", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_multi_series/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_multi_series/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## Uniform Timeseries
 
@@ -199,7 +199,7 @@ graph.add_uniform_series(
 graph.show(title="Uniform Timeseries Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_uniform_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_uniform_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## MultiChannelTimeseries
 
@@ -235,7 +235,7 @@ view = vv.MultiChannelTimeseries(
 view.show(title="Multi-Channel Data", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_multichannel_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_multichannel_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## Matplotlib Integration
 
@@ -275,7 +275,7 @@ view = vv.MatplotlibFigure(fig=fig)
 view.show(title="Matplotlib Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_matplotlib_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_matplotlib_example/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## DataFrame View
 
@@ -302,7 +302,7 @@ view = vv.DataFrame(df)
 view.show(title="DataFrame Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_dataframe_example/index.html?embedded=1" width="100%" height="300" frameborder="0"></iframe>
+<iframe data-src="./tutorial_dataframe_example/index.html?embedded=1" width="100%" height="300" frameborder="0" loading="lazy"></iframe>
 
 ## Spectrogram
 
@@ -356,7 +356,7 @@ view = vv.Spectrogram(
 view.show(title="Spectrogram Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_spectrogram_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_spectrogram_example/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 It is also possible to specify non-uniform frequencies in the spectrogram view. See the examples folder for details.
 
@@ -403,7 +403,7 @@ view = vv.PlotlyFigure(fig=fig)
 view.show(title="Plotly Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_plotly_example/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_plotly_example/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## Box Layout
 
@@ -448,7 +448,7 @@ view = vv.Box(
 view.show(title="Box Layout Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_box_layout/index.html?embedded=1" width="100%" height="700" frameborder="0"></iframe>
+<iframe data-src="./tutorial_box_layout/index.html?embedded=1" width="100%" height="700" frameborder="0" loading="lazy"></iframe>
 
 ## TabLayout
 
@@ -484,7 +484,7 @@ view = vv.TabLayout(
 view.show(title="Tab Layout Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_tab_layout/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./tutorial_tab_layout/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## Splitter Layout
 
@@ -530,7 +530,7 @@ view = vv.Splitter(
 view.show(title="Splitter Layout Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_splitter_layout/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="./tutorial_splitter_layout/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
 
 ## Complex Nested Layout
 
@@ -577,4 +577,4 @@ view = vv.Splitter(
 view.show(title="Complex Layout Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_complex_layout/index.html?embedded=1" width="100%" height="700" frameborder="0"></iframe>
+<iframe data-src="./tutorial_complex_layout/index.html?embedded=1" width="100%" height="700" frameborder="0" loading="lazy"></iframe>
