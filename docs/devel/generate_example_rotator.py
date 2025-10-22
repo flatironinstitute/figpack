@@ -10,7 +10,7 @@ from pathlib import Path
 def extract_iframe_urls(markdown_content):
     """Extract src URLs from iframe tags in markdown content."""
     # Regex pattern to match iframe tags and capture src attribute
-    pattern = r'<iframe[^>]+src=["\']([^"\']+)["\']'
+    pattern = r'<iframe[^>]+(?:data-)?src=["\']([^"\']+)["\']'
     matches = re.findall(pattern, markdown_content)
     return matches
 
