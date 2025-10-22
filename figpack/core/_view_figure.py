@@ -34,10 +34,10 @@ def serve_files(
         enable_file_upload: Whether to enable PUT requests for file uploads
         max_file_size: Maximum file size in bytes for uploads (default 10MB)
     """
-    tmpdir = pathlib.Path(tmpdir)
-    tmpdir = tmpdir.resolve()
-    if not tmpdir.exists() or not tmpdir.is_dir():
-        raise SystemExit(f"Directory not found: {tmpdir}")
+    tmpdir_2 = pathlib.Path(tmpdir)
+    tmpdir_2 = tmpdir_2.resolve()
+    if not tmpdir_2.exists() or not tmpdir_2.is_dir():
+        raise SystemExit(f"Directory not found: {tmpdir_2}")
 
     # Create a temporary server manager instance for this specific directory
     # Note: We can't use the singleton ProcessServerManager here because it serves
@@ -56,29 +56,34 @@ def serve_files(
     # Choose handler based on file upload requirement
     if enable_file_upload:
 
-        def handler_factory(*args, **kwargs):
+        def handler_factory_upload_enabled(*args, **kwargs):
             return FileUploadCORSRequestHandler(
                 *args,
-                directory=str(tmpdir),
+                directory=str(tmpdir_2),
                 allow_origin=allow_origin,
                 enable_file_upload=True,
                 max_file_size=max_file_size,
                 **kwargs,
             )
 
-        upload_status = " (file upload enabled)" if enable_file_upload else ""
+        upload_status = (
+            " (file upload enabled)" if handler_factory_upload_enabled else ""
+        )
+
+        httpd = ThreadingHTTPServer(("0.0.0.0", port), handler_factory_upload_enabled)  # type: ignore
     else:
 
         def handler_factory(*args, **kwargs):
             return CORSRequestHandler(
-                *args, directory=str(tmpdir), allow_origin=allow_origin, **kwargs
+                *args, directory=str(tmpdir_2), allow_origin=allow_origin, **kwargs
             )
 
         upload_status = ""
 
-    httpd = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)
+        httpd = ThreadingHTTPServer(("0.0.0.0", port), handler_factory)  # type: ignore
+
     print(
-        f"Serving {tmpdir} at http://localhost:{port} (CORS → {allow_origin}){upload_status}"
+        f"Serving {tmpdir_2} at http://localhost:{port} (CORS → {allow_origin}){upload_status}"
     )
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()

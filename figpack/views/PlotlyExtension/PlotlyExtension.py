@@ -55,15 +55,15 @@ class PlotlyFigure(figpack.ExtensionView):
 class CustomJSONEncoder(json.JSONEncoder):
     """Custom JSON encoder that handles numpy arrays and datetime objects"""
 
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, (np.integer, np.floating)):
-            return obj.item()
-        elif isinstance(obj, (datetime, date)):
-            return obj.isoformat()
-        elif isinstance(obj, np.datetime64):
-            return str(obj)
-        elif hasattr(obj, "isoformat"):  # Handle other datetime-like objects
-            return obj.isoformat()
-        return super().default(obj)
+    def default(self, o):
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        elif isinstance(o, (np.integer, np.floating)):
+            return o.item()
+        elif isinstance(o, (datetime, date)):
+            return o.isoformat()
+        elif isinstance(o, np.datetime64):
+            return str(o)
+        elif hasattr(o, "isoformat"):  # Handle other datetime-like objects
+            return o.isoformat()
+        return super().default(o)

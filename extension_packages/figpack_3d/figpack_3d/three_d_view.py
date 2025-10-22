@@ -13,14 +13,14 @@ import figpack
 class CustomJSONEncoder(json.JSONEncoder):
     """Custom JSON encoder that handles numpy arrays and other types"""
 
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, (np.integer, np.floating)):
-            return obj.item()
-        elif hasattr(obj, "isoformat"):  # Handle datetime-like objects
-            return obj.isoformat()
-        return super().default(obj)
+    def default(self, o):
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        elif isinstance(o, (np.integer, np.floating)):
+            return o.item()
+        elif hasattr(o, "isoformat"):  # Handle datetime-like objects
+            return o.isoformat()
+        return super().default(o)
 
 
 def _load_javascript_code():

@@ -1,7 +1,7 @@
 import os
 import pathlib
 import json
-from typing import Set
+from typing import Optional, List
 
 import zarr
 
@@ -14,7 +14,7 @@ thisdir = pathlib.Path(__file__).parent.resolve()
 
 
 def prepare_figure_bundle(
-    view: FigpackView, tmpdir: str, *, title: str, description: str = None
+    view: FigpackView, tmpdir: str, *, title: str, description: Optional[str] = None
 ) -> None:
     """
     Prepare a figure bundle in the specified temporary directory.
@@ -51,8 +51,8 @@ def prepare_figure_bundle(
     # because we only support version 2 on the frontend right now.
 
     if _check_zarr_version() == 3:
-        old_default_zarr_format = zarr.config.get("default_zarr_format")
-        zarr.config.set({"default_zarr_format": 2})
+        old_default_zarr_format = zarr.config.get("default_zarr_format")  # type: ignore
+        zarr.config.set({"default_zarr_format": 2})  # type: ignore
 
     try:
         # Write the view data to the Zarr group
@@ -80,7 +80,7 @@ def prepare_figure_bundle(
         _remove_metadata_files_except_consolidated(pathlib.Path(tmpdir) / "data.zarr")
     finally:
         if _check_zarr_version() == 3:
-            zarr.config.set({"default_zarr_format": old_default_zarr_format})
+            zarr.config.set({"default_zarr_format": old_default_zarr_format})  # type: ignore
 
 
 def _remove_metadata_files_except_consolidated(zarr_dir: pathlib.Path) -> None:
@@ -107,7 +107,7 @@ def _remove_metadata_files_except_consolidated(zarr_dir: pathlib.Path) -> None:
                     print(f"Warning: could not remove file {file_path}: {e}")
 
 
-def _discover_required_extensions(view: FigpackView) -> Set[str]:
+def _discover_required_extensions(view: FigpackView) -> List[str]:
     """
     Recursively discover all extensions required by a view and its children
 

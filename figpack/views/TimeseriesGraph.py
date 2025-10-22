@@ -3,7 +3,7 @@ Views module for figpack - contains visualization components
 """
 
 import math
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -26,7 +26,7 @@ class TimeseriesGraph(FigpackView):
         hide_nav_toolbar: bool = False,
         hide_time_axis_labels: bool = False,
         y_label: str = "",
-    ):
+    ) -> None:
         """
         Initialize a TimeseriesGraph
 
@@ -54,8 +54,8 @@ class TimeseriesGraph(FigpackView):
         self,
         *,
         name: str,
-        t: np.ndarray,
-        y: np.ndarray,
+        t: Union[np.ndarray, List[float]],
+        y: Union[np.ndarray, List[float]],
         color: str = "blue",
         width: float = 1.0,
         dash: Optional[List[float]] = None,
@@ -241,7 +241,7 @@ class TGLineSeries:
         color: str,
         width: float,
         dash: Optional[List[float]],
-    ):
+    ) -> None:
         assert t.ndim == 1, "Time array must be 1-dimensional"
         assert y.ndim == 1, "Y array must be 1-dimensional"
         assert len(t) == len(y), "Time and Y arrays must have the same length"
@@ -274,7 +274,7 @@ class TGMarkerSeries:
         color: str,
         radius: float,
         shape: str,
-    ):
+    ) -> None:
         assert t.ndim == 1, "Time array must be 1-dimensional"
         assert y.ndim == 1, "Y array must be 1-dimensional"
         assert len(t) == len(y), "Time and Y arrays must have the same length"
@@ -309,7 +309,7 @@ class TGIntervalSeries:
         t_end: np.ndarray,
         color: str,
         alpha: float,
-    ):
+    ) -> None:
         assert t_start.ndim == 1, "Start time array must be 1-dimensional"
         assert t_end.ndim == 1, "End time array must be 1-dimensional"
         assert len(t_start) == len(
@@ -352,7 +352,7 @@ class TGUniformSeries:
         channel_spacing: Optional[float] = None,
         auto_channel_spacing: Optional[float] = None,
         timestamps_for_inserting_nans: Optional[np.ndarray] = None,
-    ):
+    ) -> None:
         assert sampling_frequency_hz > 0, "Sampling frequency must be positive"
 
         # Handle both 1D and 2D data
@@ -392,7 +392,11 @@ class TGUniformSeries:
             )
             rms_estimate = mad / 0.6745  # Convert MAD to RMS estimate
             channel_spacing = auto_channel_spacing * np.nanmedian(rms_estimate)
-            if channel_spacing <= 0 or np.isnan(channel_spacing):
+            if (
+                channel_spacing is None
+                or (channel_spacing <= 0)
+                or np.isnan(channel_spacing)
+            ):
                 channel_spacing = 1.0  # Fallback to default spacing if estimate fails
         self.channel_spacing = channel_spacing
 
@@ -437,7 +441,7 @@ class TGUniformSeries:
         # Prepare downsampled arrays for efficient rendering
         self.downsampled_data = self._compute_downsampled_data()
 
-    def _compute_downsampled_data(self) -> dict:
+    def _compute_downsampled_data(self) -> Dict[int, np.ndarray]:
         """
         Compute downsampled arrays at power-of-4 factors using a vectorized
         min/max pyramid with NaN padding for partial bins.
@@ -512,8 +516,8 @@ class TGUniformSeries:
         return downsampled
 
     def _calculate_optimal_chunk_size(
-        self, shape: tuple, target_size_mb: float = 5.0
-    ) -> tuple:
+        self, shape: Tuple[int, ...], target_size_mb: float = 5.0
+    ) -> Tuple[int, ...]:
         """
         Calculate optimal chunk size for Zarr storage targeting ~5MB per chunk
 
@@ -610,7 +614,7 @@ def insert_nans_based_on_timestamps(
     start_time_sec: float,
     sampling_frequency_hz: float,
     timestamps: np.ndarray,
-):
+) -> np.ndarray:
     end_timestamps = timestamps[-1]
     ret_length = int((end_timestamps - start_time_sec) * sampling_frequency_hz) + 1
 

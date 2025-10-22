@@ -91,7 +91,7 @@ class MP4Codec(Codec):
             # Read video using imageio
             reader = imageio.get_reader(tmp_input_fname)
             frames = []
-            for frame in reader:
+            for frame in reader:  # type: ignore
                 frames.append(frame)
             reader.close()
 

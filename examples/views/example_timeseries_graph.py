@@ -11,10 +11,10 @@ def main():
 
 This is an example of a timeseries graph created using figpack.
 
-- Blue line: A smooth curve defined by the function \(y = t \cos((2t)^2)\).
+- Blue line: A smooth curve defined by the function y = t cos((2t)^2).
 - Red markers: Discrete points along the same curve.
-- Green dashed line: The function \(y = t + 1\).
-- Black square markers: Discrete points along the function \(y = -t - 1\).
+- Green dashed line: The function y = t + 1.
+- Black square markers: Discrete points along the function y = -t - 1.
 - Light blue intervals: Highlighted time intervals.
 
 You can zoom and pan the graph to explore the data in more detail.

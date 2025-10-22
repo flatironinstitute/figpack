@@ -62,12 +62,14 @@ class Spectrogram(FigpackView):
 
         # Store frequency information
         if uniform_specified:
+            assert frequency_delta_hz is not None, "Frequency delta must be provided"
             assert frequency_delta_hz > 0, "Frequency delta must be positive"
             self.uniform_frequencies = True
             self.frequency_min_hz = frequency_min_hz
             self.frequency_delta_hz = frequency_delta_hz
             self.frequencies = None
         else:
+            assert frequencies is not None, "Frequencies array must be provided"
             assert (
                 len(frequencies) == data.shape[1]
             ), f"Number of frequencies ({len(frequencies)}) must match data frequency dimension ({data.shape[1]})"

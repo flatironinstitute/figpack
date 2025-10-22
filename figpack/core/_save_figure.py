@@ -15,9 +15,9 @@ def _save_figure(
         view: FigpackView instance to save
         output_path: Output path (destination folder or .tar.gz file path)
     """
-    output_path = pathlib.Path(output_path)
-    if (output_path.suffix == ".gz" and output_path.suffixes[-2] == ".tar") or (
-        output_path.suffix == ".tgz"
+    output_path_2 = pathlib.Path(output_path)
+    if (output_path_2.suffix == ".gz" and output_path_2.suffixes[-2] == ".tar") or (
+        output_path_2.suffix == ".tgz"
     ):
         # It's a .tar.gz file
         with tempfile.TemporaryDirectory(prefix="figpack_save_") as tmpdir:
@@ -25,11 +25,11 @@ def _save_figure(
             # Create tar.gz file
             import tarfile
 
-            with tarfile.open(output_path, "w:gz") as tar:
+            with tarfile.open(output_path_2, "w:gz") as tar:
                 tar.add(tmpdir, arcname=".")
     else:
         # It's a folder
-        output_path.mkdir(parents=True, exist_ok=True)
+        output_path_2.mkdir(parents=True, exist_ok=True)
         prepare_figure_bundle(
-            view, str(output_path), title=title, description=description
+            view, str(output_path_2), title=title, description=description
         )

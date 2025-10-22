@@ -187,6 +187,6 @@ class FileUploadCORSRequestHandler(CORSRequestHandler):
             self.send_error(500, f"Internal Server Error: {str(e)}")
             return False
 
-    def log_message(self, fmt, *args):
+    def log_message(self, format, *args):
         """Override to suppress default logging (same as parent class)."""
         pass

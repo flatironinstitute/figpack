@@ -5,7 +5,6 @@ Image view for figpack - displays PNG and JPG images
 from typing import Union
 
 import numpy as np
-import zarr
 
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
@@ -16,7 +15,7 @@ class Image(FigpackView):
     An image visualization component for PNG and JPG files
     """
 
-    def __init__(self, image_path_or_data: Union[str, bytes]):
+    def __init__(self, image_path_or_data: Union[str, bytes]) -> None:
         """
         Initialize an Image view
 

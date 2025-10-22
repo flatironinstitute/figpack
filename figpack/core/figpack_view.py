@@ -5,7 +5,7 @@ Base view class for figpack visualization components
 import os
 import random
 import string
-from typing import Union
+from typing import Optional
 
 from .zarr import Group
 
@@ -19,17 +19,17 @@ class FigpackView:
         self,
         *,
         title: str,
-        description: Union[str, None] = None,
-        port: Union[int, None] = None,
-        open_in_browser: Union[bool, None] = None,
-        upload: Union[bool, None] = None,
-        inline: Union[bool, None] = None,
+        description: Optional[str] = None,
+        port: Optional[int] = None,
+        open_in_browser: Optional[bool] = None,
+        upload: Optional[bool] = None,
+        inline: Optional[bool] = None,
         inline_height: int = 600,
-        ephemeral: Union[bool, None] = None,
-        allow_origin: Union[str, None] = None,
-        wait_for_input: Union[bool, None] = None,
-        _dev: Union[bool, None] = None,
-    ):
+        ephemeral: Optional[bool] = None,
+        allow_origin: Optional[str] = None,
+        wait_for_input: Optional[bool] = None,
+        _dev: Optional[bool] = None,
+    ) -> None:
         """
         Display a figpack view component with intelligent environment detection and flexible display options.
         See https://flatironinstitute.github.io/figpack/show_function.html for complete documentation.
@@ -86,6 +86,8 @@ class FigpackView:
                 inline = False
             elif _is_in_notebook() and not upload:
                 inline = True
+            else:
+                inline = False
 
         # determine open_in_browser
         if open_in_browser is None:
@@ -111,13 +113,19 @@ class FigpackView:
                     upload = True
                     ephemeral = True
 
+        if ephemeral is None:
+            ephemeral = False
+
+        if upload is None:
+            upload = False
+
         # determine _dev
         if _dev is None:
             _dev = os.environ.get("FIGPACK_DEV") == "1"
 
         if port is None and os.environ.get("FIGPACK_PORT"):
             try:
-                port = int(os.environ.get("FIGPACK_PORT"))
+                port = int(os.environ.get("FIGPACK_PORT", ""))
             except Exception:
                 pass
 
@@ -128,6 +136,8 @@ class FigpackView:
         # Validate ephemeral parameter
         if ephemeral and not upload:
             raise ValueError("ephemeral=True requires upload=True to be set")
+
+        _local_figure_name: Optional[str] = None
 
         if _dev:
             if open_in_browser:

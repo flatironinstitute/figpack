@@ -8,7 +8,7 @@ a spherical harmonic function mapped onto the vertices.
 import numpy as np
 from typing import Tuple
 
-from create_sphere_mesh import compute_spherical_harmonic_scalar, create_sphere_mesh
+from create_sphere_mesh import compute_spherical_harmonic_scalar, create_sphere_mesh  # type: ignore
 from figpack_3d import MeshView
 
 
@@ -128,7 +128,7 @@ def create_comparison_layout():
             vertices=vertices,
             faces=faces,
             scalars=scalars,
-            colormap=cmap,
+            colormap=cmap,  # type: ignore
             background_color="#1a1a1a",
         )
         title = f"Colormap: {cmap}"
@@ -215,6 +215,8 @@ if __name__ == "__main__":
     elif args.example == "comparison":
         view = create_comparison_layout()
         title = "Sphere Mesh - Colormap Comparison"
+    else:
+        raise ValueError(f"Unknown example: {args.example}")
 
     # Display the visualization
     print(f"\nDisplaying: {title}")

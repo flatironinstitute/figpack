@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 from .slides_extension import slides_extension
 import figpack
 from .Slide import SlideText, Slide
@@ -24,7 +24,7 @@ class TitleSlideContent(figpack.ExtensionView):
         if isinstance(self.title, str):
             group.attrs["title"] = {"text": self.title}
         else:
-            title_data = {"text": self.title.text}
+            title_data: Dict[str, Any] = {"text": self.title.text}
             if self.title.font_size is not None:
                 title_data["font_size"] = self.title.font_size
             if self.title.font_family is not None:
@@ -37,7 +37,7 @@ class TitleSlideContent(figpack.ExtensionView):
             if isinstance(self.subtitle, str):
                 group.attrs["subtitle"] = {"text": self.subtitle}
             else:
-                subtitle_data = {"text": self.subtitle.text}
+                subtitle_data: Dict[str, Any] = {"text": self.subtitle.text}
                 if self.subtitle.font_size is not None:
                     subtitle_data["font_size"] = self.subtitle.font_size
                 if self.subtitle.font_family is not None:
@@ -50,7 +50,7 @@ class TitleSlideContent(figpack.ExtensionView):
             if isinstance(self.author, str):
                 group.attrs["author"] = {"text": self.author}
             else:
-                author_data = {"text": self.author.text}
+                author_data: Dict[str, Any] = {"text": self.author.text}
                 if self.author.font_size is not None:
                     author_data["font_size"] = self.author.font_size
                 if self.author.font_family is not None:

@@ -17,7 +17,7 @@ class FigpackExtension:
         javascript_code: str,
         additional_files: Optional[Dict[str, str]] = None,
         version: str = "1.0.0",
-    ):
+    ) -> None:
         """
         Initialize a figpack extension
 

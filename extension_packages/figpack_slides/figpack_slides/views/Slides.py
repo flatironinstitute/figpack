@@ -31,4 +31,4 @@ class Slides(figpack.ExtensionView):
     def title(self) -> str:
         if len(self.slides) == 0:
             return "Empty Presentation"
-        return self.slides[0].title.text
+        return self.slides[0].title.text  # type: ignore

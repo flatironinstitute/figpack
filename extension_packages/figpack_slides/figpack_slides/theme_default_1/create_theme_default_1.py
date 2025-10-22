@@ -4,6 +4,7 @@ A theme controls all aspects of slide presentation: styling, layout, and renderi
 """
 
 from dataclasses import dataclass
+from typing import Optional
 import figpack_slides as fps
 import figpack_slides.views as fpsv
 
@@ -71,7 +72,9 @@ class Theme:
     - Custom views (user-defined visualizations)
     """
 
-    def __init__(self, style: SlideStyleConfig, custom_view_types: dict = None):
+    def __init__(
+        self, style: SlideStyleConfig, custom_view_types: Optional[dict] = None
+    ):
         """
         Initialize a theme with a style configuration.
 
@@ -132,21 +135,21 @@ DEFAULT_STYLE = SlideStyleConfig(
 
 
 def create_theme_default_1(
-    title_bg_color: str = None,
-    title_text_color: str = None,
-    title_font_size: int = None,
-    subtitle_font_size: int = None,
-    author_font_size: int = None,
-    slide_bg_color: str = None,
-    slide_text_color: str = None,
-    slide_title_font_size: int = None,
-    content_font_size: int = None,
-    external_markdown_font_size: int = None,
-    header_height: int = None,
-    header_bg_color: str = None,
-    footer_height: int = None,
-    footer_bg_color: str = None,
-    custom_view_types: dict = None,
+    title_bg_color: Optional[str] = None,
+    title_text_color: Optional[str] = None,
+    title_font_size: Optional[int] = None,
+    subtitle_font_size: Optional[int] = None,
+    author_font_size: Optional[int] = None,
+    slide_bg_color: Optional[str] = None,
+    slide_text_color: Optional[str] = None,
+    slide_title_font_size: Optional[int] = None,
+    content_font_size: Optional[int] = None,
+    external_markdown_font_size: Optional[int] = None,
+    header_height: Optional[int] = None,
+    header_bg_color: Optional[str] = None,
+    footer_height: Optional[int] = None,
+    footer_bg_color: Optional[str] = None,
+    custom_view_types: Optional[dict] = None,
 ) -> Theme:
     """
     Create a customized default theme with optional parameter overrides.
