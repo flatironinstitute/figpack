@@ -92,6 +92,31 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[Developer Guide](developer_guide/index.md)**: In-depth information for extending figpack
 - **[Creating a New View](developer_guide/creating_a_new_view.md)**: Step-by-step guide to implementing custom views
 
+## Citation
+
+If you use figpack in your research, please cite it:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17419621.svg)](https://doi.org/10.5281/zenodo.17419621)
+
+**BibTeX:**
+
+```bibtex
+@software{magland_figpack_2025,
+  author       = {Magland, Jeremy},
+  title        = {figpack},
+  year         = 2025,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.17419621},
+  url          = {https://doi.org/10.5281/zenodo.17419621}
+}
+```
+
+**APA Format:**
+
+> Magland, J. (2025). figpack (Version 0.2.35) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17419621
+
+For more citation formats, see the [CITATION.cff](https://github.com/flatironinstitute/figpack/blob/main/CITATION.cff) file in the repository.
+
 ## Development and Support
 
 - **[GitHub Repository](https://github.com/flatironinstitute/figpack)**: Source code, issues, and contributions
