@@ -29,7 +29,8 @@ def extract_iframe_and_code_pairs(tutorial_content: str) -> List[Tuple[str, str]
     lines = tutorial_content.split("\n")
 
     # Find all iframe elements and their folder names
-    iframe_pattern = r'<iframe\s+src="([^"]+)"'
+    # Match either src or data-src attribute
+    iframe_pattern = r'<iframe\s+(?:data-)?src="([^"]+)"'
 
     i = 0
     while i < len(lines):
