@@ -46,7 +46,7 @@ view = ssv.UnitsTable(columns=columns, rows=rows)
 view.show(title="Units Table Example", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_units_table/index.html?embedded=1" width="100%" height="400" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_units_table/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## Unit Metrics Graph
 
@@ -95,7 +95,7 @@ This creates an interactive view where you can:
 - Zoom into regions of interest
 - Select and highlight units
 
-<iframe src="./spike_sorting_tutorial_unit_metrics_graph/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_unit_metrics_graph/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Raster Plot
 
@@ -134,7 +134,7 @@ view = ssv.RasterPlot(
 view.show(title="Raster Plot Example", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_raster_plot/index.html?embedded=1" width="100%" height="450" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_raster_plot/index.html?embedded=1" width="100%" height="450" frameborder="0" loading="lazy"></iframe>
 
 ## Spike Amplitudes
 
@@ -181,7 +181,7 @@ view = ssv.SpikeAmplitudes(
 view.show(title="Spike Amplitudes Example", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_spike_amplitudes/index.html?embedded=1" width="100%" height="450" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_spike_amplitudes/index.html?embedded=1" width="100%" height="450" frameborder="0" loading="lazy"></iframe>
 
 Or load it from a local or remote NWB file:
 
@@ -198,7 +198,7 @@ view.show(title="NWB Spike Amplitudes Example")
 ```
 
 <!-- This is larger, so we precompute it and host it on figpack: -->
-<iframe src="https://figures.figpack.org/figures/default/49b633fced04b3d1778ebfaa2eea337215a3f107/index.html" width="100%" height="450" frameborder="0"></iframe>
+<iframe data-src="https://figures.figpack.org/figures/default/49b633fced04b3d1778ebfaa2eea337215a3f107/index.html" width="100%" height="450" frameborder="0" loading="lazy"></iframe>
 
 ## Average Waveforms
 
@@ -234,7 +234,7 @@ This visualization allows you to:
 - Identify the primary channel for each unit
 - Compare waveform shapes between units
 
-<iframe src="./spike_sorting_tutorial_average_waveforms/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_average_waveforms/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Autocorrelograms
 
@@ -254,7 +254,7 @@ view = ssv.Autocorrelograms.from_sorting(sorting)
 view.show(title="Autocorrelograms Example", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_autocorrelograms/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_autocorrelograms/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Unit Locations
 
@@ -314,7 +314,7 @@ view = ssv.UnitLocations(
 view.show(title="Unit Locations Example", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_unit_locations/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_unit_locations/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Cross Correlograms
 
@@ -334,7 +334,7 @@ view = ssv.CrossCorrelograms.from_sorting(sorting)
 view.show(title="Cross Correlograms Example", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_cross_correlograms/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_cross_correlograms/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
 
 ## Simple Combined Layout
 
@@ -400,7 +400,7 @@ view = vv.Splitter(
 view.show(title="Spike Sorting Dashboard", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_dashboard/index.html?embedded=1" width="100%" height="450" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_dashboard/index.html?embedded=1" width="100%" height="450" frameborder="0" loading="lazy"></iframe>
 
 ## Sorting Curation
 
@@ -463,4 +463,4 @@ view = vv.Splitter(
 view.show(title="Sorting Curation Example", open_in_browser=True)
 ```
 
-<iframe src="./spike_sorting_tutorial_sorting_curation/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="./spike_sorting_tutorial_sorting_curation/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>

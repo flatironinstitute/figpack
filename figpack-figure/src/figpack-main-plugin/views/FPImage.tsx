@@ -12,7 +12,7 @@ export const FPImage: React.FC<{
 
   const errorMessage = zarrGroup.attrs["error"] || null;
   const imageFormat = zarrGroup.attrs["image_format"] || "Unknown";
-  const dataSize = zarrGroup.attrs["data_size"] || 0;
+  // const dataSize = zarrGroup.attrs["data_size"] || 0;
 
   useEffect(() => {
     let imageUrl0: string | null = null;
@@ -147,22 +147,6 @@ export const FPImage: React.FC<{
           setError("Failed to display image");
         }}
       />
-      {/* Optional: Show image info */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "5px",
-          right: "5px",
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
-          color: "white",
-          padding: "2px 6px",
-          fontSize: "10px",
-          borderRadius: "3px",
-          opacity: 0.8,
-        }}
-      >
-        {imageFormat} ({Math.round(dataSize / 1024)}KB)
-      </div>
     </div>
   );
 };

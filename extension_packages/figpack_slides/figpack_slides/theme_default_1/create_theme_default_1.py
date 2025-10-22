@@ -92,6 +92,7 @@ class Theme:
             build_title_slide,
             build_standard_slide,
             build_tabs_on_right_slide,
+            build_box_layout_on_right_slide,
         )
 
         title = parsed_slide.title
@@ -106,6 +107,8 @@ class Theme:
             return build_title_slide(parsed_slide, self)
         elif slide_type == "tabs-on-right":
             return build_tabs_on_right_slide(parsed_slide, self)
+        elif slide_type == "box-layout-on-right":
+            return build_box_layout_on_right_slide(parsed_slide, self)
         else:
             return build_standard_slide(parsed_slide, self)
 

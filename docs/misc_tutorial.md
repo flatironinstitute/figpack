@@ -54,7 +54,7 @@ graph = create_graph()
 graph.show(title="Force Graph Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_force_graph_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./tutorial_force_graph_example/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ### Node Properties
 
@@ -134,7 +134,7 @@ scene = create_3d_scene()
 scene.show(title="3D Scene Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_3d_scene_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./tutorial_3d_scene_example/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 The figpack_3d extension supports cubes, spheres, and cylinders with customizable positions, colors, rotations, and scales. Mouse controls allow rotation (drag) and zooming (mouse wheel).
 
@@ -146,7 +146,7 @@ See the example in [extension_packages/figpack_3d/examples/sphere_mesh_example.p
 
 Click the various tabs in the following:
 
-<iframe src="https://figures.figpack.org/figures/default/3203970f506d660f861cdd9b364767a49e56c3aa/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="https://figures.figpack.org/figures/default/3203970f506d660f861cdd9b364767a49e56c3aa/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
 
 ## figpack_experimental
 
@@ -223,7 +223,7 @@ v = fpj.LossyVideo(data=data, fps=fps)
 v.show(title="Bouncing Balls Animation", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_lossy_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./tutorial_lossy_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ### fMRI BOLD View
 
@@ -239,7 +239,7 @@ v = jv.FmriBold.from_nii(url)
 v.show(title="fMRI BOLD Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_fmri_bold_example/index.html?embedded=1" width="100%" height="800" frameborder="0"></iframe>
+<iframe data-src="./tutorial_fmri_bold_example/index.html?embedded=1" width="100%" height="800" frameborder="0" loading="lazy"></iframe>
 
 ### fMRI Video Example
 
@@ -284,7 +284,7 @@ v = jv.LossyVideo(slice_rgb, fps=10)
 v.show(title="fMRI Series", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_fmri_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0"></iframe>
+<iframe data-src="./tutorial_fmri_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ### MultiChannelIntervals View
 
@@ -381,7 +381,7 @@ view = MultiChannelIntervals(
 view.show(title="Multi-Channel Intervals Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_multi_channel_intervals_example/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="./tutorial_multi_channel_intervals_example/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
 
 The view displays multi-channel timeseries data organized by intervals, with the highlighted yellow region showing the actual interval within each window. Use the Previous/Next buttons to navigate between intervals. This is particularly useful for:
 
@@ -455,7 +455,7 @@ layout = create_mountain_layout()
 layout.show(title="Mountain Layout Example", open_in_browser=True)
 ```
 
-<iframe src="./tutorial_mountain_layout_example/index.html?embedded=1" width="100%" height="600" frameborder="0"></iframe>
+<iframe data-src="./tutorial_mountain_layout_example/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
 
 ### Key Features
 
