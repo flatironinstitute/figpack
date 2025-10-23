@@ -135,5 +135,4 @@ class Slide(figpack.ExtensionView):
             self.content.write_to_zarr_group(content_group)
 
         if self.slide_metadata is not None:
-            print(self.slide_metadata)
             group.attrs["slide_metadata"] = self.slide_metadata
