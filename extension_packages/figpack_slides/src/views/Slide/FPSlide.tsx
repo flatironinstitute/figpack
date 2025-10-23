@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo } from "react";
 import {
   FPViewContexts,
@@ -35,6 +36,15 @@ type FooterConfig = {
   background_color: string;
 } | null;
 
+export type SlideElement = {
+  type: "shape";
+  shape: "arrow";
+  direction: "right" | "left" | "up" | "down";
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  style: { stroke: string; strokeWidth: number; fill: string };
+};
+
 const FPSlide: React.FC<Props> = ({
   zarrGroup,
   width,
@@ -69,6 +79,55 @@ const FPSlide: React.FC<Props> = ({
 
     return baseTitle;
   }, [zarrGroup, slideEdits]);
+
+  const slideMetadataOriginal = useMemo(
+    () => zarrGroup.attrs["slide_metadata"] as Record<string, any> | undefined,
+    [zarrGroup],
+  );
+
+  const elements: SlideElement[] = useMemo(() => {
+    const baseElements =
+      (slideMetadataOriginal?.["elements"] as SlideElement[]) || [];
+
+    // Apply position update actions
+    const positionUpdateActions = slideEdits.filter(
+      (action) => action.type === "update_slide_element_position",
+    );
+
+    if (positionUpdateActions.length === 0) {
+      return baseElements;
+    }
+
+    // Apply each position update action
+    return baseElements.map((element, index) => {
+      const positionUpdate = positionUpdateActions
+        .filter((action) => action.elementIndex === index)
+        .pop(); // Get the latest position update for this element
+
+      if (positionUpdate) {
+        return {
+          ...element,
+          position: positionUpdate.position,
+        };
+      }
+
+      return element;
+    });
+  }, [slideMetadataOriginal, slideEdits]);
+
+  const handleElementPositionUpdate = (
+    elementIndex: number,
+    newPosition: { x: number; y: number },
+  ) => {
+    if (!editable) return;
+
+    handleEditAction({
+      type: "update_slide_element_position",
+      elementIndex,
+      position: newPosition,
+    });
+  };
+
   const hideTitle = useMemo(
     () => zarrGroup.attrs["hide_title"] as boolean | undefined,
     [zarrGroup],
@@ -87,7 +146,6 @@ const FPSlide: React.FC<Props> = ({
   );
 
   const contentGroup = useContentGroup(zarrGroup);
-  const overlays = useOverlays(zarrGroup);
 
   const showTitle = title && !hideTitle;
 
@@ -196,25 +254,27 @@ const FPSlide: React.FC<Props> = ({
         />
       )}
 
-      {/* Overlays */}
-      {overlays && overlays.length > 0 && (
-        <svg
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width,
-            height,
-            pointerEvents: "none",
-          }}
-          viewBox={`0 0 ${width} ${height}`}
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {overlays.map((overlay, index) => (
-            <g key={index} dangerouslySetInnerHTML={{ __html: overlay }} />
-          ))}
-        </svg>
-      )}
+      {elements.map((element, index) => {
+        if (element.type === "shape" && element.shape === "arrow") {
+          return (
+            <DraggableArrowElement
+              key={`slide-element-${index}`}
+              elementIndex={index}
+              x={element.position.x}
+              y={element.position.y}
+              width={element.size.width}
+              height={element.size.height}
+              direction={element.direction}
+              stroke={element.style.stroke}
+              strokeWidth={element.style.strokeWidth}
+              fill={element.style.fill}
+              editable={editable}
+              onPositionUpdate={handleElementPositionUpdate}
+            />
+          );
+        }
+        return null;
+      })}
     </div>
   );
 };
@@ -235,45 +295,201 @@ const useContentGroup = (zarrGroup: ZarrGroup): ZarrGroup | null => {
   return contentGroup;
 };
 
-const useOverlays = (zarrGroup: ZarrGroup): string[] | null => {
-  const [overlays, setOverlays] = React.useState<string[] | null>(null);
+type DraggableArrowElementProps = {
+  elementIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  direction: "right" | "left" | "up" | "down";
+  stroke: string;
+  strokeWidth: number;
+  fill: string;
+  editable: boolean;
+  onPositionUpdate: (
+    elementIndex: number,
+    position: { x: number; y: number },
+  ) => void;
+};
+
+const DraggableArrowElement: React.FC<DraggableArrowElementProps> = ({
+  elementIndex,
+  x,
+  y,
+  width,
+  height,
+  direction,
+  stroke,
+  strokeWidth,
+  fill,
+  editable,
+  onPositionUpdate,
+}) => {
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [dragStart, setDragStart] = React.useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [positionStart, setPositionStart] = React.useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [currentPosition, setCurrentPosition] = React.useState({ x, y });
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  // Update position when props change (from edit actions)
+  React.useEffect(() => {
+    setCurrentPosition({ x, y });
+  }, [x, y]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!editable) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY,
+    });
+    setPositionStart({ x: currentPosition.x, y: currentPosition.y });
+  };
 
   React.useEffect(() => {
-    const loadOverlays = async () => {
-      const numOverlays = zarrGroup.attrs["num_overlays"] as number | undefined;
-      if (!numOverlays) {
-        setOverlays(null);
-        return;
-      }
+    if (!isDragging) return;
 
-      try {
-        const overlaysGroup = await zarrGroup.getGroup("overlays");
-        if (!overlaysGroup) {
-          setOverlays(null);
-          return;
-        }
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStart) return;
 
-        const loadedOverlays: string[] = [];
-        for (let i = 0; i < numOverlays; i++) {
-          const data = await overlaysGroup.getDatasetData(String(i), {});
-          if (data !== undefined) {
-            const uint8Array = new Uint8Array(data);
-            const decoder = new TextDecoder("utf-8");
-            const svgContent = decoder.decode(uint8Array);
-            loadedOverlays.push(svgContent);
-          }
-        }
-        setOverlays(loadedOverlays);
-      } catch (err) {
-        console.error("Failed to load overlays:", err);
-        setOverlays(null);
+      const scale = determineScaleFromElement(e.target as HTMLElement);
+
+      const deltaX = (e.clientX - dragStart.x) / scale;
+      const deltaY = (e.clientY - dragStart.y) / scale;
+
+      setCurrentPosition({
+        x: (positionStart?.x || 0) + deltaX,
+        y: (positionStart?.y || 0) + deltaY,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setDragStart(null);
+
+      // Only update if position actually changed
+      if (currentPosition.x !== x || currentPosition.y !== y) {
+        onPositionUpdate(elementIndex, currentPosition);
       }
     };
 
-    loadOverlays();
-  }, [zarrGroup]);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
-  return overlays;
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [
+    isDragging,
+    dragStart,
+    currentPosition,
+    x,
+    y,
+    elementIndex,
+    onPositionUpdate,
+  ]);
+
+  // Calculate arrow proportions (Google Slides style)
+  // Account for stroke width to prevent clipping
+  const strokePadding = strokeWidth;
+  const arrowHeadWidth = width * 0.35;
+  const shaftWidth = width - arrowHeadWidth;
+  const shaftHeight = height * 0.5;
+  const shaftY = (height - shaftHeight) / 2;
+
+  const arrowPath = `
+    M ${strokePadding},${shaftY}
+    L ${shaftWidth},${shaftY}
+    L ${shaftWidth},${strokePadding}
+    L ${width - strokePadding},${height / 2}
+    L ${shaftWidth},${height - strokePadding}
+    L ${shaftWidth},${shaftY + shaftHeight}
+    L ${strokePadding},${shaftY + shaftHeight}
+    Z
+  `;
+
+  const getRotation = () => {
+    switch (direction) {
+      case "right":
+        return 0;
+      case "left":
+        return 180;
+      case "up":
+        return -90;
+      case "down":
+        return 90;
+      default:
+        return 0;
+    }
+  };
+
+  const rotation = getRotation();
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      onMouseEnter={() => editable && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        position: "absolute",
+        left: currentPosition.x,
+        top: currentPosition.y,
+        width,
+        height,
+        cursor: editable ? (isDragging ? "grabbing" : "grab") : "default",
+        outline: editable && isHovered ? "2px solid #4A90E2" : "none",
+        outlineOffset: "2px",
+        transition: isDragging ? "none" : "outline 0.2s",
+      }}
+    >
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        style={{
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <path
+          d={arrowPath}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+};
+
+const determineScaleFromElement = (element: HTMLElement): number => {
+  let cumulativeScale = 1;
+  let currentElement: HTMLElement | null = element;
+
+  while (currentElement) {
+    const style = window.getComputedStyle(currentElement);
+    const scale = style.scale;
+    if (scale && scale !== "none") {
+      cumulativeScale *= parseFloat(scale);
+    }
+
+    currentElement = currentElement.parentElement;
+  }
+
+  return cumulativeScale;
 };
 
 export default FPSlide;

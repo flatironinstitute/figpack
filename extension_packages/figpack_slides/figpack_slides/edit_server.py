@@ -24,7 +24,6 @@ class MarkdownSlideEditor:
         Args:
             edits: List of edit objects with slideIndex and actions
         """
-        print("--- apply_edits 1")
         with self.lock:
             # Read the current content
             with open(self.markdown_path, "r", encoding="utf-8") as f:
@@ -50,11 +49,16 @@ class MarkdownSlideEditor:
                             slides[slide_index], action["text"]
                         )
                     elif action["type"] == "edit_markdown":
-                        print("--- apply edit_markdown", slide_index, action)
                         slides[slide_index] = self._update_markdown_section(
                             slides[slide_index],
                             action["sectionIndex"],
                             action["content"],
+                        )
+                    elif action["type"] == "update_slide_element_position":
+                        slides[slide_index] = self._update_slide_element_position(
+                            slides[slide_index],
+                            action["elementIndex"],
+                            action["position"],
                         )
 
             # Reconstruct the markdown
@@ -111,85 +115,166 @@ class MarkdownSlideEditor:
         Returns:
             Updated slide content
         """
-        print("--- update_markdown_section", section_index)
+        section_text = _get_section_text(slide_content, section_index)
+        lines = section_text.split("\n")
+        lines_to_keep = []
+        in_metadata_block = False
+        in_markdown_section = False
+        for line in lines:
+            if line.startswith("# "):
+                # title line
+                in_markdown_section = False
+                lines_to_keep.append(line)
+            elif line.strip() == "" and not in_markdown_section:
+                # blank line outside section
+                lines_to_keep.append(line)
+            elif (
+                line.strip() == "```yaml slide-metadata"
+                or line.strip() == "```yaml section-metadata"
+            ):
+                in_metadata_block = True
+                lines_to_keep.append(line)
+            elif line.strip() == "```" and in_metadata_block:
+                in_metadata_block = False
+                lines_to_keep.append(line)
+            elif in_metadata_block:
+                # inside metadata block
+                lines_to_keep.append(line)
+            else:
+                if not in_markdown_section:
+                    if line.strip() != "":
+                        in_markdown_section = True
+                if in_markdown_section:
+                    continue
+                else:
+                    # outside markdown section
+                    lines_to_keep.append(line)
+
+        new_section_text = (
+            "\n".join(lines_to_keep).rstrip() + "\n\n" + new_content.strip() + "\n"
+        )
+        return _replace_section_text(slide_content, section_index, new_section_text)
+
+    def _update_slide_element_position(
+        self, slide_content: str, element_index: int, position: Dict[str, float]
+    ) -> str:
+        """
+        Update the position of a slide element in the slide metadata
+
+        Args:
+            slide_content: The content of a single slide
+            element_index: Index of the element to update (0-based)
+            position: New position dict with 'x' and 'y' keys
+
+        Returns:
+            Updated slide content
+        """
+        import yaml
+
         lines = slide_content.split("\n")
 
-        # Parse the slide structure to identify sections and special blocks
-        sections = []  # List of (start_line, end_line) tuples for each section
-        current_section_start = None
+        # Find the slide-metadata block
+        metadata_start = -1
+        metadata_end = -1
         in_metadata_block = False
-        in_overlay_block = False
-        title_line_index = None
 
         for i, line in enumerate(lines):
-            # Track title
-            if line.strip().startswith("# ") and title_line_index is None:
-                title_line_index = i
-                continue
-
-            # Track metadata blocks
-            if line == "```yaml slide-metadata" or line == "```yaml section-metadata":
+            if line.strip() == "```yaml slide-metadata":
+                metadata_start = i
                 in_metadata_block = True
-                continue
-            elif in_metadata_block and line == "```":
-                in_metadata_block = False
-                continue
+            elif in_metadata_block and line.strip() == "```":
+                metadata_end = i
+                break
 
-            # Track overlay blocks
-            if line == "```svg slide-overlay":
-                in_overlay_block = True
-                continue
-            elif in_overlay_block and line == "```":
-                in_overlay_block = False
-                continue
+        # Parse existing metadata or create new one
+        if metadata_start >= 0 and metadata_end > metadata_start:
+            # Extract and parse existing metadata
+            metadata_lines = lines[metadata_start + 1 : metadata_end]
+            metadata_yaml = "\n".join(metadata_lines)
+            metadata = yaml.safe_load(metadata_yaml) if metadata_yaml.strip() else {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+        else:
+            # No metadata block exists, create new one
+            metadata = {}
+            metadata_start = -1
+            metadata_end = -1
 
-            # Skip lines in special blocks
-            if in_metadata_block or in_overlay_block:
-                continue
+        # Ensure elements list exists
+        if "elements" not in metadata or not isinstance(metadata["elements"], list):
+            metadata["elements"] = []
 
-            # Detect section separator
-            if line == "* * *":
-                # End current section and start new one
-                if current_section_start is not None:
-                    sections.append((current_section_start, i - 1))
-                current_section_start = i + 1
-            else:
-                # Start first section if not started yet
-                if (
-                    current_section_start is None
-                    and line.strip()
-                    and not line.strip().startswith("# ")
-                ):
-                    current_section_start = i
-
-        # Add the last section
-        if current_section_start is not None:
-            sections.append((current_section_start, len(lines) - 1))
-
-        # Validate section index
-        if section_index < 0 or section_index >= len(sections):
+        # Validate element index
+        if element_index < 0 or element_index >= len(metadata["elements"]):
             raise ValueError(
-                f"Invalid section index: {section_index} (total sections: {len(sections)})"
+                f"Invalid element index: {element_index} (total elements: {len(metadata['elements'])})"
             )
 
-        # Replace the content of the specified section
-        section_start, section_end = sections[section_index]
+        # Update the element position
+        if not isinstance(metadata["elements"][element_index], dict):
+            raise ValueError(f"Element at index {element_index} is not a valid object")
 
-        # Build the updated slide
-        updated_lines = []
+        metadata["elements"][element_index]["position"] = {
+            "x": position["x"],
+            "y": position["y"],
+        }
 
-        # Add lines before the section
-        updated_lines.extend(lines[:section_start])
+        # Serialize metadata back to YAML
+        new_metadata_yaml = yaml.dump(
+            metadata, default_flow_style=False, sort_keys=False
+        )
+        new_metadata_lines = new_metadata_yaml.rstrip().split("\n")
 
-        # Add the new content (strip to avoid extra blank lines)
-        new_content_stripped = new_content.strip()
-        if new_content_stripped:
-            updated_lines.append(new_content_stripped)
+        # Reconstruct the slide content
+        if metadata_start >= 0 and metadata_end >= 0:
+            # Replace existing metadata block
+            result_lines = (
+                lines[: metadata_start + 1] + new_metadata_lines + lines[metadata_end:]
+            )
+        else:
+            # Insert new metadata block after title
+            # Find title line
+            title_index = -1
+            for i, line in enumerate(lines):
+                if line.strip().startswith("# "):
+                    title_index = i
+                    break
 
-        # Add lines after the section
-        updated_lines.extend(lines[section_end + 1 :])
+            if title_index >= 0:
+                # Insert after title
+                metadata_block = (
+                    ["", "```yaml slide-metadata"] + new_metadata_lines + ["```", ""]
+                )
+                result_lines = (
+                    lines[: title_index + 1] + metadata_block + lines[title_index + 1 :]
+                )
+            else:
+                # No title found, insert at beginning
+                metadata_block = (
+                    ["```yaml slide-metadata"] + new_metadata_lines + ["```", ""]
+                )
+                result_lines = metadata_block + lines
 
-        return "\n".join(updated_lines)
+        return "\n".join(result_lines)
+
+
+def _get_section_text(slide_content: str, section_index: int) -> str:
+    """Extract the text of a specific section from a slide"""
+    sections = slide_content.split("\n* * *\n")
+    if section_index < 0 or section_index >= len(sections):
+        raise ValueError(f"Invalid section index: {section_index}")
+    return sections[section_index]
+
+
+def _replace_section_text(
+    slide_content: str, section_index: int, new_section_text: str
+) -> str:
+    """Replace the text of a specific section in a slide"""
+    sections = slide_content.split("\n* * *\n")
+    if section_index < 0 or section_index >= len(sections):
+        raise ValueError(f"Invalid section index: {section_index}")
+    sections[section_index] = new_section_text
+    return "\n* * *\n".join(sections)
 
 
 def create_app(markdown_path: str, allowed_origin: str) -> Flask:

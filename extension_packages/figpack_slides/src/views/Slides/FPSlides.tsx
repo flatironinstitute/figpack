@@ -128,8 +128,6 @@ const FPSlides: React.FC<Props> = ({
     [],
   );
 
-  console.log("--- slideLedgers", slideLedgers);
-
   const slideEditsChangedCallbacks = React.useRef<Set<() => void>>(new Set());
 
   const onSlideEditsChanged = useCallback((callback: () => void) => {
@@ -218,7 +216,7 @@ const FPSlides: React.FC<Props> = ({
   // Warn before closing/reloading if there are unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedEdits) {
+      if (hasUnsavedEdits && !saveModalStatus) {
         e.preventDefault();
         // Modern browsers require returnValue to be set
         e.returnValue = "";
@@ -230,7 +228,7 @@ const FPSlides: React.FC<Props> = ({
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [hasUnsavedEdits]);
+  }, [hasUnsavedEdits, saveModalStatus]);
 
   // Save handler
   const handleSave = useCallback(async () => {

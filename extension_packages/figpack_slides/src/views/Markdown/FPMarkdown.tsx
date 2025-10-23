@@ -59,19 +59,14 @@ export const FPMarkdown: React.FC<{
     };
   }, [contexts, updateSlideEdits]);
 
-  console.log("--- slideEdits00000", slideEdits);
-
   const editedContent = useMemo(() => {
-    console.log("---- 1");
     if (!slideEdits || sectionIndex === undefined || slideIndex === undefined) {
       return content;
     }
-    console.log("---- 2");
     const actions = slideEdits.get(slideIndex);
     if (!actions) {
       return content;
     }
-    console.log("---- 3");
     let modifiedContent = content;
     for (const action of actions) {
       if (
@@ -81,7 +76,6 @@ export const FPMarkdown: React.FC<{
         modifiedContent = action.content;
       }
     }
-    console.log("---- 4", { modifiedContent });
     return modifiedContent;
   }, [content, slideEdits, sectionIndex, slideIndex]);
 

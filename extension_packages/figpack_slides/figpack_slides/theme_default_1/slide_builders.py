@@ -58,7 +58,6 @@ def build_title_slide(
             else None
         ),
         background_color=style.title_slide_background_color,
-        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
     )
 
 
@@ -105,7 +104,7 @@ def build_standard_slide(
         header=style.get_header(),
         footer=style.get_footer(),
         background_color=style.standard_slide_background_color,
-        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
+        slide_metadata=parsed_slide.metadata,
     )
 
 
@@ -158,7 +157,7 @@ def build_tabs_on_right_slide(
         header=style.get_header(),
         footer=style.get_footer(),
         background_color=style.standard_slide_background_color,
-        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
+        slide_metadata=parsed_slide.metadata,
     )
 
 
@@ -212,7 +211,7 @@ def build_box_layout_on_right_slide(
         header=style.get_header(),
         footer=style.get_footer(),
         background_color=style.standard_slide_background_color,
-        overlays=parsed_slide.overlays if parsed_slide.overlays else None,
+        slide_metadata=parsed_slide.metadata,
     )
 
 

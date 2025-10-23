@@ -65,7 +65,7 @@ class Slide(figpack.ExtensionView):
         header: Optional[SlideHeader] = None,
         footer: Optional[SlideFooter] = None,
         background_color: Optional[str] = None,
-        overlays: Optional[list[str]] = None,
+        slide_metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         A single slide in a slide deck
@@ -77,7 +77,6 @@ class Slide(figpack.ExtensionView):
             header: Optional header section
             footer: Optional footer section
             background_color: Optional background color for the slide content area
-            overlays: Optional list of SVG elements to display over the slide content
         """
         super().__init__(extension=slides_extension, view_type="slides.Slide")
 
@@ -92,7 +91,7 @@ class Slide(figpack.ExtensionView):
         self.header = header
         self.footer = footer
         self.background_color = background_color
-        self.overlays = overlays
+        self.slide_metadata = slide_metadata or {}
 
     def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
@@ -135,10 +134,6 @@ class Slide(figpack.ExtensionView):
             content_group = group.create_group("content")
             self.content.write_to_zarr_group(content_group)
 
-        if self.overlays is not None:
-            overlays_group = group.create_group("overlays")
-            for i, overlay_svg in enumerate(self.overlays):
-                overlay_bytes = overlay_svg.encode("utf-8")
-                overlay_array = np.frombuffer(overlay_bytes, dtype=np.uint8)
-                overlays_group.create_dataset(str(i), data=overlay_array)
-            group.attrs["num_overlays"] = len(self.overlays)
+        if self.slide_metadata is not None:
+            print(self.slide_metadata)
+            group.attrs["slide_metadata"] = self.slide_metadata
