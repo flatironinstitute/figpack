@@ -9,6 +9,8 @@ type NavigationBarProps = {
   onToggleFullscreen: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  hasUnsavedEdits?: boolean;
+  onSave?: () => void;
 };
 
 const NavigationBar: React.FC<NavigationBarProps> = ({
@@ -19,6 +21,8 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   onToggleFullscreen,
   onPrevious,
   onNext,
+  hasUnsavedEdits = false,
+  onSave,
 }) => {
   return (
     <div
@@ -85,6 +89,37 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         >
           {isFullscreen ? "Exit" : "▶ Present"}
         </button>
+
+        {/* Save Button - only show when there are unsaved edits */}
+        {hasUnsavedEdits && onSave && (
+          <button
+            onClick={onSave}
+            style={{
+              padding: "6px 12px",
+              fontSize: "12px",
+              backgroundColor: "#ff9800",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              opacity: 0.9,
+              transition: "opacity 0.2s",
+              fontWeight: "500",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "1";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "0.9";
+            }}
+            title="Save changes to markdown"
+          >
+            💾 Save
+          </button>
+        )}
       </div>
 
       {/* Navigation Controls */}

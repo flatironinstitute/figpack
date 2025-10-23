@@ -11,7 +11,12 @@ import {
   ZarrGroup,
 } from "../../figpack-interface";
 import FPSlide from "../Slide/FPSlide";
-import { getSlideFromUrl, updateUrlSlide } from "./urlUtils";
+import { SlideEditAction } from "../Slide/SlideTitle";
+import {
+  getSlideFromUrl,
+  updateUrlSlide,
+  getEditModeFromUrl,
+} from "./urlUtils";
 import {
   useSlideGroups,
   useSlideTitles,
@@ -21,6 +26,7 @@ import {
 import { OUTLINE_WIDTH, NAVIGATION_HEIGHT } from "./constants";
 import OutlinePanel from "./OutlinePanel";
 import NavigationBar from "./NavigationBar";
+import SaveModal from "./SaveModal";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -48,6 +54,20 @@ const FPSlides: React.FC<Props> = ({
     const urlSlide = getSlideFromUrl();
     return urlSlide !== null ? urlSlide : 0;
   });
+
+  // Initialize edit mode from URL
+  const editable = getEditModeFromUrl();
+
+  // Slide ledgers management (one ledger per slide)
+  const [slideLedgers, setSlideLedgers] = React.useState<
+    Map<number, SlideEditAction[]>
+  >(new Map());
+
+  // Save modal state
+  const [saveModalStatus, setSaveModalStatus] = React.useState<
+    "saving" | "success" | "error" | null
+  >(null);
+  const [saveErrorMessage, setSaveErrorMessage] = React.useState<string>("");
 
   const [isOutlineOpen, setIsOutlineOpen] = React.useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
@@ -136,6 +156,62 @@ const FPSlides: React.FC<Props> = ({
     }
   }, [isFullscreen, currentFragmentIndex]);
 
+  // Handle slide edit actions
+  const handleSlideEdit = useCallback(
+    (slideIndex: number, action: SlideEditAction) => {
+      setSlideLedgers((prev) => {
+        const newMap = new Map(prev);
+        const existingLedger = newMap.get(slideIndex) || [];
+        newMap.set(slideIndex, [...existingLedger, action]);
+        return newMap;
+      });
+    },
+    [],
+  );
+
+  // Check if there are unsaved edits
+  const hasUnsavedEdits = useMemo(() => {
+    return Array.from(slideLedgers.values()).some(
+      (ledger) => ledger.length > 0,
+    );
+  }, [slideLedgers]);
+
+  // Save handler
+  const handleSave = useCallback(async () => {
+    setSaveModalStatus("saving");
+
+    // Convert ledgers to array format
+    const edits = Array.from(slideLedgers.entries())
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .filter(([_, actions]) => actions.length > 0)
+      .map(([slideIndex, actions]) => ({
+        slideIndex,
+        actions,
+      }));
+
+    try {
+      const response = await fetch("http://localhost:3001/save-slide-edits", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ edits }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setSaveModalStatus("success");
+    } catch (error) {
+      console.error("Error saving edits:", error);
+      setSaveErrorMessage(
+        error instanceof Error ? error.message : "Unknown error",
+      );
+      setSaveModalStatus("error");
+    }
+  }, [slideLedgers]);
+
   // Keyboard navigation
   useKeyboardNavigation(
     totalSlides,
@@ -200,6 +276,7 @@ const FPSlides: React.FC<Props> = ({
           {slideGroups.map((sg, ii) => (
             <SlideWrapper
               key={ii}
+              slideIndex={ii}
               isVisible={ii === currentSlideIndex}
               hasBeenVisible={slideIndicesThatHaveBeenVisible.has(ii)}
               width={effectiveSlideWidth}
@@ -213,6 +290,9 @@ const FPSlides: React.FC<Props> = ({
               renderFPView={renderFPView}
               nativeWidth={nativeWidth}
               nativeHeight={nativeHeight}
+              editable={editable}
+              slideEdits={slideLedgers.get(ii) || []}
+              onSlideEdit={(action) => handleSlideEdit(ii, action)}
             />
           ))}
         </div>
@@ -225,14 +305,27 @@ const FPSlides: React.FC<Props> = ({
             onToggleFullscreen={toggleFullscreen}
             onPrevious={goToPrevious}
             onNext={goToNext}
+            hasUnsavedEdits={hasUnsavedEdits}
+            onSave={handleSave}
           />
         )}
       </div>
+
+      {/* Save Modal */}
+      {saveModalStatus && (
+        <SaveModal
+          status={saveModalStatus}
+          errorMessage={saveErrorMessage}
+          onClose={() => setSaveModalStatus(null)}
+          onReload={() => window.location.reload()}
+        />
+      )}
     </div>
   );
 };
 
 const SlideWrapper: FunctionComponent<{
+  slideIndex: number;
   isVisible: boolean;
   hasBeenVisible?: boolean;
   width: number;
@@ -242,6 +335,9 @@ const SlideWrapper: FunctionComponent<{
   renderFPView: (params: RenderParams) => void;
   nativeWidth: number;
   nativeHeight: number;
+  editable: boolean;
+  slideEdits: SlideEditAction[];
+  onSlideEdit: (action: SlideEditAction) => void;
 }> = ({
   isVisible,
   hasBeenVisible,
@@ -252,6 +348,9 @@ const SlideWrapper: FunctionComponent<{
   renderFPView,
   nativeWidth,
   nativeHeight,
+  editable,
+  slideEdits,
+  onSlideEdit,
 }) => {
   const { scale, dx, dy } = useMemo(() => {
     const scaleX = width / nativeWidth;
@@ -285,6 +384,9 @@ const SlideWrapper: FunctionComponent<{
         height={nativeHeight}
         contexts={contexts}
         renderFPView={renderFPView}
+        editable={editable}
+        slideEdits={slideEdits}
+        onSlideEdit={onSlideEdit}
       />
     </div>
   );
