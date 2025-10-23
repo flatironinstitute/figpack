@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from "react";
 
 type TitleConfig = {
@@ -16,6 +17,11 @@ export type SlideEditAction =
       type: "edit_markdown";
       sectionIndex: number;
       content: string;
+    }
+  | {
+      type: "update_slide_element_position";
+      elementIndex: number;
+      position: { x: number; y: number };
     };
 
 type SlideTitleProps = {
