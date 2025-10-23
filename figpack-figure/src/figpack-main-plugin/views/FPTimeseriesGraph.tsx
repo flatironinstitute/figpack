@@ -231,7 +231,7 @@ const paintInterval = (
     context.fillRect(
       xStart,
       0,
-      xEnd - xStart,
+      Math.max(xEnd - xStart, 1), // Ensure at least 1 pixel width
       context.canvas.height, // Fill the full height of the canvas
     );
   }
