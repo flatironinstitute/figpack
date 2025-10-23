@@ -27,3 +27,12 @@ export const updateUrlSlide = (slideIndex: number) => {
   url.searchParams.set("slide", String(slideIndex + 1)); // Convert to 1-based for URL
   window.history.replaceState({}, "", url.toString());
 };
+
+/**
+ * Gets the edit mode from the URL query parameter
+ * @returns true if edit=1 is present in the URL, false otherwise
+ */
+export const getEditModeFromUrl = (): boolean => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("edit") === "1";
+};

@@ -5,6 +5,27 @@ import FPViewWrapper from "../FPViewWrapper";
 const CAPTION_PADDING = 8;
 const CAPTION_MARGIN_TOP = 8;
 
+/**
+ * Gets the cumulative scale factor from all ancestor CSS transforms.
+ * This is needed to convert getBoundingClientRect measurements (which are in
+ * viewport coordinates) back to the component's coordinate system.
+ */
+function getCumulativeScale(element: HTMLElement): number {
+  let cumulativeScale = 1;
+  let currentElement: HTMLElement | null = element;
+
+  while (currentElement) {
+    const style = window.getComputedStyle(currentElement);
+    const scale = style.scale;
+    if (scale && scale !== "none") {
+      cumulativeScale *= parseFloat(scale);
+    }
+    currentElement = currentElement.parentElement;
+  }
+
+  return cumulativeScale;
+}
+
 export const FPCaptionedView: React.FC<{
   zarrGroup: ZarrGroup;
   width: number;
@@ -64,7 +85,10 @@ export const FPCaptionedView: React.FC<{
       const timeoutId = setTimeout(() => {
         if (measureRef.current) {
           const height = measureRef.current.getBoundingClientRect().height;
-          setCaptionHeight(height);
+          // Account for CSS scale transforms on ancestor elements
+          const cumulativeScale = getCumulativeScale(measureRef.current);
+          const unscaledHeight = height / cumulativeScale;
+          setCaptionHeight(unscaledHeight);
         }
       }, 0);
       return () => clearTimeout(timeoutId);

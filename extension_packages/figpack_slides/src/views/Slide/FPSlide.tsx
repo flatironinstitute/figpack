@@ -5,6 +5,7 @@ import {
   ZarrGroup,
 } from "../../figpack-interface";
 import FPViewWrapper from "../../FPViewWrapper";
+import SlideTitle, { SlideEditAction } from "./SlideTitle";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -12,6 +13,9 @@ type Props = {
   height: number;
   contexts: FPViewContexts;
   renderFPView: (params: RenderParams) => void;
+  editable?: boolean;
+  slideEdits?: SlideEditAction[];
+  onSlideEdit?: (action: SlideEditAction) => void;
 };
 
 type TitleConfig = {
@@ -37,11 +41,34 @@ const FPSlide: React.FC<Props> = ({
   height,
   renderFPView,
   contexts,
+  editable = false,
+  slideEdits = [],
+  onSlideEdit,
 }) => {
-  const title = useMemo(
-    () => zarrGroup.attrs["title"] as TitleConfig,
-    [zarrGroup],
-  );
+  const handleEditAction = (action: SlideEditAction) => {
+    if (onSlideEdit) {
+      onSlideEdit(action);
+    }
+  };
+
+  const title = useMemo(() => {
+    const baseTitle = zarrGroup.attrs["title"] as TitleConfig;
+    if (!baseTitle) return null;
+
+    // Apply edit actions to override the title text
+    const setTitleAction = slideEdits
+      .filter((action) => action.type === "set_title")
+      .pop();
+
+    if (setTitleAction) {
+      return {
+        ...baseTitle,
+        text: setTitleAction.text,
+      };
+    }
+
+    return baseTitle;
+  }, [zarrGroup, slideEdits]);
   const hideTitle = useMemo(
     () => zarrGroup.attrs["hide_title"] as boolean | undefined,
     [zarrGroup],
@@ -122,12 +149,14 @@ const FPSlide: React.FC<Props> = ({
             left: contentPadding / 2,
             width: width - contentPadding,
             height: titleFontSize,
-            fontSize: `${titleFontSize}px`,
-            fontFamily: title.font_family || undefined,
-            color: title.color || undefined,
           }}
         >
-          {title.text}
+          <SlideTitle
+            titleConfig={title}
+            editable={editable}
+            fontSize={titleFontSize}
+            onEditAction={handleEditAction}
+          />
         </div>
       )}
 
