@@ -23,8 +23,15 @@ import {
   useKeyboardNavigation,
   useFullscreen,
 } from "./hooks";
-import { OUTLINE_WIDTH, NAVIGATION_HEIGHT } from "./constants";
+import {
+  OUTLINE_WIDTH,
+  EDIT_PANEL_WIDTH,
+  PROPERTIES_PANEL_WIDTH,
+  NAVIGATION_HEIGHT,
+} from "./constants";
 import OutlinePanel from "./OutlinePanel";
+import EditPanel from "./EditPanel";
+import PropertiesPanel from "./PropertiesPanel";
 import NavigationBar from "./NavigationBar";
 import SaveModal from "./SaveModal";
 
@@ -62,6 +69,12 @@ const FPSlides: React.FC<Props> = ({
   const [slideLedgers, setSlideLedgers] = React.useState<
     Map<number, SlideEditAction[]>
   >(new Map());
+
+  // Element selection state (only in edit mode)
+  const [selectedElement, setSelectedElement] = React.useState<{
+    slideIndex: number;
+    elementId: string;
+  } | null>(null);
 
   // Save modal state
   const [saveModalStatus, setSaveModalStatus] = React.useState<
@@ -142,6 +155,19 @@ const FPSlides: React.FC<Props> = ({
     slideEditsChangedCallbacks.current.forEach((callback) => callback());
   }, [slideLedgers]);
 
+  // Handler for selecting an element
+  const handleSelectElement = useCallback(
+    (slideIndex: number, elementId: string) => {
+      setSelectedElement({ slideIndex, elementId });
+    },
+    [],
+  );
+
+  // Handler for deselecting elements (clicking on empty slide area)
+  const handleDeselectElement = useCallback(() => {
+    setSelectedElement(null);
+  }, []);
+
   // Add fragment context to contexts
   const ammendedContexts = React.useMemo(
     () => ({
@@ -151,6 +177,9 @@ const FPSlides: React.FC<Props> = ({
       slideEdits: slideLedgers,
       onSlideEditsChanged,
       editable,
+      selectedElementId: selectedElement?.elementId || null,
+      onSelectElement: handleSelectElement,
+      onDeselectElement: handleDeselectElement,
     }),
     [
       contexts,
@@ -159,6 +188,9 @@ const FPSlides: React.FC<Props> = ({
       slideLedgers,
       onSlideEditsChanged,
       editable,
+      selectedElement,
+      handleSelectElement,
+      handleDeselectElement,
     ],
   );
 
@@ -205,6 +237,271 @@ const FPSlides: React.FC<Props> = ({
     },
     [],
   );
+
+  // Handler for adding arrows to the current slide
+  const handleAddArrow = useCallback(() => {
+    // Get existing element IDs from the current slide
+    const currentSlideEdits = slideLedgers.get(currentSlideIndex) || [];
+    const slideGroup = slideGroups[currentSlideIndex];
+
+    // Collect all existing element IDs
+    const existingIds = new Set<number>();
+
+    // Get IDs from slide metadata
+    if (slideGroup) {
+      const slideMetadata = slideGroup.attrs?.["slide_metadata"] as
+        | Record<string, any>
+        | undefined;
+      const baseElements = (slideMetadata?.["elements"] as any[]) || [];
+      baseElements.forEach((el: any) => {
+        if (el?.id !== undefined) {
+          const numId = parseInt(el.id);
+          if (!isNaN(numId)) {
+            existingIds.add(numId);
+          }
+        }
+      });
+    }
+
+    // Get IDs from add_slide_element actions
+    currentSlideEdits
+      .filter((action) => action.type === "add_slide_element")
+      .forEach((action) => {
+        if (action.type === "add_slide_element") {
+          const numId = parseInt(action.element.id);
+          if (!isNaN(numId)) {
+            existingIds.add(numId);
+          }
+        }
+      });
+
+    // Remove IDs from delete_slide_element actions
+    currentSlideEdits
+      .filter((action) => action.type === "delete_slide_element")
+      .forEach((action) => {
+        if (action.type === "delete_slide_element") {
+          const numId = parseInt(action.elementId);
+          if (!isNaN(numId)) {
+            existingIds.delete(numId);
+          }
+        }
+      });
+
+    // Find the first non-negative integer not in use
+    let nextId = 0;
+    while (existingIds.has(nextId)) {
+      nextId++;
+    }
+
+    const elementId = nextId.toString();
+
+    // Create default arrow at center of slide
+    const arrow = {
+      id: elementId,
+      type: "shape" as const,
+      shape: "arrow" as const,
+      direction: "right" as const,
+      position: {
+        x: nativeWidth / 2, // Center horizontally
+        y: nativeHeight / 2, // Center vertically
+      },
+      size: {
+        length: 200, // Length along arrow direction
+        thickness: 80, // Thickness perpendicular to direction
+      },
+      style: {
+        stroke: "#000000",
+        strokeWidth: 2,
+        fill: "transparent",
+      },
+    };
+
+    handleSlideEdit(currentSlideIndex, {
+      type: "add_slide_element",
+      element: arrow,
+    });
+  }, [
+    currentSlideIndex,
+    nativeWidth,
+    nativeHeight,
+    handleSlideEdit,
+    slideLedgers,
+    slideGroups,
+  ]);
+
+  // Handler for deleting selected element
+  const handleDeleteSelectedElement = useCallback(() => {
+    if (!selectedElement) return;
+
+    handleSlideEdit(selectedElement.slideIndex, {
+      type: "delete_slide_element",
+      elementId: selectedElement.elementId,
+    });
+
+    setSelectedElement(null);
+  }, [selectedElement, handleSlideEdit]);
+
+  // Handler for updating element properties
+  const handleUpdateProperties = useCallback(
+    (
+      elementId: string,
+      properties: {
+        size?: { length: number; thickness: number };
+        style?: { stroke?: string; strokeWidth?: number; fill?: string };
+        direction?: "right" | "left" | "up" | "down";
+      },
+    ) => {
+      if (!selectedElement) return;
+
+      handleSlideEdit(selectedElement.slideIndex, {
+        type: "update_slide_element_properties",
+        elementId,
+        properties,
+      });
+    },
+    [selectedElement, handleSlideEdit],
+  );
+
+  // Get current slide elements for PropertiesPanel
+  const currentSlideElements = useMemo(() => {
+    const slideGroup = slideGroups[currentSlideIndex];
+    if (!slideGroup) return [];
+
+    const slideMetadata = slideGroup.attrs?.["slide_metadata"] as
+      | Record<string, any>
+      | undefined;
+    const baseElements = (slideMetadata?.["elements"] as any[]) || [];
+    const currentSlideEdits = slideLedgers.get(currentSlideIndex) || [];
+
+    // Apply add element actions
+    const addElementActions = currentSlideEdits.filter(
+      (action) => action.type === "add_slide_element",
+    );
+
+    let workingElements = [
+      ...baseElements,
+      ...addElementActions
+        .map((action) =>
+          action.type === "add_slide_element" ? action.element : null,
+        )
+        .filter((el): el is any => el !== null),
+    ];
+
+    // Apply delete element actions
+    const deleteElementActions = currentSlideEdits.filter(
+      (action) => action.type === "delete_slide_element",
+    );
+
+    const deletedIds = new Set(
+      deleteElementActions.map((action) =>
+        action.type === "delete_slide_element" ? action.elementId : "",
+      ),
+    );
+
+    workingElements = workingElements.filter(
+      (element) => !deletedIds.has(element.id),
+    );
+
+    // Apply property update actions
+    const propertyUpdateActions = currentSlideEdits.filter(
+      (action) => action.type === "update_slide_element_properties",
+    );
+
+    if (propertyUpdateActions.length > 0) {
+      workingElements = workingElements.map((element) => {
+        const updates = propertyUpdateActions.filter(
+          (action) =>
+            action.type === "update_slide_element_properties" &&
+            action.elementId === element.id,
+        );
+
+        if (updates.length === 0) return element;
+
+        const updatedElement = { ...element };
+        updates.forEach((update) => {
+          if (update.type === "update_slide_element_properties") {
+            if (update.properties.size) {
+              updatedElement.size = {
+                ...updatedElement.size,
+                ...update.properties.size,
+              };
+            }
+            if (update.properties.style) {
+              updatedElement.style = {
+                ...updatedElement.style,
+                ...update.properties.style,
+              };
+            }
+            if (update.properties.direction) {
+              updatedElement.direction = update.properties.direction;
+            }
+          }
+        });
+
+        return updatedElement;
+      });
+    }
+
+    // Apply position update actions
+    const positionUpdateActions = currentSlideEdits.filter(
+      (action) => action.type === "update_slide_element_position",
+    );
+
+    if (positionUpdateActions.length > 0) {
+      workingElements = workingElements.map((element) => {
+        const positionUpdate = positionUpdateActions
+          .filter(
+            (action) =>
+              action.type === "update_slide_element_position" &&
+              action.elementId === element.id,
+          )
+          .pop();
+
+        if (
+          positionUpdate &&
+          positionUpdate.type === "update_slide_element_position"
+        ) {
+          return {
+            ...element,
+            position: positionUpdate.position,
+          };
+        }
+
+        return element;
+      });
+    }
+
+    return workingElements;
+  }, [slideGroups, currentSlideIndex, slideLedgers]);
+
+  // Delete key handler
+  useEffect(() => {
+    if (!editable) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        // Only delete if an element is selected and we're not in an input
+        if (
+          selectedElement &&
+          document.activeElement?.tagName !== "INPUT" &&
+          document.activeElement?.tagName !== "TEXTAREA"
+        ) {
+          e.preventDefault();
+          handleDeleteSelectedElement();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editable, selectedElement, handleDeleteSelectedElement]);
+
+  // Clear selection when switching slides
+  useEffect(() => {
+    if (selectedElement && selectedElement.slideIndex !== currentSlideIndex) {
+      setSelectedElement(null);
+    }
+  }, [currentSlideIndex, selectedElement]);
 
   // Check if there are unsaved edits
   const hasUnsavedEdits = useMemo(() => {
@@ -276,7 +573,18 @@ const FPSlides: React.FC<Props> = ({
 
   const slideHeight = isFullscreen ? height : height - NAVIGATION_HEIGHT;
   const showNavigation = totalSlides > 1;
-  const effectiveSlideWidth = isOutlineOpen ? width - OUTLINE_WIDTH : width;
+
+  // In edit mode, show EditPanel and PropertiesPanel
+  const isEditPanelOpen = editable;
+  const isPanelOpen = editable ? isEditPanelOpen : isOutlineOpen;
+  const panelWidth = editable ? EDIT_PANEL_WIDTH : OUTLINE_WIDTH;
+
+  // Calculate effective slide width accounting for both left and right panels in edit mode
+  const effectiveSlideWidth = editable
+    ? width - EDIT_PANEL_WIDTH - PROPERTIES_PANEL_WIDTH
+    : isPanelOpen
+      ? width - panelWidth
+      : width;
 
   const [slideIndicesThatHaveBeenVisible, setSlideIndicesThatHaveBeenVisible] =
     React.useState<Set<number>>(emptySet);
@@ -295,8 +603,6 @@ const FPSlides: React.FC<Props> = ({
     }
   }, [currentSlideIndex, slideIndicesThatHaveBeenVisible, totalSlides]);
 
-  // Track which slides have been visible
-
   return (
     <div
       style={{
@@ -307,14 +613,25 @@ const FPSlides: React.FC<Props> = ({
         position: "relative",
       }}
     >
-      {/* Outline Panel */}
-      <OutlinePanel
-        isOpen={isOutlineOpen}
-        height={height}
-        slideTitles={slideTitles}
-        currentSlideIndex={currentSlideIndex}
-        onSlideSelect={setCurrentSlideIndex}
-      />
+      {/* Edit Panel (only in edit mode) */}
+      {editable && (
+        <EditPanel
+          isOpen={isEditPanelOpen}
+          height={height}
+          onAddArrow={handleAddArrow}
+        />
+      )}
+
+      {/* Outline Panel (only when not in edit mode) */}
+      {!editable && (
+        <OutlinePanel
+          isOpen={isOutlineOpen}
+          height={height}
+          slideTitles={slideTitles}
+          currentSlideIndex={currentSlideIndex}
+          onSlideSelect={setCurrentSlideIndex}
+        />
+      )}
 
       {/* Slide Content */}
       <div
@@ -322,7 +639,7 @@ const FPSlides: React.FC<Props> = ({
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          marginLeft: isOutlineOpen ? OUTLINE_WIDTH : 0,
+          marginLeft: isPanelOpen ? panelWidth : 0,
           transition: "margin-left 0.6s ease-in-out",
         }}
       >
@@ -362,6 +679,16 @@ const FPSlides: React.FC<Props> = ({
           />
         )}
       </div>
+
+      {/* Properties Panel (only in edit mode) */}
+      {editable && (
+        <PropertiesPanel
+          height={height}
+          selectedElement={selectedElement}
+          elements={currentSlideElements}
+          onUpdateProperties={handleUpdateProperties}
+        />
+      )}
 
       {/* Save Modal */}
       {saveModalStatus && (

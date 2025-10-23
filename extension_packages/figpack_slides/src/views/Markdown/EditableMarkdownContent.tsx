@@ -32,7 +32,7 @@ const EditableMarkdownContent: React.FC<EditableMarkdownContentProps> = ({
     }
   }, [content, isEditing]);
 
-  const handleClick = () => {
+  const handleDoubleClick = () => {
     if (editable && !isEditing) {
       setEditText(content);
       setIsEditing(true);
@@ -117,7 +117,7 @@ const EditableMarkdownContent: React.FC<EditableMarkdownContentProps> = ({
   return (
     <div
       ref={containerRef}
-      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       style={{
         width: "100%",
         height: "100%",
@@ -147,7 +147,7 @@ const EditableMarkdownContent: React.FC<EditableMarkdownContentProps> = ({
           }}
           className="edit-hint"
         >
-          Click to edit
+          Double-click to edit
         </div>
       )}
       <MarkdownContent content={content} />
