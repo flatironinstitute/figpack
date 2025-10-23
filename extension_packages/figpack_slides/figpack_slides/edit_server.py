@@ -24,6 +24,7 @@ class MarkdownSlideEditor:
         Args:
             edits: List of edit objects with slideIndex and actions
         """
+        print("--- apply_edits 1")
         with self.lock:
             # Read the current content
             with open(self.markdown_path, "r", encoding="utf-8") as f:
@@ -47,6 +48,13 @@ class MarkdownSlideEditor:
                     if action["type"] == "set_title":
                         slides[slide_index] = self._update_title(
                             slides[slide_index], action["text"]
+                        )
+                    elif action["type"] == "edit_markdown":
+                        print("--- apply edit_markdown", slide_index, action)
+                        slides[slide_index] = self._update_markdown_section(
+                            slides[slide_index],
+                            action["sectionIndex"],
+                            action["content"],
                         )
 
             # Reconstruct the markdown
@@ -86,6 +94,100 @@ class MarkdownSlideEditor:
                 title_found = True
             else:
                 updated_lines.append(line)
+
+        return "\n".join(updated_lines)
+
+    def _update_markdown_section(
+        self, slide_content: str, section_index: int, new_content: str
+    ) -> str:
+        """
+        Update a specific section within a slide
+
+        Args:
+            slide_content: The content of a single slide
+            section_index: Index of the section to update (0-based)
+            new_content: The new content for that section
+
+        Returns:
+            Updated slide content
+        """
+        print("--- update_markdown_section", section_index)
+        lines = slide_content.split("\n")
+
+        # Parse the slide structure to identify sections and special blocks
+        sections = []  # List of (start_line, end_line) tuples for each section
+        current_section_start = None
+        in_metadata_block = False
+        in_overlay_block = False
+        title_line_index = None
+
+        for i, line in enumerate(lines):
+            # Track title
+            if line.strip().startswith("# ") and title_line_index is None:
+                title_line_index = i
+                continue
+
+            # Track metadata blocks
+            if line == "```yaml slide-metadata" or line == "```yaml section-metadata":
+                in_metadata_block = True
+                continue
+            elif in_metadata_block and line == "```":
+                in_metadata_block = False
+                continue
+
+            # Track overlay blocks
+            if line == "```svg slide-overlay":
+                in_overlay_block = True
+                continue
+            elif in_overlay_block and line == "```":
+                in_overlay_block = False
+                continue
+
+            # Skip lines in special blocks
+            if in_metadata_block or in_overlay_block:
+                continue
+
+            # Detect section separator
+            if line == "* * *":
+                # End current section and start new one
+                if current_section_start is not None:
+                    sections.append((current_section_start, i - 1))
+                current_section_start = i + 1
+            else:
+                # Start first section if not started yet
+                if (
+                    current_section_start is None
+                    and line.strip()
+                    and not line.strip().startswith("# ")
+                ):
+                    current_section_start = i
+
+        # Add the last section
+        if current_section_start is not None:
+            sections.append((current_section_start, len(lines) - 1))
+
+        # Validate section index
+        if section_index < 0 or section_index >= len(sections):
+            raise ValueError(
+                f"Invalid section index: {section_index} (total sections: {len(sections)})"
+            )
+
+        # Replace the content of the specified section
+        section_start, section_end = sections[section_index]
+
+        # Build the updated slide
+        updated_lines = []
+
+        # Add lines before the section
+        updated_lines.extend(lines[:section_start])
+
+        # Add the new content (strip to avoid extra blank lines)
+        new_content_stripped = new_content.strip()
+        if new_content_stripped:
+            updated_lines.append(new_content_stripped)
+
+        # Add lines after the section
+        updated_lines.extend(lines[section_end + 1 :])
 
         return "\n".join(updated_lines)
 

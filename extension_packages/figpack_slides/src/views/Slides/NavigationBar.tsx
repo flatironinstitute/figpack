@@ -115,7 +115,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             onMouseLeave={(e) => {
               e.currentTarget.style.opacity = "0.9";
             }}
-            title="Save changes to markdown"
+            title="Save changes to presentation"
           >
             💾 Save
           </button>

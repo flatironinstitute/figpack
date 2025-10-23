@@ -11,7 +11,7 @@ from .parse_markdown.parse_markdown import (
 
 from .theme_default_1 import create_theme_default_1
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 __all__ = [
     "create_presentation",

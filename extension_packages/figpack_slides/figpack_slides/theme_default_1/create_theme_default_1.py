@@ -84,7 +84,7 @@ class Theme:
         self.style = style
         self.custom_view_types = custom_view_types or {}
 
-    def create_slide(self, parsed_slide: fps.ParsedSlide):
+    def create_slide(self, parsed_slide: fps.ParsedSlide, *, slide_index: int):
         """
         Create a slide from a parsed slide object.
 
@@ -107,13 +107,17 @@ class Theme:
         )
 
         if slide_type == "title":
-            return build_title_slide(parsed_slide, self)
+            return build_title_slide(parsed_slide, self, slide_index=slide_index)
         elif slide_type == "tabs-on-right":
-            return build_tabs_on_right_slide(parsed_slide, self)
+            return build_tabs_on_right_slide(
+                parsed_slide, self, slide_index=slide_index
+            )
         elif slide_type == "box-layout-on-right":
-            return build_box_layout_on_right_slide(parsed_slide, self)
+            return build_box_layout_on_right_slide(
+                parsed_slide, self, slide_index=slide_index
+            )
         else:
-            return build_standard_slide(parsed_slide, self)
+            return build_standard_slide(parsed_slide, self, slide_index=slide_index)
 
 
 DEFAULT_STYLE = SlideStyleConfig(
