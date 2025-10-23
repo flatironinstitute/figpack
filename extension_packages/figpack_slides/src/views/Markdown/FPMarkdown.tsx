@@ -1,10 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  ZarrGroup,
-  FragmentContextValue,
-  FPViewContexts,
-} from "../../figpack-interface";
-import MarkdownContent from "./MarkdownContent";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ZarrGroup, FPViewContexts } from "../../figpack-interface";
+import EditableMarkdownContent from "./EditableMarkdownContent";
+import { SlideEditAction } from "../Slide/SlideTitle";
 
 export const FPMarkdown: React.FC<{
   zarrGroup: ZarrGroup;
@@ -18,13 +16,82 @@ export const FPMarkdown: React.FC<{
 
   const fontSize = zarrGroup.attrs["font_size"] || undefined;
 
+  // Extract editable from contexts
+  const editable = useMemo(() => {
+    return (contexts.editable as any) ?? false;
+  }, [contexts]);
+
+  const { slideIndex, sectionIndex } = useMemo(() => {
+    const si = zarrGroup.attrs["slide_index"] as number | undefined;
+    const sei = zarrGroup.attrs["section_index"] as number | undefined;
+    return {
+      slideIndex: si,
+      sectionIndex: sei,
+    };
+  }, [zarrGroup]);
+
+  const onEditMarkdown = useCallback(
+    (newContent: string) => {
+      const onEditSlide = contexts.onEditSlide as any | undefined;
+      if (!onEditSlide) return;
+      if (slideIndex === undefined || sectionIndex === undefined) return;
+      const action: SlideEditAction = {
+        type: "edit_markdown",
+        sectionIndex: sectionIndex,
+        content: newContent,
+      };
+      onEditSlide(slideIndex, action);
+    },
+    [contexts, slideIndex, sectionIndex],
+  );
+
+  const [slideEdits, setSlideEdits] = useState<
+    Map<number, SlideEditAction[]> | undefined
+  >(undefined);
+  const updateSlideEdits = useCallback(() => {
+    setSlideEdits(contexts.slideEdits as any | undefined);
+  }, [contexts]);
+  useEffect(() => {
+    const cancel = (contexts.onSlideEditsChanged as any)?.(updateSlideEdits);
+    updateSlideEdits();
+    return () => {
+      if (cancel) cancel();
+    };
+  }, [contexts, updateSlideEdits]);
+
+  console.log("--- slideEdits00000", slideEdits);
+
+  const editedContent = useMemo(() => {
+    console.log("---- 1");
+    if (!slideEdits || sectionIndex === undefined || slideIndex === undefined) {
+      return content;
+    }
+    console.log("---- 2");
+    const actions = slideEdits.get(slideIndex);
+    if (!actions) {
+      return content;
+    }
+    console.log("---- 3");
+    let modifiedContent = content;
+    for (const action of actions) {
+      if (
+        action.type === "edit_markdown" &&
+        action.sectionIndex === sectionIndex
+      ) {
+        modifiedContent = action.content;
+      }
+    }
+    console.log("---- 4", { modifiedContent });
+    return modifiedContent;
+  }, [content, slideEdits, sectionIndex, slideIndex]);
+
   const fragments: string[] = useMemo(
-    () => getFragmentsForContent(content),
-    [content],
+    () => getFragmentsForContent(editedContent),
+    [editedContent],
   );
 
   // Get fragment context from contexts prop (with fallback for when not in presentation mode)
-  const fragmentContext = contexts.fragment as FragmentContextValue | undefined;
+  const fragmentContext = contexts.fragment as any | undefined;
   const currentFragmentIndex = fragmentContext?.currentFragmentIndex ?? 0;
   const isPresentationMode = fragmentContext?.isPresentationMode ?? false;
   const registerNumFragments = useMemo(
@@ -138,7 +205,11 @@ export const FPMarkdown: React.FC<{
         fontSize,
       }}
     >
-      <MarkdownContent content={visibleContent} />
+      <EditableMarkdownContent
+        content={visibleContent}
+        editable={editable}
+        onEdit={onEditMarkdown}
+      />
     </div>
   );
 };

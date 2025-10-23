@@ -116,13 +116,52 @@ const FPSlides: React.FC<Props> = ({
     ],
   );
 
+  const onEditSlide = useCallback(
+    (slideIndex: number, action: SlideEditAction) => {
+      setSlideLedgers((prev) => {
+        const newMap = new Map(prev);
+        const existingLedger = newMap.get(slideIndex) || [];
+        newMap.set(slideIndex, [...existingLedger, action]);
+        return newMap;
+      });
+    },
+    [],
+  );
+
+  console.log("--- slideLedgers", slideLedgers);
+
+  const slideEditsChangedCallbacks = React.useRef<Set<() => void>>(new Set());
+
+  const onSlideEditsChanged = useCallback((callback: () => void) => {
+    slideEditsChangedCallbacks.current.add(callback);
+    return () => {
+      slideEditsChangedCallbacks.current.delete(callback);
+    };
+  }, []);
+
+  // Notify listeners when slide edits change
+  React.useEffect(() => {
+    slideEditsChangedCallbacks.current.forEach((callback) => callback());
+  }, [slideLedgers]);
+
   // Add fragment context to contexts
-  const contextsWithFragment = React.useMemo(
+  const ammendedContexts = React.useMemo(
     () => ({
       ...contexts,
       fragment: fragmentContext,
+      onEditSlide,
+      slideEdits: slideLedgers,
+      onSlideEditsChanged,
+      editable,
     }),
-    [contexts, fragmentContext],
+    [
+      contexts,
+      fragmentContext,
+      onEditSlide,
+      slideLedgers,
+      onSlideEditsChanged,
+      editable,
+    ],
   );
 
   // Navigation functions with fragment awareness
@@ -175,6 +214,23 @@ const FPSlides: React.FC<Props> = ({
       (ledger) => ledger.length > 0,
     );
   }, [slideLedgers]);
+
+  // Warn before closing/reloading if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedEdits) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedEdits]);
 
   // Save handler
   const handleSave = useCallback(async () => {
@@ -283,9 +339,7 @@ const FPSlides: React.FC<Props> = ({
               height={slideHeight}
               zarrGroup={sg}
               contexts={
-                ii === currentSlideIndex
-                  ? (contextsWithFragment as any)
-                  : contexts
+                ii === currentSlideIndex ? (ammendedContexts as any) : contexts
               }
               renderFPView={renderFPView}
               nativeWidth={nativeWidth}

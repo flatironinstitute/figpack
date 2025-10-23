@@ -7,10 +7,16 @@ type TitleConfig = {
   color?: string;
 };
 
-export type SlideEditAction = {
-  type: "set_title";
-  text: string;
-};
+export type SlideEditAction =
+  | {
+      type: "set_title";
+      text: string;
+    }
+  | {
+      type: "edit_markdown";
+      sectionIndex: number;
+      content: string;
+    };
 
 type SlideTitleProps = {
   titleConfig: TitleConfig;
@@ -107,8 +113,9 @@ const SlideTitle: React.FC<SlideTitleProps> = ({
         fontFamily: titleConfig.font_family || "inherit",
         color: titleConfig.color || "inherit",
         cursor: editable ? "pointer" : "default",
-        borderBottom: editable ? "2px dotted rgba(0, 0, 0, 0.3)" : "none",
-        transition: "border-bottom-color 0.2s",
+        // borderBottom: editable ? "2px dotted rgba(0, 0, 0, 0.3)" : "none",
+        // transition: "border-bottom-color 0.2s",
+        backgroundColor: editable ? "#eeeedd" : "transparent",
         paddingBottom: "2px",
       }}
       onMouseEnter={(e) => {

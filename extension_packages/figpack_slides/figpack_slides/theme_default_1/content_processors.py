@@ -86,7 +86,14 @@ def fetch_image_from_url(url: str) -> Optional[bytes]:
         return None
 
 
-def process_markdown_content(content: str, font_size: int) -> fpsv.Markdown:
+def process_markdown_content(
+    content: str, font_size: int, *, slide_index: int, section_index: int
+) -> fpsv.Markdown:
     """Process regular markdown content with embedded images."""
     content_with_images = fps.embed_images_as_base64(content, base_dir="./")
-    return fpsv.Markdown(content_with_images, font_size=font_size)
+    return fpsv.Markdown(
+        content_with_images,
+        font_size=font_size,
+        slide_index=slide_index,
+        section_index=section_index,
+    )

@@ -16,7 +16,9 @@ from .content_processors import (
 from .create_theme_default_1 import Theme
 
 
-def build_title_slide(parsed_slide: fps.ParsedSlide, theme: Theme) -> fpsv.TitleSlide:
+def build_title_slide(
+    parsed_slide: fps.ParsedSlide, theme: Theme, *, slide_index: int
+) -> fpsv.TitleSlide:
     """Build a title slide."""
     title = parsed_slide.title
     style = theme.style
@@ -60,7 +62,9 @@ def build_title_slide(parsed_slide: fps.ParsedSlide, theme: Theme) -> fpsv.Title
     )
 
 
-def build_standard_slide(parsed_slide: fps.ParsedSlide, theme: Theme) -> fpsv.Slide:
+def build_standard_slide(
+    parsed_slide: fps.ParsedSlide, theme: Theme, *, slide_index: int
+) -> fpsv.Slide:
     """Build a standard slide with one or two columns."""
     title = parsed_slide.title
     sections = parsed_slide.sections
@@ -71,14 +75,18 @@ def build_standard_slide(parsed_slide: fps.ParsedSlide, theme: Theme) -> fpsv.Sl
 
     if len(sections) == 1:
         # Single column
-        content = process_section(sections[0], theme)
+        content = process_section(
+            sections[0], theme, slide_index=slide_index, section_index=0
+        )
     elif len(sections) == 2:
         # Two columns
         items = []
-        for section in sections:
+        for i, section in enumerate(sections):
             items.append(
                 fpv.LayoutItem(
-                    view=process_section(section, theme),
+                    view=process_section(
+                        section, theme, slide_index=slide_index, section_index=i
+                    ),
                     stretch=1,
                 )
             )
@@ -102,7 +110,7 @@ def build_standard_slide(parsed_slide: fps.ParsedSlide, theme: Theme) -> fpsv.Sl
 
 
 def build_tabs_on_right_slide(
-    parsed_slide: fps.ParsedSlide, theme: Theme
+    parsed_slide: fps.ParsedSlide, theme: Theme, *, slide_index: int
 ) -> fpsv.Slide:
     """Build a slide with tabs on the right side."""
     title = parsed_slide.title
@@ -113,7 +121,9 @@ def build_tabs_on_right_slide(
         raise ValueError("Tabs-on-right slide must have at least two sections.")
 
     # First section goes on the left
-    left_content = process_section(sections[0], theme)
+    left_content = process_section(
+        sections[0], theme, slide_index=slide_index, section_index=0
+    )
 
     # Remaining sections become tabs on the right
     tabs: List[fpv.TabLayoutItem] = []
@@ -122,7 +132,9 @@ def build_tabs_on_right_slide(
         tabs.append(
             fpv.TabLayoutItem(
                 label=tab_label,
-                view=process_section(section, theme),
+                view=process_section(
+                    section, theme, slide_index=slide_index, section_index=i
+                ),
             )
         )
 
@@ -151,7 +163,7 @@ def build_tabs_on_right_slide(
 
 
 def build_box_layout_on_right_slide(
-    parsed_slide: fps.ParsedSlide, theme: Theme
+    parsed_slide: fps.ParsedSlide, theme: Theme, *, slide_index: int
 ) -> fpsv.Slide:
     """Build a slide with a box layout on the right side."""
     title = parsed_slide.title
@@ -162,14 +174,18 @@ def build_box_layout_on_right_slide(
         raise ValueError("Box-layout-on-right slide must have at least two sections.")
 
     # First section goes on the left
-    left_content = process_section(sections[0], theme)
+    left_content = process_section(
+        sections[0], theme, slide_index=slide_index, section_index=0
+    )
 
     # Remaining sections become box layout on the right
     box_items: List[fpv.LayoutItem] = []
-    for section in sections[1:]:
+    for i, section in enumerate(sections[1:], start=1):
         box_items.append(
             fpv.LayoutItem(
-                view=process_section(section, theme),
+                view=process_section(
+                    section, theme, slide_index=slide_index, section_index=i
+                ),
                 stretch=1,
             )
         )
@@ -200,7 +216,13 @@ def build_box_layout_on_right_slide(
     )
 
 
-def process_section(section: fps.ParsedSlideSection, theme: Theme):
+def process_section(
+    section: fps.ParsedSlideSection,
+    theme: Theme,
+    *,
+    slide_index: int,
+    section_index: int,
+):
     """Process a slide section and return appropriate view."""
     content = section.content.strip()
     metadata = section.metadata
@@ -242,4 +264,6 @@ def process_section(section: fps.ParsedSlideSection, theme: Theme):
 
     # Regular markdown content
     font_size = style.get_content_font_size(metadata)
-    return process_markdown_content(content, font_size)
+    return process_markdown_content(
+        content, font_size, slide_index=slide_index, section_index=section_index
+    )

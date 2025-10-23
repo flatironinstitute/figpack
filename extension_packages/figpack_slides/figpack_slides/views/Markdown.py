@@ -13,7 +13,14 @@ class Markdown(FigpackView):
     A markdown content visualization component
     """
 
-    def __init__(self, content: str, *, font_size: Optional[int] = None):
+    def __init__(
+        self,
+        content: str,
+        *,
+        font_size: Optional[int] = None,
+        slide_index: Optional[int] = None,
+        section_index: Optional[int] = None,
+    ):
         """
         Initialize a Markdown view
 
@@ -22,6 +29,8 @@ class Markdown(FigpackView):
         """
         self.content = content
         self.font_size = font_size
+        self.slide_index = slide_index
+        self.section_index = section_index
 
     def write_to_zarr_group(self, group: Group) -> None:
         """
@@ -35,6 +44,12 @@ class Markdown(FigpackView):
 
         if self.font_size is not None:
             group.attrs["font_size"] = self.font_size
+
+        if self.slide_index is not None:
+            group.attrs["slide_index"] = self.slide_index
+
+        if self.section_index is not None:
+            group.attrs["section_index"] = self.section_index
 
         # Convert string content to numpy array of bytes
         content_bytes = self.content.encode("utf-8")

@@ -137,7 +137,12 @@ def create_presentation(md_content: str, *, theme) -> Slides:
                     parsed_slide.sections[-1].content = line
         parsed_slides.append(parsed_slide)
 
-    return Slides(slides=[theme.create_slide(slide) for slide in parsed_slides])
+    return Slides(
+        slides=[
+            theme.create_slide(slide, slide_index=i)
+            for i, slide in enumerate(parsed_slides)
+        ]
+    )
 
 
 def _sanitize_svg(svg_content: str) -> str:
