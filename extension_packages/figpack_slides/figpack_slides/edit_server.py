@@ -57,8 +57,24 @@ class MarkdownSlideEditor:
                     elif action["type"] == "update_slide_element_position":
                         slides[slide_index] = self._update_slide_element_position(
                             slides[slide_index],
-                            action["elementIndex"],
+                            action["elementId"],
                             action["position"],
+                        )
+                    elif action["type"] == "add_slide_element":
+                        slides[slide_index] = self._add_slide_element(
+                            slides[slide_index],
+                            action["element"],
+                        )
+                    elif action["type"] == "delete_slide_element":
+                        slides[slide_index] = self._delete_slide_element(
+                            slides[slide_index],
+                            action["elementId"],
+                        )
+                    elif action["type"] == "update_slide_element_properties":
+                        slides[slide_index] = self._update_slide_element_properties(
+                            slides[slide_index],
+                            action["elementId"],
+                            action["properties"],
                         )
 
             # Reconstruct the markdown
@@ -156,15 +172,241 @@ class MarkdownSlideEditor:
         return _replace_section_text(slide_content, section_index, new_section_text)
 
     def _update_slide_element_position(
-        self, slide_content: str, element_index: int, position: Dict[str, float]
+        self, slide_content: str, element_id: str, position: Dict[str, float]
     ) -> str:
         """
         Update the position of a slide element in the slide metadata
 
         Args:
             slide_content: The content of a single slide
-            element_index: Index of the element to update (0-based)
+            element_id: ID of the element to update
             position: New position dict with 'x' and 'y' keys
+
+        Returns:
+            Updated slide content
+        """
+        import yaml
+
+        lines = slide_content.split("\n")
+
+        # Find the slide-metadata block
+        metadata_start = -1
+        metadata_end = -1
+        in_metadata_block = False
+
+        for i, line in enumerate(lines):
+            if line.strip() == "```yaml slide-metadata":
+                metadata_start = i
+                in_metadata_block = True
+            elif in_metadata_block and line.strip() == "```":
+                metadata_end = i
+                break
+
+        # Parse existing metadata or create new one
+        if metadata_start >= 0 and metadata_end > metadata_start:
+            # Extract and parse existing metadata
+            metadata_lines = lines[metadata_start + 1 : metadata_end]
+            metadata_yaml = "\n".join(metadata_lines)
+            metadata = yaml.safe_load(metadata_yaml) if metadata_yaml.strip() else {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+        else:
+            # No metadata block exists
+            raise ValueError(f"No metadata block found for element {element_id}")
+
+        # Ensure elements list exists
+        if "elements" not in metadata or not isinstance(metadata["elements"], list):
+            raise ValueError(f"No elements found for element {element_id}")
+
+        # Find element by ID
+        element_found = False
+        for element in metadata["elements"]:
+            if isinstance(element, dict) and element.get("id") == element_id:
+                element["position"] = {
+                    "x": position["x"],
+                    "y": position["y"],
+                }
+                element_found = True
+                break
+
+        if not element_found:
+            raise ValueError(f"Element with ID {element_id} not found")
+
+        # Serialize metadata back to YAML
+        new_metadata_yaml = yaml.dump(
+            metadata, default_flow_style=False, sort_keys=False
+        )
+        new_metadata_lines = new_metadata_yaml.rstrip().split("\n")
+
+        # Reconstruct the slide content
+        result_lines = (
+            lines[: metadata_start + 1] + new_metadata_lines + lines[metadata_end:]
+        )
+
+        return "\n".join(result_lines)
+
+    def _delete_slide_element(self, slide_content: str, element_id: str) -> str:
+        """
+        Delete a slide element from the slide metadata
+
+        Args:
+            slide_content: The content of a single slide
+            element_id: ID of the element to delete
+
+        Returns:
+            Updated slide content
+        """
+        import yaml
+
+        lines = slide_content.split("\n")
+
+        # Find the slide-metadata block
+        metadata_start = -1
+        metadata_end = -1
+        in_metadata_block = False
+
+        for i, line in enumerate(lines):
+            if line.strip() == "```yaml slide-metadata":
+                metadata_start = i
+                in_metadata_block = True
+            elif in_metadata_block and line.strip() == "```":
+                metadata_end = i
+                break
+
+        # Parse existing metadata
+        if metadata_start >= 0 and metadata_end > metadata_start:
+            # Extract and parse existing metadata
+            metadata_lines = lines[metadata_start + 1 : metadata_end]
+            metadata_yaml = "\n".join(metadata_lines)
+            metadata = yaml.safe_load(metadata_yaml) if metadata_yaml.strip() else {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+        else:
+            # No metadata block exists
+            raise ValueError(f"No metadata block found for element {element_id}")
+
+        # Ensure elements list exists
+        if "elements" not in metadata or not isinstance(metadata["elements"], list):
+            raise ValueError(f"No elements found for element {element_id}")
+
+        # Filter out the element with the given ID
+        original_count = len(metadata["elements"])
+        metadata["elements"] = [
+            el
+            for el in metadata["elements"]
+            if not (isinstance(el, dict) and el.get("id") == element_id)
+        ]
+
+        if len(metadata["elements"]) == original_count:
+            raise ValueError(f"Element with ID {element_id} not found")
+
+        # Serialize metadata back to YAML
+        new_metadata_yaml = yaml.dump(
+            metadata, default_flow_style=False, sort_keys=False
+        )
+        new_metadata_lines = new_metadata_yaml.rstrip().split("\n")
+
+        # Reconstruct the slide content
+        result_lines = (
+            lines[: metadata_start + 1] + new_metadata_lines + lines[metadata_end:]
+        )
+
+        return "\n".join(result_lines)
+
+    def _update_slide_element_properties(
+        self, slide_content: str, element_id: str, properties: Dict[str, Any]
+    ) -> str:
+        """
+        Update properties of a slide element in the slide metadata
+
+        Args:
+            slide_content: The content of a single slide
+            element_id: ID of the element to update
+            properties: Properties dict with 'size' (containing 'length' and 'thickness'),
+                       'style', and/or 'direction' keys
+
+        Returns:
+            Updated slide content
+        """
+        import yaml
+
+        lines = slide_content.split("\n")
+
+        # Find the slide-metadata block
+        metadata_start = -1
+        metadata_end = -1
+        in_metadata_block = False
+
+        for i, line in enumerate(lines):
+            if line.strip() == "```yaml slide-metadata":
+                metadata_start = i
+                in_metadata_block = True
+            elif in_metadata_block and line.strip() == "```":
+                metadata_end = i
+                break
+
+        # Parse existing metadata
+        if metadata_start >= 0 and metadata_end > metadata_start:
+            # Extract and parse existing metadata
+            metadata_lines = lines[metadata_start + 1 : metadata_end]
+            metadata_yaml = "\n".join(metadata_lines)
+            metadata = yaml.safe_load(metadata_yaml) if metadata_yaml.strip() else {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+        else:
+            # No metadata block exists
+            raise ValueError(f"No metadata block found for element {element_id}")
+
+        # Ensure elements list exists
+        if "elements" not in metadata or not isinstance(metadata["elements"], list):
+            raise ValueError(f"No elements found for element {element_id}")
+
+        # Find element by ID and update properties
+        element_found = False
+        for element in metadata["elements"]:
+            if isinstance(element, dict) and element.get("id") == element_id:
+                # Update size if provided (using length and thickness)
+                if "size" in properties:
+                    if "size" not in element:
+                        element["size"] = {}
+                    element["size"].update(properties["size"])
+
+                # Update style if provided
+                if "style" in properties:
+                    if "style" not in element:
+                        element["style"] = {}
+                    element["style"].update(properties["style"])
+
+                # Update direction if provided
+                if "direction" in properties:
+                    element["direction"] = properties["direction"]
+
+                element_found = True
+                break
+
+        if not element_found:
+            raise ValueError(f"Element with ID {element_id} not found")
+
+        # Serialize metadata back to YAML
+        new_metadata_yaml = yaml.dump(
+            metadata, default_flow_style=False, sort_keys=False
+        )
+        new_metadata_lines = new_metadata_yaml.rstrip().split("\n")
+
+        # Reconstruct the slide content
+        result_lines = (
+            lines[: metadata_start + 1] + new_metadata_lines + lines[metadata_end:]
+        )
+
+        return "\n".join(result_lines)
+
+    def _add_slide_element(self, slide_content: str, element: Dict[str, Any]) -> str:
+        """
+        Add a new element to the slide metadata
+
+        Args:
+            slide_content: The content of a single slide
+            element: Element dict to add
 
         Returns:
             Updated slide content
@@ -204,20 +446,8 @@ class MarkdownSlideEditor:
         if "elements" not in metadata or not isinstance(metadata["elements"], list):
             metadata["elements"] = []
 
-        # Validate element index
-        if element_index < 0 or element_index >= len(metadata["elements"]):
-            raise ValueError(
-                f"Invalid element index: {element_index} (total elements: {len(metadata['elements'])})"
-            )
-
-        # Update the element position
-        if not isinstance(metadata["elements"][element_index], dict):
-            raise ValueError(f"Element at index {element_index} is not a valid object")
-
-        metadata["elements"][element_index]["position"] = {
-            "x": position["x"],
-            "y": position["y"],
-        }
+        # Add the new element
+        metadata["elements"].append(element)
 
         # Serialize metadata back to YAML
         new_metadata_yaml = yaml.dump(

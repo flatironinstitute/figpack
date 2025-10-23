@@ -6,6 +6,7 @@
 - Fix height calculation in FPCaptionedView
 - In figpack_slides, support slide editing of titles
 - In figpack_slides, support slide editing of markdown sections
+- In timeseries graph, ensure minimum 1 pixel width for time intervals
 
 ## [0.2.35] - 2025-10-22
 

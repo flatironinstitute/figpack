@@ -7,6 +7,7 @@ import {
 } from "../../figpack-interface";
 import FPViewWrapper from "../../FPViewWrapper";
 import SlideTitle, { SlideEditAction } from "./SlideTitle";
+import { DraggableArrowElement } from "./ArrowElement";
 
 type Props = {
   zarrGroup: ZarrGroup;
@@ -37,11 +38,12 @@ type FooterConfig = {
 } | null;
 
 export type SlideElement = {
+  id: string;
   type: "shape";
   shape: "arrow";
   direction: "right" | "left" | "up" | "down";
   position: { x: number; y: number };
-  size: { width: number; height: number };
+  size: { length: number; thickness: number };
   style: { stroke: string; strokeWidth: number; fill: string };
 };
 
@@ -58,6 +60,27 @@ const FPSlide: React.FC<Props> = ({
   const handleEditAction = (action: SlideEditAction) => {
     if (onSlideEdit) {
       onSlideEdit(action);
+    }
+  };
+
+  // Extract selection handlers from contexts
+  const selectedElementId = (contexts as any).selectedElementId as
+    | string
+    | null;
+  const onSelectElement = (contexts as any).onSelectElement as
+    | ((slideIndex: number, elementId: string) => void)
+    | undefined;
+  const onDeselectElement = (contexts as any).onDeselectElement as
+    | (() => void)
+    | undefined;
+  const currentSlideIndex = (contexts as any).fragment?.currentSlideIndex as
+    | number
+    | undefined;
+
+  // Handler for clicking on empty slide area (deselect)
+  const handleSlideClick = (e: React.MouseEvent) => {
+    if (editable && onDeselectElement && e.target === e.currentTarget) {
+      onDeselectElement();
     }
   };
 
@@ -89,41 +112,116 @@ const FPSlide: React.FC<Props> = ({
     const baseElements =
       (slideMetadataOriginal?.["elements"] as SlideElement[]) || [];
 
+    // Apply add element actions
+    const addElementActions = slideEdits.filter(
+      (action) => action.type === "add_slide_element",
+    );
+
+    let workingElements = [
+      ...baseElements,
+      ...addElementActions
+        .map((action) =>
+          action.type === "add_slide_element" ? action.element : null,
+        )
+        .filter((el): el is SlideElement => el !== null),
+    ];
+
+    // Apply delete element actions
+    const deleteElementActions = slideEdits.filter(
+      (action) => action.type === "delete_slide_element",
+    );
+
+    const deletedIds = new Set(
+      deleteElementActions.map((action) =>
+        action.type === "delete_slide_element" ? action.elementId : "",
+      ),
+    );
+
+    workingElements = workingElements.filter(
+      (element) => !deletedIds.has(element.id),
+    );
+
+    // Apply property update actions
+    const propertyUpdateActions = slideEdits.filter(
+      (action) => action.type === "update_slide_element_properties",
+    );
+
+    if (propertyUpdateActions.length > 0) {
+      workingElements = workingElements.map((element) => {
+        const updates = propertyUpdateActions.filter(
+          (action) =>
+            action.type === "update_slide_element_properties" &&
+            action.elementId === element.id,
+        );
+
+        if (updates.length === 0) return element;
+
+        const updatedElement = { ...element };
+        updates.forEach((update) => {
+          if (update.type === "update_slide_element_properties") {
+            if (update.properties.size) {
+              updatedElement.size = {
+                ...updatedElement.size,
+                ...update.properties.size,
+              };
+            }
+            if (update.properties.style) {
+              updatedElement.style = {
+                ...updatedElement.style,
+                ...update.properties.style,
+              };
+            }
+            if (update.properties.direction) {
+              updatedElement.direction = update.properties.direction;
+            }
+          }
+        });
+
+        return updatedElement;
+      });
+    }
+
     // Apply position update actions
     const positionUpdateActions = slideEdits.filter(
       (action) => action.type === "update_slide_element_position",
     );
 
-    if (positionUpdateActions.length === 0) {
-      return baseElements;
+    if (positionUpdateActions.length > 0) {
+      workingElements = workingElements.map((element) => {
+        const positionUpdate = positionUpdateActions
+          .filter(
+            (action) =>
+              action.type === "update_slide_element_position" &&
+              action.elementId === element.id,
+          )
+          .pop(); // Get the latest position update for this element
+
+        if (
+          positionUpdate &&
+          positionUpdate.type === "update_slide_element_position"
+        ) {
+          return {
+            ...element,
+            position: positionUpdate.position,
+          };
+        }
+
+        return element;
+      });
     }
 
-    // Apply each position update action
-    return baseElements.map((element, index) => {
-      const positionUpdate = positionUpdateActions
-        .filter((action) => action.elementIndex === index)
-        .pop(); // Get the latest position update for this element
-
-      if (positionUpdate) {
-        return {
-          ...element,
-          position: positionUpdate.position,
-        };
-      }
-
-      return element;
-    });
+    return workingElements;
   }, [slideMetadataOriginal, slideEdits]);
 
   const handleElementPositionUpdate = (
-    elementIndex: number,
+    elementId: string,
     newPosition: { x: number; y: number },
   ) => {
     if (!editable) return;
 
     handleEditAction({
       type: "update_slide_element_position",
-      elementIndex,
+      elementId,
       position: newPosition,
     });
   };
@@ -165,6 +263,7 @@ const FPSlide: React.FC<Props> = ({
 
   return (
     <div
+      onClick={handleSlideClick}
       style={{
         position: "relative",
         width,
@@ -254,22 +353,29 @@ const FPSlide: React.FC<Props> = ({
         />
       )}
 
-      {elements.map((element, index) => {
+      {elements.map((element) => {
         if (element.type === "shape" && element.shape === "arrow") {
+          const isSelected = selectedElementId === element.id;
           return (
             <DraggableArrowElement
-              key={`slide-element-${index}`}
-              elementIndex={index}
+              key={element.id}
+              elementId={element.id}
               x={element.position.x}
               y={element.position.y}
-              width={element.size.width}
-              height={element.size.height}
+              length={element.size.length}
+              thickness={element.size.thickness}
               direction={element.direction}
               stroke={element.style.stroke}
               strokeWidth={element.style.strokeWidth}
               fill={element.style.fill}
               editable={editable}
+              isSelected={isSelected}
               onPositionUpdate={handleElementPositionUpdate}
+              onSelect={() => {
+                if (onSelectElement && currentSlideIndex !== undefined) {
+                  onSelectElement(currentSlideIndex, element.id);
+                }
+              }}
             />
           );
         }
@@ -293,203 +399,6 @@ const useContentGroup = (zarrGroup: ZarrGroup): ZarrGroup | null => {
   }, [zarrGroup]);
 
   return contentGroup;
-};
-
-type DraggableArrowElementProps = {
-  elementIndex: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  direction: "right" | "left" | "up" | "down";
-  stroke: string;
-  strokeWidth: number;
-  fill: string;
-  editable: boolean;
-  onPositionUpdate: (
-    elementIndex: number,
-    position: { x: number; y: number },
-  ) => void;
-};
-
-const DraggableArrowElement: React.FC<DraggableArrowElementProps> = ({
-  elementIndex,
-  x,
-  y,
-  width,
-  height,
-  direction,
-  stroke,
-  strokeWidth,
-  fill,
-  editable,
-  onPositionUpdate,
-}) => {
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [dragStart, setDragStart] = React.useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [positionStart, setPositionStart] = React.useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [currentPosition, setCurrentPosition] = React.useState({ x, y });
-  const [isHovered, setIsHovered] = React.useState(false);
-
-  // Update position when props change (from edit actions)
-  React.useEffect(() => {
-    setCurrentPosition({ x, y });
-  }, [x, y]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!editable) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX,
-      y: e.clientY,
-    });
-    setPositionStart({ x: currentPosition.x, y: currentPosition.y });
-  };
-
-  React.useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragStart) return;
-
-      const scale = determineScaleFromElement(e.target as HTMLElement);
-
-      const deltaX = (e.clientX - dragStart.x) / scale;
-      const deltaY = (e.clientY - dragStart.y) / scale;
-
-      setCurrentPosition({
-        x: (positionStart?.x || 0) + deltaX,
-        y: (positionStart?.y || 0) + deltaY,
-      });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      setDragStart(null);
-
-      // Only update if position actually changed
-      if (currentPosition.x !== x || currentPosition.y !== y) {
-        onPositionUpdate(elementIndex, currentPosition);
-      }
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [
-    isDragging,
-    dragStart,
-    currentPosition,
-    x,
-    y,
-    elementIndex,
-    onPositionUpdate,
-  ]);
-
-  // Calculate arrow proportions (Google Slides style)
-  // Account for stroke width to prevent clipping
-  const strokePadding = strokeWidth;
-  const arrowHeadWidth = width * 0.35;
-  const shaftWidth = width - arrowHeadWidth;
-  const shaftHeight = height * 0.5;
-  const shaftY = (height - shaftHeight) / 2;
-
-  const arrowPath = `
-    M ${strokePadding},${shaftY}
-    L ${shaftWidth},${shaftY}
-    L ${shaftWidth},${strokePadding}
-    L ${width - strokePadding},${height / 2}
-    L ${shaftWidth},${height - strokePadding}
-    L ${shaftWidth},${shaftY + shaftHeight}
-    L ${strokePadding},${shaftY + shaftHeight}
-    Z
-  `;
-
-  const getRotation = () => {
-    switch (direction) {
-      case "right":
-        return 0;
-      case "left":
-        return 180;
-      case "up":
-        return -90;
-      case "down":
-        return 90;
-      default:
-        return 0;
-    }
-  };
-
-  const rotation = getRotation();
-
-  return (
-    <div
-      onMouseDown={handleMouseDown}
-      onMouseEnter={() => editable && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        position: "absolute",
-        left: currentPosition.x,
-        top: currentPosition.y,
-        width,
-        height,
-        cursor: editable ? (isDragging ? "grabbing" : "grab") : "default",
-        outline: editable && isHovered ? "2px solid #4A90E2" : "none",
-        outlineOffset: "2px",
-        transition: isDragging ? "none" : "outline 0.2s",
-      }}
-    >
-      <svg
-        width={width}
-        height={height}
-        viewBox={`0 0 ${width} ${height}`}
-        style={{
-          transform: `rotate(${rotation}deg)`,
-          transformOrigin: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <path
-          d={arrowPath}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  );
-};
-
-const determineScaleFromElement = (element: HTMLElement): number => {
-  let cumulativeScale = 1;
-  let currentElement: HTMLElement | null = element;
-
-  while (currentElement) {
-    const style = window.getComputedStyle(currentElement);
-    const scale = style.scale;
-    if (scale && scale !== "none") {
-      cumulativeScale *= parseFloat(scale);
-    }
-
-    currentElement = currentElement.parentElement;
-  }
-
-  return cumulativeScale;
 };
 
 export default FPSlide;

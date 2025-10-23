@@ -20,8 +20,33 @@ export type SlideEditAction =
     }
   | {
       type: "update_slide_element_position";
-      elementIndex: number;
+      elementId: string;
       position: { x: number; y: number };
+    }
+  | {
+      type: "add_slide_element";
+      element: {
+        id: string;
+        type: "shape";
+        shape: "arrow";
+        direction: "right" | "left" | "up" | "down";
+        position: { x: number; y: number };
+        size: { length: number; thickness: number };
+        style: { stroke: string; strokeWidth: number; fill: string };
+      };
+    }
+  | {
+      type: "delete_slide_element";
+      elementId: string;
+    }
+  | {
+      type: "update_slide_element_properties";
+      elementId: string;
+      properties: {
+        size?: { length: number; thickness: number };
+        style?: { stroke?: string; strokeWidth?: number; fill?: string };
+        direction?: "right" | "left" | "up" | "down";
+      };
     };
 
 type SlideTitleProps = {
@@ -48,7 +73,7 @@ const SlideTitle: React.FC<SlideTitleProps> = ({
     }
   }, [isEditing]);
 
-  const handleClick = () => {
+  const handleDoubleClick = () => {
     if (editable && !isEditing) {
       setEditText(titleConfig.text);
       setIsEditing(true);
@@ -111,7 +136,7 @@ const SlideTitle: React.FC<SlideTitleProps> = ({
 
   return (
     <div
-      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       style={{
         width: "100%",
         height: "100%",
