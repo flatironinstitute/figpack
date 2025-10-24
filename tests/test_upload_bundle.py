@@ -120,7 +120,6 @@ def test_upload_single_file_with_retry(tmp_path):
 
 
 def test_create_or_get_figure():
-    figure_hash = "test-hash"
     api_key = "test-key"
 
     mock_response = mock.Mock()
@@ -132,14 +131,13 @@ def test_create_or_get_figure():
 
     with mock.patch("requests.post") as mock_post:
         mock_post.return_value = mock_response
-        result = _create_or_get_figure(figure_hash, api_key)
+        result = _create_or_get_figure(api_key)
 
         assert result["success"]
         assert result["figure"]["figureUrl"] == "test-url"
         assert result["figure"]["status"] == "pending"
 
         mock_post.assert_called_once()
-        assert mock_post.call_args[1]["json"]["figureHash"] == figure_hash
         assert mock_post.call_args[1]["json"]["apiKey"] == api_key
 
 
