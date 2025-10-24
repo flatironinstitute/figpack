@@ -4,7 +4,6 @@ import pytest
 import requests
 
 from figpack.core._upload_bundle import (
-    _compute_deterministic_figure_hash,
     _create_or_get_figure,
     _determine_content_type,
     _finalize_figure,
@@ -118,27 +117,6 @@ def test_upload_single_file_with_retry(tmp_path):
 
         assert result == "test.txt"
         assert mock_put.call_count == 2
-
-
-def test_compute_deterministic_figure_hash(tmp_path):
-    # Create test files with known content
-    file1 = tmp_path / "file1.txt"
-    file2 = tmp_path / "file2.txt"
-    file1.write_text("content1")
-    file2.write_text("content2")
-
-    hash1 = _compute_deterministic_figure_hash(tmp_path)
-    assert isinstance(hash1, str)
-    assert len(hash1) == 40  # SHA1 hash is 40 characters
-
-    # Same content should produce same hash
-    hash2 = _compute_deterministic_figure_hash(tmp_path)
-    assert hash1 == hash2
-
-    # Different content should produce different hash
-    file1.write_text("different content")
-    hash3 = _compute_deterministic_figure_hash(tmp_path)
-    assert hash1 != hash3
 
 
 def test_create_or_get_figure():
