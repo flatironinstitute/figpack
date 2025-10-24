@@ -82,8 +82,6 @@ const FPViewWrapper: React.FC<{
       } catch (err) {
         console.warn(`Error in extension data change callback: ${err}`);
       }
-    } else {
-      console.log("no dataChangeCallbackRef.current");
     }
   }, [zarrGroup]);
 
