@@ -249,6 +249,64 @@ def handle_extensions_command(args):
         print("Use 'figpack extensions <command> --help' for more information.")
 
 
+def download_and_view_archive(url: str, port: int = None) -> None:
+    """
+    Download a tar.gz/tgz archive from a URL and view it
+
+    Args:
+        url: URL to the tar.gz or tgz file
+        port: Optional port number to serve on
+    """
+    if not (url.endswith(".tar.gz") or url.endswith(".tgz")):
+        print(f"Error: URL must point to a .tar.gz or .tgz file: {url}")
+        sys.exit(1)
+
+    print(f"Downloading archive from: {url}")
+
+    try:
+        response = requests.get(url, timeout=60, stream=True)
+        response.raise_for_status()
+
+        # Create a temporary file to store the downloaded archive
+        with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as temp_file:
+            temp_path = temp_file.name
+
+            # Download with progress indication
+            total_size = int(response.headers.get("content-length", 0))
+            downloaded_size = 0
+
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    temp_file.write(chunk)
+                    downloaded_size += len(chunk)
+                    if total_size > 0:
+                        progress = (downloaded_size / total_size) * 100
+                        print(
+                            f"Downloaded: {downloaded_size / (1024*1024):.2f} MB ({progress:.1f}%)",
+                            end="\r",
+                        )
+
+            if total_size > 0:
+                print()  # New line after progress
+            print(f"Download complete: {downloaded_size / (1024*1024):.2f} MB")
+
+        # Now view the downloaded file
+        try:
+            view_figure(temp_path, port=port)
+        finally:
+            # Clean up the temporary file after viewing
+            import os
+
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error: Failed to download archive from {url}: {e}")
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
@@ -270,7 +328,7 @@ def main():
     view_parser = subparsers.add_parser(
         "view", help="Extract and serve a figure archive locally"
     )
-    view_parser.add_argument("archive", help="Path to the tar.gz archive file")
+    view_parser.add_argument("archive", help="Path or URL to the tar.gz archive file")
     view_parser.add_argument(
         "--port", type=int, help="Port number to serve on (default: auto-select)"
     )
@@ -317,7 +375,11 @@ def main():
     if args.command == "download":
         download_figure(args.figure_url, args.dest)
     elif args.command == "view":
-        view_figure(args.archive, port=args.port)
+        # Check if archive argument is a URL
+        if args.archive.startswith("http://") or args.archive.startswith("https://"):
+            download_and_view_archive(args.archive, port=args.port)
+        else:
+            view_figure(args.archive, port=args.port)
     elif args.command == "extensions":
         handle_extensions_command(args)
     else:

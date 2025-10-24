@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.36] - 2025-10-24
+
 - Improve Python typing throughout
 - Fix height calculation in FPCaptionedView
 - In figpack_slides, support slide editing of titles
@@ -9,6 +11,7 @@
 - In timeseries graph, ensure minimum 1 pixel width for time intervals
 - Sliding slide transitions in figpack_slides extension
 - Add linear decode view in figpack_experimental extension
+- Support url in figpack view command line tool
 
 ## [0.2.35] - 2025-10-22
 
