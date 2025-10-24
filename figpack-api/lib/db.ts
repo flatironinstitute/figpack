@@ -86,6 +86,7 @@ export interface IFigure {
   figpackManageUrl?: string; // e.g., https://manage.figpack.org (new)
   channel?: string; // "default" or "ephemeral"
   isEphemeral?: boolean; // Whether this is an ephemeral figure
+  sourceUrl?: string; // Optional source URL for the figure (must be unique)
 }
 
 export interface IFigureDocument extends IFigure, Document {}
@@ -176,6 +177,11 @@ const figureSchema = new mongoose.Schema<IFigureDocument>({
     type: Boolean,
     default: false,
   },
+  sourceUrl: {
+    type: String,
+    required: false,
+    sparse: true, // Allows multiple null values but enforces uniqueness for non-null values
+  },
 });
 
 // Update the updatedAt field on save
@@ -186,6 +192,7 @@ figureSchema.pre("save", function (next) {
 
 // Create indexes for fast lookups
 figureSchema.index({ figureUrl: 1 }, { unique: true });
+figureSchema.index({ sourceUrl: 1 }, { unique: true, sparse: true }); // Sparse index for unique sourceUrl
 figureSchema.index({ bucket: 1 });
 figureSchema.index({ ownerEmail: 1 });
 figureSchema.index({ status: 1 });

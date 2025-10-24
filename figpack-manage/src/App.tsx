@@ -8,6 +8,7 @@ import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 import FiguresPage from "./pages/FiguresPage/FiguresPage";
 import AnnotatePage from "./pages/AnnotatePage/AnnotatePage";
 import EditFigureServicePage from "./pages/EditFigureServicePage/EditFigureServicePage";
+import SourceUrlViewPage from "./pages/SourceUrlViewPage/SourceUrlViewPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BacklinksProvider } from "./contexts/BacklinksProvider";
 import LoginButton from "./components/LoginButton";
@@ -16,7 +17,7 @@ import NavigationMenu from "./components/NavigationMenu";
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const showAppBar = location.pathname !== '/edit-figure-service';
+  const showAppBar = location.pathname !== '/edit-figure-service' && location.pathname !== '/view';
   return (
     <AuthProvider>
       <BacklinksProvider>
@@ -68,6 +69,7 @@ function App() {
             <Route path="/figure" element={<ManageFigurePage />} />
             <Route path="/edit-figure-service" element={<EditFigureServicePage />} />
             <Route path="/annotate" element={<AnnotatePage />} />
+            <Route path="/view" element={<SourceUrlViewPage />} />
             <Route path="/" element={<HomePage />} />
           </Routes>
         </Container>

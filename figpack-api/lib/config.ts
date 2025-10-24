@@ -1,6 +1,7 @@
 const defaultAllowedOrigins = [
   "https://figpack.org",
   "https://manage.figpack.org",
+  "https://figpack.org",
   "http://localhost:5173",
   "http://localhost:5174",
 ];
