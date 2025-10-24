@@ -224,45 +224,61 @@ def process_section(
 ):
     """Process a slide section and return appropriate view."""
     content = section.content.strip()
+    content_without_comments = remove_comments_from_markdown(content)
     metadata = section.metadata
     style = theme.style
 
     # Check for custom figpack view
     view_type = metadata.get("view-type")
     if view_type in theme.custom_view_types:
-        return theme.custom_view_types[view_type](metadata, content)
+        return theme.custom_view_types[view_type](metadata, content_without_comments)
 
     # Check for iframe
-    if content.startswith("<iframe") and content.endswith("</iframe>"):
-        return process_iframe(content)
+    if content_without_comments.startswith(
+        "<iframe"
+    ) and content_without_comments.endswith("</iframe>"):
+        return process_iframe(content_without_comments)
 
     # Check for markdown file reference
-    if content.startswith("./") and content.endswith(".md"):
+    if content_without_comments.startswith("./") and content_without_comments.endswith(
+        ".md"
+    ):
         return process_markdown_file(
-            content, metadata, style.standard_slide_external_markdown_font_size
+            content_without_comments,
+            metadata,
+            style.standard_slide_external_markdown_font_size,
         )
 
     # Check for single-line local image
-    single_line = "\n" not in content
+    single_line = "\n" not in content_without_comments
     if (
         single_line
-        and content.startswith("![")
-        and "](./" in content
-        and content.endswith(")")
+        and content_without_comments.startswith("![")
+        and "](./" in content_without_comments
+        and content_without_comments.endswith(")")
     ):
-        return process_local_image(content)
+        return process_local_image(content_without_comments)
 
     # Check for single-line remote image
     if (
         single_line
-        and content.startswith("![")
-        and "](https://" in content
-        and content.endswith(")")
+        and content_without_comments.startswith("![")
+        and "](https://" in content_without_comments
+        and content_without_comments.endswith(")")
     ):
-        return process_remote_image(content)
+        return process_remote_image(content_without_comments)
 
     # Regular markdown content
     font_size = style.get_content_font_size(metadata)
     return process_markdown_content(
         content, font_size, slide_index=slide_index, section_index=section_index
     )
+
+
+def remove_comments_from_markdown(content: str) -> str:
+    """Remove HTML comments from markdown content."""
+    import re
+
+    # Regex pattern to match HTML comments
+    pattern = r"<!--(.*?)-->"
+    return re.sub(pattern, "", content, flags=re.DOTALL).strip()
