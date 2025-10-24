@@ -125,7 +125,6 @@ export const useSwipeNavigation = ({
     // Trigger navigation if:
     // 1. Swipe distance exceeds minimum AND
     // 2. Either swipe ratio exceeds threshold OR velocity is high (quick swipe)
-    console.log(swipeThreshold, swipeRatio, containerWidth.current);
     const shouldNavigate =
       swipeDistance > minSwipeDistance &&
       (swipeRatio > swipeThreshold || velocity > 0.5);
