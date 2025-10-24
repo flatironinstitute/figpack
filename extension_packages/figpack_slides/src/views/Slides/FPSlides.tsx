@@ -23,6 +23,7 @@ import {
   useKeyboardNavigation,
   useFullscreen,
 } from "./hooks";
+import { useSwipeNavigation } from "./useSwipeNavigation";
 import {
   OUTLINE_WIDTH,
   EDIT_PANEL_WIDTH,
@@ -84,6 +85,7 @@ const FPSlides: React.FC<Props> = ({
 
   const [isOutlineOpen, setIsOutlineOpen] = React.useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const slideContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Fragment state management
   const [currentFragmentIndex, setCurrentFragmentIndex] = React.useState(0);
@@ -571,6 +573,16 @@ const FPSlides: React.FC<Props> = ({
     setCurrentSlideIndex,
   );
 
+  // Swipe navigation for mobile devices (disabled in edit mode)
+  const swipeState = useSwipeNavigation({
+    onSwipeLeft: goToNext,
+    onSwipeRight: goToPrevious,
+    enabled: !editable && totalSlides > 1,
+    currentIndex: currentSlideIndex,
+    totalItems: totalSlides,
+    containerRef: slideContainerRef,
+  });
+
   const slideHeight = isFullscreen ? height : height - NAVIGATION_HEIGHT;
   const showNavigation = totalSlides > 1;
 
@@ -635,6 +647,7 @@ const FPSlides: React.FC<Props> = ({
 
       {/* Slide Content */}
       <div
+        ref={slideContainerRef}
         style={{
           flex: 1,
           display: "flex",
@@ -643,12 +656,13 @@ const FPSlides: React.FC<Props> = ({
           transition: "margin-left 0.6s ease-in-out",
         }}
       >
-        <div style={{ flex: 1, position: "relative" }}>
+        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
           {slideGroups.map((sg, ii) => (
             <SlideWrapper
               key={ii}
               slideIndex={ii}
-              isVisible={ii === currentSlideIndex}
+              currentSlideIndex={currentSlideIndex}
+              isVisible={Math.abs(ii - currentSlideIndex) <= 1}
               hasBeenVisible={slideIndicesThatHaveBeenVisible.has(ii)}
               width={effectiveSlideWidth}
               height={slideHeight}
@@ -662,6 +676,8 @@ const FPSlides: React.FC<Props> = ({
               editable={editable}
               slideEdits={slideLedgers.get(ii) || []}
               onSlideEdit={(action) => handleSlideEdit(ii, action)}
+              swipeOffset={swipeState.offset}
+              isSwiping={swipeState.isSwiping}
             />
           ))}
         </div>
@@ -705,6 +721,7 @@ const FPSlides: React.FC<Props> = ({
 
 const SlideWrapper: FunctionComponent<{
   slideIndex: number;
+  currentSlideIndex: number;
   isVisible: boolean;
   hasBeenVisible?: boolean;
   width: number;
@@ -717,7 +734,11 @@ const SlideWrapper: FunctionComponent<{
   editable: boolean;
   slideEdits: SlideEditAction[];
   onSlideEdit: (action: SlideEditAction) => void;
+  swipeOffset: number;
+  isSwiping: boolean;
 }> = ({
+  slideIndex,
+  currentSlideIndex,
   isVisible,
   hasBeenVisible,
   width,
@@ -730,6 +751,8 @@ const SlideWrapper: FunctionComponent<{
   editable,
   slideEdits,
   onSlideEdit,
+  swipeOffset,
+  isSwiping,
 }) => {
   const { scale, dx, dy } = useMemo(() => {
     const scaleX = width / nativeWidth;
@@ -739,9 +762,26 @@ const SlideWrapper: FunctionComponent<{
     const dy = (width - nativeWidth * scale) / 2;
     return { scale, dx, dy };
   }, [width, height, nativeWidth, nativeHeight]);
+
+  // Calculate horizontal offset for slide transition
+  // Slides are positioned based on their position relative to current slide
+  // We need to account for the CSS scale - translate in pixels, not percentage
+  const translateX = useMemo(() => {
+    const offset = slideIndex - currentSlideIndex;
+    // Translate by the full container width divided by scale
+    // This ensures slides move by exactly one screen width
+    const baseTranslate = (offset * width) / scale;
+
+    // Add swipe offset (already in pixels, needs to be divided by scale)
+    const swipeTranslate = swipeOffset / scale;
+
+    return baseTranslate + swipeTranslate;
+  }, [slideIndex, currentSlideIndex, width, scale, swipeOffset]);
+
   if (!isVisible && !hasBeenVisible) {
     return <span style={{ display: "none" }} />;
   }
+
   return (
     <div
       style={{
@@ -753,7 +793,8 @@ const SlideWrapper: FunctionComponent<{
         scale,
         transformOrigin: "top left",
         opacity: isVisible ? 1 : 0,
-        // transition: "opacity 0.3s ease-in-out",
+        transform: `translateX(${translateX}px)`,
+        transition: isSwiping ? "none" : "transform 0.25s ease-in-out",
         pointerEvents: isVisible ? "auto" : "none",
       }}
     >

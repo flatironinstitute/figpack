@@ -77,6 +77,11 @@ class Slide(figpack.ExtensionView):
             header: Optional header section
             footer: Optional footer section
             background_color: Optional background color for the slide content area
+            slide_metadata: Optional metadata dict. Can include 'elements' list with arrow elements.
+                           Arrow elements should have: id, type, shape, direction, position (x, y),
+                           size (length, thickness), and style (stroke, strokeWidth, fill).
+                           Note: 'length' is the dimension along the arrow direction,
+                           'thickness' is perpendicular to the direction.
         """
         super().__init__(extension=slides_extension, view_type="slides.Slide")
 
