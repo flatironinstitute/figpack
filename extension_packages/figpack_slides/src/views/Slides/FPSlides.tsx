@@ -620,9 +620,7 @@ const FPSlides: React.FC<Props> = ({
       style={{
         width,
         height,
-        display: "flex",
-        flexDirection: "row",
-        position: "relative",
+        position: "absolute",
       }}
     >
       {/* Edit Panel (only in edit mode) */}
@@ -646,53 +644,51 @@ const FPSlides: React.FC<Props> = ({
       )}
 
       {/* Slide Content */}
-      <div
-        ref={slideContainerRef}
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          marginLeft: isPanelOpen ? panelWidth : 0,
-          transition: "margin-left 0.6s ease-in-out",
-        }}
-      >
-        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-          {slideGroups.map((sg, ii) => (
-            <SlideWrapper
-              key={ii}
-              slideIndex={ii}
-              currentSlideIndex={currentSlideIndex}
-              isVisible={Math.abs(ii - currentSlideIndex) <= 1}
-              hasBeenVisible={slideIndicesThatHaveBeenVisible.has(ii)}
-              width={effectiveSlideWidth}
-              height={slideHeight}
-              zarrGroup={sg}
-              contexts={
-                ii === currentSlideIndex ? (ammendedContexts as any) : contexts
-              }
-              renderFPView={renderFPView}
-              nativeWidth={nativeWidth}
-              nativeHeight={nativeHeight}
-              editable={editable}
-              slideEdits={slideLedgers.get(ii) || []}
-              onSlideEdit={(action) => handleSlideEdit(ii, action)}
-              swipeOffset={swipeState.offset}
-              isSwiping={swipeState.isSwiping}
-            />
-          ))}
-        </div>
-        {showNavigation && !isFullscreen && (
-          <NavigationBar
+      <div ref={slideContainerRef}>
+        {slideGroups.map((sg, ii) => (
+          <SlideWrapper
+            key={ii}
+            slideIndex={ii}
             currentSlideIndex={currentSlideIndex}
-            totalSlides={totalSlides}
-            isFullscreen={isFullscreen}
-            onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
-            onToggleFullscreen={toggleFullscreen}
-            onPrevious={goToPrevious}
-            onNext={goToNext}
-            hasUnsavedEdits={hasUnsavedEdits}
-            onSave={handleSave}
+            isVisible={Math.abs(ii - currentSlideIndex) <= 1}
+            hasBeenVisible={slideIndicesThatHaveBeenVisible.has(ii)}
+            width={effectiveSlideWidth}
+            height={slideHeight}
+            zarrGroup={sg}
+            contexts={
+              ii === currentSlideIndex ? (ammendedContexts as any) : contexts
+            }
+            renderFPView={renderFPView}
+            nativeWidth={nativeWidth}
+            nativeHeight={nativeHeight}
+            editable={editable}
+            slideEdits={slideLedgers.get(ii) || []}
+            onSlideEdit={(action) => handleSlideEdit(ii, action)}
+            swipeOffset={swipeState.offset}
+            isSwiping={swipeState.isSwiping}
           />
+        ))}
+        {showNavigation && !isFullscreen && (
+          <div
+            style={{
+              position: "absolute",
+              height: NAVIGATION_HEIGHT,
+              bottom: 0,
+              width: "100%",
+            }}
+          >
+            <NavigationBar
+              currentSlideIndex={currentSlideIndex}
+              totalSlides={totalSlides}
+              isFullscreen={isFullscreen}
+              onToggleOutline={() => setIsOutlineOpen(!isOutlineOpen)}
+              onToggleFullscreen={toggleFullscreen}
+              onPrevious={goToPrevious}
+              onNext={goToNext}
+              hasUnsavedEdits={hasUnsavedEdits}
+              onSave={handleSave}
+            />
+          </div>
         )}
       </div>
 
@@ -758,8 +754,10 @@ const SlideWrapper: FunctionComponent<{
     const scaleX = width / nativeWidth;
     const scaleY = height / nativeHeight;
     const scale = Math.min(scaleX, scaleY);
-    const dx = (height - nativeHeight * scale) / 2;
-    const dy = (width - nativeWidth * scale) / 2;
+    const dy = (height - nativeHeight * scale) / 2;
+    let dx = (width - nativeWidth * scale) / 2;
+    if (dx < -width * 2) dx = -width * 2; // prevent extreme offscreen positioning
+    if (dx > width * 2) dx = width * 2;
     return { scale, dx, dy };
   }, [width, height, nativeWidth, nativeHeight]);
 
@@ -786,10 +784,10 @@ const SlideWrapper: FunctionComponent<{
     <div
       style={{
         position: "absolute",
-        top: dx,
-        left: dy,
-        width: nativeWidth * scale,
-        height: nativeHeight * scale,
+        top: dy,
+        left: dx,
+        width: nativeWidth,
+        height: nativeHeight,
         scale,
         transformOrigin: "top left",
         opacity: isVisible ? 1 : 0,
