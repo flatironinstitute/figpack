@@ -115,3 +115,7 @@ view_figure("path/to/figure.tar.gz")
 ```
 
 When viewing figures, a local server will start and open your browser. Press Enter in the terminal to stop the server.
+
+## Archiving on Zenodo
+
+For long-term preservation and citability, you can archive your figures on Zenodo and view them through figpack's web interface. See the [Zenodo Archival Guide](zenodo_archival.md) for details.
