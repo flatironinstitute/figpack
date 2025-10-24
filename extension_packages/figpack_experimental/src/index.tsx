@@ -5,6 +5,7 @@ import FPEditableNotes from "./views/EditableNotes/FPEditableNotes";
 import FPLossyVideo from "./views/LossyVideo/FPLossyVideo";
 import FPFmriBold from "./views/FmriBold/FPFmriBold";
 import FPMultiChannelIntervals from "./views/MultiChannelIntervals/FPMultiChannelIntervals";
+import FPLinearDecode from "./views/LinearDecode/FPLinearDecode";
 import {
   FPViewComponent,
   FPViewContext,
@@ -105,6 +106,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "experimental.MultiChannelIntervals",
     render: makeRenderFunction(FPMultiChannelIntervals),
+  });
+  registerFPViewComponent({
+    name: "experimental.LinearDecode",
+    render: makeRenderFunction(FPLinearDecode),
   });
 
   // Register custom Zarr decoder for 'mp4' codec

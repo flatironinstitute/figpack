@@ -390,6 +390,75 @@ The view displays multi-channel timeseries data organized by intervals, with the
 - Visualizing trial-by-trial data in electrophysiology experiments
 - Any scenario where you need to view multi-channel signals aligned to specific time intervals
 
+### LinearDecode View
+
+The LinearDecode view visualizes time-position decode data, showing probability distributions across spatial positions over time. It's designed for visualizing decoded position estimates from neural activity, such as in place cell recordings or other spatial coding applications.
+
+```python
+import numpy as np
+from figpack_experimental.views import LinearDecode
+
+# Create synthetic data
+n_timepoints = 1000
+n_positions = 50
+sampling_frequency_hz = 30  # 30 Hz
+start_time_sec = 0.0
+
+# Create a linear decode heatmap with a moving "hot spot"
+data = np.zeros((n_timepoints, n_positions), dtype=np.float32)
+for t in range(n_timepoints):
+    # Create a gaussian bump that moves across positions over time
+    center = (t / n_timepoints) * n_positions
+    for p in range(n_positions):
+        distance = abs(p - center)
+        data[t, p] = np.exp(-(distance**2) / (2 * 3**2))
+
+# Add some noise
+data += np.random.randn(n_timepoints, n_positions) * 0.1
+data = np.maximum(data, 0)  # Keep non-negative
+
+# Create position grid (uniform spacing from 0 to 100)
+position_grid = np.linspace(0, 100, n_positions, dtype=np.float32)
+
+# Create observed positions that follow the true position with some noise
+true_positions = (np.arange(n_timepoints) / n_timepoints) * 100
+observed_positions = true_positions + np.random.randn(n_timepoints) * 5
+observed_positions = observed_positions.astype(np.float32)
+
+# Add some NaN values to simulate gaps in observations
+observed_positions[200:250] = np.nan
+observed_positions[600:650] = np.nan
+
+# Create the LinearDecode view
+view = LinearDecode(
+    start_time_sec=start_time_sec,
+    sampling_frequency_hz=sampling_frequency_hz,
+    data=data,
+    observed_positions=observed_positions,
+    position_grid=position_grid,
+)
+
+# Show the figure
+view.show(
+    title="Linear Decode Example",
+    open_in_browser=True,
+)
+```
+
+<iframe data-src="./tutorial_linear_decode_example/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+
+The LinearDecode view displays:
+- A heatmap showing the probability distribution across positions (y-axis) over time (x-axis)
+- An optional white line overlay showing the observed/actual positions
+- Interactive time scrolling and zooming
+- Brightness control to adjust the color scaling
+
+This view is particularly useful for:
+- Visualizing Bayesian decoding results from place cells
+- Comparing decoded positions with actual animal positions
+- Analyzing temporal dynamics of spatial representations
+- Any application involving time-varying position probability distributions
+
 ## MountainLayout
 
 The MountainLayout provides a workspace-style interface with a left panel for view buttons and controls, and a right panel with dual tab workspaces (north and south). This layout is ideal for applications that need to manage multiple views in a workspace environment.
