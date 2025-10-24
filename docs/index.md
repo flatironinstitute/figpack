@@ -88,6 +88,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[NWB Tutorial](nwb_tutorial.md)**: Guide to creating NWB visualizations using figpack's NWB extension
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
 - **[Slides Tutorial](slides_tutorial.md)**: Creating interactive slide presentations with Figpack Slides
+- **[Zenodo Archival](zenodo_archival.md)**: Archive figures on Zenodo for permanent storage and citation
 - **[Figpack vs Figurl Comparison](figpack_vs_figurl_comparison.md)**: Comparison of approaches between figpack and figurl
 - **[API Reference](api/index.md)**: Complete documentation of all components
 - **[Contributing](contributing.md)**: How to contribute to figpack
@@ -143,6 +144,7 @@ misc_tutorial
 nwb_tutorial
 show_function
 slides_tutorial
+zenodo_archival
 figpack_vs_figurl_comparison
 api/index
 contributing
