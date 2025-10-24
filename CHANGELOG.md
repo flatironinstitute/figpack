@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.2.37] - 2025-10-24
+
+- Do not use figure hash in create figure api - generate random id instead
+- Implement source url for archiving, e.g. on Zenodo. See https://sandbox.zenodo.org/records/391408
+
 ## [0.2.36] - 2025-10-24
 
 - Improve Python typing throughout

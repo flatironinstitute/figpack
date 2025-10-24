@@ -6,11 +6,12 @@ import CssBaseline from "@mui/material/CssBaseline";
 import "./index.css";
 import App from "./App.tsx";
 
-// Redirect from figpack.org to manage.figpack.org
-if (window.location.hostname === "figpack.org") {
-  const newUrl = `https://manage.figpack.org${window.location.pathname}${window.location.search}${window.location.hash}`;
-  window.location.replace(newUrl);
-}
+// No longer do this redirect:
+// // Redirect from figpack.org to manage.figpack.org
+// if (window.location.hostname === "figpack.org") {
+//   const newUrl = `https://manage.figpack.org${window.location.pathname}${window.location.search}${window.location.hash}`;
+//   window.location.replace(newUrl);
+// }
 
 const theme = createTheme({
   palette: {

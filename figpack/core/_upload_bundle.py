@@ -122,56 +122,24 @@ def _upload_single_file_with_signed_url(
 MAX_WORKERS_FOR_UPLOAD = 16
 
 
-def _compute_deterministic_figure_hash(tmpdir_path: pathlib.Path) -> str:
-    """
-    Compute a deterministic figure ID based on SHA1 hashes of all files
-
-    Returns:
-        str: 40-character SHA1 hash representing the content of all files
-    """
-    file_hashes = []
-
-    # Collect all files and their hashes
-    for file_path in sorted(tmpdir_path.rglob("*")):
-        if file_path.is_file():
-            relative_path = file_path.relative_to(tmpdir_path)
-
-            # Compute SHA1 hash of file content
-            sha1_hash = hashlib.sha1()
-            with open(file_path, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
-                    sha1_hash.update(chunk)
-
-            # Include both the relative path and content hash to ensure uniqueness
-            file_info = f"{relative_path}:{sha1_hash.hexdigest()}"
-            file_hashes.append(file_info)
-
-    # Create final hash from all file hashes
-    combined_hash = hashlib.sha1()
-    for file_hash in file_hashes:
-        combined_hash.update(file_hash.encode("utf-8"))
-
-    return combined_hash.hexdigest()
-
-
 def _create_or_get_figure(
-    figure_hash: str,
     api_key: Optional[str],
     total_files: Optional[int] = None,
     total_size: Optional[int] = None,
     title: Optional[str] = None,
     ephemeral: bool = False,
+    source_url: Optional[str] = None,
 ) -> dict:
     """
     Create a new figure or get existing figure information
 
     Args:
-        figure_hash: The hash of the figure
         api_key: The API key for authentication (required for non-ephemeral)
         total_files: Optional total number of files
         total_size: Optional total size of files
         title: Optional title for the figure
         ephemeral: Whether to create an ephemeral figure
+        source_url: Optional source URL for the figure (must be unique)
 
     Returns:
         dict: Figure information from the API
@@ -181,7 +149,6 @@ def _create_or_get_figure(
         raise ValueError("API key is required for non-ephemeral figures")
 
     payload: dict[str, Union[str, int]] = {
-        "figureHash": figure_hash,
         "figpackVersion": __version__,
         "bucket": FIGPACK_BUCKET,
     }
@@ -198,6 +165,8 @@ def _create_or_get_figure(
         payload["title"] = title
     if ephemeral:
         payload["ephemeral"] = True
+    if source_url is not None:
+        payload["sourceUrl"] = source_url
 
     # Use the same endpoint for both regular and ephemeral figures
     response = requests.post(f"{FIGPACK_API_BASE_URL}/api/figures/create", json=payload)
@@ -208,12 +177,12 @@ def _create_or_get_figure(
             error_msg = error_data.get("message", "Unknown error")
         except:
             error_msg = f"HTTP {response.status_code}"
-        raise Exception(f"Failed to create figure {figure_hash}: {error_msg}")
+        raise Exception(f"Failed to create figure: {error_msg}")
 
     response_data = response.json()
     if not response_data.get("success"):
         raise Exception(
-            f"Failed to create figure {figure_hash}: {response_data.get('message', 'Unknown error')}"
+            f"Failed to create figure: {response_data.get('message', 'Unknown error')}"
         )
 
     return response_data
@@ -258,6 +227,7 @@ def _upload_bundle(
     title: Optional[str] = None,
     ephemeral: bool = False,
     use_consolidated_metadata_only: bool = False,
+    source_url: Optional[str] = None,
 ) -> str:
     """
     Upload the prepared bundle to the cloud using the new database-driven approach
@@ -269,11 +239,9 @@ def _upload_bundle(
         ephemeral: Whether to create an ephemeral figure
         use_consolidated_metadata_only: If True, excludes individual zarr metadata files
             (.zgroup, .zarray, .zattrs) since they are included in .zmetadata
+        source_url: Optional source URL for the figure (must be unique)
     """
     tmpdir_path = pathlib.Path(tmpdir)
-
-    # Compute deterministic figure ID based on file contents
-    figure_hash = _compute_deterministic_figure_hash(tmpdir_path)
 
     # Collect all files to upload
     all_files = []
@@ -295,7 +263,12 @@ def _upload_bundle(
 
     # Find available figure ID and create/get figure in database with metadata
     result = _create_or_get_figure(
-        figure_hash, api_key, total_files, total_size, title=title, ephemeral=ephemeral
+        api_key,
+        total_files,
+        total_size,
+        title=title,
+        ephemeral=ephemeral,
+        source_url=source_url,
     )
     figure_info = result.get("figure", {})
     figure_url = figure_info.get("figureUrl")
@@ -428,6 +401,39 @@ def _upload_bundle(
     print("Upload completed successfully")
 
     return figure_url
+
+
+def get_figure_by_source_url(source_url: str) -> Optional[str]:
+    """
+    Query the API for a figure URL by its source URL
+
+    Args:
+        source_url: The source URL to search for
+
+    Returns:
+        Optional[str]: The figure URL if found, None otherwise
+    """
+    payload = {"sourceUrl": source_url}
+
+    response = requests.post(
+        f"{FIGPACK_API_BASE_URL}/api/figures/find-by-source-url", json=payload
+    )
+
+    if not response.ok:
+        if response.status_code == 404:
+            return None
+        try:
+            error_data = response.json()
+            error_msg = error_data.get("message", "Unknown error")
+        except:
+            error_msg = f"HTTP {response.status_code}"
+        raise Exception(f"Failed to query figure by source URL: {error_msg}")
+
+    response_data = response.json()
+    if not response_data.get("success"):
+        return None
+
+    return response_data.get("figureUrl")
 
 
 def _determine_content_type(file_path: str) -> str:

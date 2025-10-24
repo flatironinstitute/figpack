@@ -6,7 +6,7 @@ import { figpackManageUrl, setCorsHeaders } from "../../../lib/config";
 import { withDatabaseResilience } from "../../../lib/retryUtils";
 
 interface CreateFigureRequest {
-  figureHash: string;
+  figureHash?: string; // Kept only for backward compatibility - no longer used
   apiKey?: string; // Optional for ephemeral figures
   totalFiles?: number;
   totalSize?: number;
@@ -14,6 +14,7 @@ interface CreateFigureRequest {
   title?: string;
   ephemeral?: boolean;
   bucket?: string; // Optional bucket name, defaults to "figpack-figures"
+  sourceUrl?: string; // Optional source URL for the figure (must be unique)
 }
 
 interface CreateFigureResponse {
@@ -48,27 +49,30 @@ export default async function handler(
 
     // Parse request body
     const {
-      figureHash,
+      // figureHash,
       apiKey,
       ephemeral,
       bucket: bucketName,
+      sourceUrl,
     }: CreateFigureRequest = req.body;
 
-    // Validate required fields
-    if (!figureHash) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required field: figureHash",
-      });
-    }
+    // // Validate required fields
+    // if (!figureHash) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Missing required field: figureHash",
+    //   });
+    // }
 
-    // Validate hash format (should be 40 hex characters)
-    if (!/^[0-9a-f]{40}$/.test(figureHash)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid figureHash format",
-      });
-    }
+    const figureId = createFigureId();
+
+    // // Validate hash format (should be 40 hex characters)
+    // if (!/^[0-9a-f]{40}$/.test(figureId)) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Invalid figureHash format",
+    //   });
+    // }
 
     // Get bucket information (default to "figpack-figures")
     const targetBucketName = bucketName || "figpack-figures";
@@ -131,7 +135,21 @@ export default async function handler(
       });
     }
 
-    const baseFigureString = `${figureHash}`;
+    // Check if sourceUrl is provided and if it already exists
+    if (sourceUrl) {
+      const existingFigureWithSourceUrl = await withDatabaseResilience(async () => {
+        return await Figure.findOne({ sourceUrl });
+      });
+
+      if (existingFigureWithSourceUrl) {
+        return res.status(400).json({
+          success: false,
+          message: `A figure with source URL "${sourceUrl}" already exists: ${existingFigureWithSourceUrl.figureUrl}`,
+        });
+      }
+    }
+
+    const baseFigureString = `${figureId}`;
     let count = 0;
     let figureUrlToUse: string | undefined;
     let figureIsExistingAndCompleted = false;
@@ -213,6 +231,7 @@ export default async function handler(
       figpackManageUrl,
       channel: ephemeral ? "ephemeral" : "default",
       isEphemeral: ephemeral || false,
+      sourceUrl: sourceUrl,
     });
 
     await withDatabaseResilience(async () => {
@@ -241,3 +260,13 @@ export default async function handler(
     });
   }
 }
+
+const createFigureId = (): string => {
+  // Generate a random 24-character hexadecimal string
+  const chars = "abcdef0123456789";
+  let result = "";
+  for (let i = 0; i < 24; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
