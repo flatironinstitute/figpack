@@ -8,6 +8,7 @@
 - In figpack_slides, support slide editing of markdown sections
 - In timeseries graph, ensure minimum 1 pixel width for time intervals
 - Sliding slide transitions in figpack_slides extension
+- Add linear decode view in figpack_experimental extension
 
 ## [0.2.35] - 2025-10-22
 
