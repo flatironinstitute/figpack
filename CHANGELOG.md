@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.38] - 2025-10-29
+
 - Export figures as SVG format for publication and presentation use
 
 ## [0.2.37] - 2025-10-24
