@@ -116,6 +116,10 @@ view_figure("path/to/figure.tar.gz")
 
 When viewing figures, a local server will start and open your browser. Press Enter in the terminal to stop the server.
 
+## Exporting to SVG
+
+Some figpack views support exporting to SVG format for use in publications and presentations. See the [Exporting Figures](exporting_figures.md) guide for details on how to export figures with customizable dimensions.
+
 ## Archiving on Zenodo
 
 For long-term preservation and citability, you can archive your figures on Zenodo and view them through figpack's web interface. See the [Zenodo Archival Guide](zenodo_archival.md) for details.

@@ -27,6 +27,7 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
   width,
   height,
   contexts,
+  setDrawForExport,
 }) => {
   const [error, setError] = useState<string | null>(null);
   const resizeCallbackRef = useRef<
@@ -70,6 +71,7 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
         onDataChange,
         contexts,
         renderFPView,
+        setDrawForExport,
       });
     } catch (err) {
       setError(
@@ -103,7 +105,7 @@ export const FPView2: React.FC<FPViewComponentProps> = ({
         console.warn(`Error in extension data change callback: ${err}`);
       }
     } else {
-      console.log("no dataChangeCallbackRef.current");
+      console.log("no dataChangeCallbackRef.current (*)");
     }
   }, [zarrGroup]);
 

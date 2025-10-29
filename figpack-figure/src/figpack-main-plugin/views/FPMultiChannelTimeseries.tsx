@@ -7,7 +7,12 @@ import {
 } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { colorForUnitId } from "../core-utils/unit-colors";
 import { useEffect, useMemo, useState } from "react";
-import { FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
+import {
+  DrawForExportFunction,
+  FPViewContext,
+  FPViewContexts,
+  ZarrGroup,
+} from "../figpack-interface";
 import { useMultiChannelTimeseriesClient } from "./MultiChannelTimeseries/useMultiChannelTimeseriesClient";
 import {
   paintDownsampledChannelLine,
@@ -21,7 +26,8 @@ export const FPMultiChannelTimeseries: React.FC<{
   contexts: FPViewContexts;
   width: number;
   height: number;
-}> = ({ zarrGroup, contexts, width, height }) => {
+  setDrawForExport: (draw: DrawForExportFunction) => void;
+}> = ({ zarrGroup, contexts, width, height, setDrawForExport }) => {
   return (
     <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
       <FPMultiChannelTimeseriesChild
@@ -29,6 +35,7 @@ export const FPMultiChannelTimeseries: React.FC<{
         contexts={contexts}
         width={width}
         height={height}
+        setDrawForExport={setDrawForExport}
       />
     </ProvideTimeseriesSelectionContext>
   );
@@ -39,7 +46,8 @@ const FPMultiChannelTimeseriesChild: React.FC<{
   contexts: FPViewContexts;
   width: number;
   height: number;
-}> = ({ zarrGroup, width, height }) => {
+  setDrawForExport: (draw: DrawForExportFunction) => void;
+}> = ({ zarrGroup, width, height, setDrawForExport }) => {
   const {
     initializeTimeseriesSelection,
     visibleStartTimeSec,
@@ -294,7 +302,8 @@ const FPMultiChannelTimeseriesChild: React.FC<{
       }}
       yAxisInfo={yAxisInfo}
       customToolbarActions={customToolbarActions}
-      drawForExport={draw}
+      drawContentForExport={draw}
+      setDrawForExport={setDrawForExport}
     />
   );
 };

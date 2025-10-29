@@ -151,6 +151,7 @@ const useYAxisTicks = (props: YAxisProps) => {
   const { datamin, datamax, userSpecifiedZoom } = props;
   let { pixelHeight } = props;
   if (pixelHeight <= 1) pixelHeight = 1; // safely handle case where pixelHeight is negative or zero
+  const yZoom = userSpecifiedZoom ?? 1;
   return useMemo(() => {
     return computeYAxisTicks({
       datamin,
@@ -158,7 +159,7 @@ const useYAxisTicks = (props: YAxisProps) => {
       userSpecifiedZoom,
       pixelHeight,
     });
-  }, [datamax, datamin, pixelHeight, userSpecifiedZoom]);
+  }, [datamax, datamin, yZoom, pixelHeight]);
 };
 
 export default useYAxisTicks;

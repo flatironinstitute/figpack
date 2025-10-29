@@ -119,6 +119,7 @@ export type RenderParams = {
   onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: FPViewContexts;
   renderFPView: (params: RenderParams) => void;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 export type FPViewComponent = {
@@ -131,11 +132,18 @@ export type FPViewContextCreator = {
   create: () => FPViewContext;
 };
 
+export type DrawForExportFunction = (o: {
+  context: CanvasRenderingContext2D;
+  width: number;
+  height: number;
+}) => Promise<void>;
+
 export type FPViewComponentProps = {
   zarrGroup: ZarrGroup; // Root data access
   width: number; // Available width
   height: number; // Available height
   contexts: FPViewContexts;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 export type FigureAnnotationsState = {

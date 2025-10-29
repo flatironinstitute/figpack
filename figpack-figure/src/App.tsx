@@ -8,7 +8,7 @@ import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
 import "./localStyles.css";
 // import { plugins } from "./main";
-import { FPViewContexts } from "./figpack-interface";
+import { DrawForExportFunction, FPViewContexts } from "./figpack-interface";
 import UploadFilesPanel, {
   PutFigureFilesInterface,
 } from "./UploadFilesPanel/UploadFilesPanel";
@@ -26,6 +26,10 @@ function App() {
   const [putFigureFilesInterface, setPutFigureFilesInterface] =
     useState<PutFigureFilesInterface | null>(null);
   const { width, height } = useWindowDimensions();
+
+  const [drawForExport, setDrawForExport] = useState<
+    DrawForExportFunction | undefined
+  >(undefined);
 
   const figureInfoResult = useFigureInfo();
 
@@ -157,6 +161,10 @@ function App() {
         width={width}
         height={height - statusBarHeight - uploadFilesPanelHeight}
         contexts={contexts}
+        setDrawForExport={(draw) => {
+          // need to do it this way because of how react works with function states
+          setDrawForExport(() => draw);
+        }}
       />
     );
 
@@ -171,6 +179,7 @@ function App() {
       saveFigureAnnotations={saveFigureAnnotations}
       figureAnnotations={figureAnnotations}
       figureAnnotationsDispatch={figureAnnotationsDispatch}
+      drawForExport={drawForExport}
     />
   );
 

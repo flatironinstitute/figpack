@@ -87,6 +87,7 @@ graph.show(open_in_browser=True, title="Quick Start Example")
 - **[Miscellaneous Tutorial](misc_tutorial.md)**: Tutorial covering various figpack extensions
 - **[NWB Tutorial](nwb_tutorial.md)**: Guide to creating NWB visualizations using figpack's NWB extension
 - **[Show Function Reference](show_function.md)**: Detailed guide to the core display function
+- **[Exporting Figures](exporting_figures.md)**: Guide to exporting figures to SVG format
 - **[Slides Tutorial](slides_tutorial.md)**: Creating interactive slide presentations with Figpack Slides
 - **[Zenodo Archival](zenodo_archival.md)**: Archive figures on Zenodo for permanent storage and citation
 - **[Figpack vs Figurl Comparison](figpack_vs_figurl_comparison.md)**: Comparison of approaches between figpack and figurl
@@ -143,6 +144,7 @@ spike_sorting_tutorial
 misc_tutorial
 nwb_tutorial
 show_function
+exporting_figures
 slides_tutorial
 zenodo_archival
 figpack_vs_figurl_comparison

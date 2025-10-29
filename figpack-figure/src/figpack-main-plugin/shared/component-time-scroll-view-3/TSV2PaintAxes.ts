@@ -8,7 +8,7 @@ export const paintAxes = (
 ) => {
   const { width, height, margins, timeTicks, gridlineOpts, yTickSet, yLabel } =
     props;
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  context.clearRect(0, 0, width, height);
 
   const xAxisVerticalPosition = height - margins.bottom;
   paintTimeTicks(
@@ -48,7 +48,7 @@ export const paintAxes = (
       margins.left,
       margins.bottom,
       margins.top,
-      context.canvas.height,
+      height,
     );
 };
 

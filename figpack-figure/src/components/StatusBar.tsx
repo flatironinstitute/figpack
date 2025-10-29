@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useState } from "react";
 import {
+  DrawForExportFunction,
   FigureAnnotationsAction,
   FigureAnnotationsState,
   ZarrGroup,
@@ -8,19 +10,20 @@ import { FigureInfoResult } from "../hooks/useFigureInfo";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
 import FigureAnnotationsStatusComponent from "./FigureAnnotationsStatusComponent";
+import SvgExportDialog from "./SvgExportDialog";
 
 const AboutButton: React.FC<{ title?: string; description?: string }> = ({
   title,
   description,
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
 
   const handleAboutClick = () => {
-    setIsDialogOpen(true);
+    setIsAboutDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
-    setIsDialogOpen(false);
+    setIsAboutDialogOpen(false);
   };
 
   // Only show the About button if there's a title or description
@@ -38,7 +41,7 @@ const AboutButton: React.FC<{ title?: string; description?: string }> = ({
         Figure Info
       </button>
       <AboutDialog
-        isOpen={isDialogOpen}
+        isOpen={isAboutDialogOpen}
         onClose={handleCloseDialog}
         title={title}
         description={description}
@@ -77,6 +80,7 @@ export const StatusBar: React.FC<{
   saveFigureAnnotations?: () => void;
   figureAnnotations?: FigureAnnotationsState;
   figureAnnotationsDispatch?: (a: FigureAnnotationsAction) => void;
+  drawForExport?: DrawForExportFunction;
 }> = ({
   zarrData,
   figureInfoResult,
@@ -85,6 +89,7 @@ export const StatusBar: React.FC<{
   saveFigureAnnotations,
   figureAnnotations,
   figureAnnotationsDispatch,
+  drawForExport,
 }) => {
   const { embedded } = useUrlParams();
 
@@ -128,7 +133,26 @@ export const StatusBar: React.FC<{
     />
   );
 
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
   const figureInfo = figureInfoResult?.figureInfo;
+
+  const exportAsSvgButton = drawForExport ? (
+    <>
+      <button
+        className="export-svg-button"
+        title="Export figure as SVG"
+        onClick={() => setIsExportDialogOpen(true)}
+      >
+        Export as SVG
+      </button>
+      <SvgExportDialog
+        isOpen={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        drawForExport={drawForExport}
+      />
+    </>
+  ) : null;
 
   if (figureInfo?.status && figureInfo?.status !== "completed") {
     return (
@@ -169,6 +193,7 @@ export const StatusBar: React.FC<{
       {aboutButton}
       {manageButton}
       {figureAnnotationsStatusComponent}
+      {exportAsSvgButton}
     </div>
   );
 };

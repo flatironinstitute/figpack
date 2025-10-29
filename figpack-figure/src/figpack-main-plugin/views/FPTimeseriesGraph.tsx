@@ -8,13 +8,15 @@ import { useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { ProvideTimeseriesSelectionContext } from "./FPMultiChannelTimeseries";
+import { DrawForExportFunction } from "src/figpack-interface";
 
 export const FPTimeseriesGraph: React.FC<{
   zarrGroup: ZarrGroup;
   contexts: FPViewContexts;
   width: number;
   height: number;
-}> = ({ zarrGroup, contexts, width, height }) => {
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
+}> = ({ zarrGroup, contexts, width, height, setDrawForExport }) => {
   return (
     <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
       <FPTimeseriesGraphChild
@@ -22,6 +24,7 @@ export const FPTimeseriesGraph: React.FC<{
         contexts={contexts}
         width={width}
         height={height}
+        setDrawForExport={setDrawForExport}
       />
     </ProvideTimeseriesSelectionContext>
   );
@@ -32,7 +35,8 @@ export const FPTimeseriesGraphChild: React.FC<{
   contexts: FPViewContexts;
   width: number;
   height: number;
-}> = ({ zarrGroup, width, height }) => {
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
+}> = ({ zarrGroup, width, height, setDrawForExport }) => {
   const {
     initializeTimeseriesSelection,
     visibleStartTimeSec,
@@ -118,7 +122,8 @@ export const FPTimeseriesGraphChild: React.FC<{
       yAxisInfo={yAxisInfo}
       hideNavToolbar={client?.hideNavToolbar ?? false}
       hideTimeAxisLabels={client?.hideTimeAxisLabels ?? false}
-      drawForExport={draw}
+      drawContentForExport={draw}
+      setDrawForExport={setDrawForExport}
     />
   );
 };
