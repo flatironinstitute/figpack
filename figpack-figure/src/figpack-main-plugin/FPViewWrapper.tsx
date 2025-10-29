@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FPViewContexts, RenderParams, ZarrGroup } from "./figpack-interface";
+import { DrawForExportFunction } from "./figpack-interface";
 
 const FPViewWrapper: React.FC<{
   zarrGroup: ZarrGroup;
@@ -7,7 +8,15 @@ const FPViewWrapper: React.FC<{
   height: number;
   contexts: FPViewContexts;
   renderFPView: (params: RenderParams) => void;
-}> = ({ zarrGroup, width, height, contexts, renderFPView }) => {
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
+}> = ({
+  zarrGroup,
+  width,
+  height,
+  contexts,
+  renderFPView,
+  setDrawForExport,
+}) => {
   const [error, setError] = useState<string | null>(null);
   const resizeCallbackRef = useRef<
     ((width: number, height: number) => void) | null
@@ -49,6 +58,7 @@ const FPViewWrapper: React.FC<{
         onDataChange,
         contexts,
         renderFPView,
+        setDrawForExport,
       });
     } catch (err) {
       setError(

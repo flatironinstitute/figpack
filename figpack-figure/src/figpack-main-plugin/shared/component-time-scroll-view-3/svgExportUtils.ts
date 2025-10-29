@@ -67,6 +67,7 @@ class SVGContextImpl implements SVGContext {
     textBaseline: CanvasTextBaseline;
     lineDash: number[];
     transform: { translateX: number; translateY: number; rotation: number };
+    clipPath: string | null;
   }> = [];
   private lineDash: number[] = [];
   private clipPath: string | null = null;
@@ -100,6 +101,18 @@ class SVGContextImpl implements SVGContext {
 
   private getClipPathAttr(): string {
     return this.clipPath ? ` clip-path="url(#clipPath)"` : "";
+  }
+
+  private getTransformAttr(): string {
+    if (
+      this.transform.rotation !== 0 ||
+      this.transform.translateX !== 0 ||
+      this.transform.translateY !== 0
+    ) {
+      const rotationDeg = (this.transform.rotation * 180) / Math.PI;
+      return ` transform="translate(${this.transform.translateX}, ${this.transform.translateY}) rotate(${rotationDeg})"`;
+    }
+    return "";
   }
 
   beginPath(): void {
@@ -173,7 +186,7 @@ class SVGContextImpl implements SVGContext {
         : "";
 
     this.svgElements.push(
-      `<path d="${pathData}" fill="none" stroke="${this.colorToString(this.strokeStyle)}" stroke-width="${this.lineWidth}"${strokeDashArray}${this.getOpacityAttr()}${this.getClipPathAttr()} />`,
+      `<path d="${pathData}" fill="none" stroke="${this.colorToString(this.strokeStyle)}" stroke-width="${this.lineWidth}"${strokeDashArray}${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()} />`,
     );
   }
 
@@ -183,19 +196,19 @@ class SVGContextImpl implements SVGContext {
     const pathData = this.currentPath.join(" ");
 
     this.svgElements.push(
-      `<path d="${pathData}" fill="${this.colorToString(this.fillStyle)}" stroke="none"${this.getOpacityAttr()}${this.getClipPathAttr()} />`,
+      `<path d="${pathData}" fill="${this.colorToString(this.fillStyle)}" stroke="none"${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()} />`,
     );
   }
 
   fillRect(x: number, y: number, width: number, height: number): void {
     this.svgElements.push(
-      `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${this.colorToString(this.fillStyle)}"${this.getOpacityAttr()}${this.getClipPathAttr()} />`,
+      `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${this.colorToString(this.fillStyle)}"${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()} />`,
     );
   }
 
   strokeRect(x: number, y: number, width: number, height: number): void {
     this.svgElements.push(
-      `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="${this.colorToString(this.strokeStyle)}" stroke-width="${this.lineWidth}"${this.getOpacityAttr()}${this.getClipPathAttr()} />`,
+      `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="${this.colorToString(this.strokeStyle)}" stroke-width="${this.lineWidth}"${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()} />`,
     );
   }
 
@@ -222,27 +235,15 @@ class SVGContextImpl implements SVGContext {
     else if (this.textBaseline === "middle") dominantBaseline = "central";
     else if (this.textBaseline === "bottom") dominantBaseline = "alphabetic";
 
-    // Apply transformations
-    const transformX = x + this.transform.translateX;
-    const transformY = y + this.transform.translateY;
-    const rotationDeg = (this.transform.rotation * 180) / Math.PI;
-
-    const transformAttr =
-      this.transform.rotation !== 0 ||
-      this.transform.translateX !== 0 ||
-      this.transform.translateY !== 0
-        ? ` transform="translate(${this.transform.translateX}, ${this.transform.translateY}) rotate(${rotationDeg}, ${x}, ${y})"`
-        : "";
-
     this.svgElements.push(
-      `<text x="${transformX}" y="${transformY}" fill="${this.colorToString(this.fillStyle)}" font-size="${fontSize}" font-family="${fontFamily}" text-anchor="${textAnchor}" dominant-baseline="${dominantBaseline}"${transformAttr}${this.getOpacityAttr()}${this.getClipPathAttr()}>${text}</text>`,
+      `<text x="${x}" y="${y}" fill="${this.colorToString(this.fillStyle)}" font-size="${fontSize}" font-family="${fontFamily}" text-anchor="${textAnchor}" dominant-baseline="${dominantBaseline}"${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()}>${text}</text>`,
     );
   }
 
   clearRect(x: number, y: number, width: number, height: number): void {
     // For SVG, we can add a white rectangle to simulate clearing
     this.svgElements.push(
-      `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="white" />`,
+      `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="white"${this.getClipPathAttr()}${this.getTransformAttr()} />`,
     );
   }
 
@@ -265,6 +266,7 @@ class SVGContextImpl implements SVGContext {
       textBaseline: this.textBaseline,
       lineDash: [...this.lineDash],
       transform: { ...this.transform },
+      clipPath: this.clipPath,
     });
   }
 
@@ -280,6 +282,7 @@ class SVGContextImpl implements SVGContext {
       this.textBaseline = state.textBaseline;
       this.lineDash = state.lineDash;
       this.transform = state.transform;
+      this.clipPath = state.clipPath;
     }
   }
 

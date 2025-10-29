@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
   FunctionComponent,
   useCallback,
@@ -116,14 +117,17 @@ const ExportDialog: FunctionComponent<Props> = ({
     pixelHeight: EXPORT_HEIGHT - margins.top - margins.bottom,
   });
 
-  const yTickSet: TickSet = {
-    datamin: yTicks.datamin,
-    datamax: yTicks.datamax,
-    ticks: yTicks.ticks.map((t) => ({
-      ...t,
-      pixelValue: yToPixel(t.dataValue),
-    })),
-  };
+  const yTickSet: TickSet = useMemo(
+    () => ({
+      datamin: yTicks.datamin,
+      datamax: yTicks.datamax,
+      ticks: yTicks.ticks.map((t) => ({
+        ...t,
+        pixelValue: yToPixel(t.dataValue),
+      })),
+    }),
+    [yTicks, yToPixel],
+  );
 
   // Render preview
   useEffect(() => {

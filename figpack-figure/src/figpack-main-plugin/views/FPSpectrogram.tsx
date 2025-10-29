@@ -9,6 +9,7 @@ import {
 } from "./Spectrogram/spectrogramRendering";
 import { useSpectrogramClient } from "./Spectrogram/useSpectrogramClient";
 import { ProvideTimeseriesSelectionContext } from "./FPMultiChannelTimeseries";
+import { DrawForExportFunction } from "../figpack-interface";
 
 export const FPSpectrogram: React.FC<{
   zarrGroup: ZarrGroup;
@@ -33,7 +34,8 @@ const FPSpectrogramChild: React.FC<{
   contexts: FPViewContexts;
   width: number;
   height: number;
-}> = ({ zarrGroup, width, height }) => {
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
+}> = ({ zarrGroup, width, height, setDrawForExport }) => {
   const {
     initializeTimeseriesSelection,
     visibleStartTimeSec,
@@ -226,7 +228,8 @@ const FPSpectrogramChild: React.FC<{
       }}
       yAxisInfo={yAxisInfo}
       customToolbarActions={customToolbarActions}
-      drawForExport={draw}
+      drawContentForExport={draw}
+      setDrawForExport={setDrawForExport}
     />
   );
 };

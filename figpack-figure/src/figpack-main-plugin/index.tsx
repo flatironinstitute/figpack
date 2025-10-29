@@ -28,6 +28,7 @@ import { FPTabLayout } from "./views/FPTabLayout";
 import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
 import { createRoot } from "react-dom/client";
 import { renderFPView } from "@components/FPView";
+import { DrawForExportFunction } from "src/figpack-interface";
 
 export {
   // eslint-disable-next-line react-refresh/only-export-components
@@ -51,6 +52,7 @@ type ComponentWrapperProps = {
   contexts: { [key: string]: FPViewContext };
   component: React.ComponentType<any>;
   renderFPView: (params: RenderParams) => void;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
@@ -62,6 +64,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   contexts,
   component: Component,
   renderFPView,
+  setDrawForExport,
 }) => {
   const [internalWidth, setInternalWidth] = useState(width);
   const [internalHeight, setInternalHeight] = useState(height);
@@ -84,6 +87,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
       height={internalHeight}
       contexts={contexts}
       renderFPView={renderFPView}
+      setDrawForExport={setDrawForExport}
     />
   );
 };
@@ -101,6 +105,7 @@ const makeRenderFunction = (
       onResize,
       onDataChange,
       contexts,
+      setDrawForExport,
     } = a;
     const root = createRoot(container);
     root.render(
@@ -113,6 +118,7 @@ const makeRenderFunction = (
         contexts={contexts}
         component={Component}
         renderFPView={renderFPView}
+        setDrawForExport={setDrawForExport}
       />,
     );
   };

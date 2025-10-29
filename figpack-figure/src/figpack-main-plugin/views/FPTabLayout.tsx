@@ -1,5 +1,5 @@
-import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
 import FPViewWrapper from "../FPViewWrapper";
 
 interface TabLayoutItemData {

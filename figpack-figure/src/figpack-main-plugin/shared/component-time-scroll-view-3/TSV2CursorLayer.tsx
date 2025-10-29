@@ -15,7 +15,7 @@ const paintCursor = (
   props: TSVCursorLayerProps,
 ) => {
   const { margins, currentTimePixels, currentTimeIntervalPixels } = props;
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  context.clearRect(0, 0, props.width, props.height);
 
   // current time interval
   if (currentTimeIntervalPixels !== undefined) {

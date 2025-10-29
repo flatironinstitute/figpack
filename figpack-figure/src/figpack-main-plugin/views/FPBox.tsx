@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo, useState } from "react";
-import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  DrawForExportFunction,
+  FPViewContexts,
+  RenderParams,
+  ZarrGroup,
+} from "../figpack-interface";
 import FPViewWrapper from "../FPViewWrapper";
 
 interface LayoutItemData {
@@ -29,7 +34,15 @@ export const FPBox: React.FC<{
   height: number;
   contexts: FPViewContexts;
   renderFPView: (params: RenderParams) => void;
-}> = ({ zarrGroup, width, height, contexts, renderFPView }) => {
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
+}> = ({
+  zarrGroup,
+  width,
+  height,
+  contexts,
+  renderFPView,
+  setDrawForExport,
+}) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
   const showTitles = zarrGroup.attrs["show_titles"] || false;
   const boxTitle = zarrGroup.attrs["title"] || null;
@@ -68,6 +81,106 @@ export const FPBox: React.FC<{
   }, [
     width,
     availableHeight,
+    direction,
+    itemsMetadata,
+    showTitles,
+    collapsedItems,
+  ]);
+
+  const itemDrawForExportRefs = React.useRef<
+    Map<number, DrawForExportFunction>
+  >(new Map());
+
+  const setItemDrawForExport = (index: number, draw: DrawForExportFunction) => {
+    itemDrawForExportRefs.current.set(index, draw);
+  };
+
+  useEffect(() => {
+    if (!setDrawForExport) return;
+    const drawForExport: DrawForExportFunction = async (opts: {
+      context: CanvasRenderingContext2D;
+      width: number;
+      height: number;
+    }) => {
+      const { context, width: exportWidth, height: exportHeight } = opts;
+
+      const layoutForExport = calculateLayout(
+        exportWidth,
+        exportHeight - boxTitleHeight,
+        direction as "horizontal" | "vertical",
+        itemsMetadata,
+        showTitles,
+        collapsedItems,
+      );
+
+      // Draw box title if present
+      let yOffset = 0;
+      if (boxTitle) {
+        context.fillStyle = "#f5f5f5";
+        context.fillRect(0, 0, exportWidth, boxTitleHeight);
+        context.fillStyle = "#000";
+        context.font = "bold 14px sans-serif";
+        context.textBaseline = "middle";
+        context.fillText(boxTitle, 8, boxTitleHeight / 2);
+        yOffset += boxTitleHeight;
+      }
+
+      // Draw each item
+      for (let i = 0; i < itemsMetadata.length; i++) {
+        const item = itemsMetadata[i];
+        const layout = layoutForExport[i];
+        const isCollapsed = collapsedItems.has(item.name);
+
+        context.save();
+        context.translate(layout.x, layout.y + yOffset);
+
+        // Draw item title if present
+        if (showTitles && item.title) {
+          context.fillStyle = "#f5f5f5";
+          context.fillRect(0, 0, layout.width, layout.titleHeight);
+          context.strokeStyle = "#ddd";
+          context.lineWidth = 1;
+          context.strokeRect(0, 0, layout.width, layout.titleHeight);
+
+          context.fillStyle = "#000";
+          context.font = "bold 12px sans-serif";
+          context.textBaseline = "middle";
+
+          // Draw collapse indicator if collapsible
+          let textX = 8;
+          if (item.collapsible) {
+            const indicator = isCollapsed ? "▶" : "▼";
+            context.fillText(indicator, textX, layout.titleHeight / 2);
+            textX += 16;
+          }
+
+          context.fillText(item.title, textX, layout.titleHeight / 2);
+        }
+
+        // Draw item content if not collapsed
+        if (!isCollapsed) {
+          const drawFunc = itemDrawForExportRefs.current.get(i);
+          if (drawFunc) {
+            context.save();
+            context.translate(0, layout.titleHeight);
+            await drawFunc({
+              context,
+              width: layout.width,
+              height: layout.height - layout.titleHeight,
+            });
+            context.restore();
+          }
+        }
+
+        context.restore();
+      }
+    };
+    setDrawForExport(drawForExport);
+  }, [
+    itemDrawForExportRefs,
+    setDrawForExport,
+    boxTitle,
+    boxTitleHeight,
     direction,
     itemsMetadata,
     showTitles,
@@ -162,6 +275,7 @@ export const FPBox: React.FC<{
                   height={layout.height - layout.titleHeight}
                   contexts={contexts}
                   renderFPView={renderFPView}
+                  setDrawForExport={(draw) => setItemDrawForExport(index, draw)}
                 />
               </div>
             )}
@@ -179,7 +293,16 @@ const BoxItem: React.FC<{
   height: number;
   contexts: FPViewContexts;
   renderFPView: (params: RenderParams) => void;
-}> = ({ zarrGroup, itemName, width, height, contexts, renderFPView }) => {
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
+}> = ({
+  zarrGroup,
+  itemName,
+  width,
+  height,
+  contexts,
+  renderFPView,
+  setDrawForExport,
+}) => {
   const [childGroup, setChildGroup] = useState<ZarrGroup | null>(null);
 
   React.useEffect(() => {
@@ -225,6 +348,7 @@ const BoxItem: React.FC<{
       height={height}
       contexts={contexts}
       renderFPView={renderFPView}
+      setDrawForExport={setDrawForExport}
     />
   );
 };

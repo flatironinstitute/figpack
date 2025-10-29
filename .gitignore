@@ -1,9 +1,6 @@
+figpack-preprint/
 doc-pages.json
 *.nii.gz
-stats.html
-figpack-presentation/
-
-figpack-blog
 
 # Python
 __pycache__/
