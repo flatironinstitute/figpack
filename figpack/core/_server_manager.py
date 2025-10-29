@@ -29,6 +29,9 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                 "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
             )
 
+        # Always send Accept-Ranges header to indicate byte-range support
+        self.send_header("Accept-Ranges", "bytes")
+
         # Prevent browser caching - important for when we are editing figures in place
         # This ensures the browser always fetches the latest version of files
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -44,6 +47,99 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
     def do_PUT(self):
         """Reject PUT requests when file upload is not enabled."""
         self.send_error(405, "Method Not Allowed")
+
+    def do_GET(self):
+        """Handle GET requests with support for Range requests."""
+        # Translate path and check if file exists
+        path = self.translate_path(self.path)
+
+        # Check if path is a file
+        if not os.path.isfile(path):
+            # Let parent class handle directories and 404s
+            return super().do_GET()
+
+        # Check for Range header
+        range_header = self.headers.get("Range")
+
+        if range_header is None:
+            # No range request, use parent's implementation
+            return super().do_GET()
+
+        # Parse range header
+        try:
+            # Range header format: "bytes=start-end"
+            if not range_header.startswith("bytes="):
+                # Invalid range format, ignore and serve full file
+                return super().do_GET()
+
+            range_spec = range_header[6:]  # Remove "bytes=" prefix
+
+            # Get file size
+            file_size = os.path.getsize(path)
+
+            # Parse range specification
+            if "-" not in range_spec:
+                # Invalid format
+                self.send_error(400, "Invalid Range header")
+                return
+
+            range_parts = range_spec.split("-", 1)
+
+            # Determine start and end positions
+            if range_parts[0]:  # Start position specified
+                start = int(range_parts[0])
+                if range_parts[1]:  # End position also specified
+                    end = int(range_parts[1])
+                else:  # Open-ended range (e.g., "1024-")
+                    end = file_size - 1
+            else:  # Suffix range (e.g., "-500" means last 500 bytes)
+                if not range_parts[1]:
+                    self.send_error(400, "Invalid Range header")
+                    return
+                suffix_length = int(range_parts[1])
+                start = max(0, file_size - suffix_length)
+                end = file_size - 1
+
+            # Validate range
+            if start < 0 or end >= file_size or start > end:
+                self.send_response(416, "Range Not Satisfiable")
+                self.send_header("Content-Range", f"bytes */{file_size}")
+                self.end_headers()
+                return
+
+            # Calculate content length
+            content_length = end - start + 1
+
+            # Guess content type
+            import mimetypes
+
+            content_type = mimetypes.guess_type(path)[0] or "application/octet-stream"
+
+            # Send 206 Partial Content response
+            self.send_response(206, "Partial Content")
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(content_length))
+            self.send_header("Content-Range", f"bytes {start}-{end}/{file_size}")
+            self.end_headers()
+
+            # Send the requested byte range
+            with open(path, "rb") as f:
+                f.seek(start)
+                remaining = content_length
+                while remaining > 0:
+                    chunk_size = min(8192, remaining)
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                    remaining -= len(chunk)
+
+        except ValueError:
+            # Invalid range values
+            self.send_error(400, "Invalid Range header")
+        except Exception as e:
+            # Log error and return 500
+            self.send_error(500, f"Internal Server Error: {str(e)}")
 
     def log_message(self, format, *args):
         pass

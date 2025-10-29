@@ -42,7 +42,13 @@ export class ZarrFileSystemClient {
   #inProgressReads: { [key: string]: boolean } = {};
   constructor(
     private url: string,
-    private zmetadata: any,
+    private zmetadata: {
+      metadata: { [key: string]: any };
+      refs?: {
+        [key: string]: [string, number, number]; // kerchunk style refs
+      };
+      zarr_format: number;
+    },
     private customDecoders?: {
       [key: string]: (chunk: ArrayBuffer) => Promise<any>;
     },
@@ -129,18 +135,38 @@ export class ZarrFileSystemClient {
         url += `?cb=${Date.now()}`;
       }
       let buf: ArrayBuffer | undefined;
-      if (o.startByte !== undefined && o.endByte !== undefined) {
-        buf = await fetchByteRange(url, o.startByte, o.endByte - o.startByte);
-      } else {
-        const r = await fetch(url);
-        if (!r.ok) {
-          if (r.status === 404) {
-            this.#fileContentCache[kk] = { content: undefined, found: false };
-            return undefined; // file not found
-          }
-          throw Error(`Failed to fetch ${url}: ${r.statusText}`);
+      if (this.zmetadata.refs && path in this.zmetadata.refs) {
+        const pathForRef = this.zmetadata.refs[path][0];
+        const startByteForRef = this.zmetadata.refs[path][1];
+        const sizeForRef = this.zmetadata.refs[path][2];
+        if (o.startByte !== undefined && o.endByte !== undefined) {
+          buf = await fetchByteRange(
+            this.url + "/" + pathForRef,
+            startByteForRef + o.startByte,
+            o.endByte - o.startByte,
+          );
+        } else {
+          buf = await fetchByteRange(
+            this.url + "/" + pathForRef,
+            startByteForRef,
+            sizeForRef,
+          );
         }
-        buf = await r.arrayBuffer();
+      } else {
+        // normal fetch
+        if (o.startByte !== undefined && o.endByte !== undefined) {
+          buf = await fetchByteRange(url, o.startByte, o.endByte - o.startByte);
+        } else {
+          const r = await fetch(url);
+          if (!r.ok) {
+            if (r.status === 404) {
+              this.#fileContentCache[kk] = { content: undefined, found: false };
+              return undefined; // file not found
+            }
+            throw Error(`Failed to fetch ${url}: ${r.statusText}`);
+          }
+          buf = await r.arrayBuffer();
+        }
       }
       if (o.decodeArray) {
         const parentPath = path.split("/").slice(0, -1).join("/");
