@@ -160,6 +160,7 @@ export const StatusBar: React.FC<{
         <span>Upload status: {figureInfo.status}</span>
         {aboutButton}
         {manageButton}
+        {exportAsSvgButton}
       </div>
     );
   }
@@ -172,6 +173,7 @@ export const StatusBar: React.FC<{
         </span>
         {aboutButton}
         {manageButton}
+        {exportAsSvgButton}
       </div>
     );
   }
@@ -183,6 +185,7 @@ export const StatusBar: React.FC<{
         {aboutButton}
         {manageButton}
         {figureAnnotationsStatusComponent}
+        {exportAsSvgButton}
       </div>
     );
   }
