@@ -9,6 +9,7 @@ from .figpack_view import FigpackView
 from .figpack_extension import FigpackExtension
 from .extension_view import ExtensionView
 from .zarr import Group, _check_zarr_version
+from ._zarr_consolidate import consolidate_zarr_chunks
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
@@ -72,12 +73,15 @@ def prepare_figure_bundle(
         # Generate extension manifest
         _write_extension_manifest(required_extensions, tmpdir)
 
+        # Create the .zmetadata file
         zarr.consolidate_metadata(zarr_group._zarr_group.store)
 
         # It's important that we remove all the metadata files except for the
-        # consolidated one, because otherwise we may get inconstencies
-        # once we start editing the zarr data from the browser.
+        # consolidated one so there is a single source of truth.
         _remove_metadata_files_except_consolidated(pathlib.Path(tmpdir) / "data.zarr")
+
+        # Consolidate zarr chunks into larger files to reduce upload count
+        consolidate_zarr_chunks(pathlib.Path(tmpdir) / "data.zarr")
     finally:
         if _check_zarr_version() == 3:
             zarr.config.set({"default_zarr_format": old_default_zarr_format})  # type: ignore

@@ -60,6 +60,19 @@ function validateFilePath(path: string): { valid: boolean } {
     ) {
       return { valid: true };
     }
+    // Files of the form _consolidated_{iteger}.dat are also valid
+    if (
+      fileBaseName.startsWith("_consolidated_") &&
+      fileBaseName.endsWith(".dat")
+    ) {
+      const middlePart = fileBaseName.slice(
+        "_consolidated_".length,
+        -".dat".length
+      );
+      if (/^\d+$/.test(middlePart)) {
+        return { valid: true };
+      }
+    }
   }
 
   // Check assets directory

@@ -42,6 +42,9 @@ class FileUploadCORSRequestHandler(CORSRequestHandler):
                 "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
             )
 
+        # Always send Accept-Ranges header to indicate byte-range support
+        self.send_header("Accept-Ranges", "bytes")
+
         # Prevent browser caching - important for when we are editing figures in place
         # This ensures the browser always fetches the latest version of files
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
