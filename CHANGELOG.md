@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Figpack Documents
+
 ## [0.2.39] - 2025-10-29
 
 - Consolidate chunks to reduce Zarr file count before upload

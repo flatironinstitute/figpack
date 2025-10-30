@@ -416,4 +416,72 @@ bucketSchema.index({ createdAt: 1 });
 export const Bucket: Model<IBucketDocument> =
   mongoose.models.Bucket || mongoose.model("Bucket", bucketSchema);
 
+// FigpackDocument interface
+export interface IFigpackDocument {
+  documentId: string; // Unique identifier
+  ownerEmail: string; // Owner of the document
+  title: string; // Document title
+  content: string; // Markdown content stored in MongoDB
+  figureRefs: string[]; // Array of figure URLs referenced in content
+  createdAt: number; // Unix timestamp
+  updatedAt: number; // Unix timestamp
+}
+
+export interface IFigpackDocumentDocument extends IFigpackDocument, Document {}
+
+// FigpackDocument schema
+const figpackDocumentSchema = new mongoose.Schema<IFigpackDocumentDocument>({
+  documentId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  ownerEmail: {
+    type: String,
+    required: true,
+    lowercase: true,
+    trim: true,
+  },
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 1,
+    maxlength: 200,
+  },
+  content: {
+    type: String,
+    required: false,
+    default: "",
+    maxlength: 1000000, // 1MB limit for content
+  },
+  figureRefs: {
+    type: [String],
+    default: [],
+  },
+  createdAt: {
+    type: Number,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Number,
+    default: Date.now,
+  },
+});
+
+// Update the updatedAt field on save
+figpackDocumentSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+// Create indexes for fast lookups
+figpackDocumentSchema.index({ documentId: 1 }, { unique: true });
+figpackDocumentSchema.index({ ownerEmail: 1 });
+figpackDocumentSchema.index({ figureRefs: 1 }); // For querying which docs use a figure
+figpackDocumentSchema.index({ createdAt: -1 });
+
+export const FigpackDocument: Model<IFigpackDocumentDocument> =
+  mongoose.models.FigpackDocument || mongoose.model("FigpackDocument", figpackDocumentSchema);
+
 export default connectDB;
