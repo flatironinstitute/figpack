@@ -95,7 +95,7 @@ export default async function handler(
     // Extract figure references from content
     const figureRefs = extractFigureRefsFromMarkdown(documentContent);
 
-    // Create new document
+    // Create new document with default access control (owner-only)
     const now = Date.now();
     const newDocument = new FigpackDocument({
       documentId,
@@ -103,6 +103,12 @@ export default async function handler(
       title: title.trim(),
       content: documentContent,
       figureRefs,
+      accessControl: {
+        viewMode: 'owner-only',
+        editMode: 'owner-only',
+        viewerEmails: [],
+        editorEmails: [],
+      },
       createdAt: now,
       updatedAt: now,
     });

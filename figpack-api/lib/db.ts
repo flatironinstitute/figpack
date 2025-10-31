@@ -423,6 +423,12 @@ export interface IFigpackDocument {
   title: string; // Document title
   content: string; // Markdown content stored in MongoDB
   figureRefs: string[]; // Array of figure URLs referenced in content
+  accessControl: {
+    viewMode: 'owner-only' | 'users' | 'public'; // Who can view the document
+    editMode: 'owner-only' | 'users'; // Who can edit the document
+    viewerEmails: string[]; // Additional users who can view (beyond owner and editors)
+    editorEmails: string[]; // Users who can edit (beyond owner)
+  };
   createdAt: number; // Unix timestamp
   updatedAt: number; // Unix timestamp
 }
@@ -458,6 +464,42 @@ const figpackDocumentSchema = new mongoose.Schema<IFigpackDocumentDocument>({
   figureRefs: {
     type: [String],
     default: [],
+  },
+  accessControl: {
+    viewMode: {
+      type: String,
+      enum: ['owner-only', 'users', 'public'],
+      default: 'owner-only',
+    },
+    editMode: {
+      type: String,
+      enum: ['owner-only', 'users'],
+      default: 'owner-only',
+    },
+    viewerEmails: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function (emails: string[]) {
+          return emails.every((email) =>
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+          );
+        },
+        message: "All viewer emails must be valid email addresses",
+      },
+    },
+    editorEmails: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function (emails: string[]) {
+          return emails.every((email) =>
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+          );
+        },
+        message: "All editor emails must be valid email addresses",
+      },
+    },
   },
   createdAt: {
     type: Number,

@@ -34,7 +34,7 @@ const DocumentViewPage: React.FC = () => {
     setError(null);
 
     try {
-      const result = await getDocument(documentId);
+      const result = await getDocument(documentId, user?.apiKey);
 
       if (result.success && result.document) {
         setDocument(result.document);
@@ -46,15 +46,19 @@ const DocumentViewPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [documentId]);
+  }, [documentId, user?.apiKey]);
 
   // Effects
   useEffect(() => {
     loadDocument();
   }, [loadDocument]);
 
-  // Check if user is owner
+  // Check if user is owner or has edit access
   const isOwner = user && document && user.email === document.ownerEmail;
+  const canEdit = user && document && (
+    isOwner || 
+    document.accessControl?.editorEmails?.includes(user.email)
+  );
 
   if (loading) {
     return (
@@ -96,7 +100,7 @@ const DocumentViewPage: React.FC = () => {
               <Typography variant="h4" component="h1">
                 {document.title}
               </Typography>
-              {isOwner && (
+              {canEdit && (
                 <Button
                   variant="contained"
                   startIcon={<Edit />}
@@ -118,6 +122,13 @@ const DocumentViewPage: React.FC = () => {
               <Typography variant="caption" color="text.secondary" display="block">
                 Owner: {document.ownerEmail}
               </Typography>
+              {document.accessControl && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Access: {document.accessControl.viewMode === 'public' ? 'Public' : 
+                           document.accessControl.viewMode === 'users' ? 'Shared' : 
+                           'Owner Only'}
+                </Typography>
+              )}
             </Box>
 
             {/* Content - Rendered as Markdown */}
