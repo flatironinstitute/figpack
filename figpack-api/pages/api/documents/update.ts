@@ -10,6 +10,12 @@ interface UpdateDocumentRequest {
   documentId: string;
   title?: string;
   content?: string;
+  accessControl?: {
+    viewMode?: 'owner-only' | 'users' | 'public';
+    editMode?: 'owner-only' | 'users';
+    viewerEmails?: string[];
+    editorEmails?: string[];
+  };
 }
 
 interface UpdateDocumentResponse {
@@ -43,7 +49,7 @@ export default async function handler(
     await connectDB();
 
     // Parse request body
-    const { apiKey, documentId, title, content }: UpdateDocumentRequest = req.body;
+    const { apiKey, documentId, title, content, accessControl }: UpdateDocumentRequest = req.body;
 
     // Validate required fields
     if (!apiKey) {
@@ -61,10 +67,10 @@ export default async function handler(
     }
 
     // Validate at least one field to update
-    if (title === undefined && content === undefined) {
+    if (title === undefined && content === undefined && accessControl === undefined) {
       return res.status(400).json({
         success: false,
-        message: "At least one field to update must be provided (title or content)",
+        message: "At least one field to update must be provided (title, content, or accessControl)",
       });
     }
 
@@ -108,11 +114,27 @@ export default async function handler(
       });
     }
 
-    // Check ownership (user can only update their own documents unless admin)
-    if (document.ownerEmail !== userEmail && !isAdmin) {
+    // Check edit permissions
+    const isOwner = document.ownerEmail === userEmail;
+    const editMode = document.accessControl?.editMode || 'owner-only';
+    const editorEmails = document.accessControl?.editorEmails || [];
+    const isEditor = editorEmails.includes(userEmail);
+
+    // Determine if user can edit
+    const canEdit = isOwner || isAdmin || (editMode === 'users' && isEditor);
+
+    if (!canEdit) {
       return res.status(403).json({
         success: false,
-        message: "You do not have permission to update this document",
+        message: "You do not have permission to edit this document",
+      });
+    }
+
+    // Only owner can modify access control settings
+    if (accessControl !== undefined && !isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the document owner can modify access control settings",
       });
     }
 
@@ -125,6 +147,48 @@ export default async function handler(
       document.content = content;
       // Re-extract figure references if content changed
       document.figureRefs = extractFigureRefsFromMarkdown(content);
+    }
+
+    // Update access control if provided
+    if (accessControl !== undefined) {
+      // Validate email formats if provided
+      if (accessControl.viewerEmails) {
+        const invalidViewerEmails = accessControl.viewerEmails.filter(
+          email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        );
+        if (invalidViewerEmails.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid viewer email(s): ${invalidViewerEmails.join(', ')}`,
+          });
+        }
+      }
+
+      if (accessControl.editorEmails) {
+        const invalidEditorEmails = accessControl.editorEmails.filter(
+          email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        );
+        if (invalidEditorEmails.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid editor email(s): ${invalidEditorEmails.join(', ')}`,
+          });
+        }
+      }
+
+      // Update access control fields
+      if (accessControl.viewMode !== undefined) {
+        document.accessControl.viewMode = accessControl.viewMode;
+      }
+      if (accessControl.editMode !== undefined) {
+        document.accessControl.editMode = accessControl.editMode;
+      }
+      if (accessControl.viewerEmails !== undefined) {
+        document.accessControl.viewerEmails = accessControl.viewerEmails;
+      }
+      if (accessControl.editorEmails !== undefined) {
+        document.accessControl.editorEmails = accessControl.editorEmails;
+      }
     }
 
     document.updatedAt = Date.now();

@@ -4,9 +4,14 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
+  FormControl,
+  FormControlLabel,
   IconButton,
   Paper,
+  Radio,
+  RadioGroup,
   Stack,
   Tab,
   Table,
@@ -19,7 +24,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Save, Visibility, OpenInNew } from "@mui/icons-material";
+import { Save, Visibility, OpenInNew, Delete } from "@mui/icons-material";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate, useParams } from "react-router-dom";
@@ -30,7 +35,7 @@ import MarkdownEditor from "../../components/MarkdownEditor/MarkdownEditor";
 
 const DocumentEditPage: React.FC = () => {
   const { documentId } = useParams<{ documentId: string }>();
-  const { apiKey } = useAuth();
+  const { apiKey, user } = useAuth();
   const navigate = useNavigate();
 
   // State
@@ -41,7 +46,15 @@ const DocumentEditPage: React.FC = () => {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [activeTab, setActiveTab] = useState<"write" | "preview" | "figures">("write");
+  const [activeTab, setActiveTab] = useState<"write" | "preview" | "figures" | "access">("write");
+  
+  // Access control state
+  const [viewMode, setViewMode] = useState<'owner-only' | 'users' | 'public'>('owner-only');
+  const [editMode, setEditMode] = useState<'owner-only' | 'users'>('owner-only');
+  const [viewerEmails, setViewerEmails] = useState<string[]>([]);
+  const [editorEmails, setEditorEmails] = useState<string[]>([]);
+  const [newViewerEmail, setNewViewerEmail] = useState("");
+  const [newEditorEmail, setNewEditorEmail] = useState("");
 
   // Load document
   const loadDocument = useCallback(async () => {
@@ -51,12 +64,20 @@ const DocumentEditPage: React.FC = () => {
     setError(null);
 
     try {
-      const result = await getDocument(documentId);
+      const result = await getDocument(documentId, apiKey);
 
       if (result.success && result.document) {
         setDocument(result.document);
         setTitle(result.document.title);
         setContent(result.document.content);
+        
+        // Load access control settings
+        if (result.document.accessControl) {
+          setViewMode(result.document.accessControl.viewMode);
+          setEditMode(result.document.accessControl.editMode);
+          setViewerEmails(result.document.accessControl.viewerEmails || []);
+          setEditorEmails(result.document.accessControl.editorEmails || []);
+        }
       } else {
         setError(result.message || "Failed to load document");
       }
@@ -65,7 +86,7 @@ const DocumentEditPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [documentId]);
+  }, [documentId, apiKey]);
 
   // Effects
   useEffect(() => {
@@ -76,9 +97,14 @@ const DocumentEditPage: React.FC = () => {
   useEffect(() => {
     if (!document) return;
     const hasChanged =
-      title !== document.title || content !== document.content;
+      title !== document.title || 
+      content !== document.content ||
+      viewMode !== document.accessControl?.viewMode ||
+      editMode !== document.accessControl?.editMode ||
+      JSON.stringify(viewerEmails) !== JSON.stringify(document.accessControl?.viewerEmails || []) ||
+      JSON.stringify(editorEmails) !== JSON.stringify(document.accessControl?.editorEmails || []);
     setIsDirty(hasChanged);
-  }, [title, content, document]);
+  }, [title, content, viewMode, editMode, viewerEmails, editorEmails, document]);
 
   // Check if user is owner
   // const isOwner = user && document && user.email === document.ownerEmail;
@@ -90,6 +116,9 @@ const DocumentEditPage: React.FC = () => {
   //   }
   // }, [loading, document, isOwner, apiKey, documentId, navigate]);
 
+  // Check if user is owner
+  const isOwner = user && document && user.email === document.ownerEmail;
+
   // Handlers
   const handleSave = async () => {
     if (!apiKey || !documentId || !isDirty) return;
@@ -98,12 +127,28 @@ const DocumentEditPage: React.FC = () => {
     setError(null);
 
     try {
-      const result = await updateDocument(apiKey, documentId, title, content);
+      const accessControl = {
+        viewMode,
+        editMode,
+        viewerEmails,
+        editorEmails,
+      };
+
+      const result = await updateDocument(apiKey, documentId, title, content, accessControl);
 
       if (result.success && result.document) {
         setDocument(result.document);
         setTitle(result.document.title);
         setContent(result.document.content);
+        
+        // Update access control state
+        if (result.document.accessControl) {
+          setViewMode(result.document.accessControl.viewMode);
+          setEditMode(result.document.accessControl.editMode);
+          setViewerEmails(result.document.accessControl.viewerEmails || []);
+          setEditorEmails(result.document.accessControl.editorEmails || []);
+        }
+        
         setIsDirty(false);
       } else {
         setError(result.message || "Failed to save document");
@@ -113,6 +158,30 @@ const DocumentEditPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleAddViewerEmail = () => {
+    const email = newViewerEmail.trim().toLowerCase();
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !viewerEmails.includes(email)) {
+      setViewerEmails([...viewerEmails, email]);
+      setNewViewerEmail("");
+    }
+  };
+
+  const handleRemoveViewerEmail = (email: string) => {
+    setViewerEmails(viewerEmails.filter(e => e !== email));
+  };
+
+  const handleAddEditorEmail = () => {
+    const email = newEditorEmail.trim().toLowerCase();
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !editorEmails.includes(email)) {
+      setEditorEmails([...editorEmails, email]);
+      setNewEditorEmail("");
+    }
+  };
+
+  const handleRemoveEditorEmail = (email: string) => {
+    setEditorEmails(editorEmails.filter(e => e !== email));
   };
 
   const handleViewDocument = () => {
@@ -208,7 +277,7 @@ const DocumentEditPage: React.FC = () => {
               disabled={saving}
             />
 
-            {/* Tabs for Write/Preview/Figures */}
+            {/* Tabs for Write/Preview/Figures/Access */}
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <Tabs
                 value={activeTab}
@@ -217,6 +286,7 @@ const DocumentEditPage: React.FC = () => {
                 <Tab label="Write" value="write" />
                 <Tab label="Preview" value="preview" />
                 <Tab label="Figures" value="figures" />
+                {isOwner && <Tab label="Access Control" value="access" />}
               </Tabs>
             </Box>
 
@@ -254,7 +324,7 @@ const DocumentEditPage: React.FC = () => {
                     </Typography>
                   )}
                 </Box>
-              ) : (
+              ) : activeTab === "figures" ? (
                 <Box sx={{ height: "100%", overflowY: "auto", p: 3 }}>
                   {document.figureRefs && document.figureRefs.length > 0 ? (
                     <TableContainer component={Paper}>
@@ -290,6 +360,146 @@ const DocumentEditPage: React.FC = () => {
                       No figures referenced in this document
                     </Typography>
                   )}
+                </Box>
+              ) : (
+                <Box sx={{ height: "100%", overflowY: "auto", p: 3 }}>
+                  <Stack spacing={4}>
+                    {/* View Access */}
+                    <Box>
+                      <Typography variant="h6" gutterBottom>
+                        View Access
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Control who can view this document
+                      </Typography>
+                      <FormControl component="fieldset" sx={{ mt: 2 }}>
+                        <RadioGroup
+                          value={viewMode}
+                          onChange={(e) => setViewMode(e.target.value as 'owner-only' | 'users' | 'public')}
+                        >
+                          <FormControlLabel
+                            value="owner-only"
+                            control={<Radio />}
+                            label="Owner Only - Only you can view"
+                          />
+                          <FormControlLabel
+                            value="users"
+                            control={<Radio />}
+                            label="Specific Users - Share with specific people"
+                          />
+                          <FormControlLabel
+                            value="public"
+                            control={<Radio />}
+                            label="Public - Anyone with the link can view"
+                          />
+                        </RadioGroup>
+                      </FormControl>
+
+                      {viewMode === 'users' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Viewers (can view only)
+                          </Typography>
+                          <Box display="flex" gap={1} mb={2}>
+                            <TextField
+                              size="small"
+                              placeholder="Enter email address"
+                              value={newViewerEmail}
+                              onChange={(e) => setNewViewerEmail(e.target.value)}
+                              onKeyPress={(e) => e.key === 'Enter' && handleAddViewerEmail()}
+                              fullWidth
+                            />
+                            <Button onClick={handleAddViewerEmail} variant="outlined">
+                              Add
+                            </Button>
+                          </Box>
+                          <Box display="flex" flexWrap="wrap" gap={1}>
+                            {viewerEmails.map((email) => (
+                              <Chip
+                                key={email}
+                                label={email}
+                                onDelete={() => handleRemoveViewerEmail(email)}
+                                deleteIcon={<Delete />}
+                              />
+                            ))}
+                            {viewerEmails.length === 0 && (
+                              <Typography variant="body2" color="text.secondary">
+                                No viewers added yet
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* Edit Access */}
+                    <Box>
+                      <Typography variant="h6" gutterBottom>
+                        Edit Access
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Control who can edit this document (editors can also view)
+                      </Typography>
+                      <FormControl component="fieldset" sx={{ mt: 2 }}>
+                        <RadioGroup
+                          value={editMode}
+                          onChange={(e) => setEditMode(e.target.value as 'owner-only' | 'users')}
+                        >
+                          <FormControlLabel
+                            value="owner-only"
+                            control={<Radio />}
+                            label="Owner Only - Only you can edit"
+                          />
+                          <FormControlLabel
+                            value="users"
+                            control={<Radio />}
+                            label="Specific Users - Share editing with specific people"
+                          />
+                        </RadioGroup>
+                      </FormControl>
+
+                      {editMode === 'users' && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Editors (can view and edit)
+                          </Typography>
+                          <Box display="flex" gap={1} mb={2}>
+                            <TextField
+                              size="small"
+                              placeholder="Enter email address"
+                              value={newEditorEmail}
+                              onChange={(e) => setNewEditorEmail(e.target.value)}
+                              onKeyPress={(e) => e.key === 'Enter' && handleAddEditorEmail()}
+                              fullWidth
+                            />
+                            <Button onClick={handleAddEditorEmail} variant="outlined">
+                              Add
+                            </Button>
+                          </Box>
+                          <Box display="flex" flexWrap="wrap" gap={1}>
+                            {editorEmails.map((email) => (
+                              <Chip
+                                key={email}
+                                label={email}
+                                onDelete={() => handleRemoveEditorEmail(email)}
+                                deleteIcon={<Delete />}
+                                color="primary"
+                              />
+                            ))}
+                            {editorEmails.length === 0 && (
+                              <Typography variant="body2" color="text.secondary">
+                                No editors added yet
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+
+                    <Alert severity="info">
+                      Note: Anyone who can edit can also view the document. Remember to save your changes.
+                    </Alert>
+                  </Stack>
                 </Box>
               )}
             </Box>

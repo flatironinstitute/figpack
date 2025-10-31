@@ -6,6 +6,12 @@ export interface IFigpackDocument {
   title: string;
   content: string;
   figureRefs: string[];
+  accessControl: {
+    viewMode: 'owner-only' | 'users' | 'public';
+    editMode: 'owner-only' | 'users';
+    viewerEmails: string[];
+    editorEmails: string[];
+  };
   createdAt: number;
   updatedAt: number;
 }
