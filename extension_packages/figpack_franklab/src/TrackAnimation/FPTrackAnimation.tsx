@@ -90,6 +90,9 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
     setCurrentTime,
   ]);
 
+  const controlsHeight = 60;
+  const canvasHeight = height - controlsHeight;
+
   // Canvas drawing
   const drawFrame = useCallback(async () => {
     if (!client || !canvasRef.current) return;
@@ -99,7 +102,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
     if (!ctx) return;
 
     // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, width, canvasHeight);
 
     // Calculate scaling factors
     const padding = 20;
@@ -123,7 +126,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
 
     // Draw frame info
     await drawFrameInfo(ctx, client, currentFrame, canvas.width, canvas.height);
-  }, [client, currentFrame]);
+  }, [client, currentFrame, width, canvasHeight]);
 
   // Redraw when frame changes
   useEffect(() => {
@@ -164,9 +167,6 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
       </div>
     );
   }
-
-  const controlsHeight = 60;
-  const canvasHeight = height - controlsHeight;
 
   return (
     <div style={{ width, height, display: "flex", flexDirection: "column" }}>

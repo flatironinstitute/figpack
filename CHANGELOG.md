@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.2.40] - 2025-11-03
 
 - Figpack Documents
 
