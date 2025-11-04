@@ -57,7 +57,7 @@ const DocumentViewPage: React.FC = () => {
   const isOwner = user && document && user.email === document.ownerEmail;
   const canEdit = user && document && (
     isOwner || 
-    document.accessControl?.editorEmails?.includes(user.email)
+    document.editorEmails?.includes(user.email)
   );
 
   if (loading) {
@@ -122,10 +122,10 @@ const DocumentViewPage: React.FC = () => {
               <Typography variant="caption" color="text.secondary" display="block">
                 Owner: {document.ownerEmail}
               </Typography>
-              {document.accessControl && (
+              {document.viewMode && document.editMode && (
                 <Typography variant="caption" color="text.secondary" display="block">
-                  Access: {document.accessControl.viewMode === 'public' ? 'Public' : 
-                           document.accessControl.viewMode === 'users' ? 'Shared' : 
+                  Access: {document.viewMode === 'public' ? 'Public' : 
+                           document.viewMode === 'users' ? 'Shared' : 
                            'Owner Only'}
                 </Typography>
               )}

@@ -56,9 +56,14 @@ const DocumentEditPage: React.FC = () => {
   const [newViewerEmail, setNewViewerEmail] = useState("");
   const [newEditorEmail, setNewEditorEmail] = useState("");
 
+  console.log('--- api key:', apiKey);
+
   // Load document
   const loadDocument = useCallback(async () => {
     if (!documentId) return;
+    if (!apiKey) return;
+
+    console.log('--- loading document:', documentId, apiKey);
 
     setLoading(true);
     setError(null);
@@ -72,11 +77,17 @@ const DocumentEditPage: React.FC = () => {
         setContent(result.document.content);
         
         // Load access control settings
-        if (result.document.accessControl) {
-          setViewMode(result.document.accessControl.viewMode);
-          setEditMode(result.document.accessControl.editMode);
-          setViewerEmails(result.document.accessControl.viewerEmails || []);
-          setEditorEmails(result.document.accessControl.editorEmails || []);
+        if (result.document.viewMode) {
+          setViewMode(result.document.viewMode);
+        }
+        if (result.document.editMode) {
+          setEditMode(result.document.editMode);
+        }
+        if (result.document.viewerEmails) {
+          setViewerEmails(result.document.viewerEmails);
+        }
+        if (result.document.editorEmails) {
+          setEditorEmails(result.document.editorEmails);
         }
       } else {
         setError(result.message || "Failed to load document");
@@ -99,10 +110,10 @@ const DocumentEditPage: React.FC = () => {
     const hasChanged =
       title !== document.title || 
       content !== document.content ||
-      viewMode !== document.accessControl?.viewMode ||
-      editMode !== document.accessControl?.editMode ||
-      JSON.stringify(viewerEmails) !== JSON.stringify(document.accessControl?.viewerEmails || []) ||
-      JSON.stringify(editorEmails) !== JSON.stringify(document.accessControl?.editorEmails || []);
+      viewMode !== document.viewMode ||
+      editMode !== document.editMode ||
+      JSON.stringify(viewerEmails) !== JSON.stringify(document.viewerEmails || []) ||
+      JSON.stringify(editorEmails) !== JSON.stringify(document.editorEmails || []);
     setIsDirty(hasChanged);
   }, [title, content, viewMode, editMode, viewerEmails, editorEmails, document]);
 
@@ -127,14 +138,12 @@ const DocumentEditPage: React.FC = () => {
     setError(null);
 
     try {
-      const accessControl = {
+      const result = await updateDocument(apiKey, documentId, title, content, {
         viewMode,
         editMode,
         viewerEmails,
         editorEmails,
-      };
-
-      const result = await updateDocument(apiKey, documentId, title, content, accessControl);
+      });
 
       if (result.success && result.document) {
         setDocument(result.document);
@@ -142,11 +151,17 @@ const DocumentEditPage: React.FC = () => {
         setContent(result.document.content);
         
         // Update access control state
-        if (result.document.accessControl) {
-          setViewMode(result.document.accessControl.viewMode);
-          setEditMode(result.document.accessControl.editMode);
-          setViewerEmails(result.document.accessControl.viewerEmails || []);
-          setEditorEmails(result.document.accessControl.editorEmails || []);
+        if (result.document.viewMode) {
+          setViewMode(result.document.viewMode);
+        }
+        if (result.document.editMode) {
+          setEditMode(result.document.editMode);
+        }
+        if (result.document.viewerEmails) {
+          setViewerEmails(result.document.viewerEmails);
+        }
+        if (result.document.editorEmails) {
+          setEditorEmails(result.document.editorEmails);
         }
         
         setIsDirty(false);

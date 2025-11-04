@@ -258,7 +258,7 @@ export async function handleListDocuments(request: Request, env: Env, rateLimitR
 export async function handleUpdateDocument(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
 		const body = (await request.json()) as any;
-		const { documentId, title, content, accessControl } = body;
+		const { documentId, title, content, viewMode, editMode, viewerEmails, editorEmails } = body;
 
 		const apiKey = request.headers.get('x-api-key');
 
@@ -322,22 +322,22 @@ export async function handleUpdateDocument(request: Request, env: Env, rateLimit
 		}
 
 		// Only owner can update access control
-		if (accessControl && document.ownerEmail === userEmail) {
-			if (accessControl.viewMode) {
+		if (document.ownerEmail === userEmail) {
+			if (viewMode) {
 				updates.push('view_mode = ?');
-				values.push(accessControl.viewMode);
+				values.push(viewMode);
 			}
-			if (accessControl.editMode) {
+			if (editMode) {
 				updates.push('edit_mode = ?');
-				values.push(accessControl.editMode);
+				values.push(editMode);
 			}
-			if (accessControl.viewerEmails) {
+			if (viewerEmails) {
 				updates.push('viewer_emails = ?');
-				values.push(JSON.stringify(accessControl.viewerEmails));
+				values.push(JSON.stringify(viewerEmails));
 			}
-			if (accessControl.editorEmails) {
+			if (editorEmails) {
 				updates.push('editor_emails = ?');
-				values.push(JSON.stringify(accessControl.editorEmails));
+				values.push(JSON.stringify(editorEmails));
 			}
 		}
 

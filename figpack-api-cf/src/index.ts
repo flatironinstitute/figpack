@@ -169,7 +169,7 @@ export default {
 		}
 
 		if (url.pathname === '/documents/update') {
-			if (request.method.toUpperCase() === 'POST') {
+			if (request.method.toUpperCase() === 'PUT') {
 				return handleUpdateDocument(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);

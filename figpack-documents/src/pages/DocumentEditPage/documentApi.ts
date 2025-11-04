@@ -26,12 +26,12 @@ export async function updateDocument(
   documentId: string,
   title?: string,
   content?: string,
-  accessControl?: {
-    viewMode?: 'owner-only' | 'users' | 'public';
-    editMode?: 'owner-only' | 'users';
-    viewerEmails?: string[];
-    editorEmails?: string[];
-  }
+  o: {
+    viewMode?: 'owner-only' | 'users' | 'public',
+    editMode?: 'owner-only' | 'users',
+    viewerEmails?: string[],
+    editorEmails?: string[],
+  } = {}
 ): Promise<DocumentResponse> {
   const url = `${FIGPACK_API_BASE_URL}/documents/update`;
 
@@ -39,12 +39,10 @@ export async function updateDocument(
     documentId: string;
     title?: string;
     content?: string;
-    accessControl?: {
-      viewMode?: 'owner-only' | 'users' | 'public';
-      editMode?: 'owner-only' | 'users';
-      viewerEmails?: string[];
-      editorEmails?: string[];
-    };
+    viewMode?: 'owner-only' | 'users' | 'public';
+    editMode?: 'owner-only' | 'users';
+    viewerEmails?: string[];
+    editorEmails?: string[];
   } = { documentId };
 
   if (title !== undefined) {
@@ -53,8 +51,17 @@ export async function updateDocument(
   if (content !== undefined) {
     body.content = content;
   }
-  if (accessControl !== undefined) {
-    body.accessControl = accessControl;
+  if (o.viewMode !== undefined) {
+    body.viewMode = o.viewMode;
+  }
+  if (o.editMode !== undefined) {
+    body.editMode = o.editMode;
+  }
+  if (o.viewerEmails !== undefined) {
+    body.viewerEmails = o.viewerEmails;
+  }
+  if (o.editorEmails !== undefined) {
+    body.editorEmails = o.editorEmails;
   }
 
   const headers = {
