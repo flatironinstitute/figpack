@@ -7,15 +7,13 @@ export interface Bucket {
   bucketBaseUrl: string;
   createdAt: number;
   updatedAt: number;
-  credentials: {
-    AWS_ACCESS_KEY_ID: string;
-    AWS_SECRET_ACCESS_KEY: string;
-    S3_ENDPOINT: string;
-  };
-  authorization: {
-    isPublic: boolean;
-    authorizedUsers: string[];
-  };
+  // Flattened credentials (migrated from nested structure)
+  awsAccessKeyId: string;
+  awsSecretAccessKey: string;
+  s3Endpoint: string;
+  // Flattened authorization (migrated from nested structure)
+  isPublic: boolean;
+  authorizedUsers: string[];
 }
 
 export interface BucketApiResponse {

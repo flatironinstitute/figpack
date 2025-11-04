@@ -40,15 +40,13 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
     provider: "cloudflare" as "cloudflare" | "aws",
     description: "",
     bucketBaseUrl: "",
-    credentials: {
-      AWS_ACCESS_KEY_ID: "",
-      AWS_SECRET_ACCESS_KEY: "",
-      S3_ENDPOINT: "",
-    },
-    authorization: {
-      isPublic: false,
-      authorizedUsers: [] as string[],
-    },
+    // Flattened credentials
+    awsAccessKeyId: "",
+    awsSecretAccessKey: "",
+    s3Endpoint: "",
+    // Flattened authorization
+    isPublic: false,
+    authorizedUsers: [] as string[],
   });
 
   const [newUserEmail, setNewUserEmail] = useState("");
@@ -62,15 +60,11 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         provider: "cloudflare",
         description: "",
         bucketBaseUrl: "",
-        credentials: {
-          AWS_ACCESS_KEY_ID: "",
-          AWS_SECRET_ACCESS_KEY: "",
-          S3_ENDPOINT: "",
-        },
-        authorization: {
-          isPublic: false,
-          authorizedUsers: [],
-        },
+        awsAccessKeyId: "",
+        awsSecretAccessKey: "",
+        s3Endpoint: "",
+        isPublic: false,
+        authorizedUsers: [],
       });
       setNewUserEmail("");
       setFormErrors({});
@@ -105,21 +99,21 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
       }
     }
 
-    if (!formData.credentials.AWS_ACCESS_KEY_ID.trim()) {
-      errors.AWS_ACCESS_KEY_ID = "Access Key ID is required";
+    if (!formData.awsAccessKeyId.trim()) {
+      errors.awsAccessKeyId = "Access Key ID is required";
     }
 
-    if (!formData.credentials.AWS_SECRET_ACCESS_KEY.trim()) {
-      errors.AWS_SECRET_ACCESS_KEY = "Secret Access Key is required";
+    if (!formData.awsSecretAccessKey.trim()) {
+      errors.awsSecretAccessKey = "Secret Access Key is required";
     }
 
-    if (!formData.credentials.S3_ENDPOINT.trim()) {
-      errors.S3_ENDPOINT = "S3 Endpoint is required";
+    if (!formData.s3Endpoint.trim()) {
+      errors.s3Endpoint = "S3 Endpoint is required";
     } else {
       try {
-        new URL(formData.credentials.S3_ENDPOINT);
+        new URL(formData.s3Endpoint);
       } catch {
-        errors.S3_ENDPOINT = "Invalid URL format";
+        errors.s3Endpoint = "Invalid URL format";
       }
     }
 
@@ -134,21 +128,10 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
   };
 
   const handleInputChange = (field: string, value: string) => {
-    if (field.startsWith("credentials.")) {
-      const credField = field.split(".")[1];
-      setFormData((prev) => ({
-        ...prev,
-        credentials: {
-          ...prev.credentials,
-          [credField]: value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
 
     // Clear error when user starts typing
     if (formErrors[field]) {
@@ -243,12 +226,12 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
           <TextField
             fullWidth
             label="Access Key ID"
-            value={formData.credentials.AWS_ACCESS_KEY_ID}
+            value={formData.awsAccessKeyId}
             onChange={(e) =>
-              handleInputChange("credentials.AWS_ACCESS_KEY_ID", e.target.value)
+              handleInputChange("awsAccessKeyId", e.target.value)
             }
-            error={!!formErrors.AWS_ACCESS_KEY_ID}
-            helperText={formErrors.AWS_ACCESS_KEY_ID}
+            error={!!formErrors.awsAccessKeyId}
+            helperText={formErrors.awsAccessKeyId}
             margin="normal"
             disabled={loading}
           />
@@ -257,15 +240,12 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             fullWidth
             label="Secret Access Key"
             type="password"
-            value={formData.credentials.AWS_SECRET_ACCESS_KEY}
+            value={formData.awsSecretAccessKey}
             onChange={(e) =>
-              handleInputChange(
-                "credentials.AWS_SECRET_ACCESS_KEY",
-                e.target.value
-              )
+              handleInputChange("awsSecretAccessKey", e.target.value)
             }
-            error={!!formErrors.AWS_SECRET_ACCESS_KEY}
-            helperText={formErrors.AWS_SECRET_ACCESS_KEY}
+            error={!!formErrors.awsSecretAccessKey}
+            helperText={formErrors.awsSecretAccessKey}
             margin="normal"
             disabled={loading}
           />
@@ -273,12 +253,12 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
           <TextField
             fullWidth
             label="S3 Endpoint"
-            value={formData.credentials.S3_ENDPOINT}
+            value={formData.s3Endpoint}
             onChange={(e) =>
-              handleInputChange("credentials.S3_ENDPOINT", e.target.value)
+              handleInputChange("s3Endpoint", e.target.value)
             }
-            error={!!formErrors.S3_ENDPOINT}
-            helperText={formErrors.S3_ENDPOINT}
+            error={!!formErrors.s3Endpoint}
+            helperText={formErrors.s3Endpoint}
             placeholder={getEndpointPlaceholder()}
             margin="normal"
             disabled={loading}
@@ -291,14 +271,11 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
           <FormControlLabel
             control={
               <Switch
-                checked={formData.authorization.isPublic}
+                checked={formData.isPublic}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    authorization: {
-                      ...prev.authorization,
-                      isPublic: e.target.checked,
-                    },
+                    isPublic: e.target.checked,
                   }))
                 }
                 disabled={loading}
@@ -308,7 +285,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             sx={{ mb: 2 }}
           />
 
-          {!formData.authorization.isPublic && (
+          {!formData.isPublic && (
             <Box>
               <Typography variant="body2" sx={{ mb: 1 }}>
                 Authorized Users (Email Addresses)
@@ -328,19 +305,16 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                       if (
                         newUserEmail.trim() &&
                         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) &&
-                        !formData.authorization.authorizedUsers.includes(
+                        !formData.authorizedUsers.includes(
                           newUserEmail.trim()
                         )
                       ) {
                         setFormData((prev) => ({
                           ...prev,
-                          authorization: {
-                            ...prev.authorization,
-                            authorizedUsers: [
-                              ...prev.authorization.authorizedUsers,
-                              newUserEmail.trim(),
-                            ],
-                          },
+                          authorizedUsers: [
+                            ...prev.authorizedUsers,
+                            newUserEmail.trim(),
+                          ],
                         }));
                         setNewUserEmail("");
                       }
@@ -354,7 +328,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                     loading ||
                     !newUserEmail.trim() ||
                     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) ||
-                    formData.authorization.authorizedUsers.includes(
+                    formData.authorizedUsers.includes(
                       newUserEmail.trim()
                     )
                   }
@@ -362,19 +336,16 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                     if (
                       newUserEmail.trim() &&
                       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) &&
-                      !formData.authorization.authorizedUsers.includes(
+                      !formData.authorizedUsers.includes(
                         newUserEmail.trim()
                       )
                     ) {
                       setFormData((prev) => ({
                         ...prev,
-                        authorization: {
-                          ...prev.authorization,
-                          authorizedUsers: [
-                            ...prev.authorization.authorizedUsers,
-                            newUserEmail.trim(),
-                          ],
-                        },
+                        authorizedUsers: [
+                          ...prev.authorizedUsers,
+                          newUserEmail.trim(),
+                        ],
                       }));
                       setNewUserEmail("");
                     }
@@ -384,20 +355,17 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                 </Button>
               </Box>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {formData.authorization.authorizedUsers.map((email) => (
+                {formData.authorizedUsers.map((email: string) => (
                   <Chip
                     key={email}
                     label={email}
                     onDelete={() =>
                       setFormData((prev) => ({
                         ...prev,
-                        authorization: {
-                          ...prev.authorization,
-                          authorizedUsers:
-                            prev.authorization.authorizedUsers.filter(
-                              (u) => u !== email
-                            ),
-                        },
+                        authorizedUsers:
+                          prev.authorizedUsers.filter(
+                            (u: string) => u !== email
+                          ),
                       }))
                     }
                     disabled={loading}
@@ -405,7 +373,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                   />
                 ))}
               </Box>
-              {formData.authorization.authorizedUsers.length === 0 && (
+              {formData.authorizedUsers.length === 0 && (
                 <Typography
                   variant="body2"
                   color="text.secondary"

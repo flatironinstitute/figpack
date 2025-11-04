@@ -97,50 +97,58 @@ export async function handleCreateBucket(
       return json({ success: false, message: "Bucket data is required" }, 400);
     }
 
-    // Validate required fields
+    // Support both nested (old) and flattened (new) formats
     const {
       name,
       provider,
       description,
       bucketBaseUrl,
+      // Old nested format
       credentials,
       authorization,
+      // New flattened format
+      awsAccessKeyId,
+      awsSecretAccessKey,
+      s3Endpoint,
+      isPublic,
+      authorizedUsers,
     } = bucketData;
 
-    if (!name || !provider || !description || !bucketBaseUrl || !credentials) {
+    if (!name || !provider || !description || !bucketBaseUrl) {
       return json({
         success: false,
-        message: "Name, provider, description, bucketBaseUrl, and credentials are required",
+        message: "Name, provider, description, and bucketBaseUrl are required",
       }, 400);
     }
+
+    // Extract credentials from either format
+    const accessKeyId = awsAccessKeyId || credentials?.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = awsSecretAccessKey || credentials?.AWS_SECRET_ACCESS_KEY;
+    const endpoint = s3Endpoint || credentials?.S3_ENDPOINT;
+
+    if (!accessKeyId || !secretAccessKey || !endpoint) {
+      return json({
+        success: false,
+        message: "All credential fields (awsAccessKeyId, awsSecretAccessKey, s3Endpoint) are required",
+      }, 400);
+    }
+
+    // Extract authorization from either format
+    const bucketIsPublic = isPublic !== undefined ? isPublic : (authorization?.isPublic || false);
+    const bucketAuthorizedUsers = authorizedUsers !== undefined ? authorizedUsers : (authorization?.authorizedUsers || []);
 
     // Validate authorization fields
-    if (authorization && typeof authorization.isPublic !== "boolean") {
+    if (typeof bucketIsPublic !== "boolean") {
       return json({
         success: false,
-        message: "Authorization isPublic field must be a boolean",
+        message: "isPublic field must be a boolean",
       }, 400);
     }
 
-    if (
-      authorization &&
-      authorization.authorizedUsers &&
-      !Array.isArray(authorization.authorizedUsers)
-    ) {
+    if (!Array.isArray(bucketAuthorizedUsers)) {
       return json({
         success: false,
-        message: "Authorization authorizedUsers field must be an array",
-      }, 400);
-    }
-
-    if (
-      !credentials.AWS_ACCESS_KEY_ID ||
-      !credentials.AWS_SECRET_ACCESS_KEY ||
-      !credentials.S3_ENDPOINT
-    ) {
-      return json({
-        success: false,
-        message: "All credential fields (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_ENDPOINT) are required",
+        message: "authorizedUsers field must be an array",
       }, 400);
     }
 
@@ -159,8 +167,6 @@ export async function handleCreateBucket(
 
     // Create the bucket
     const now = Date.now();
-    const isPublic = authorization?.isPublic || false;
-    const authorizedUsers = JSON.stringify(authorization?.authorizedUsers || []);
 
     const result = await env.figpack_db
       .prepare(`
@@ -176,11 +182,11 @@ export async function handleCreateBucket(
         provider,
         description,
         bucketBaseUrl,
-        credentials.AWS_ACCESS_KEY_ID,
-        credentials.AWS_SECRET_ACCESS_KEY,
-        credentials.S3_ENDPOINT,
-        isPublic ? 1 : 0,
-        authorizedUsers,
+        accessKeyId,
+        secretAccessKey,
+        endpoint,
+        bucketIsPublic ? 1 : 0,
+        JSON.stringify(bucketAuthorizedUsers),
         now,
         now
       )
@@ -271,7 +277,22 @@ export async function handleUpdateBucket(
       values.push(bucketData.bucketBaseUrl);
     }
 
-    // Update credentials if provided
+    // Support both nested (old) and flattened (new) formats for credentials
+    // Flattened format (new)
+    if (bucketData.awsAccessKeyId !== undefined) {
+      updates.push("aws_access_key_id = ?");
+      values.push(bucketData.awsAccessKeyId);
+    }
+    if (bucketData.awsSecretAccessKey !== undefined) {
+      updates.push("aws_secret_access_key = ?");
+      values.push(bucketData.awsSecretAccessKey);
+    }
+    if (bucketData.s3Endpoint !== undefined) {
+      updates.push("s3_endpoint = ?");
+      values.push(bucketData.s3Endpoint);
+    }
+    
+    // Nested format (old) - for backward compatibility
     if (bucketData.credentials) {
       if (bucketData.credentials.AWS_ACCESS_KEY_ID) {
         updates.push("aws_access_key_id = ?");
@@ -287,7 +308,18 @@ export async function handleUpdateBucket(
       }
     }
 
-    // Update authorization if provided
+    // Support both nested (old) and flattened (new) formats for authorization
+    // Flattened format (new)
+    if (bucketData.isPublic !== undefined) {
+      updates.push("is_public = ?");
+      values.push(bucketData.isPublic ? 1 : 0);
+    }
+    if (bucketData.authorizedUsers !== undefined) {
+      updates.push("authorized_users = ?");
+      values.push(JSON.stringify(bucketData.authorizedUsers));
+    }
+    
+    // Nested format (old) - for backward compatibility
     if (bucketData.authorization !== undefined) {
       if (bucketData.authorization.isPublic !== undefined) {
         updates.push("is_public = ?");

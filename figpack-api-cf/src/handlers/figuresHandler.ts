@@ -66,7 +66,6 @@ function parseFigure(row: any): Figure {
 
 export async function handleCreateFigure(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
-		console.log('--- create figure request received ---');
 		const body = (await request.json()) as any;
 		const { apiKey, ephemeral, bucket: bucketName, sourceUrl, figpackVersion, totalFiles, totalSize, title } = body;
 
@@ -96,8 +95,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 
 		let userEmail = 'anonymous';
 		let isUserAuthorized = false;
-
-		console.log('--- Authenticating user ---');
 
 		// Authenticate with API key if provided
 		if (apiKey) {
@@ -172,8 +169,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			}
 		}
 
-		console.log('--- Generating unique figure URL ---');
-
 		const baseFigureString = `${figureId}`;
 		let count = 0;
 		let figureUrlToUse: string | undefined;
@@ -224,18 +219,12 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			);
 		}
 
-		console.log('--- Creating new figure record in database ---');
-
 		// Create new figure document
 		const now = Date.now();
 		// Set expiration: 6 hours for ephemeral, 24 hours for regular
 		const expirationTime = ephemeral
 			? now + 6 * 60 * 60 * 1000 // 6 hours
 			: now + 24 * 60 * 60 * 1000; // 24 hours
-
-		console.log(`--- Figure expiration time set to: ${new Date(expirationTime).toISOString()} ---`);
-
-		console.log('--- env.figpack_db', env.figpack_db);
 
 		const prepareResult = env.figpack_db.prepare(`
         INSERT INTO figures (
@@ -245,8 +234,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
           created_at, updated_at, pinned, channel, is_ephemeral, source_url
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-
-    console.log('--- Prepared statement for inserting figure ---', prepareResult);
 
 		const bindResult = prepareResult.bind(
 			figureUrlToUse,
@@ -268,13 +255,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			sourceUrl ?? null
 		);
 
-    console.log('--- Bound parameters for inserting figure ---', bindResult);
-
 		const result = await bindResult.run();
-
-		console.log('--- New figure record created successfully ---', result);
-
-    console.log('--- xxx', result.meta.last_row_id);
 
 		// Fetch the created figure
 		const newFigure = await env.figpack_db.prepare('SELECT * FROM figures WHERE id = ?').bind(result.meta.last_row_id).first();
@@ -288,8 +269,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			console.error('Error updating figpack.json:', error);
 			// Don't fail the request if figpack.json update fails
 		}
-
-		console.log('--- Figure creation process completed successfully ---');
 
 		return json(
 			{

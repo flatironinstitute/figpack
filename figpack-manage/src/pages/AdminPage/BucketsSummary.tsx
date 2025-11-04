@@ -167,7 +167,7 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
 
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={1}>
-                        {bucket.authorization.isPublic ? (
+                        {bucket.isPublic ? (
                           <Tooltip title="Public upload - anyone can upload">
                             <Chip
                               icon={<Public />}
@@ -180,13 +180,12 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
                         ) : (
                           <Tooltip
                             title={`Restricted - ${
-                              bucket.authorization.authorizedUsers.length === 0
+                              bucket.authorizedUsers.length === 0
                                 ? "Admin only"
                                 : `${
-                                    bucket.authorization.authorizedUsers.length
+                                    bucket.authorizedUsers.length
                                   } authorized user${
-                                    bucket.authorization.authorizedUsers
-                                      .length === 1
+                                    bucket.authorizedUsers.length === 1
                                       ? ""
                                       : "s"
                                   }`
@@ -195,15 +194,12 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
                             <Chip
                               icon={<Lock />}
                               label={
-                                bucket.authorization.authorizedUsers.length ===
-                                0
+                                bucket.authorizedUsers.length === 0
                                   ? "Admin Only"
                                   : `${
-                                      bucket.authorization.authorizedUsers
-                                        .length
+                                      bucket.authorizedUsers.length
                                     } User${
-                                      bucket.authorization.authorizedUsers
-                                        .length === 1
+                                      bucket.authorizedUsers.length === 1
                                         ? ""
                                         : "s"
                                     }`
@@ -236,7 +232,7 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {bucket.credentials.S3_ENDPOINT}
+                        {bucket.s3Endpoint}
                       </Typography>
                     </TableCell>
 
