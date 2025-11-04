@@ -39,11 +39,14 @@ export async function listDocuments(
   skip: number = 0,
   limit: number = 100
 ): Promise<DocumentListResponse> {
-  const url = `${FIGPACK_API_BASE_URL}/api/documents/list?apiKey=${encodeURIComponent(
-    apiKey
-  )}&skip=${skip}&limit=${limit}`;
+  const url = `${FIGPACK_API_BASE_URL}/documents/list?skip=${skip}&limit=${limit}`;
 
-  const response = await fetch(url);
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": apiKey || "",
+  };
+
+  const response = await fetch(url, { headers });
   return await response.json();
 }
 
@@ -52,7 +55,7 @@ export async function createDocument(
   title: string,
   content: string = ""
 ): Promise<DocumentResponse> {
-  const url = `${FIGPACK_API_BASE_URL}/api/documents/create`;
+  const url = `${FIGPACK_API_BASE_URL}/documents/create`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -69,12 +72,18 @@ export async function deleteDocument(
   apiKey: string,
   documentId: string
 ): Promise<DeleteResponse> {
-  const url = `${FIGPACK_API_BASE_URL}/api/documents/delete?documentId=${encodeURIComponent(
+  const url = `${FIGPACK_API_BASE_URL}/documents/delete?documentId=${encodeURIComponent(
     documentId
-  )}&apiKey=${encodeURIComponent(apiKey)}`;
+  )}`;
+
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": apiKey || "",
+  };
 
   const response = await fetch(url, {
     method: "DELETE",
+    headers,
   });
 
   return await response.json();

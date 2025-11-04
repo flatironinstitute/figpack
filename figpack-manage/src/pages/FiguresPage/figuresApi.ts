@@ -15,11 +15,10 @@ export interface FigureListItem {
   updatedAt: number;
   pinned?: boolean;
   title?: string;
-  pinInfo?: {
-    name: string;
-    figureDescription: string;
-    pinnedTimestamp: number;
-  };
+  // Flattened pinInfo (migrated from nested structure)
+  pinName?: string;
+  pinDescription?: string;
+  pinnedTimestamp?: number;
   renewalTimestamp?: number;
   figureManagementUrl?: string; // to phase out
   figpackManageUrl?: string; // new

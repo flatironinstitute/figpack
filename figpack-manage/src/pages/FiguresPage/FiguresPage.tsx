@@ -441,16 +441,16 @@ const FiguresPage: React.FC = () => {
                             >
                               {figure.title || figure.figureUrl}
                             </Link>
-                            {figure.pinInfo?.name && (
+                            {figure.pinName && (
                               <Typography
                                 variant="caption"
                                 display="block"
                                 color="text.secondary"
                               >
-                                {figure.pinInfo.name}
+                                {figure.pinName}
                               </Typography>
                             )}
-                            {figure.pinInfo?.figureDescription && (
+                            {figure.pinDescription && (
                               <Box
                                 display="flex"
                                 alignItems="center"
@@ -466,7 +466,7 @@ const FiguresPage: React.FC = () => {
                                   color="text.secondary"
                                   sx={{ fontStyle: "italic" }}
                                 >
-                                  {figure.pinInfo.figureDescription}
+                                  {figure.pinDescription}
                                 </Typography>
                               </Box>
                             )}

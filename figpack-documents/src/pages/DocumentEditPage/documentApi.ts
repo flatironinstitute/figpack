@@ -8,15 +8,16 @@ export interface DocumentResponse {
 }
 
 export async function getDocument(documentId: string, apiKey?: string): Promise<DocumentResponse> {
-  let url = `${FIGPACK_API_BASE_URL}/api/documents/get?documentId=${encodeURIComponent(
+  const url = `${FIGPACK_API_BASE_URL}/documents/get?documentId=${encodeURIComponent(
     documentId
   )}`;
   
-  if (apiKey) {
-    url += `&apiKey=${encodeURIComponent(apiKey)}`;
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": apiKey || "",
   }
 
-  const response = await fetch(url);
+  const response = await fetch(url, { headers });
   return await response.json();
 }
 
@@ -32,7 +33,7 @@ export async function updateDocument(
     editorEmails?: string[];
   }
 ): Promise<DocumentResponse> {
-  const url = `${FIGPACK_API_BASE_URL}/api/documents/update`;
+  const url = `${FIGPACK_API_BASE_URL}/documents/update`;
 
   const body: {
     apiKey: string;

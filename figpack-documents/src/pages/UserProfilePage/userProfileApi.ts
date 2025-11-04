@@ -21,7 +21,7 @@ interface ApiResponse {
  */
 export async function getUserProfile(apiKey: string): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user?cb=${Date.now()}`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/user?cb=${Date.now()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

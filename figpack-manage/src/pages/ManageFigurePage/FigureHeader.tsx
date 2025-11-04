@@ -26,12 +26,6 @@ import {
 import React from "react";
 import { getStatusLabel } from "../FiguresPage/utils";
 
-interface PinInfo {
-  name: string;
-  figureDescription: string;
-  pinnedTimestamp: number;
-}
-
 interface FigpackStatus {
   status: string;
   uploadStarted?: number;
@@ -43,7 +37,10 @@ interface FigpackStatus {
   totalSize?: number;
   figpackVersion?: string;
   pinned?: boolean;
-  pinInfo?: PinInfo;
+  // Flattened pinInfo (migrated from nested structure)
+  pinName?: string;
+  pinDescription?: string;
+  pinnedTimestamp?: number;
   ownerEmail?: string;
   title?: string;
   figureManagementUrl?: string; // to phase out
@@ -210,7 +207,7 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
         </Box>
 
         {/* Status Alerts */}
-        {figpackStatus?.pinned && figpackStatus.pinInfo && (
+        {figpackStatus?.pinned && figpackStatus.pinName && (
           <Alert severity="success" sx={{ mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
               This figure is pinned and will not automatically expire, though
@@ -218,16 +215,16 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
             </Typography>
             <Box sx={{ mt: 1 }}>
               <Typography variant="body2">
-                <strong>Pinned by:</strong> {figpackStatus.pinInfo.name}
+                <strong>Pinned by:</strong> {figpackStatus.pinName}
               </Typography>
               <Typography variant="body2">
                 <strong>Figure:</strong>{" "}
-                {figpackStatus.pinInfo.figureDescription}
+                {figpackStatus.pinDescription}
               </Typography>
               <Typography variant="body2">
                 <strong>Pinned on:</strong>{" "}
-                {figpackStatus.pinInfo.pinnedTimestamp
-                  ? formatDate(figpackStatus.pinInfo.pinnedTimestamp)
+                {figpackStatus.pinnedTimestamp
+                  ? formatDate(figpackStatus.pinnedTimestamp)
                   : "N/A"}
               </Typography>
             </Box>
