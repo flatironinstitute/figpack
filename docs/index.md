@@ -117,7 +117,7 @@ If you use figpack in your research, please cite it:
 
 **APA Format:**
 
-> Magland, J. (2025). figpack (Version 0.2.40) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17419621
+> Magland, J. (2025). figpack (Version 0.3.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17419621
 
 For more citation formats, see the [CITATION.cff](https://github.com/flatironinstitute/figpack/blob/main/CITATION.cff) file in the repository.
 

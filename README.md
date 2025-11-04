@@ -57,7 +57,7 @@ If you use figpack in your research, please cite it:
 
 Or in APA format:
 
-> Magland, J. (2025). figpack (Version 0.2.40) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17419621
+> Magland, J. (2025). figpack (Version 0.3.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.17419621
 
 ## Contributing
 
