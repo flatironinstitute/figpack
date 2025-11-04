@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.0] - 2025-11-04
+
+- Migration to Cloudflare
+
 ## [0.2.40] - 2025-11-03
 
 - Figpack Documents
