@@ -48,7 +48,7 @@ The built files will be in the `dist` directory.
 
 ## Environment Variables
 
-Set `VITE_FIGPACK_BASE_URL` to point to the Figpack API server. Defaults to `https://figpack-api.vercel.app`.
+Set `VITE_FIGPACK_BASE_URL` to point to the Figpack API server. Defaults to `https://figpack-api.figpack.org`.
 
 ## API Integration
 

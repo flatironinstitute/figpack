@@ -24,7 +24,7 @@ export const usePin = (
     setPinLoading(true);
     setPinError(null);
     try {
-      const response = await fetch(`${FIGPACK_API_BASE_URL}/api/pin`, {
+      const response = await fetch(`${FIGPACK_API_BASE_URL}/pin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -70,7 +70,7 @@ export const usePin = (
     setUnpinLoading(true);
     setPinError(null);
     try {
-      const response = await fetch(`${FIGPACK_API_BASE_URL}/api/unpin`, {
+      const response = await fetch(`${FIGPACK_API_BASE_URL}/unpin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

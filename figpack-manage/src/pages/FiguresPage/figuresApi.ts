@@ -93,7 +93,7 @@ export const getFigures = async (
     }
 
     const response = await fetch(
-      `${FIGPACK_API_BASE_URL}/api/figures/list?${queryParams}`,
+      `${FIGPACK_API_BASE_URL}/figures/list?${queryParams}`,
       {
         method: "GET",
         headers: {

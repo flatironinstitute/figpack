@@ -83,7 +83,7 @@ The management interface includes an administrative panel with the following cap
 
 ## Deployment
 
-The management interface is set up to be deployed to Vercel and the default instance can be accessed at https://manage.figpack.org. The VITE_FIGPACK_BASE_URL environment variable can be set to point to a custom figpack API instance if needed. By default, it points to https://figpack-api.vercel.app.
+The management interface is set up to be deployed to Vercel and the default instance can be accessed at https://manage.figpack.org. The VITE_FIGPACK_BASE_URL environment variable can be set to point to a custom figpack API instance if needed. By default, it points to https://figpack-api.figpack.org.
 
 ## Authentication & API Integration
 
@@ -95,7 +95,7 @@ The management interface is set up to be deployed to Vercel and the default inst
 
 ### API Communication
 
-- Communicates with the figpack API (default: https://figpack-api.vercel.app)
+- Communicates with the figpack API (default: https://figpack-api.figpack.org)
 - API base URL configurable via environment variables
 - Handles figure metadata, status updates, and user actions
 

@@ -56,7 +56,7 @@ export const renewBulk = async (apiKey: string): Promise<RenewBulkResult> => {
   }
 
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/renew-bulk`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/renew-bulk`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -83,7 +83,7 @@ export const getUsers = async (apiKey: string): Promise<UsersResult> => {
   }
 
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/users`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -136,7 +136,7 @@ export const createUser = async (
   }
 
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -184,7 +184,7 @@ export const updateUser = async (
   }
 
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/users`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -232,7 +232,7 @@ export const deleteUser = async (
   }
 
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/users`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/users`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -281,7 +281,7 @@ export const getAllUsersUsageStats = async (
     // Fetch usage stats for each user in parallel
     const promises = users.map(async (user) => {
       try {
-        const response = await fetch(`${FIGPACK_API_BASE_URL}/api/user/usage-stats?email=${encodeURIComponent(user.email)}`, {
+        const response = await fetch(`${FIGPACK_API_BASE_URL}/user/usage-stats?email=${encodeURIComponent(user.email)}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

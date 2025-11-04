@@ -16,7 +16,7 @@ export const useRenew = (
 
     setRenewLoading(true);
     try {
-      const response = await fetch(`${FIGPACK_API_BASE_URL}/api/renew`, {
+      const response = await fetch(`${FIGPACK_API_BASE_URL}/renew`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ figureUrl, apiKey }),

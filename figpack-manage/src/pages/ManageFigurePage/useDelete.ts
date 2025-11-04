@@ -13,7 +13,7 @@ export const useDelete = (figureUrl: string, apiKey: string | null, onSuccess: (
         setDeleteError(null);
 
         try {
-            const response = await fetch(`${FIGPACK_API_BASE_URL}/api/figures/delete`, {
+            const response = await fetch(`${FIGPACK_API_BASE_URL}/figures/delete`, {
                 method: 'POST',
                 headers: {
                     'x-api-key': apiKey,
