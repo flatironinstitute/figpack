@@ -2,6 +2,12 @@ figpack-preprint/
 doc-pages.json
 *.nii.gz
 
+# Sensitive data files
+figpack-api-cf/buckets.json
+figpack-api-cf/documents.json
+figpack-api-cf/figures.json
+figpack-api-cf/users.json
+
 # Python
 __pycache__/
 *.py[cod]
