@@ -61,8 +61,9 @@ export async function createDocument(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "x-api-key": apiKey || "",
     },
-    body: JSON.stringify({ apiKey, title, content: content || "" }),
+    body: JSON.stringify({ title, content: content || "" }),
   });
 
   return await response.json();

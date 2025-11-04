@@ -3,17 +3,21 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
+		"build": "wrangler build",
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"format": "prettier --write .",
+		"lint": "prettier --check ."
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
-		"wrangler": "^4.45.4"
+		"wrangler": "^4.45.4",
+		"prettier": "^3.0.0"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.922.0",

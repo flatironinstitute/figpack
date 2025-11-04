@@ -5,6 +5,7 @@ This guide explains how to migrate your data from MongoDB to Cloudflare D1.
 ## Overview
 
 The migration consists of three main phases:
+
 1. **Export** - Export data from MongoDB
 2. **Import** - Import data into D1
 3. **Verify** - Verify data integrity
@@ -20,15 +21,18 @@ The migration consists of three main phases:
 ## Migration Scripts
 
 ### Export Scripts
+
 - `export-mongodb-data.sh` - Exports all collections from MongoDB
 
 ### Import Scripts
+
 - `import-users-to-d1.mjs` - Imports users
 - `import-buckets-to-d1.mjs` - Imports S3 bucket configurations
 - `import-figures-to-d1.mjs` - Imports figure metadata
 - `import-documents-to-d1.mjs` - Imports documents
 
 ### Helper Scripts
+
 - `run-full-migration.sh` - Runs complete migration in correct order
 - `verify-migration.mjs` - Verifies data was migrated correctly
 
@@ -44,12 +48,14 @@ npx wrangler d1 migrations apply figpack-db --remote
 ```
 
 This command:
+
 - Executes the SQL file `migrations/0001_migrating-from-mongo.sql`
 - Creates all necessary tables (users, buckets, figures, figpack_documents)
 - Sets up indexes for optimal query performance
 - Only needs to be run once
 
 **Verify the migration succeeded:**
+
 ```bash
 npx wrangler d1 execute figpack-db --remote --command="SELECT name FROM sqlite_master WHERE type='table'"
 ```
@@ -69,11 +75,13 @@ chmod +x export-mongodb-data.sh
 ```
 
 Replace `YOUR_MONGODB_URI` with your actual MongoDB connection string, e.g.:
+
 ```
 mongodb+srv://username:password@cluster.mongodb.net/figpack
 ```
 
 This will create four JSON files:
+
 - `users.json`
 - `buckets.json`
 - `figures.json`
@@ -99,6 +107,7 @@ chmod +x run-full-migration.sh
 ```
 
 This script will:
+
 1. Check that all export files exist
 2. Ask for confirmation
 3. Import data in the correct order:
@@ -118,6 +127,7 @@ node verify-migration.mjs
 ```
 
 This will:
+
 - Count records in MongoDB exports vs D1
 - Show sample records from each table
 - Help you confirm data integrity
@@ -145,7 +155,9 @@ npx wrangler d1 execute figpack-db --remote --command="SELECT figure_url, owner_
 The migration automatically handles these MongoDB to D1 transformations:
 
 ### Buckets Collection
+
 **MongoDB (nested)** → **D1 (flat)**
+
 - `credentials.AWS_ACCESS_KEY_ID` → `aws_access_key_id`
 - `credentials.AWS_SECRET_ACCESS_KEY` → `aws_secret_access_key`
 - `credentials.S3_ENDPOINT` → `s3_endpoint`
@@ -153,7 +165,9 @@ The migration automatically handles these MongoDB to D1 transformations:
 - `authorization.authorizedUsers` → `authorized_users` (JSON string)
 
 ### Figures Collection
+
 **MongoDB (nested)** → **D1 (flat)**
+
 - `pinInfo.name` → `pin_name`
 - `pinInfo.figureDescription` → `pin_description`
 - `pinInfo.pinnedTimestamp` → `pinned_timestamp`
@@ -161,7 +175,9 @@ The migration automatically handles these MongoDB to D1 transformations:
 - `isEphemeral` → `is_ephemeral` (boolean → integer)
 
 ### Documents Collection
+
 **MongoDB (nested)** → **D1 (flat)**
+
 - `accessControl.viewMode` → `view_mode`
 - `accessControl.editMode` → `edit_mode`
 - `accessControl.viewerEmails` → `viewer_emails` (JSON string)
@@ -182,6 +198,7 @@ The migration automatically handles these MongoDB to D1 transformations:
 
 **Problem**: Import fails with "table already exists" or duplicate key errors
 **Solution**: If you need to re-run the migration, first clear the D1 tables:
+
 ```bash
 npx wrangler d1 execute figpack-db --remote --command="DELETE FROM figpack_documents"
 npx wrangler d1 execute figpack-db --remote --command="DELETE FROM figures"
@@ -195,7 +212,8 @@ npx wrangler d1 execute figpack-db --remote --command="DELETE FROM users"
 ### Verification Issues
 
 **Problem**: Record counts don't match
-**Solution**: 
+**Solution**:
+
 1. Check for errors in the import logs
 2. Verify the export files contain valid JSON
 3. Look for records that may have failed validation (e.g., invalid email formats)
@@ -224,6 +242,7 @@ After successful migration:
 ## Support
 
 If you encounter issues not covered here:
+
 1. Check the error messages in the console output
 2. Review the generated SQL files (they're temporarily created during import)
 3. Manually inspect problematic records in MongoDB vs D1

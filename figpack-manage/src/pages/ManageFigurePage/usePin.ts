@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { FIGPACK_API_BASE_URL } from '../../config';
+import { useCallback, useState } from "react";
+import { FIGPACK_API_BASE_URL } from "../../config";
 
 interface PinInfo {
   name: string;
@@ -16,41 +16,43 @@ export const usePin = (
   const [pinError, setPinError] = useState<string | null>(null);
   const [unpinLoading, setUnpinLoading] = useState(false);
 
-  const handlePin = useCallback(async (pinInfo: PinInfo) => {
-    if (!apiKey) {
-      throw new Error("API key is required to pin a figure");
-    }
-
-    setPinLoading(true);
-    setPinError(null);
-    try {
-      const response = await fetch(`${FIGPACK_API_BASE_URL}/pin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          figureUrl,
-          apiKey: apiKey,
-          pinInfo: pinInfo,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        await loadFigureData(figureUrl);
-        setPinDialogOpen(false);
-        return { success: true };
-      } else {
-        setPinError(`Failed to pin figure: ${result.message}`);
-        throw Error(result.message);
+  const handlePin = useCallback(
+    async (pinInfo: PinInfo) => {
+      if (!apiKey) {
+        throw new Error("API key is required to pin a figure");
       }
-    } catch (err) {
-      setPinError(`Error pinning figure: ${err}`);
-      throw err;
-    } finally {
-      setPinLoading(false);
-    }
-  }, [figureUrl, apiKey, loadFigureData]);
+
+      setPinLoading(true);
+      setPinError(null);
+      try {
+        const response = await fetch(`${FIGPACK_API_BASE_URL}/pin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+          body: JSON.stringify({
+            figureUrl,
+            pinInfo: pinInfo,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          await loadFigureData(figureUrl);
+          setPinDialogOpen(false);
+          return { success: true };
+        } else {
+          setPinError(`Failed to pin figure: ${result.message}`);
+          throw Error(result.message);
+        }
+      } catch (err) {
+        setPinError(`Error pinning figure: ${err}`);
+        throw err;
+      } finally {
+        setPinLoading(false);
+      }
+    },
+    [figureUrl, apiKey, loadFigureData]
+  );
 
   const handleOpenPinDialog = () => {
     setPinError(null);
@@ -72,10 +74,9 @@ export const usePin = (
     try {
       const response = await fetch(`${FIGPACK_API_BASE_URL}/unpin`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-api-key": apiKey },
         body: JSON.stringify({
           figureUrl,
-          apiKey: apiKey,
         }),
       });
 

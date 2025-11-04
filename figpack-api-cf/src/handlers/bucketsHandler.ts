@@ -1,426 +1,426 @@
-import { Env, Bucket, AuthResult, RateLimitResult } from "../types";
-import { json } from "../utils";
-import { authenticateAdmin } from "../auth";
+import { Env, Bucket, AuthResult, RateLimitResult } from '../types';
+import { json } from '../utils';
+import { authenticateAdmin } from '../auth';
 
 // Helper function to parse JSON fields from database
 function parseBucket(row: any): Bucket {
-  return {
-    id: row.id,
-    name: row.name,
-    provider: row.provider as 'cloudflare' | 'aws',
-    description: row.description,
-    bucketBaseUrl: row.bucket_base_url,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    awsAccessKeyId: row.aws_access_key_id,
-    awsSecretAccessKey: row.aws_secret_access_key,
-    s3Endpoint: row.s3_endpoint,
-    isPublic: Boolean(row.is_public),
-    authorizedUsers: JSON.parse(row.authorized_users || '[]'),
-  };
+	return {
+		id: row.id,
+		name: row.name,
+		provider: row.provider as 'cloudflare' | 'aws',
+		description: row.description,
+		bucketBaseUrl: row.bucket_base_url,
+		createdAt: row.created_at,
+		updatedAt: row.updated_at,
+		awsAccessKeyId: row.aws_access_key_id,
+		awsSecretAccessKey: row.aws_secret_access_key,
+		s3Endpoint: row.s3_endpoint,
+		isPublic: Boolean(row.is_public),
+		authorizedUsers: JSON.parse(row.authorized_users || '[]'),
+	};
 }
 
 // Helper function to sanitize bucket data (remove secret key from responses)
 function sanitizeBucket(bucket: Bucket): Bucket {
-  return {
-    ...bucket,
-    awsSecretAccessKey: "***HIDDEN***",
-  };
+	return {
+		...bucket,
+		awsSecretAccessKey: '***HIDDEN***',
+	};
 }
 
-export async function handleGetBuckets(
-  request: Request,
-  env: Env,
-  rateLimitResult: RateLimitResult
-): Promise<Response> {
-  try {
-    // Extract API key
-    const apiKey = request.headers.get("x-api-key");
-    
-    if (!apiKey) {
-      return json({ success: false, message: "API key is required" }, 400);
-    }
+export async function handleGetBuckets(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
+	try {
+		// Extract API key
+		const apiKey = request.headers.get('x-api-key');
 
-    // Authenticate (admin only)
-    const authResult = await authenticateAdmin(apiKey, env);
-    
-    if (!authResult.isValid || !authResult.isAdmin) {
-      return json({ success: false, message: "Admin access required" }, 401);
-    }
+		if (!apiKey) {
+			return json({ success: false, message: 'API key is required' }, 400);
+		}
 
-    // Get all buckets
-    const result = await env.figpack_db
-      .prepare("SELECT * FROM buckets ORDER BY created_at DESC")
-      .all();
+		// Authenticate (admin only)
+		const authResult = await authenticateAdmin(apiKey, env);
 
-    const buckets = result.results.map(parseBucket).map(sanitizeBucket);
+		if (!authResult.isValid || !authResult.isAdmin) {
+			return json({ success: false, message: 'Admin access required' }, 401);
+		}
 
-    return json({
-      success: true,
-      buckets,
-    }, 200, {
-      "X-RateLimit-Limit": "30",
-      "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-      "X-RateLimit-Reset": Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-    });
-  } catch (error) {
-    console.error("Error getting buckets:", error);
-    return json({ success: false, message: "Failed to get buckets" }, 500);
-  }
+		// Get all buckets
+		const result = await env.figpack_db.prepare('SELECT * FROM buckets ORDER BY created_at DESC').all();
+
+		const buckets = result.results.map(parseBucket).map(sanitizeBucket);
+
+		return json(
+			{
+				success: true,
+				buckets,
+			},
+			200,
+			{
+				'X-RateLimit-Limit': '30',
+				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+			},
+		);
+	} catch (error) {
+		console.error('Error getting buckets:', error);
+		return json({ success: false, message: 'Failed to get buckets' }, 500);
+	}
 }
 
-export async function handleCreateBucket(
-  request: Request,
-  env: Env,
-  rateLimitResult: RateLimitResult
-): Promise<Response> {
-  try {
-    // Extract API key
-    const apiKey = request.headers.get("x-api-key");
-    
-    if (!apiKey) {
-      return json({ success: false, message: "API key is required" }, 400);
-    }
+export async function handleCreateBucket(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
+	try {
+		// Extract API key
+		const apiKey = request.headers.get('x-api-key');
 
-    // Authenticate (admin only)
-    const authResult = await authenticateAdmin(apiKey, env);
-    
-    if (!authResult.isValid || !authResult.isAdmin) {
-      return json({ success: false, message: "Admin access required" }, 401);
-    }
+		if (!apiKey) {
+			return json({ success: false, message: 'API key is required' }, 400);
+		}
 
-    // Parse request body
-    const body = await request.json() as any;
-    const bucketData = body.bucket;
+		// Authenticate (admin only)
+		const authResult = await authenticateAdmin(apiKey, env);
 
-    if (!bucketData) {
-      return json({ success: false, message: "Bucket data is required" }, 400);
-    }
+		if (!authResult.isValid || !authResult.isAdmin) {
+			return json({ success: false, message: 'Admin access required' }, 401);
+		}
 
-    // Support both nested (old) and flattened (new) formats
-    const {
-      name,
-      provider,
-      description,
-      bucketBaseUrl,
-      // Old nested format
-      credentials,
-      authorization,
-      // New flattened format
-      awsAccessKeyId,
-      awsSecretAccessKey,
-      s3Endpoint,
-      isPublic,
-      authorizedUsers,
-    } = bucketData;
+		// Parse request body
+		const body = (await request.json()) as any;
+		const bucketData = body.bucket;
 
-    if (!name || !provider || !description || !bucketBaseUrl) {
-      return json({
-        success: false,
-        message: "Name, provider, description, and bucketBaseUrl are required",
-      }, 400);
-    }
+		if (!bucketData) {
+			return json({ success: false, message: 'Bucket data is required' }, 400);
+		}
 
-    // Extract credentials from either format
-    const accessKeyId = awsAccessKeyId || credentials?.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = awsSecretAccessKey || credentials?.AWS_SECRET_ACCESS_KEY;
-    const endpoint = s3Endpoint || credentials?.S3_ENDPOINT;
+		// Support both nested (old) and flattened (new) formats
+		const {
+			name,
+			provider,
+			description,
+			bucketBaseUrl,
+			// Old nested format
+			credentials,
+			authorization,
+			// New flattened format
+			awsAccessKeyId,
+			awsSecretAccessKey,
+			s3Endpoint,
+			isPublic,
+			authorizedUsers,
+		} = bucketData;
 
-    if (!accessKeyId || !secretAccessKey || !endpoint) {
-      return json({
-        success: false,
-        message: "All credential fields (awsAccessKeyId, awsSecretAccessKey, s3Endpoint) are required",
-      }, 400);
-    }
+		if (!name || !provider || !description || !bucketBaseUrl) {
+			return json(
+				{
+					success: false,
+					message: 'Name, provider, description, and bucketBaseUrl are required',
+				},
+				400,
+			);
+		}
 
-    // Extract authorization from either format
-    const bucketIsPublic = isPublic !== undefined ? isPublic : (authorization?.isPublic || false);
-    const bucketAuthorizedUsers = authorizedUsers !== undefined ? authorizedUsers : (authorization?.authorizedUsers || []);
+		// Extract credentials from either format
+		const accessKeyId = awsAccessKeyId || credentials?.AWS_ACCESS_KEY_ID;
+		const secretAccessKey = awsSecretAccessKey || credentials?.AWS_SECRET_ACCESS_KEY;
+		const endpoint = s3Endpoint || credentials?.S3_ENDPOINT;
 
-    // Validate authorization fields
-    if (typeof bucketIsPublic !== "boolean") {
-      return json({
-        success: false,
-        message: "isPublic field must be a boolean",
-      }, 400);
-    }
+		if (!accessKeyId || !secretAccessKey || !endpoint) {
+			return json(
+				{
+					success: false,
+					message: 'All credential fields (awsAccessKeyId, awsSecretAccessKey, s3Endpoint) are required',
+				},
+				400,
+			);
+		}
 
-    if (!Array.isArray(bucketAuthorizedUsers)) {
-      return json({
-        success: false,
-        message: "authorizedUsers field must be an array",
-      }, 400);
-    }
+		// Extract authorization from either format
+		const bucketIsPublic = isPublic !== undefined ? isPublic : authorization?.isPublic || false;
+		const bucketAuthorizedUsers = authorizedUsers !== undefined ? authorizedUsers : authorization?.authorizedUsers || [];
 
-    // Check if bucket already exists
-    const existing = await env.figpack_db
-      .prepare("SELECT id FROM buckets WHERE name = ?")
-      .bind(name)
-      .first();
+		// Validate authorization fields
+		if (typeof bucketIsPublic !== 'boolean') {
+			return json(
+				{
+					success: false,
+					message: 'isPublic field must be a boolean',
+				},
+				400,
+			);
+		}
 
-    if (existing) {
-      return json({
-        success: false,
-        message: "Bucket with this name already exists",
-      }, 409);
-    }
+		if (!Array.isArray(bucketAuthorizedUsers)) {
+			return json(
+				{
+					success: false,
+					message: 'authorizedUsers field must be an array',
+				},
+				400,
+			);
+		}
 
-    // Create the bucket
-    const now = Date.now();
+		// Check if bucket already exists
+		const existing = await env.figpack_db.prepare('SELECT id FROM buckets WHERE name = ?').bind(name).first();
 
-    const result = await env.figpack_db
-      .prepare(`
+		if (existing) {
+			return json(
+				{
+					success: false,
+					message: 'Bucket with this name already exists',
+				},
+				409,
+			);
+		}
+
+		// Create the bucket
+		const now = Date.now();
+
+		const result = await env.figpack_db
+			.prepare(
+				`
         INSERT INTO buckets (
           name, provider, description, bucket_base_url,
           aws_access_key_id, aws_secret_access_key, s3_endpoint,
           is_public, authorized_users,
           created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `)
-      .bind(
-        name,
-        provider,
-        description,
-        bucketBaseUrl,
-        accessKeyId,
-        secretAccessKey,
-        endpoint,
-        bucketIsPublic ? 1 : 0,
-        JSON.stringify(bucketAuthorizedUsers),
-        now,
-        now
-      )
-      .run();
+      `,
+			)
+			.bind(
+				name,
+				provider,
+				description,
+				bucketBaseUrl,
+				accessKeyId,
+				secretAccessKey,
+				endpoint,
+				bucketIsPublic ? 1 : 0,
+				JSON.stringify(bucketAuthorizedUsers),
+				now,
+				now,
+			)
+			.run();
 
-    // Fetch the created bucket
-    const newBucket = await env.figpack_db
-      .prepare("SELECT * FROM buckets WHERE id = ?")
-      .bind(result.meta.last_row_id)
-      .first();
+		// Fetch the created bucket
+		const newBucket = await env.figpack_db.prepare('SELECT * FROM buckets WHERE id = ?').bind(result.meta.last_row_id).first();
 
-    const bucket = sanitizeBucket(parseBucket(newBucket));
+		const bucket = sanitizeBucket(parseBucket(newBucket));
 
-    return json({
-      success: true,
-      message: "Bucket created successfully",
-      bucket,
-    }, 201, {
-      "X-RateLimit-Limit": "30",
-      "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-      "X-RateLimit-Reset": Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-    });
-  } catch (error) {
-    console.error("Error creating bucket:", error);
-    return json({ success: false, message: "Failed to create bucket" }, 500);
-  }
+		return json(
+			{
+				success: true,
+				message: 'Bucket created successfully',
+				bucket,
+			},
+			201,
+			{
+				'X-RateLimit-Limit': '30',
+				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+			},
+		);
+	} catch (error) {
+		console.error('Error creating bucket:', error);
+		return json({ success: false, message: 'Failed to create bucket' }, 500);
+	}
 }
 
-export async function handleUpdateBucket(
-  request: Request,
-  env: Env,
-  rateLimitResult: RateLimitResult
-): Promise<Response> {
-  try {
-    // Extract API key
-    const apiKey = request.headers.get("x-api-key");
-    
-    if (!apiKey) {
-      return json({ success: false, message: "API key is required" }, 400);
-    }
+export async function handleUpdateBucket(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
+	try {
+		// Extract API key
+		const apiKey = request.headers.get('x-api-key');
 
-    // Authenticate (admin only)
-    const authResult = await authenticateAdmin(apiKey, env);
-    
-    if (!authResult.isValid || !authResult.isAdmin) {
-      return json({ success: false, message: "Admin access required" }, 401);
-    }
+		if (!apiKey) {
+			return json({ success: false, message: 'API key is required' }, 400);
+		}
 
-    // Parse request body
-    const body = await request.json() as any;
-    const { name, bucket: bucketData } = body;
+		// Authenticate (admin only)
+		const authResult = await authenticateAdmin(apiKey, env);
 
-    if (!name || !bucketData) {
-      return json({
-        success: false,
-        message: "Bucket name and data are required",
-      }, 400);
-    }
+		if (!authResult.isValid || !authResult.isAdmin) {
+			return json({ success: false, message: 'Admin access required' }, 401);
+		}
 
-    // Check if bucket exists
-    const existing = await env.figpack_db
-      .prepare("SELECT * FROM buckets WHERE name = ?")
-      .bind(name)
-      .first();
+		// Parse request body
+		const body = (await request.json()) as any;
+		const { name, bucket: bucketData } = body;
 
-    if (!existing) {
-      return json({ success: false, message: "Bucket not found" }, 404);
-    }
+		if (!name || !bucketData) {
+			return json(
+				{
+					success: false,
+					message: 'Bucket name and data are required',
+				},
+				400,
+			);
+		}
 
-    const existingBucket = parseBucket(existing);
+		// Check if bucket exists
+		const existing = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?').bind(name).first();
 
-    // Build update fields
-    const updates: string[] = [];
-    const values: any[] = [];
+		if (!existing) {
+			return json({ success: false, message: 'Bucket not found' }, 404);
+		}
 
-    if (bucketData.description !== undefined) {
-      updates.push("description = ?");
-      values.push(bucketData.description);
-    }
+		const existingBucket = parseBucket(existing);
 
-    if (bucketData.provider !== undefined) {
-      updates.push("provider = ?");
-      values.push(bucketData.provider);
-    }
+		// Build update fields
+		const updates: string[] = [];
+		const values: any[] = [];
 
-    if (bucketData.bucketBaseUrl !== undefined) {
-      updates.push("bucket_base_url = ?");
-      values.push(bucketData.bucketBaseUrl);
-    }
+		if (bucketData.description !== undefined) {
+			updates.push('description = ?');
+			values.push(bucketData.description);
+		}
 
-    // Support both nested (old) and flattened (new) formats for credentials
-    // Flattened format (new)
-    if (bucketData.awsAccessKeyId !== undefined) {
-      updates.push("aws_access_key_id = ?");
-      values.push(bucketData.awsAccessKeyId);
-    }
-    if (bucketData.awsSecretAccessKey !== undefined) {
-      updates.push("aws_secret_access_key = ?");
-      values.push(bucketData.awsSecretAccessKey);
-    }
-    if (bucketData.s3Endpoint !== undefined) {
-      updates.push("s3_endpoint = ?");
-      values.push(bucketData.s3Endpoint);
-    }
-    
-    // Nested format (old) - for backward compatibility
-    if (bucketData.credentials) {
-      if (bucketData.credentials.AWS_ACCESS_KEY_ID) {
-        updates.push("aws_access_key_id = ?");
-        values.push(bucketData.credentials.AWS_ACCESS_KEY_ID);
-      }
-      if (bucketData.credentials.AWS_SECRET_ACCESS_KEY) {
-        updates.push("aws_secret_access_key = ?");
-        values.push(bucketData.credentials.AWS_SECRET_ACCESS_KEY);
-      }
-      if (bucketData.credentials.S3_ENDPOINT) {
-        updates.push("s3_endpoint = ?");
-        values.push(bucketData.credentials.S3_ENDPOINT);
-      }
-    }
+		if (bucketData.provider !== undefined) {
+			updates.push('provider = ?');
+			values.push(bucketData.provider);
+		}
 
-    // Support both nested (old) and flattened (new) formats for authorization
-    // Flattened format (new)
-    if (bucketData.isPublic !== undefined) {
-      updates.push("is_public = ?");
-      values.push(bucketData.isPublic ? 1 : 0);
-    }
-    if (bucketData.authorizedUsers !== undefined) {
-      updates.push("authorized_users = ?");
-      values.push(JSON.stringify(bucketData.authorizedUsers));
-    }
-    
-    // Nested format (old) - for backward compatibility
-    if (bucketData.authorization !== undefined) {
-      if (bucketData.authorization.isPublic !== undefined) {
-        updates.push("is_public = ?");
-        values.push(bucketData.authorization.isPublic ? 1 : 0);
-      }
-      if (bucketData.authorization.authorizedUsers !== undefined) {
-        updates.push("authorized_users = ?");
-        values.push(JSON.stringify(bucketData.authorization.authorizedUsers));
-      }
-    }
+		if (bucketData.bucketBaseUrl !== undefined) {
+			updates.push('bucket_base_url = ?');
+			values.push(bucketData.bucketBaseUrl);
+		}
 
-    // Update timestamp
-    updates.push("updated_at = ?");
-    values.push(Date.now());
+		// Support both nested (old) and flattened (new) formats for credentials
+		// Flattened format (new)
+		if (bucketData.awsAccessKeyId !== undefined) {
+			updates.push('aws_access_key_id = ?');
+			values.push(bucketData.awsAccessKeyId);
+		}
+		if (bucketData.awsSecretAccessKey !== undefined) {
+			updates.push('aws_secret_access_key = ?');
+			values.push(bucketData.awsSecretAccessKey);
+		}
+		if (bucketData.s3Endpoint !== undefined) {
+			updates.push('s3_endpoint = ?');
+			values.push(bucketData.s3Endpoint);
+		}
 
-    // Add name to values for WHERE clause
-    values.push(name);
+		// Nested format (old) - for backward compatibility
+		if (bucketData.credentials) {
+			if (bucketData.credentials.AWS_ACCESS_KEY_ID) {
+				updates.push('aws_access_key_id = ?');
+				values.push(bucketData.credentials.AWS_ACCESS_KEY_ID);
+			}
+			if (bucketData.credentials.AWS_SECRET_ACCESS_KEY) {
+				updates.push('aws_secret_access_key = ?');
+				values.push(bucketData.credentials.AWS_SECRET_ACCESS_KEY);
+			}
+			if (bucketData.credentials.S3_ENDPOINT) {
+				updates.push('s3_endpoint = ?');
+				values.push(bucketData.credentials.S3_ENDPOINT);
+			}
+		}
 
-    // Execute update
-    await env.figpack_db
-      .prepare(`UPDATE buckets SET ${updates.join(", ")} WHERE name = ?`)
-      .bind(...values)
-      .run();
+		// Support both nested (old) and flattened (new) formats for authorization
+		// Flattened format (new)
+		if (bucketData.isPublic !== undefined) {
+			updates.push('is_public = ?');
+			values.push(bucketData.isPublic ? 1 : 0);
+		}
+		if (bucketData.authorizedUsers !== undefined) {
+			updates.push('authorized_users = ?');
+			values.push(JSON.stringify(bucketData.authorizedUsers));
+		}
 
-    // Fetch updated bucket
-    const updated = await env.figpack_db
-      .prepare("SELECT * FROM buckets WHERE name = ?")
-      .bind(name)
-      .first();
+		// Nested format (old) - for backward compatibility
+		if (bucketData.authorization !== undefined) {
+			if (bucketData.authorization.isPublic !== undefined) {
+				updates.push('is_public = ?');
+				values.push(bucketData.authorization.isPublic ? 1 : 0);
+			}
+			if (bucketData.authorization.authorizedUsers !== undefined) {
+				updates.push('authorized_users = ?');
+				values.push(JSON.stringify(bucketData.authorization.authorizedUsers));
+			}
+		}
 
-    const bucket = sanitizeBucket(parseBucket(updated));
+		// Update timestamp
+		updates.push('updated_at = ?');
+		values.push(Date.now());
 
-    return json({
-      success: true,
-      message: "Bucket updated successfully",
-      bucket,
-    }, 200, {
-      "X-RateLimit-Limit": "30",
-      "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-      "X-RateLimit-Reset": Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-    });
-  } catch (error) {
-    console.error("Error updating bucket:", error);
-    return json({ success: false, message: "Failed to update bucket" }, 500);
-  }
+		// Add name to values for WHERE clause
+		values.push(name);
+
+		// Execute update
+		await env.figpack_db
+			.prepare(`UPDATE buckets SET ${updates.join(', ')} WHERE name = ?`)
+			.bind(...values)
+			.run();
+
+		// Fetch updated bucket
+		const updated = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?').bind(name).first();
+
+		const bucket = sanitizeBucket(parseBucket(updated));
+
+		return json(
+			{
+				success: true,
+				message: 'Bucket updated successfully',
+				bucket,
+			},
+			200,
+			{
+				'X-RateLimit-Limit': '30',
+				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+			},
+		);
+	} catch (error) {
+		console.error('Error updating bucket:', error);
+		return json({ success: false, message: 'Failed to update bucket' }, 500);
+	}
 }
 
-export async function handleDeleteBucket(
-  request: Request,
-  env: Env,
-  rateLimitResult: RateLimitResult
-): Promise<Response> {
-  try {
-    // Extract API key
-    const apiKey = request.headers.get("x-api-key");
-    
-    if (!apiKey) {
-      return json({ success: false, message: "API key is required" }, 400);
-    }
+export async function handleDeleteBucket(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
+	try {
+		// Extract API key
+		const apiKey = request.headers.get('x-api-key');
 
-    // Authenticate (admin only)
-    const authResult = await authenticateAdmin(apiKey, env);
-    
-    if (!authResult.isValid || !authResult.isAdmin) {
-      return json({ success: false, message: "Admin access required" }, 401);
-    }
+		if (!apiKey) {
+			return json({ success: false, message: 'API key is required' }, 400);
+		}
 
-    // Parse request body
-    const body = await request.json() as any;
-    const { name } = body;
+		// Authenticate (admin only)
+		const authResult = await authenticateAdmin(apiKey, env);
 
-    if (!name) {
-      return json({ success: false, message: "Bucket name is required" }, 400);
-    }
+		if (!authResult.isValid || !authResult.isAdmin) {
+			return json({ success: false, message: 'Admin access required' }, 401);
+		}
 
-    // Check if bucket exists
-    const existing = await env.figpack_db
-      .prepare("SELECT id FROM buckets WHERE name = ?")
-      .bind(name)
-      .first();
+		// Parse request body
+		const body = (await request.json()) as any;
+		const { name } = body;
 
-    if (!existing) {
-      return json({ success: false, message: "Bucket not found" }, 404);
-    }
+		if (!name) {
+			return json({ success: false, message: 'Bucket name is required' }, 400);
+		}
 
-    // Delete the bucket
-    await env.figpack_db
-      .prepare("DELETE FROM buckets WHERE name = ?")
-      .bind(name)
-      .run();
+		// Check if bucket exists
+		const existing = await env.figpack_db.prepare('SELECT id FROM buckets WHERE name = ?').bind(name).first();
 
-    return json({
-      success: true,
-      message: "Bucket deleted successfully",
-    }, 200, {
-      "X-RateLimit-Limit": "30",
-      "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-      "X-RateLimit-Reset": Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-    });
-  } catch (error) {
-    console.error("Error deleting bucket:", error);
-    return json({ success: false, message: "Failed to delete bucket" }, 500);
-  }
+		if (!existing) {
+			return json({ success: false, message: 'Bucket not found' }, 404);
+		}
+
+		// Delete the bucket
+		await env.figpack_db.prepare('DELETE FROM buckets WHERE name = ?').bind(name).run();
+
+		return json(
+			{
+				success: true,
+				message: 'Bucket deleted successfully',
+			},
+			200,
+			{
+				'X-RateLimit-Limit': '30',
+				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+			},
+		);
+	} catch (error) {
+		console.error('Error deleting bucket:', error);
+		return json({ success: false, message: 'Failed to delete bucket' }, 500);
+	}
 }

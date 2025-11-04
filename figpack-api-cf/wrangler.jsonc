@@ -8,14 +8,14 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2025-11-04",
 	"observability": {
-		"enabled": true
+		"enabled": true,
 	},
 	"d1_databases": [
 		{
 			"binding": "figpack_db",
 			"database_name": "figpack-db",
 			"database_id": "525adc45-ec30-4165-8492-73fd11a4d428",
-			"migrations_dir": "migrations"
-		}
-	]
+			"migrations_dir": "migrations",
+		},
+	],
 }

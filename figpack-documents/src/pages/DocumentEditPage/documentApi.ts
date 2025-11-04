@@ -36,7 +36,6 @@ export async function updateDocument(
   const url = `${FIGPACK_API_BASE_URL}/documents/update`;
 
   const body: {
-    apiKey: string;
     documentId: string;
     title?: string;
     content?: string;
@@ -46,7 +45,7 @@ export async function updateDocument(
       viewerEmails?: string[];
       editorEmails?: string[];
     };
-  } = { apiKey, documentId };
+  } = { documentId };
 
   if (title !== undefined) {
     body.title = title;
@@ -58,11 +57,14 @@ export async function updateDocument(
     body.accessControl = accessControl;
   }
 
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": apiKey || "",
+  };
+
   const response = await fetch(url, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(body),
   });
 

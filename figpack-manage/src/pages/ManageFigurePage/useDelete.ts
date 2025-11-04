@@ -19,7 +19,7 @@ export const useDelete = (figureUrl: string, apiKey: string | null, onSuccess: (
                     'x-api-key': apiKey,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ figureUrl, apiKey })
+                body: JSON.stringify({ figureUrl })
             });
 
             const data = await response.json();

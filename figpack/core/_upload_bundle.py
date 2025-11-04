@@ -36,10 +36,16 @@ def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> 
     payload = {
         "figureUrl": figure_url,
         "files": files_data,
-        "apiKey": api_key,
     }
 
-    response = requests.post(f"{FIGPACK_API_BASE_URL}/upload", json=payload)
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key if api_key else "",
+    }
+
+    response = requests.post(
+        f"{FIGPACK_API_BASE_URL}/upload", json=payload, headers=headers
+    )
 
     if not response.ok:
         try:
@@ -154,8 +160,8 @@ def _create_or_get_figure(
     }
 
     # API key is optional for ephemeral figures
-    if api_key is not None:
-        payload["apiKey"] = api_key
+    # if api_key is not None:
+    #     payload["apiKey"] = api_key
 
     if total_files is not None:
         payload["totalFiles"] = total_files
@@ -170,7 +176,11 @@ def _create_or_get_figure(
 
     # Use the same endpoint for both regular and ephemeral figures
     url = f"{FIGPACK_API_BASE_URL}/figures/create"
-    response = requests.post(url, json=payload)
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key if api_key else "",
+    }
+    response = requests.post(url, json=payload, headers=headers)
 
     if not response.ok:
         try:
@@ -198,10 +208,16 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
     """
     payload = {
         "figureUrl": figure_url,
-        "apiKey": api_key,
     }
 
-    response = requests.post(f"{FIGPACK_API_BASE_URL}/figures/finalize", json=payload)
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key if api_key else "",
+    }
+
+    response = requests.post(
+        f"{FIGPACK_API_BASE_URL}/figures/finalize", json=payload, headers=headers
+    )
 
     if not response.ok:
         try:

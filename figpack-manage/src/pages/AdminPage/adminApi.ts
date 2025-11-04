@@ -60,10 +60,9 @@ export const renewBulk = async (apiKey: string): Promise<RenewBulkResult> => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": apiKey,
       },
-      body: JSON.stringify({
-        apiKey,
-      }),
+      body: JSON.stringify({}),
     });
 
     const result = await response.json();

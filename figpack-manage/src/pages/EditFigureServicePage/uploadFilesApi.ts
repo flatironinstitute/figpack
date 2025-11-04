@@ -9,7 +9,6 @@ interface UploadFile {
 interface BatchUploadRequest {
   figureUrl: string;
   files: UploadFile[];
-  apiKey: string;
 }
 
 interface SignedUrlInfo {
@@ -25,7 +24,6 @@ interface BatchUploadResponse {
 
 interface FinalizeRequest {
   figureUrl: string;
-  apiKey: string;
 }
 
 interface FinalizeResponse {
@@ -70,13 +68,13 @@ export async function getBatchSignedUrls(
     const payload: BatchUploadRequest = {
       figureUrl,
       files: filesData,
-      apiKey,
     };
 
     const response = await fetch(`${FIGPACK_API_BASE_URL}/upload`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': apiKey,
       },
       body: JSON.stringify(payload),
     });
@@ -163,13 +161,13 @@ export async function finalizeFigureUpload(
   try {
     const payload: FinalizeRequest = {
       figureUrl,
-      apiKey,
     };
 
     const response = await fetch(`${FIGPACK_API_BASE_URL}/figures/finalize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': apiKey,
       },
       body: JSON.stringify(payload),
     });

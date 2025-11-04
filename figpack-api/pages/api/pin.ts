@@ -6,7 +6,6 @@ import { setCorsHeaders } from "../../lib/config";
 
 interface PinRequest {
   figureUrl: string;
-  apiKey: string;
   pinInfo: {
     name: string;
     figureDescription: string;
@@ -70,7 +69,9 @@ export default async function handler(
   }
 
   try {
-    const { figureUrl, apiKey, pinInfo }: PinRequest = req.body;
+    const { figureUrl, pinInfo }: PinRequest = req.body;
+
+    const apiKey = req.headers["x-api-key"] as string | undefined;
 
     // Validate required fields
     if (!figureUrl) {

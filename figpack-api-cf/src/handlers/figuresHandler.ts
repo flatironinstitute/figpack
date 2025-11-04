@@ -67,17 +67,17 @@ function parseFigure(row: any): Figure {
 export async function handleCreateFigure(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
 		const body = (await request.json()) as any;
-		const { apiKey, ephemeral, bucket: bucketName, sourceUrl, figpackVersion, totalFiles, totalSize, title } = body;
+		const { apiKey: apiKeyFromBody, ephemeral, bucket: bucketName, sourceUrl, figpackVersion, totalFiles, totalSize, title } = body;
+
+		// In version 0.3.0 of the python package we used apiKey in the body, so we'll keep supporting that now
+
+		const apiKey = request.headers.get('x-api-key') || apiKeyFromBody;
 
 		const figureId = createFigureId();
-
-		console.log(`--- Creating figure with ID: ${figureId}`);
 
 		// Get bucket information (default to "figpack-figures")
 		const targetBucketName = bucketName || 'figpack-figures';
 		const bucketRow = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?').bind(targetBucketName).first();
-
-		console.log(`--- Bucket information retrieved: ${JSON.stringify(bucketRow)} ---`);
 
 		if (!bucketRow) {
 			return json(
@@ -85,7 +85,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 					success: false,
 					message: `Bucket "${targetBucketName}" not found`,
 				},
-				400
+				400,
 			);
 		}
 
@@ -98,7 +98,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 
 		// Authenticate with API key if provided
 		if (apiKey) {
-			console.log(`--- Authenticating user with API key: ${apiKey} ---`);
 			const authResult = await validateApiKey(apiKey, env);
 			if (!authResult.isValid || !authResult.user) {
 				return json({ success: false, message: 'Invalid API key' }, 401);
@@ -122,7 +121,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 					success: false,
 					message: 'Ephemeral uploads are only allowed for public buckets',
 				},
-				403
+				403,
 			);
 		}
 
@@ -135,7 +134,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 					success: false,
 					message: 'API key is required for non-ephemeral figures',
 				},
-				400
+				400,
 			);
 		}
 
@@ -146,7 +145,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 					success: false,
 					message: 'You are not authorized to upload to this bucket',
 				},
-				403
+				403,
 			);
 		}
 
@@ -164,7 +163,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 						success: false,
 						message: `A figure with source URL "${sourceUrl}" already exists: ${existingWithSourceUrl.figure_url}`,
 					},
-					400
+					400,
 				);
 			}
 		}
@@ -200,7 +199,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 						success: false,
 						message: 'Too many attempts to find a unique figureString',
 					},
-					500
+					500,
 				);
 			}
 		}
@@ -215,7 +214,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 					message: figureIsExistingAndCompleted ? 'Figure already exists and is completed' : 'Figure already exists',
 					figure: parseFigure(existingFigure),
 				},
-				200
+				200,
 			);
 		}
 
@@ -252,7 +251,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			0, // pinned
 			ephemeral ? 'ephemeral' : 'default',
 			ephemeral ? 1 : 0,
-			sourceUrl ?? null
+			sourceUrl ?? null,
 		);
 
 		const result = await bindResult.run();
@@ -281,7 +280,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 				'X-RateLimit-Limit': '30',
 				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
 				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			}
+			},
 		);
 	} catch (error) {
 		console.error('Create figure API error:', error);
@@ -290,7 +289,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 				success: false,
 				message: `Internal server error: ${error || 'Unknown error'}`,
 			},
-			500
+			500,
 		);
 	}
 }
@@ -299,7 +298,7 @@ export async function handleGetFigure(request: Request, env: Env, rateLimitResul
 	try {
 		const url = new URL(request.url);
 		const figureUrl = url.searchParams.get('figureUrl');
-		const apiKey = url.searchParams.get('apiKey');
+		const apiKey = request.headers.get('x-api-key');
 
 		if (!figureUrl) {
 			return json(
@@ -307,7 +306,7 @@ export async function handleGetFigure(request: Request, env: Env, rateLimitResul
 					success: false,
 					message: 'Missing required field: figureUrl',
 				},
-				400
+				400,
 			);
 		}
 
@@ -335,7 +334,7 @@ export async function handleGetFigure(request: Request, env: Env, rateLimitResul
 							hasWriteAccess: figure.ownerEmail === userEmail,
 						},
 					},
-					200
+					200,
 				);
 			}
 		}
@@ -346,7 +345,7 @@ export async function handleGetFigure(request: Request, env: Env, rateLimitResul
 				message: 'Figure found',
 				figure,
 			},
-			200
+			200,
 		);
 	} catch (error) {
 		console.error('Get figure API error:', error);
@@ -452,7 +451,7 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 				'X-RateLimit-Limit': '60',
 				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
 				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			}
+			},
 		);
 	} catch (error) {
 		console.error('Figure list API error:', error);
@@ -463,7 +462,9 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 export async function handleDeleteFigure(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
 		const body = (await request.json()) as any;
-		const { figureUrl, apiKey } = body;
+		const { figureUrl } = body;
+
+		const apiKey = request.headers.get('x-api-key');
 
 		if (!figureUrl) {
 			return json(
@@ -471,7 +472,7 @@ export async function handleDeleteFigure(request: Request, env: Env, rateLimitRe
 					success: false,
 					message: 'Missing required field: figureUrl',
 				},
-				400
+				400,
 			);
 		}
 
@@ -481,7 +482,7 @@ export async function handleDeleteFigure(request: Request, env: Env, rateLimitRe
 					success: false,
 					message: 'API key is required',
 				},
-				400
+				400,
 			);
 		}
 
@@ -507,7 +508,7 @@ export async function handleDeleteFigure(request: Request, env: Env, rateLimitRe
 					success: false,
 					message: 'Access denied. You are not the owner of this figure.',
 				},
-				403
+				403,
 			);
 		}
 
@@ -589,7 +590,7 @@ export async function handleDeleteFigure(request: Request, env: Env, rateLimitRe
 				'X-RateLimit-Limit': '30',
 				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
 				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			}
+			},
 		);
 	} catch (error) {
 		console.error('Delete figure API error:', error);
@@ -600,7 +601,9 @@ export async function handleDeleteFigure(request: Request, env: Env, rateLimitRe
 export async function handleFinalizeFigure(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
 		const body = (await request.json()) as any;
-		const { figureUrl, apiKey } = body;
+		const { figureUrl } = body;
+
+		const apiKey = request.headers.get('x-api-key');
 
 		if (!figureUrl) {
 			return json(
@@ -608,7 +611,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 					success: false,
 					message: 'Missing required field: figureUrl',
 				},
-				400
+				400,
 			);
 		}
 
@@ -629,7 +632,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 					success: false,
 					message: 'API key is required for non-ephemeral figures',
 				},
-				400
+				400,
 			);
 		}
 
@@ -648,7 +651,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 						success: false,
 						message: 'Access denied. You are not the owner of this figure.',
 					},
-					403
+					403,
 				);
 			}
 		} else {
@@ -659,7 +662,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 						success: false,
 						message: 'Access denied. This figure requires authentication.',
 					},
-					403
+					403,
 				);
 			}
 		}
@@ -672,7 +675,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 					message: 'Figure is already completed',
 					figure,
 				},
-				200
+				200,
 			);
 		}
 
@@ -684,7 +687,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
         UPDATE figures 
         SET status = ?, upload_completed = ?, upload_updated = ?, updated_at = ?
         WHERE figure_url = ?
-      `
+      `,
 			)
 			.bind('completed', now, now, now, figureUrl)
 			.run();
@@ -711,7 +714,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 				'X-RateLimit-Limit': '30',
 				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
 				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			}
+			},
 		);
 	} catch (error) {
 		console.error('Finalize figure API error:', error);
@@ -730,7 +733,7 @@ export async function handleFindFigureBySourceUrl(request: Request, env: Env, ra
 					success: false,
 					message: 'Missing required field: sourceUrl',
 				},
-				400
+				400,
 			);
 		}
 
@@ -752,7 +755,7 @@ export async function handleFindFigureBySourceUrl(request: Request, env: Env, ra
 				'X-RateLimit-Limit': '30',
 				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
 				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			}
+			},
 		);
 	} catch (error) {
 		console.error('Find figure by source URL API error:', error);

@@ -1,6 +1,7 @@
 # Figpack API Migration Summary
 
 ## Overview
+
 Successfully migrated figpack-api from Vercel/Next.js/MongoDB to Cloudflare Workers/D1.
 
 ## Migration Status
@@ -8,6 +9,7 @@ Successfully migrated figpack-api from Vercel/Next.js/MongoDB to Cloudflare Work
 ### ✅ Completed Endpoints
 
 #### User Management
+
 - `GET /users` - List all users (admin only)
 - `POST /users` - Create new user
 - `PUT /users` - Update user
@@ -15,14 +17,17 @@ Successfully migrated figpack-api from Vercel/Next.js/MongoDB to Cloudflare Work
 - `GET /user` - Get current user info
 - `POST /user` - Regenerate API key
 - `PUT /user` - Update current user
+- `GET /user/usage-stats` - Get usage statistics (file counts, sizes by pinned/unpinned)
 
 #### Bucket Management
+
 - `GET /buckets` - List buckets (admin only)
 - `POST /buckets` - Create bucket (admin only)
 - `PUT /buckets` - Update bucket (admin only)
 - `DELETE /buckets` - Delete bucket (admin only)
 
 #### Figure Management
+
 - `POST /figures/create` - Create new figure upload
 - `GET /figures/get` - Get figure details
 - `GET /figures/list` - List figures with filtering/pagination
@@ -31,6 +36,7 @@ Successfully migrated figpack-api from Vercel/Next.js/MongoDB to Cloudflare Work
 - `GET /figures/find-by-source-url` - Find figure by source URL
 
 #### Document Management
+
 - `POST /documents/create` - Create new document
 - `GET /documents/get` - Get document details
 - `GET /documents/list` - List accessible documents
@@ -39,15 +45,17 @@ Successfully migrated figpack-api from Vercel/Next.js/MongoDB to Cloudflare Work
 - `GET /documents/get-documents-referencing-figure` - Find documents referencing a figure
 
 #### Figure Operations
+
 - `POST /pin` - Pin a figure (prevents expiration)
 - `POST /unpin` - Unpin a figure
 - `POST /renew` - Renew figure expiration
 - `POST /renew-bulk` - Renew multiple figures
 
 ### ✅ File Upload
+
 - `POST /upload` - Generate presigned S3 upload URLs for batch file uploads
   - **Status**: ✅ COMPLETED
-  - Validates file paths (index.html, manifest.json, data.zarr/*, assets/*, etc.)
+  - Validates file paths (index.html, manifest.json, data.zarr/_, assets/_, etc.)
   - Supports ephemeral (anonymous) and authenticated uploads
   - Works with AWS S3, Cloudflare R2, Wasabi, and Google Cloud Storage
   - Uses AWS SDK v3 for Cloudflare Workers compatibility
@@ -57,12 +65,14 @@ Successfully migrated figpack-api from Vercel/Next.js/MongoDB to Cloudflare Work
 ### ❌ Not Migrated
 
 #### Admin Endpoint
+
 - `/admin` endpoint - Admin-specific operations
   - **Status**: Need to review original implementation to determine what functionality is needed
 
 ## Database Schema Migration
 
 ### Tables Created
+
 All tables from the original MongoDB schema have been migrated to D1:
 
 1. **users** - User accounts and authentication
@@ -71,7 +81,9 @@ All tables from the original MongoDB schema have been migrated to D1:
 4. **figpack_documents** - Document management
 
 ### Schema Changes
+
 The migration flattened nested MongoDB objects into top-level D1 columns:
+
 - Bucket credentials (awsAccessKeyId, awsSecretAccessKey, s3Endpoint)
 - Bucket authorization (isPublic, authorizedUsers)
 - Figure pinInfo (pinName, pinDescription, pinnedTimestamp)
@@ -80,19 +92,23 @@ The migration flattened nested MongoDB objects into top-level D1 columns:
 ## Key Implementation Notes
 
 ### Authentication
+
 - Uses same API key-based authentication
 - Bootstrap key support for initial setup
 - Admin role checking preserved
 
 ### Rate Limiting
+
 - In-memory rate limiting (30 requests/minute default)
 - **Note**: This is per-worker instance, not global
 
 ### CORS
+
 - Full CORS support maintained
 - Preflight request handling
 
 ### Data Formats
+
 - JSON arrays stored as JSON strings in D1
 - Timestamps stored as milliseconds (number)
 - Boolean values stored as integers (0/1)
@@ -100,6 +116,7 @@ The migration flattened nested MongoDB objects into top-level D1 columns:
 ## Recently Implemented Functionality
 
 ### ✅ S3 Upload and File Management (COMPLETED)
+
 1. **Upload endpoint** (`POST /upload`)
    - Generates presigned S3 upload URLs for batch file uploads
    - Validates file paths and sizes
@@ -133,14 +150,17 @@ The migration flattened nested MongoDB objects into top-level D1 columns:
 ## Missing Functionality to Implement
 
 ### Critical
+
 None - all critical functionality has been implemented
 
 ### Important
+
 1. **Admin endpoint** review
    - Determine what admin-specific operations are needed
    - May be covered by existing admin permissions on other endpoints
 
 ### Enhancements
+
 5. **Global Rate Limiting**
    - Current implementation is per-worker instance
    - Consider using Durable Objects for global rate limiting
@@ -154,24 +174,29 @@ None - all critical functionality has been implemented
 ## Environment Variables Needed
 
 ### Cloudflare Secrets
+
 - `BOOTSTRAP_KEY` - Initial admin setup key
 
 ### D1 Database
+
 - `figpack_db` - D1 database binding (configured in wrangler.jsonc)
 
 ## Testing Requirements
 
 ### Unit Tests
+
 - Auth functions
 - Rate limiting
 - Data parsing/serialization
 
 ### Integration Tests
+
 - Each endpoint with various scenarios
 - Error handling
 - Permission checks
 
 ### End-to-End Tests
+
 - Complete workflows (create user → upload figure → pin/renew)
 - Document creation with figure references
 - Bucket authorization
@@ -196,6 +221,7 @@ None - all critical functionality has been implemented
 ## Files Created/Modified
 
 ### New Files
+
 - `src/handlers/bucketsHandler.ts` - Bucket CRUD operations
 - `src/handlers/figuresHandler.ts` - Figure management
 - `src/handlers/documentsHandler.ts` - Document management
@@ -204,12 +230,14 @@ None - all critical functionality has been implemented
 - `src/s3Utils.ts` - S3 client utilities (AWS SDK v3) with caching
 
 ### Modified Files
+
 - `src/types.ts` - Added Bucket, Figure, FigpackDocument, and upload-related interfaces
 - `src/index.ts` - Added all new routes including /upload
 - `migrations/0001_migrating-from-mongo.sql` - Database schema
 - `package.json` - Added AWS SDK v3 dependencies (@aws-sdk/client-s3, @aws-sdk/s3-request-presigner)
 
 ### Existing Files (from original migration)
+
 - `src/auth.ts` - Authentication logic
 - `src/rateLimit.ts` - Rate limiting
 - `src/utils.ts` - Utility functions
@@ -245,6 +273,7 @@ None - all critical functionality has been implemented
 ## Migration from MongoDB
 
 A migration script (`import-users-to-d1.mjs`) has been created for users. Similar scripts will be needed for:
+
 - Buckets
 - Figures
 - Documents

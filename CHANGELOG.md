@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.1] - 2025-11-04
+
+- Migration fixes
+
 ## [0.3.0] - 2025-11-04
 
 - Migration to Cloudflare

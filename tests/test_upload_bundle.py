@@ -49,7 +49,6 @@ def test_get_batch_signed_urls(tmp_path):
         called_payload = mock_post.call_args[1]["json"]
         assert "upload" in called_url
         assert called_payload["figureUrl"] == figure_url
-        assert called_payload["apiKey"] == api_key
         assert len(called_payload["files"]) == 2
 
 
@@ -138,7 +137,6 @@ def test_create_or_get_figure():
         assert result["figure"]["status"] == "pending"
 
         mock_post.assert_called_once()
-        assert mock_post.call_args[1]["json"]["apiKey"] == api_key
 
 
 def test_create_or_get_figure_error():
@@ -170,7 +168,6 @@ def test_finalize_figure():
 
         mock_post.assert_called_once()
         assert mock_post.call_args[1]["json"]["figureUrl"] == figure_url
-        assert mock_post.call_args[1]["json"]["apiKey"] == api_key
 
 
 def test_determine_content_type():

@@ -2,7 +2,7 @@
 figpack - A Python package for creating shareable, interactive visualizations in the browser
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from .cli import view_figure
 from .core import FigpackView, FigpackExtension, ExtensionView

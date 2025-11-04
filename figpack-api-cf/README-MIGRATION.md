@@ -1,23 +1,27 @@
 # Data Migration Scripts - Ready to Use
 
-All migration scripts have been created and are ready to execute! 
+All migration scripts have been created and are ready to execute!
 
 ## What's Been Created
 
 ✅ **Export Script**
+
 - `export-mongodb-data.sh` - Exports all MongoDB collections to JSON files
 
-✅ **Import Scripts** 
+✅ **Import Scripts**
+
 - `import-users-to-d1.mjs` - Imports users
-- `import-buckets-to-d1.mjs` - Imports buckets  
+- `import-buckets-to-d1.mjs` - Imports buckets
 - `import-figures-to-d1.mjs` - Imports figures
 - `import-documents-to-d1.mjs` - Imports documents
 
 ✅ **Orchestration Scripts**
+
 - `run-full-migration.sh` - Runs complete migration (recommended)
 - `verify-migration.mjs` - Verifies data integrity after migration
 
 ✅ **Documentation**
+
 - `MIGRATION_GUIDE.md` - Complete step-by-step guide with troubleshooting
 
 ## Quick Start: Run the Migration
@@ -43,6 +47,7 @@ cd figpack-api-cf
 ```
 
 Replace `YOUR_MONGODB_URI` with your actual connection string like:
+
 - `mongodb+srv://user:pass@cluster.mongodb.net/figpack`
 - `mongodb://localhost:27017/figpack`
 
@@ -55,6 +60,7 @@ This creates: `users.json`, `buckets.json`, `figures.json`, `documents.json`
 ```
 
 This will:
+
 - Check all export files exist
 - Ask for confirmation
 - Import in correct order: Users → Buckets → Figures → Documents
@@ -71,6 +77,7 @@ This shows record counts and sample data to confirm everything migrated correctl
 ## What Happens During Migration
 
 The scripts automatically handle:
+
 - ✅ Flattening nested MongoDB objects into D1 columns
 - ✅ Converting boolean values to integers (0/1)
 - ✅ Converting JavaScript arrays to JSON strings
@@ -81,6 +88,7 @@ The scripts automatically handle:
 ## Key Files Generated During Import
 
 Temporary SQL files (auto-deleted after use):
+
 - `import-batch.sql` (users)
 - `import-buckets-batch.sql`
 - `import-figures-batch.sql`
@@ -91,6 +99,7 @@ Temporary SQL files (auto-deleted after use):
 See `MIGRATION_GUIDE.md` for detailed troubleshooting.
 
 Quick fix for re-running migration:
+
 ```bash
 # Clear D1 tables first (in reverse order)
 npx wrangler d1 execute figpack-db --remote --command="DELETE FROM figpack_documents"
@@ -108,7 +117,7 @@ npx wrangler d1 execute figpack-db --remote --command="DELETE FROM users"
 2. Test API endpoints with migrated data
 3. Check MIGRATION_SUMMARY.md and update checklist items:
    - [ ] Import existing users from MongoDB
-   - [ ] Import existing buckets  
+   - [ ] Import existing buckets
    - [ ] Import existing figures
    - [ ] Import existing documents
 4. Keep MongoDB as backup for a while before decommissioning
