@@ -27,7 +27,7 @@ export interface BucketApiResponse {
 
 export async function getBuckets(apiKey: string): Promise<BucketApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/buckets`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -51,7 +51,7 @@ export async function createBucket(
   bucketData: Omit<Bucket, "createdAt" | "updatedAt">
 ): Promise<BucketApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/buckets`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +79,7 @@ export async function updateBucket(
   bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>
 ): Promise<BucketApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/buckets`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -107,7 +107,7 @@ export async function deleteBucket(
   name: string
 ): Promise<BucketApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/buckets`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

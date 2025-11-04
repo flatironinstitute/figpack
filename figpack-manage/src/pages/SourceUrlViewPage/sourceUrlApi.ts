@@ -16,7 +16,7 @@ export async function getFigureBySourceUrl(
   sourceUrl: string
 ): Promise<GetBySourceUrlResponse> {
   const response = await fetch(
-    `${FIGPACK_API_BASE_URL}/api/figures/find-by-source-url`,
+    `${FIGPACK_API_BASE_URL}/figures/find-by-source-url`,
     {
       method: "POST",
       headers: {

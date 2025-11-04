@@ -107,7 +107,7 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
         const apiKey = localStorage.getItem("figpack_api_key");
 
         // Fetch figure data from new API endpoint
-        const apiUrl = new URL("/api/figures/get", FIGPACK_API_BASE_URL);
+        const apiUrl = new URL("/figures/get", FIGPACK_API_BASE_URL);
         apiUrl.searchParams.set("figureUrl", figureUrl);
         if (apiKey) {
           apiUrl.searchParams.set("apiKey", apiKey);

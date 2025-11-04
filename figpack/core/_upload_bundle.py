@@ -39,7 +39,7 @@ def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> 
         "apiKey": api_key,
     }
 
-    response = requests.post(f"{FIGPACK_API_BASE_URL}/api/upload", json=payload)
+    response = requests.post(f"{FIGPACK_API_BASE_URL}/upload", json=payload)
 
     if not response.ok:
         try:
@@ -169,7 +169,8 @@ def _create_or_get_figure(
         payload["sourceUrl"] = source_url
 
     # Use the same endpoint for both regular and ephemeral figures
-    response = requests.post(f"{FIGPACK_API_BASE_URL}/api/figures/create", json=payload)
+    url = f"{FIGPACK_API_BASE_URL}/figures/create"
+    response = requests.post(url, json=payload)
 
     if not response.ok:
         try:
@@ -200,9 +201,7 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
         "apiKey": api_key,
     }
 
-    response = requests.post(
-        f"{FIGPACK_API_BASE_URL}/api/figures/finalize", json=payload
-    )
+    response = requests.post(f"{FIGPACK_API_BASE_URL}/figures/finalize", json=payload)
 
     if not response.ok:
         try:
@@ -416,7 +415,7 @@ def get_figure_by_source_url(source_url: str) -> Optional[str]:
     payload = {"sourceUrl": source_url}
 
     response = requests.post(
-        f"{FIGPACK_API_BASE_URL}/api/figures/find-by-source-url", json=payload
+        f"{FIGPACK_API_BASE_URL}/figures/find-by-source-url", json=payload
     )
 
     if not response.ok:

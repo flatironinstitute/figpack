@@ -73,7 +73,7 @@ export async function getBatchSignedUrls(
       apiKey,
     };
 
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/upload`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/upload`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ export async function finalizeFigureUpload(
       apiKey,
     };
 
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/api/figures/finalize`, {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/figures/finalize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

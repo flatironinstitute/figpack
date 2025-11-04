@@ -20,7 +20,7 @@ export const getDocumentsReferencingFigure = async (
 ): Promise<DocumentReference[]> => {
   try {
     const response = await fetch(
-      `${FIGPACK_API_BASE_URL}/api/documents/get-documents-referencing-figure?figureUrl=${encodeURIComponent(
+      `${FIGPACK_API_BASE_URL}/documents/get-documents-referencing-figure?figureUrl=${encodeURIComponent(
         figureUrl
       )}`,
       {
