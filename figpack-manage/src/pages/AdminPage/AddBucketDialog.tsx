@@ -254,9 +254,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             fullWidth
             label="S3 Endpoint"
             value={formData.s3Endpoint}
-            onChange={(e) =>
-              handleInputChange("s3Endpoint", e.target.value)
-            }
+            onChange={(e) => handleInputChange("s3Endpoint", e.target.value)}
             error={!!formErrors.s3Endpoint}
             helperText={formErrors.s3Endpoint}
             placeholder={getEndpointPlaceholder()}
@@ -305,9 +303,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                       if (
                         newUserEmail.trim() &&
                         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) &&
-                        !formData.authorizedUsers.includes(
-                          newUserEmail.trim()
-                        )
+                        !formData.authorizedUsers.includes(newUserEmail.trim())
                       ) {
                         setFormData((prev) => ({
                           ...prev,
@@ -328,17 +324,13 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                     loading ||
                     !newUserEmail.trim() ||
                     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) ||
-                    formData.authorizedUsers.includes(
-                      newUserEmail.trim()
-                    )
+                    formData.authorizedUsers.includes(newUserEmail.trim())
                   }
                   onClick={() => {
                     if (
                       newUserEmail.trim() &&
                       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) &&
-                      !formData.authorizedUsers.includes(
-                        newUserEmail.trim()
-                      )
+                      !formData.authorizedUsers.includes(newUserEmail.trim())
                     ) {
                       setFormData((prev) => ({
                         ...prev,
@@ -362,10 +354,9 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
                     onDelete={() =>
                       setFormData((prev) => ({
                         ...prev,
-                        authorizedUsers:
-                          prev.authorizedUsers.filter(
-                            (u: string) => u !== email
-                          ),
+                        authorizedUsers: prev.authorizedUsers.filter(
+                          (u: string) => u !== email,
+                        ),
                       }))
                     }
                     disabled={loading}

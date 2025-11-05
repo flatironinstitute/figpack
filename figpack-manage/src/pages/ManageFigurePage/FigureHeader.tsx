@@ -218,8 +218,7 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 <strong>Pinned by:</strong> {figpackStatus.pinName}
               </Typography>
               <Typography variant="body2">
-                <strong>Figure:</strong>{" "}
-                {figpackStatus.pinDescription}
+                <strong>Figure:</strong> {figpackStatus.pinDescription}
               </Typography>
               <Typography variant="body2">
                 <strong>Pinned on:</strong>{" "}

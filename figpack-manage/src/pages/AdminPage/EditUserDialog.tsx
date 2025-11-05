@@ -19,7 +19,7 @@ interface EditUserDialogProps {
   onClose: () => void;
   onUpdateUser: (
     email: string,
-    userData: Partial<Omit<User, "email" | "createdAt">>
+    userData: Partial<Omit<User, "email" | "createdAt">>,
   ) => Promise<void>;
   user: User | null;
   loading?: boolean;
@@ -60,7 +60,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-      ""
+      "",
     );
   };
 

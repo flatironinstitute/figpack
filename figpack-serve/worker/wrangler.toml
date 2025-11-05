@@ -1,18 +1,18 @@
-name = "upload-figpack-figure-from-source"
+name = "figpack-serve-worker"
 main = "src/worker.ts"
 compatibility_date = "2025-11-05"
 compatibility_flags = ["nodejs_compat"]
 
 [[containers]]
-class_name = "FigpackContainer"
+class_name = "FigpackServeContainer"
 image = "./container/Dockerfile"
 max_instances = 2
 instance_type = "standard-1"
 
 [[durable_objects.bindings]]
-name = "FIGPACK_CONTAINER"
-class_name = "FigpackContainer"
+name = "FIGPACK_SERVE_CONTAINER"
+class_name = "FigpackServeContainer"
 
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["FigpackContainer"]
+new_sqlite_classes = ["FigpackServeContainer"]

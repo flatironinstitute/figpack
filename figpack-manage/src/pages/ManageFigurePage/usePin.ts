@@ -9,7 +9,7 @@ interface PinInfo {
 export const usePin = (
   figureUrl: string,
   apiKey: string | null,
-  loadFigureData: (url: string) => Promise<void>
+  loadFigureData: (url: string) => Promise<void>,
 ) => {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
@@ -51,7 +51,7 @@ export const usePin = (
         setPinLoading(false);
       }
     },
-    [figureUrl, apiKey, loadFigureData]
+    [figureUrl, apiKey, loadFigureData],
   );
 
   const handleOpenPinDialog = () => {

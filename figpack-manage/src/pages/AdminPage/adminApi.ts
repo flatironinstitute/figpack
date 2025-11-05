@@ -124,7 +124,7 @@ export const getUsers = async (apiKey: string): Promise<UsersResult> => {
 // Create a new user
 export const createUser = async (
   apiKey: string,
-  user: Omit<User, "createdAt">
+  user: Omit<User, "createdAt">,
 ): Promise<UserResult> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
@@ -172,7 +172,7 @@ export const createUser = async (
 export const updateUser = async (
   apiKey: string,
   email: string,
-  userData: Partial<Omit<User, "email" | "createdAt">>
+  userData: Partial<Omit<User, "email" | "createdAt">>,
 ): Promise<UserResult> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
@@ -220,7 +220,7 @@ export const updateUser = async (
 // Delete a user
 export const deleteUser = async (
   apiKey: string,
-  email: string
+  email: string,
 ): Promise<{ success: boolean; message?: string }> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
@@ -266,8 +266,12 @@ export const deleteUser = async (
 // Get usage statistics for all users
 export const getAllUsersUsageStats = async (
   apiKey: string,
-  users: User[]
-): Promise<{ success: boolean; message?: string; usageStats?: UserUsageStats }> => {
+  users: User[],
+): Promise<{
+  success: boolean;
+  message?: string;
+  usageStats?: UserUsageStats;
+}> => {
   if (!apiKey) {
     return { success: false, message: "No API key available" };
   }
@@ -280,20 +284,26 @@ export const getAllUsersUsageStats = async (
     // Fetch usage stats for each user in parallel
     const promises = users.map(async (user) => {
       try {
-        const response = await fetch(`${FIGPACK_API_BASE_URL}/user/usage-stats?email=${encodeURIComponent(user.email)}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
+        const response = await fetch(
+          `${FIGPACK_API_BASE_URL}/user/usage-stats?email=${encodeURIComponent(user.email)}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+            },
           },
-        });
+        );
 
         const result: UsageStatsResult = await response.json();
-        
+
         if (result.success && result.stats) {
           return { email: user.email, stats: result.stats };
         } else {
-          console.warn(`Failed to get usage stats for ${user.email}:`, result.message);
+          console.warn(
+            `Failed to get usage stats for ${user.email}:`,
+            result.message,
+          );
           return null;
         }
       } catch (error) {
@@ -303,11 +313,11 @@ export const getAllUsersUsageStats = async (
     });
 
     const results = await Promise.all(promises);
-    
+
     // Build the usage stats object
     const usageStats: UserUsageStats = {};
     let successCount = 0;
-    
+
     results.forEach((result) => {
       if (result) {
         usageStats[result.email] = result.stats;

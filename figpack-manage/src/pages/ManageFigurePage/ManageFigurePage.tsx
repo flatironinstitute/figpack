@@ -66,7 +66,7 @@ const ManageFigurePage: React.FC = () => {
   const { renewLoading, apiError, handleRenew } = useRenew(
     figureUrl,
     apiKey,
-    loadFigureData
+    loadFigureData,
   );
 
   const { deleteLoading, deleteError, handleDelete } = useDelete(
@@ -75,7 +75,7 @@ const ManageFigurePage: React.FC = () => {
     () => {
       // On successful delete, redirect to home
       window.location.href = "/";
-    }
+    },
   );
 
   const handleOpenDeleteDialog = useCallback(() => {
@@ -96,12 +96,12 @@ const ManageFigurePage: React.FC = () => {
     async (pinInfo: { name: string; figureDescription: string }) => {
       if (!handlePin) {
         throw new Error(
-          "Pin functionality is not available without an API key"
+          "Pin functionality is not available without an API key",
         );
       }
       await handlePin(pinInfo);
     },
-    [handlePin]
+    [handlePin],
   );
 
   if (loading) {
@@ -190,7 +190,7 @@ const ManageFigurePage: React.FC = () => {
           onConfirm={() => {
             if (!handleDelete) {
               throw new Error(
-                "Delete functionality is not available without an API key"
+                "Delete functionality is not available without an API key",
               );
             }
             handleDelete();

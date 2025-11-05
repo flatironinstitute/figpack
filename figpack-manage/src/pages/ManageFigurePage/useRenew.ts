@@ -1,10 +1,10 @@
-import { useCallback, useState } from 'react';
-import { FIGPACK_API_BASE_URL } from '../../config';
+import { useCallback, useState } from "react";
+import { FIGPACK_API_BASE_URL } from "../../config";
 
 export const useRenew = (
   figureUrl: string,
   apiKey: string | null,
-  loadFigureData: (url: string) => Promise<void>
+  loadFigureData: (url: string) => Promise<void>,
 ) => {
   const [renewLoading, setRenewLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);

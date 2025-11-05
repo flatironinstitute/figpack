@@ -99,7 +99,7 @@ const FiguresPage: React.FC = () => {
 
     const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
     const hours = Math.floor(
-      (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
     );
 
     if (days > 0) return `${days}d ${hours}h`;
@@ -199,7 +199,7 @@ const FiguresPage: React.FC = () => {
 
   const handlePageChange = (
     _event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPage(value);
   };
@@ -423,7 +423,7 @@ const FiguresPage: React.FC = () => {
                             <Link
                               onClick={() => {
                                 const newUrl = `/figure?figure_url=${encodeURIComponent(
-                                  figure.figureUrl
+                                  figure.figureUrl,
                                 )}`;
                                 navigate(newUrl);
                               }}
@@ -513,7 +513,7 @@ const FiguresPage: React.FC = () => {
                               <Tooltip title="Expires soon">
                                 <Chip
                                   label={getTimeUntilExpiration(
-                                    figure.expiration
+                                    figure.expiration,
                                   )}
                                   color="warning"
                                   size="small"
@@ -523,7 +523,7 @@ const FiguresPage: React.FC = () => {
                             ) : (
                               <Chip
                                 label={getTimeUntilExpiration(
-                                  figure.expiration
+                                  figure.expiration,
                                 )}
                                 color="default"
                                 size="small"
@@ -587,7 +587,7 @@ const FiguresPage: React.FC = () => {
                                 component="a"
                                 onClick={() => {
                                   const newUrl = `/figure?figure_url=${encodeURIComponent(
-                                    figure.figureUrl
+                                    figure.figureUrl,
                                   )}`;
                                   navigate(newUrl);
                                 }}

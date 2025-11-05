@@ -37,12 +37,16 @@ interface FinalizeResponse {
 export async function getBatchSignedUrls(
   apiKey: string,
   figureUrl: string,
-  files: { [relativePath: string]: string | ArrayBuffer | null }
-): Promise<{ success: boolean; message?: string; signedUrls?: SignedUrlInfo[] }> {
+  files: { [relativePath: string]: string | ArrayBuffer | null },
+): Promise<{
+  success: boolean;
+  message?: string;
+  signedUrls?: SignedUrlInfo[];
+}> {
   try {
     // Prepare files data for the batch request
     const filesData: UploadFile[] = [];
-    
+
     for (const [relativePath, content] of Object.entries(files)) {
       if (content === null) continue; // Skip deleted files
 
@@ -54,11 +58,13 @@ export async function getBatchSignedUrls(
       } else if ("buffer" in content) {
         buf = (content as any).buffer;
       } else {
-        throw new Error(`Unsupported file content type for ${relativePath}: ${typeof content}`);
+        throw new Error(
+          `Unsupported file content type for ${relativePath}: ${typeof content}`,
+        );
       }
-      
+
       const size = buf.byteLength || buf.length || 0;
-      
+
       filesData.push({
         relativePath,
         size,
@@ -71,16 +77,16 @@ export async function getBatchSignedUrls(
     };
 
     const response = await fetch(`${FIGPACK_API_BASE_URL}/upload`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
       },
       body: JSON.stringify(payload),
     });
 
     const data: BatchUploadResponse = await response.json();
-    
+
     if (!response.ok) {
       return {
         success: false,
@@ -94,7 +100,7 @@ export async function getBatchSignedUrls(
       signedUrls: data.signedUrls,
     };
   } catch (error) {
-    console.error('Error getting batch signed URLs:', error);
+    console.error("Error getting batch signed URLs:", error);
     return {
       success: false,
       message: `Network error: ${error}`,
@@ -108,7 +114,7 @@ export async function getBatchSignedUrls(
 export async function uploadFileToSignedUrl(
   signedUrl: string,
   content: string | ArrayBuffer,
-  relativePath: string
+  relativePath: string,
 ): Promise<{ success: boolean; message?: string }> {
   try {
     let buf;
@@ -127,9 +133,9 @@ export async function uploadFileToSignedUrl(
     const contentType = _determineContentType(relativePath);
 
     const response = await fetch(signedUrl, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': contentType,
+        "Content-Type": contentType,
       },
       body,
     });
@@ -143,7 +149,7 @@ export async function uploadFileToSignedUrl(
 
     return { success: true };
   } catch (error) {
-    console.error('Error uploading file to signed URL:', error);
+    console.error("Error uploading file to signed URL:", error);
     return {
       success: false,
       message: `Upload error: ${error}`,
@@ -156,7 +162,7 @@ export async function uploadFileToSignedUrl(
  */
 export async function finalizeFigureUpload(
   apiKey: string,
-  figureUrl: string
+  figureUrl: string,
 ): Promise<FinalizeResponse> {
   try {
     const payload: FinalizeRequest = {
@@ -164,16 +170,16 @@ export async function finalizeFigureUpload(
     };
 
     const response = await fetch(`${FIGPACK_API_BASE_URL}/figures/finalize`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
       },
       body: JSON.stringify(payload),
     });
 
     const data: FinalizeResponse = await response.json();
-    
+
     if (!response.ok) {
       return {
         success: false,
@@ -183,7 +189,7 @@ export async function finalizeFigureUpload(
 
     return data;
   } catch (error) {
-    console.error('Error finalizing figure upload:', error);
+    console.error("Error finalizing figure upload:", error);
     return {
       success: false,
       message: `Network error: ${error}`,
@@ -198,9 +204,14 @@ export async function uploadFigureFiles(
   apiKey: string,
   figureUrl: string,
   files: { [relativePath: string]: string | ArrayBuffer | null },
-  onProgress?: (progress: number, currentFile?: string, totalFiles?: number, completedFiles?: number) => void
+  onProgress?: (
+    progress: number,
+    currentFile?: string,
+    totalFiles?: number,
+    completedFiles?: number,
+  ) => void,
 ): Promise<{ success: boolean; message?: string; uploadedFiles?: string[] }> {
-  const filePaths = Object.keys(files).filter(path => files[path] !== null);
+  const filePaths = Object.keys(files).filter((path) => files[path] !== null);
   const totalFiles = filePaths.length;
   let completedFiles = 0;
   const uploadedFiles: string[] = [];
@@ -209,7 +220,7 @@ export async function uploadFigureFiles(
     if (totalFiles === 0) {
       return {
         success: true,
-        message: 'No files to upload',
+        message: "No files to upload",
         uploadedFiles: [],
       };
     }
@@ -242,13 +253,19 @@ export async function uploadFigureFiles(
         (completedFiles / totalFiles) * 100,
         filePath,
         totalFiles,
-        completedFiles
+        completedFiles,
       );
 
       // Upload the file
-      const uploadResponse = await uploadFileToSignedUrl(signedUrl, fileContent, filePath);
+      const uploadResponse = await uploadFileToSignedUrl(
+        signedUrl,
+        fileContent,
+        filePath,
+      );
       if (!uploadResponse.success) {
-        throw new Error(`Failed to upload ${filePath}: ${uploadResponse.message}`);
+        throw new Error(
+          `Failed to upload ${filePath}: ${uploadResponse.message}`,
+        );
       }
 
       uploadedFiles.push(filePath);
@@ -258,7 +275,7 @@ export async function uploadFigureFiles(
         (completedFiles / totalFiles) * 100,
         filePath,
         totalFiles,
-        completedFiles
+        completedFiles,
       );
     }
 
@@ -274,7 +291,7 @@ export async function uploadFigureFiles(
       uploadedFiles,
     };
   } catch (error) {
-    console.error('Error uploading figure files:', error);
+    console.error("Error uploading figure files:", error);
     return {
       success: false,
       message: `Upload failed: ${error}`,
@@ -287,20 +304,20 @@ export async function uploadFigureFiles(
  * Determine content type for upload based on file extension
  */
 function _determineContentType(filePath: string): string {
-  const fileName = filePath.split('/').pop() || '';
-  const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
+  const fileName = filePath.split("/").pop() || "";
+  const extension = fileName.includes(".") ? fileName.split(".").pop() : "";
 
   const contentTypeMap: { [key: string]: string } = {
-    'json': 'application/json',
-    'html': 'text/html',
-    'css': 'text/css',
-    'js': 'application/javascript',
-    'png': 'image/png',
-    'zattrs': 'application/json',
-    'zgroup': 'application/json',
-    'zarray': 'application/json',
-    'zmetadata': 'application/json',
+    json: "application/json",
+    html: "text/html",
+    css: "text/css",
+    js: "application/javascript",
+    png: "image/png",
+    zattrs: "application/json",
+    zgroup: "application/json",
+    zarray: "application/json",
+    zmetadata: "application/json",
   };
 
-  return contentTypeMap[extension || ''] || 'application/octet-stream';
+  return contentTypeMap[extension || ""] || "application/octet-stream";
 }

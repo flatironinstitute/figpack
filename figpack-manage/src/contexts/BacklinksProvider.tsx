@@ -11,7 +11,7 @@ export function BacklinksProvider({ children }: { children: React.ReactNode }) {
     const fetchBacklinks = async () => {
       try {
         const response = await fetch(
-          `https://magland.github.io/figpack-url-refs/figpack-url-refs.json?cb=${Date.now()}`
+          `https://magland.github.io/figpack-url-refs/figpack-url-refs.json?cb=${Date.now()}`,
         );
         if (!response.ok) {
           throw new Error("Failed to fetch backlinks");
@@ -20,7 +20,7 @@ export function BacklinksProvider({ children }: { children: React.ReactNode }) {
         setBacklinks(data);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load backlinks"
+          err instanceof Error ? err.message : "Failed to load backlinks",
         );
       } finally {
         setLoading(false);

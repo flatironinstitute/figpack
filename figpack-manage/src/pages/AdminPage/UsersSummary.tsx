@@ -94,7 +94,13 @@ const UsersSummary: React.FC<UsersSummaryProps> = ({
               size="small"
               onClick={onLoadUsageStats}
               disabled={usageStatsLoading}
-              startIcon={usageStatsLoading ? <CircularProgress size={16} /> : <BarChart />}
+              startIcon={
+                usageStatsLoading ? (
+                  <CircularProgress size={16} />
+                ) : (
+                  <BarChart />
+                )
+              }
             >
               {usageStatsLoading ? "Loading..." : "Load Usage Stats"}
             </Button>
@@ -188,22 +194,34 @@ const UsersSummary: React.FC<UsersSummaryProps> = ({
                   <>
                     <TableCell align="center">
                       <Typography variant="body2">
-                        {usageStats[user.email] ? formatNumber(usageStats[user.email].total.figureCount) : '-'}
+                        {usageStats[user.email]
+                          ? formatNumber(
+                              usageStats[user.email].total.figureCount,
+                            )
+                          : "-"}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Typography variant="body2">
-                        {usageStats[user.email] ? formatBytes(usageStats[user.email].total.totalSize) : '-'}
+                        {usageStats[user.email]
+                          ? formatBytes(usageStats[user.email].total.totalSize)
+                          : "-"}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Typography variant="body2" color="success.main">
-                        {usageStats[user.email] ? formatNumber(usageStats[user.email].pinned.figureCount) : '-'}
+                        {usageStats[user.email]
+                          ? formatNumber(
+                              usageStats[user.email].pinned.figureCount,
+                            )
+                          : "-"}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Typography variant="body2" color="success.main">
-                        {usageStats[user.email] ? formatBytes(usageStats[user.email].pinned.totalSize) : '-'}
+                        {usageStats[user.email]
+                          ? formatBytes(usageStats[user.email].pinned.totalSize)
+                          : "-"}
                       </Typography>
                     </TableCell>
                   </>

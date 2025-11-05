@@ -23,7 +23,7 @@ export const getStatusLabel = (status: string) => {
 };
 
 export const getStatusColor = (
-  status: string
+  status: string,
 ): "success" | "error" | "info" | "default" => {
   switch (status) {
     case "completed":

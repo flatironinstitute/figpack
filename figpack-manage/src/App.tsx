@@ -8,7 +8,6 @@ import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 import FiguresPage from "./pages/FiguresPage/FiguresPage";
 import AnnotatePage from "./pages/AnnotatePage/AnnotatePage";
 import EditFigureServicePage from "./pages/EditFigureServicePage/EditFigureServicePage";
-import SourceUrlViewPage from "./pages/SourceUrlViewPage/SourceUrlViewPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BacklinksProvider } from "./contexts/BacklinksProvider";
 import LoginButton from "./components/LoginButton";
@@ -17,49 +16,51 @@ import NavigationMenu from "./components/NavigationMenu";
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const showAppBar = location.pathname !== '/edit-figure-service' && location.pathname !== '/view';
+  const showAppBar = location.pathname !== "/edit-figure-service";
   return (
     <AuthProvider>
       <BacklinksProvider>
-        {showAppBar && <AppBar
-          position="fixed"
+        {showAppBar && (
+          <AppBar
+            position="fixed"
+            sx={{
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+              left: "50%",
+              transform: "translateX(-50%)",
+              maxWidth: 1200,
+              width: "calc(100% - 32px)",
+              borderRadius: "12px",
+              marginTop: "8px",
+              // Let the theme handle background and shadows
+            }}
+          >
+            <Toolbar sx={{ px: 2 }}>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  mr: 2,
+                  cursor: "pointer",
+                  "&:hover": {
+                    opacity: 0.8,
+                  },
+                }}
+                onClick={() => navigate("/")}
+              >
+                Figpack
+              </Typography>
+              <Box sx={{ flexGrow: 1 }} />
+              <NavigationMenu />
+              <LoginButton />
+            </Toolbar>
+          </AppBar>
+        )}
+        <Container
+          maxWidth="lg"
           sx={{
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-            left: "50%",
-            transform: "translateX(-50%)",
-            maxWidth: 1200,
-            width: "calc(100% - 32px)",
-            borderRadius: "12px",
-            marginTop: "8px",
-            // Let the theme handle background and shadows
-          }}
-        >
-          <Toolbar sx={{ px: 2 }}>
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{
-                mr: 2,
-                cursor: "pointer",
-                "&:hover": {
-                  opacity: 0.8,
-                },
-              }}
-              onClick={() => navigate("/")}
-            >
-              Figpack
-            </Typography>
-            <Box sx={{ flexGrow: 1 }} />
-            <NavigationMenu />
-            <LoginButton />
-          </Toolbar>
-        </AppBar>}
-        <Container 
-          maxWidth="lg" 
-          sx={{ 
-            mt: showAppBar ? 12 : 0, 
+            mt: showAppBar ? 12 : 0,
             mb: showAppBar ? 4 : 0,
-            p: showAppBar ? undefined : 0
+            p: showAppBar ? undefined : 0,
           }}
         >
           <Routes>
@@ -67,9 +68,11 @@ function App() {
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/figures" element={<FiguresPage />} />
             <Route path="/figure" element={<ManageFigurePage />} />
-            <Route path="/edit-figure-service" element={<EditFigureServicePage />} />
+            <Route
+              path="/edit-figure-service"
+              element={<EditFigureServicePage />}
+            />
             <Route path="/annotate" element={<AnnotatePage />} />
-            <Route path="/view" element={<SourceUrlViewPage />} />
             <Route path="/" element={<HomePage />} />
           </Routes>
         </Container>

@@ -17,7 +17,11 @@ import {
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import ApiKeyField from "../../components/ApiKeyField";
-import { updateUserProfile, regenerateUserApiKey, getUserUsageStats } from "./userProfileApi";
+import {
+  updateUserProfile,
+  regenerateUserApiKey,
+  getUserUsageStats,
+} from "./userProfileApi";
 import { useAuth } from "../../hooks/useAuth";
 import { formatBytes, formatNumber } from "../../utils/formatUtils";
 
@@ -82,7 +86,9 @@ const UserProfilePage: React.FC = () => {
         if (result.success && result.stats) {
           setUsageStats(result.stats);
         } else {
-          setUsageStatsError(result.message || "Failed to load usage statistics");
+          setUsageStatsError(
+            result.message || "Failed to load usage statistics",
+          );
         }
       } catch (error) {
         setUsageStatsError(`Error loading usage statistics: ${error}`);
@@ -126,7 +132,7 @@ const UserProfilePage: React.FC = () => {
       if (result.success && result.user) {
         login(result.user.apiKey); // Update stored API key
         setSuccess(
-          "API key regenerated successfully. Please save your new API key!"
+          "API key regenerated successfully. Please save your new API key!",
         );
         setRegenerateDialogOpen(false);
       } else {
@@ -304,11 +310,22 @@ const UserProfilePage: React.FC = () => {
                 <Stack spacing={3}>
                   {/* Total Statistics */}
                   <Box>
-                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    <Typography
+                      variant="subtitle1"
+                      gutterBottom
+                      sx={{ fontWeight: "bold" }}
+                    >
                       Total Usage
                     </Typography>
                     <Box display="flex" gap={2} flexWrap="wrap">
-                      <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="grey.50" borderRadius={1}>
+                      <Box
+                        flex="1"
+                        minWidth="200px"
+                        textAlign="center"
+                        p={2}
+                        bgcolor="grey.50"
+                        borderRadius={1}
+                      >
                         <Typography variant="h4" color="primary">
                           {formatNumber(usageStats.total.figureCount)}
                         </Typography>
@@ -316,7 +333,14 @@ const UserProfilePage: React.FC = () => {
                           Figures
                         </Typography>
                       </Box>
-                      <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="grey.50" borderRadius={1}>
+                      <Box
+                        flex="1"
+                        minWidth="200px"
+                        textAlign="center"
+                        p={2}
+                        bgcolor="grey.50"
+                        borderRadius={1}
+                      >
                         <Typography variant="h4" color="primary">
                           {formatNumber(usageStats.total.totalFiles)}
                         </Typography>
@@ -324,7 +348,14 @@ const UserProfilePage: React.FC = () => {
                           Files
                         </Typography>
                       </Box>
-                      <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="grey.50" borderRadius={1}>
+                      <Box
+                        flex="1"
+                        minWidth="200px"
+                        textAlign="center"
+                        p={2}
+                        bgcolor="grey.50"
+                        borderRadius={1}
+                      >
                         <Typography variant="h4" color="primary">
                           {formatBytes(usageStats.total.totalSize)}
                         </Typography>
@@ -338,11 +369,22 @@ const UserProfilePage: React.FC = () => {
                   {/* Pinned Usage */}
                   {usageStats.total.figureCount > 0 && (
                     <Box>
-                      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                      <Typography
+                        variant="subtitle1"
+                        gutterBottom
+                        sx={{ fontWeight: "bold" }}
+                      >
                         Pinned Usage
                       </Typography>
                       <Box display="flex" gap={2} flexWrap="wrap">
-                        <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="success.50" borderRadius={1}>
+                        <Box
+                          flex="1"
+                          minWidth="200px"
+                          textAlign="center"
+                          p={2}
+                          bgcolor="success.50"
+                          borderRadius={1}
+                        >
                           <Typography variant="h4" color="success.main">
                             {formatNumber(usageStats.pinned.figureCount)}
                           </Typography>
@@ -350,7 +392,14 @@ const UserProfilePage: React.FC = () => {
                             Pinned Figures
                           </Typography>
                         </Box>
-                        <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="success.50" borderRadius={1}>
+                        <Box
+                          flex="1"
+                          minWidth="200px"
+                          textAlign="center"
+                          p={2}
+                          bgcolor="success.50"
+                          borderRadius={1}
+                        >
                           <Typography variant="h4" color="success.main">
                             {formatNumber(usageStats.pinned.totalFiles)}
                           </Typography>
@@ -358,7 +407,14 @@ const UserProfilePage: React.FC = () => {
                             Pinned Files
                           </Typography>
                         </Box>
-                        <Box flex="1" minWidth="200px" textAlign="center" p={2} bgcolor="success.50" borderRadius={1}>
+                        <Box
+                          flex="1"
+                          minWidth="200px"
+                          textAlign="center"
+                          p={2}
+                          bgcolor="success.50"
+                          borderRadius={1}
+                        >
                           <Typography variant="h4" color="success.main">
                             {formatBytes(usageStats.pinned.totalSize)}
                           </Typography>
@@ -372,7 +428,8 @@ const UserProfilePage: React.FC = () => {
 
                   {usageStats.total.figureCount === 0 && (
                     <Alert severity="info">
-                      You haven't uploaded any completed figures yet. Upload your first figure to see usage statistics here.
+                      You haven't uploaded any completed figures yet. Upload
+                      your first figure to see usage statistics here.
                     </Alert>
                   )}
                 </Stack>

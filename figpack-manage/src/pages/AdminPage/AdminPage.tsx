@@ -96,7 +96,7 @@ const AdminPage: React.FC = () => {
 
       setLoading(false);
     },
-    [apiKey]
+    [apiKey],
   );
 
   // Load on mount if logged in
@@ -129,7 +129,7 @@ const AdminPage: React.FC = () => {
 
   const handleUpdateUser = async (
     email: string,
-    userData: Partial<Omit<User, "email" | "createdAt">>
+    userData: Partial<Omit<User, "email" | "createdAt">>,
   ) => {
     setSaving(true);
     setError(null);
@@ -179,7 +179,7 @@ const AdminPage: React.FC = () => {
 
   // Bucket management handlers
   const handleAddBucket = async (
-    bucketData: Omit<Bucket, "createdAt" | "updatedAt">
+    bucketData: Omit<Bucket, "createdAt" | "updatedAt">,
   ) => {
     setSaving(true);
     setError(null);
@@ -202,7 +202,7 @@ const AdminPage: React.FC = () => {
 
   const handleUpdateBucket = async (
     name: string,
-    bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>
+    bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>,
   ) => {
     setSaving(true);
     setError(null);

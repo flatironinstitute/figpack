@@ -48,7 +48,7 @@ const DocumentReferences: React.FC<DocumentReferencesProps> = ({
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to load document references"
+            : "Failed to load document references",
         );
       } finally {
         setLoading(false);

@@ -35,7 +35,7 @@ const EditFigureServicePage: React.FC = () => {
     status: "awaiting_permission",
   });
   const [figureUrlFromQuery, setFigureUrlFromQuery] = useState<string | null>(
-    null
+    null,
   );
   const [messageHandler, setMessageHandler] = useState<
     IframeMessageHandler | undefined
@@ -57,13 +57,13 @@ const EditFigureServicePage: React.FC = () => {
       if (payload.figureUrl !== uploadState.approvedFigureUrl) {
         console.warn(
           "Upload request for unauthorized figure URL:",
-          payload.figureUrl
+          payload.figureUrl,
         );
         return;
       }
 
       const fileCount = Object.keys(payload.files).filter(
-        (path) => payload.files[path] !== null
+        (path) => payload.files[path] !== null,
       ).length;
 
       // Start upload immediately since permission is already granted
@@ -95,9 +95,9 @@ const EditFigureServicePage: React.FC = () => {
               progress,
               currentFile,
               totalFiles,
-              completedFiles
+              completedFiles,
             );
-          }
+          },
         );
 
         if (result.success) {
@@ -109,7 +109,7 @@ const EditFigureServicePage: React.FC = () => {
           }));
           handler.sendSuccess(
             result.message || "Upload completed successfully",
-            result.uploadedFiles || []
+            result.uploadedFiles || [],
           );
 
           // Auto-return to ready state after 3 seconds

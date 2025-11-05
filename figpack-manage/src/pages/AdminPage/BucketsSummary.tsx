@@ -61,7 +61,7 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
   };
 
   const getProviderColor = (
-    provider: string
+    provider: string,
   ): "primary" | "secondary" | "default" => {
     switch (provider) {
       case "aws":
@@ -196,9 +196,7 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
                               label={
                                 bucket.authorizedUsers.length === 0
                                   ? "Admin Only"
-                                  : `${
-                                      bucket.authorizedUsers.length
-                                    } User${
+                                  : `${bucket.authorizedUsers.length} User${
                                       bucket.authorizedUsers.length === 1
                                         ? ""
                                         : "s"

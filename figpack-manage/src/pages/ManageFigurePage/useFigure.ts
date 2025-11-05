@@ -44,7 +44,7 @@ interface UseFigureResult {
 
 export const useFigure = (figureUrl: string): UseFigureResult => {
   const [figpackStatus, setFigpackStatus] = useState<FigpackStatus | null>(
-    null
+    null,
   );
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -143,7 +143,7 @@ export const useFigure = (figureUrl: string): UseFigureResult => {
         setLoading(false);
       }
     },
-    [figureUrl]
+    [figureUrl],
   );
 
   useEffect(() => {

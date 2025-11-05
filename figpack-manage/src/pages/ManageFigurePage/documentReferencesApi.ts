@@ -16,19 +16,19 @@ interface GetDocumentsReferencingFigureResponse {
 }
 
 export const getDocumentsReferencingFigure = async (
-  figureUrl: string
+  figureUrl: string,
 ): Promise<DocumentReference[]> => {
   try {
     const response = await fetch(
       `${FIGPACK_API_BASE_URL}/documents/get-documents-referencing-figure?figureUrl=${encodeURIComponent(
-        figureUrl
+        figureUrl,
       )}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     if (!response.ok) {

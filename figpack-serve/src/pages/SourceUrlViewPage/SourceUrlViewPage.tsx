@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -9,15 +7,18 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { getFigureBySourceUrl } from "./sourceUrlApi";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 const SourceUrlViewPage = () => {
   const [searchParams] = useSearchParams();
   const sourceUrl = searchParams.get("source");
+  const forceParam = searchParams.get("force");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [figureUrl, setFigureUrl] = useState<string | null>(null);
+  const figureUrl = figureUrlFromSourceUrl(sourceUrl);
+  const [figureExists, setFigureExists] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{
     okay: boolean;
@@ -34,14 +35,14 @@ const SourceUrlViewPage = () => {
 
     try {
       const response = await fetch(
-        "https://upload-figpack-figure-from-source.figpack.org/upload",
+        "https://figpack-serve-worker.figurl.workers.dev/upload",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ source_url: sourceUrl }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -50,13 +51,20 @@ const SourceUrlViewPage = () => {
 
       const result = await response.json();
       if (result.okay || result.ok) {
+        if (result.url !== figureUrl) {
+          console.warn(
+            "Warning: returned figure URL does not match expected URL",
+            result.url,
+            figureUrl,
+          );
+        }
         setUploadResult(result);
       } else {
         setUploadError("Upload failed. Please try again.");
       }
     } catch (err) {
       setUploadError(
-        err instanceof Error ? err.message : "Failed to upload figure"
+        err instanceof Error ? err.message : "Failed to upload figure",
       );
     } finally {
       setUploadLoading(false);
@@ -64,7 +72,11 @@ const SourceUrlViewPage = () => {
   };
 
   const handleReload = () => {
-    window.location.reload();
+    // Remove force parameter when reloading
+    const newSearchParams = new URLSearchParams(window.location.search);
+    newSearchParams.delete("force");
+    const newUrl = `${window.location.pathname}?${newSearchParams.toString()}`;
+    window.location.href = newUrl;
   };
 
   useEffect(() => {
@@ -72,31 +84,40 @@ const SourceUrlViewPage = () => {
       setError("No source URL provided. Please add ?source=<url> to the URL.");
       return;
     }
+  }, [sourceUrl]);
 
-    const fetchFigure = async () => {
+  useEffect(() => {
+    const checkFigureExists = async () => {
+      if (!figureUrl) return;
+
+      // If force=1 is set, skip the check and act like figure doesn't exist
+      if (forceParam === "1") {
+        setError("Figure not found for the provided source URL.");
+        return;
+      }
+
       setLoading(true);
       setError(null);
+
       try {
-        const response = await getFigureBySourceUrl(sourceUrl);
-        if (response.success && response.figure && response.figure.figureUrl) {
-          setFigureUrl(response.figure.figureUrl);
+        const response = await fetch(figureUrl, { method: "HEAD" });
+        if (response.ok) {
+          setFigureExists(true);
         } else {
-          setError(response.message);
+          setError("Figure not found for the provided source URL.");
         }
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to query figure"
-        );
+      } catch {
+        setError("Error checking for figure existence.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFigure();
-  }, [sourceUrl]);
+    checkFigureExists();
+  }, [figureUrl, forceParam]);
 
   // If figure is found, display it in a full-page iframe
-  if (figureUrl) {
+  if (figureExists && figureUrl) {
     return (
       <Box
         sx={{
@@ -222,6 +243,15 @@ const SourceUrlViewPage = () => {
         )}
       </Paper>
     </Container>
+  );
+};
+
+const figureUrlFromSourceUrl = (sourceUrl: string | null) => {
+  if (!sourceUrl) return "";
+  return (
+    "https://serve-bucket.figpack.org/" +
+    (sourceUrl.split("://")[1] || "") +
+    "/index.html"
   );
 };
 

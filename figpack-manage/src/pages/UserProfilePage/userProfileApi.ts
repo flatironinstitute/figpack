@@ -46,18 +46,21 @@ interface UsageStatsResponse {
  */
 export async function getUserProfile(apiKey: string): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/user?cb=${Date.now()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+    const response = await fetch(
+      `${FIGPACK_API_BASE_URL}/user?cb=${Date.now()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
       },
-    });
+    );
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error getting user profile:', error);
+    console.error("Error getting user profile:", error);
     return {
       success: false,
       message: `Network error: ${error}`,
@@ -70,24 +73,27 @@ export async function getUserProfile(apiKey: string): Promise<ApiResponse> {
  */
 export async function updateUserProfile(
   apiKey: string,
-  userData: { name: string; researchDescription: string }
+  userData: { name: string; researchDescription: string },
 ): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/user?cb=${Date.now()}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+    const response = await fetch(
+      `${FIGPACK_API_BASE_URL}/user?cb=${Date.now()}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          user: userData,
+        }),
       },
-      body: JSON.stringify({
-        user: userData,
-      }),
-    });
+    );
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error updating user profile:', error);
+    console.error("Error updating user profile:", error);
     return {
       success: false,
       message: `Network error: ${error}`,
@@ -98,23 +104,28 @@ export async function updateUserProfile(
 /**
  * Regenerate user API key
  */
-export async function regenerateUserApiKey(apiKey: string): Promise<ApiResponse> {
+export async function regenerateUserApiKey(
+  apiKey: string,
+): Promise<ApiResponse> {
   try {
-    const response = await fetch(`${FIGPACK_API_BASE_URL}/user?cb=${Date.now()}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+    const response = await fetch(
+      `${FIGPACK_API_BASE_URL}/user?cb=${Date.now()}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          action: "regenerate",
+        }),
       },
-      body: JSON.stringify({
-        action: 'regenerate',
-      }),
-    });
+    );
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error regenerating API key:', error);
+    console.error("Error regenerating API key:", error);
     return {
       success: false,
       message: `Network error: ${error}`,
@@ -125,25 +136,30 @@ export async function regenerateUserApiKey(apiKey: string): Promise<ApiResponse>
 /**
  * Get user usage statistics
  */
-export async function getUserUsageStats(apiKey: string, email?: string): Promise<UsageStatsResponse> {
+export async function getUserUsageStats(
+  apiKey: string,
+  email?: string,
+): Promise<UsageStatsResponse> {
   try {
-    const url = new URL(`${FIGPACK_API_BASE_URL}/user/usage-stats?cb=${Date.now()}`);
+    const url = new URL(
+      `${FIGPACK_API_BASE_URL}/user/usage-stats?cb=${Date.now()}`,
+    );
     if (email) {
-      url.searchParams.append('email', email);
+      url.searchParams.append("email", email);
     }
 
     const response = await fetch(url.toString(), {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
       },
     });
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error getting usage statistics:', error);
+    console.error("Error getting usage statistics:", error);
     return {
       success: false,
       message: `Network error: ${error}`,

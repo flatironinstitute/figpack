@@ -46,7 +46,7 @@ export async function getBuckets(apiKey: string): Promise<BucketApiResponse> {
 
 export async function createBucket(
   apiKey: string,
-  bucketData: Omit<Bucket, "createdAt" | "updatedAt">
+  bucketData: Omit<Bucket, "createdAt" | "updatedAt">,
 ): Promise<BucketApiResponse> {
   try {
     const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {
@@ -74,7 +74,7 @@ export async function createBucket(
 export async function updateBucket(
   apiKey: string,
   name: string,
-  bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>
+  bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>,
 ): Promise<BucketApiResponse> {
   try {
     const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {
@@ -102,7 +102,7 @@ export async function updateBucket(
 
 export async function deleteBucket(
   apiKey: string,
-  name: string
+  name: string,
 ): Promise<BucketApiResponse> {
   try {
     const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {

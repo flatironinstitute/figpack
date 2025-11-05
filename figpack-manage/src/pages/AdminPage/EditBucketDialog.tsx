@@ -25,7 +25,7 @@ interface EditBucketDialogProps {
   onClose: () => void;
   onUpdateBucket: (
     name: string,
-    bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>
+    bucketData: Partial<Omit<Bucket, "name" | "createdAt" | "updatedAt">>,
   ) => void;
   bucket: Bucket | null;
   loading?: boolean;
@@ -140,8 +140,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       }
 
       onUpdateBucket(bucket.name, updateData);
-    }
-    else {
+    } else {
       console.log("Form validation failed:", formErrors);
     }
   };
@@ -274,9 +273,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
             fullWidth
             label="S3 Endpoint"
             value={formData.s3Endpoint}
-            onChange={(e) =>
-              handleInputChange("s3Endpoint", e.target.value)
-            }
+            onChange={(e) => handleInputChange("s3Endpoint", e.target.value)}
             error={!!formErrors.s3Endpoint}
             helperText={formErrors.s3Endpoint}
             placeholder={getEndpointPlaceholder()}
@@ -325,9 +322,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
                       if (
                         newUserEmail.trim() &&
                         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) &&
-                        !formData.authorizedUsers.includes(
-                          newUserEmail.trim()
-                        )
+                        !formData.authorizedUsers.includes(newUserEmail.trim())
                       ) {
                         setFormData((prev) => ({
                           ...prev,
@@ -348,17 +343,13 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
                     loading ||
                     !newUserEmail.trim() ||
                     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) ||
-                    formData.authorizedUsers.includes(
-                      newUserEmail.trim()
-                    )
+                    formData.authorizedUsers.includes(newUserEmail.trim())
                   }
                   onClick={() => {
                     if (
                       newUserEmail.trim() &&
                       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail) &&
-                      !formData.authorizedUsers.includes(
-                        newUserEmail.trim()
-                      )
+                      !formData.authorizedUsers.includes(newUserEmail.trim())
                     ) {
                       setFormData((prev) => ({
                         ...prev,
@@ -382,10 +373,9 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
                     onDelete={() =>
                       setFormData((prev) => ({
                         ...prev,
-                        authorizedUsers:
-                          prev.authorizedUsers.filter(
-                            (u: string) => u !== email
-                          ),
+                        authorizedUsers: prev.authorizedUsers.filter(
+                          (u: string) => u !== email,
+                        ),
                       }))
                     }
                     disabled={loading}

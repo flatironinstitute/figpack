@@ -53,7 +53,7 @@ export interface FigureListParams {
 }
 
 export const getFigures = async (
-  params: FigureListParams
+  params: FigureListParams,
 ): Promise<FigureListResponse> => {
   const {
     apiKey,
@@ -99,7 +99,7 @@ export const getFigures = async (
           "Content-Type": "application/json",
           "x-api-key": apiKey,
         },
-      }
+      },
     );
 
     const result = await response.json();

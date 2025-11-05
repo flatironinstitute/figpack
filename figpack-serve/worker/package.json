@@ -1,5 +1,5 @@
 {
-  "name": "upload-figpack-figure-from-source",
+  "name": "figpack-serve-worker",
   "private": true,
   "type": "module",
   "scripts": {
