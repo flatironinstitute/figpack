@@ -382,13 +382,14 @@ export async function handleUpdateDocument(request: Request, env: Env, rateLimit
 
 export async function handleDeleteDocument(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
-		const body = (await request.json()) as any;
-		const { documentId } = body;
+		// get the document ID from query parameters
+		const url = new URL(request.url);
+		const documentId = url.searchParams.get('documentId');
 
 		const apiKey = request.headers.get('x-api-key');
 
 		if (!documentId) {
-			return json({ success: false, message: 'Missing required field: documentId' }, 400);
+			return json({ success: false, message: 'Missing required query parameter: documentId' }, 400);
 		}
 
 		if (!apiKey) {

@@ -168,7 +168,7 @@ export default {
 		}
 
 		if (url.pathname === '/documents/delete') {
-			if (request.method.toUpperCase() === 'POST') {
+			if (request.method.toUpperCase() === 'DELETE') {
 				return handleDeleteDocument(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);

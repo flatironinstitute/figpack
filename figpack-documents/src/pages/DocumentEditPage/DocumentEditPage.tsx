@@ -56,14 +56,10 @@ const DocumentEditPage: React.FC = () => {
   const [newViewerEmail, setNewViewerEmail] = useState("");
   const [newEditorEmail, setNewEditorEmail] = useState("");
 
-  console.log('--- api key:', apiKey);
-
   // Load document
   const loadDocument = useCallback(async () => {
     if (!documentId) return;
     if (!apiKey) return;
-
-    console.log('--- loading document:', documentId, apiKey);
 
     setLoading(true);
     setError(null);

@@ -22,7 +22,6 @@ const MarkdownEditor: FunctionComponent<Props> = ({
 }) => {
   const handleChange = useCallback(
     (value: string | undefined) => {
-      console.log("MarkdownEditor: handleChange", value);
       onTextChange(value || "");
     },
     [onTextChange],
