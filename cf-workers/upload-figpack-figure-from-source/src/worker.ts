@@ -16,7 +16,7 @@ export interface Env {
 export class FigpackContainer extends Container {
   // figpack HTTP server in container listens here (see app.py)
   defaultPort = 8080;
-  sleepAfter = "5m";
+  sleepAfter = "1m";
 
   // Make the Worker secret available inside the container process
   envVars = {
