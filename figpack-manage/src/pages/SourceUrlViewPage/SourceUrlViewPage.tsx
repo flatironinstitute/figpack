@@ -3,11 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   Container,
   Paper,
   Typography,
-  Link,
 } from "@mui/material";
 import { getFigureBySourceUrl } from "./sourceUrlApi";
 
@@ -18,6 +18,54 @@ const SourceUrlViewPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [figureUrl, setFigureUrl] = useState<string | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<{
+    okay: boolean;
+    stdout: string;
+  } | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleUpload = async () => {
+    if (!sourceUrl) return;
+
+    setUploadLoading(true);
+    setUploadError(null);
+    setUploadResult(null);
+
+    try {
+      const response = await fetch(
+        "https://upload-figpack-figure-from-source.figpack.org/upload",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ source_url: sourceUrl }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (result.okay || result.ok) {
+        setUploadResult(result);
+      } else {
+        setUploadError("Upload failed. Please try again.");
+      }
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : "Failed to upload figure"
+      );
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleReload = () => {
+    window.location.reload();
+  };
 
   useEffect(() => {
     if (!sourceUrl) {
@@ -30,8 +78,8 @@ const SourceUrlViewPage = () => {
       setError(null);
       try {
         const response = await getFigureBySourceUrl(sourceUrl);
-        if (response.success && response.figureUrl) {
-          setFigureUrl(response.figureUrl);
+        if (response.success && response.figure && response.figure.figureUrl) {
+          setFigureUrl(response.figure.figureUrl);
         } else {
           setError(response.message);
         }
@@ -93,29 +141,49 @@ const SourceUrlViewPage = () => {
               {error}
             </Alert>
 
-            {sourceUrl && (
+            {sourceUrl && !uploadResult && (
               <Box sx={{ mt: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  How to Create a Figure for This Source URL
-                </Typography>
-
                 <Typography variant="body1" paragraph>
-                  No figure has been created for this source URL yet. To create
-                  one, follow these steps:
+                  No figure has been created for this source URL yet.
                 </Typography>
 
-                <Typography variant="body2" component="div" sx={{ mb: 2 }}>
-                  <strong>1. Get a Figpack API Key</strong>
-                  <br />
-                  Visit{" "}
-                  <Link
-                    href="https://figpack.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    figpack.org
-                  </Link>{" "}
-                  to request an API key. Set it as an environment variable:
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleUpload}
+                  disabled={uploadLoading}
+                  sx={{ mb: 2 }}
+                >
+                  {uploadLoading
+                    ? "Preparing and Uploading..."
+                    : "Prepare and Upload Figure"}
+                </Button>
+
+                {uploadLoading && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <CircularProgress size={24} />
+                    <Typography variant="body2" color="text.secondary">
+                      This may take a while. Please wait...
+                    </Typography>
+                  </Box>
+                )}
+
+                {uploadError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {uploadError}
+                  </Alert>
+                )}
+              </Box>
+            )}
+
+            {uploadResult && (
+              <Box sx={{ mt: 3 }}>
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  Figure uploaded successfully!
+                </Alert>
+
+                <Typography variant="h6" gutterBottom>
+                  Upload Output:
                 </Typography>
 
                 <Paper
@@ -125,50 +193,22 @@ const SourceUrlViewPage = () => {
                     bgcolor: "grey.100",
                     fontFamily: "monospace",
                     fontSize: "0.875rem",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    maxHeight: "400px",
+                    overflow: "auto",
                   }}
                 >
-                  export FIGPACK_API_KEY=your-api-key-here
+                  {uploadResult.stdout}
                 </Paper>
 
-                <Typography variant="body2" component="div" sx={{ mb: 2 }}>
-                  <strong>2. Install Figpack</strong>
-                </Typography>
-
-                <Paper
-                  sx={{
-                    p: 2,
-                    mb: 2,
-                    bgcolor: "grey.100",
-                    fontFamily: "monospace",
-                    fontSize: "0.875rem",
-                  }}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleReload}
                 >
-                  pip install figpack
-                </Paper>
-
-                <Typography variant="body2" component="div" sx={{ mb: 2 }}>
-                  <strong>3. Upload the Figure</strong>
-                  <br />
-                  Use the following command to download and upload the archive
-                  as a figure:
-                </Typography>
-
-                <Paper
-                  sx={{
-                    p: 2,
-                    mb: 2,
-                    bgcolor: "grey.100",
-                    fontFamily: "monospace",
-                    fontSize: "0.875rem",
-                    wordBreak: "break-all",
-                  }}
-                >
-                  figpack upload-from-source-url "{sourceUrl}" --title "Source: {sourceUrl}"
-                </Paper>
-
-                <Typography variant="body2" color="text.secondary">
-                  After uploading, refresh this page to view your figure.
-                </Typography>
+                  Reload Page to View Figure
+                </Button>
               </Box>
             )}
           </>

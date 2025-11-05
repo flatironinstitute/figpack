@@ -16,13 +16,14 @@ export async function getFigureBySourceUrl(
   sourceUrl: string
 ): Promise<GetBySourceUrlResponse> {
   const response = await fetch(
-    `${FIGPACK_API_BASE_URL}/figures/find-by-source-url`,
+    `${FIGPACK_API_BASE_URL}/figures/find-by-source-url?sourceUrl=${encodeURIComponent(
+      sourceUrl
+    )}`,
     {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ sourceUrl }),
     }
   );
 

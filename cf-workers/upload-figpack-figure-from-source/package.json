@@ -1,0 +1,12 @@
+{
+  "name": "upload-figpack-figure-from-source",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "^0.0.30"
+  }
+}

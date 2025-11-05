@@ -1,5 +1,7 @@
 # Change Log
 
+- Cloudflare worker: upload-figpack-figure-from-source
+
 ## [0.3.1] - 2025-11-04
 
 - Migration fixes
