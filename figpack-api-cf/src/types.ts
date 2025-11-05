@@ -75,7 +75,7 @@ export interface Figure {
 	figpackManageUrl?: string;
 	channel: 'default' | 'ephemeral';
 	isEphemeral: boolean;
-	sourceUrl?: string;
+	sourceUrl?: string /* Deprecated */;
 }
 
 // FigpackDocument interface

@@ -29,7 +29,7 @@ function rowToFigure(row: any): Figure {
 		figpackManageUrl: row.figpack_manage_url,
 		channel: row.channel,
 		isEphemeral: row.is_ephemeral === 1,
-		sourceUrl: row.source_url,
+		// sourceUrl: row.source_url,
 	};
 }
 

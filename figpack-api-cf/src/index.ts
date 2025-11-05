@@ -11,7 +11,6 @@ import {
 	handleListFigures,
 	handleDeleteFigure,
 	handleFinalizeFigure,
-	handleFindFigureBySourceUrl,
 } from './handlers/figuresHandler';
 import {
 	handleCreateDocument,
@@ -135,13 +134,6 @@ export default {
 		if (url.pathname === '/figures/finalize') {
 			if (request.method.toUpperCase() === 'POST') {
 				return handleFinalizeFigure(request, env, rateLimitResult);
-			}
-			return json({ success: false, message: 'Method not allowed' }, 405);
-		}
-
-		if (url.pathname === '/figures/find-by-source-url') {
-			if (request.method.toUpperCase() === 'GET') {
-				return handleFindFigureBySourceUrl(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}

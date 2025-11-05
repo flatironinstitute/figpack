@@ -1,6 +1,10 @@
 # Change Log
 
+## [0.3.2] - 2025-11-05
+
 - Create figpack-serve with worker for preparing and serving figpack figures from source URLs
+- Remove sourceUrl from figure creation API
+- Remove upload by sourceUrl functionality
 
 ## [0.3.1] - 2025-11-04
 

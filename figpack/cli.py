@@ -16,9 +16,8 @@ from urllib.parse import urljoin
 import requests
 
 from . import __version__
-from .core._server_manager import CORSRequestHandler
-from .core._view_figure import serve_files, view_figure
-from .core._upload_bundle import _upload_bundle, get_figure_by_source_url
+from .core._view_figure import view_figure
+from .core._upload_bundle import _upload_bundle
 from .extensions import ExtensionManager
 
 MAX_WORKERS_FOR_DOWNLOAD = 16
@@ -250,130 +249,6 @@ def handle_extensions_command(args):
         print("Use 'figpack extensions <command> --help' for more information.")
 
 
-def handle_upload_from_source_url(args) -> None:
-    """
-    Handle the upload-from-source-url command
-
-    Downloads a tar.gz/tgz file from a URL, extracts it, and uploads it as a new figure
-    with the source URL set.
-    """
-    import os
-
-    source_url = args.source_url
-    title = args.title if hasattr(args, "title") else None
-
-    # Get API key from environment variable
-    api_key = os.environ.get("FIGPACK_API_KEY")
-    if not api_key:
-        print(
-            "Error: FIGPACK_API_KEY environment variable must be set to upload figures."
-        )
-        sys.exit(1)
-
-    # Validate URL format
-    if not (source_url.endswith(".tar.gz") or source_url.endswith(".tgz")):
-        print(f"Error: Source URL must point to a .tar.gz or .tgz file: {source_url}")
-        sys.exit(1)
-
-    print(f"Downloading archive from: {source_url}")
-
-    try:
-        # Download the archive
-        response = requests.get(source_url, timeout=120, stream=True)
-        response.raise_for_status()
-
-        # Create temporary file for the archive
-        with tempfile.NamedTemporaryFile(
-            suffix=".tar.gz", delete=False
-        ) as temp_archive:
-            archive_path = temp_archive.name
-
-            # Download with progress indication
-            total_size = int(response.headers.get("content-length", 0))
-            downloaded_size = 0
-
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    temp_archive.write(chunk)
-                    downloaded_size += len(chunk)
-                    if total_size > 0:
-                        progress = (downloaded_size / total_size) * 100
-                        print(
-                            f"Downloaded: {downloaded_size / (1024*1024):.2f} MB ({progress:.1f}%)",
-                            end="\r",
-                        )
-
-            if total_size > 0:
-                print()  # New line after progress
-            print(f"Download complete: {downloaded_size / (1024*1024):.2f} MB")
-
-        # Extract archive to temporary directory
-        print("Extracting archive...")
-        with tempfile.TemporaryDirectory() as extract_dir:
-            extract_path = pathlib.Path(extract_dir)
-
-            try:
-                with tarfile.open(archive_path, "r:gz") as tar:
-                    tar.extractall(path=extract_path)
-                print(f"Extracted to temporary directory")
-            except Exception as e:
-                print(f"Error: Failed to extract archive: {e}")
-                sys.exit(1)
-            finally:
-                # Clean up downloaded archive
-                import os
-
-                try:
-                    os.unlink(archive_path)
-                except Exception:
-                    pass
-
-            # Upload the extracted files
-            print(f"Uploading figure with source URL: {source_url}")
-            try:
-                figure_url = _upload_bundle(
-                    str(extract_path),
-                    api_key=api_key,
-                    title=title,
-                    source_url=source_url,
-                )
-                print(f"\nFigure uploaded successfully!")
-                print(f"Figure URL: {figure_url}")
-            except Exception as e:
-                print(f"Error: Failed to upload figure: {e}")
-                sys.exit(1)
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error: Failed to download archive from {source_url}: {e}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
-
-
-def handle_find_by_source_url(args) -> None:
-    """
-    Handle the find-by-source-url command
-
-    Queries the API for a figure URL by its source URL.
-    """
-    source_url = args.source_url
-
-    print(f"Querying for figure with source URL: {source_url}")
-
-    try:
-        figure_url = get_figure_by_source_url(source_url)
-
-        if figure_url:
-            print(f"Figure found: {figure_url}")
-        else:
-            print(f"No figure found with source URL: {source_url}")
-            sys.exit(1)
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
-
-
 def download_and_view_archive(url: str, port: int = None) -> None:
     """
     Download a tar.gz/tgz archive from a URL and view it
@@ -495,27 +370,6 @@ def main():
         "extensions", nargs="+", help="Extension package names to uninstall"
     )
 
-    # Upload from URL command
-    upload_from_source_url_parser = subparsers.add_parser(
-        "upload-from-source-url",
-        help="Download a tar.gz/tgz file and upload it as a new figure",
-    )
-    upload_from_source_url_parser.add_argument(
-        "source_url",
-        help="URL to the tar.gz or tgz file (will be set as the figure's source URL)",
-    )
-    upload_from_source_url_parser.add_argument(
-        "--title", help="Optional title for the figure"
-    )
-
-    # Find by source URL command
-    find_by_source_url_parser = subparsers.add_parser(
-        "find-by-source-url", help="Get the figure URL for a given source URL"
-    )
-    find_by_source_url_parser.add_argument(
-        "source_url", help="The source URL to search for"
-    )
-
     args = parser.parse_args()
 
     if args.command == "download":
@@ -528,10 +382,6 @@ def main():
             view_figure(args.archive, port=args.port)
     elif args.command == "extensions":
         handle_extensions_command(args)
-    elif args.command == "upload-from-source-url":
-        handle_upload_from_source_url(args)
-    elif args.command == "find-by-source-url":
-        handle_find_by_source_url(args)
     else:
         parser.print_help()
 

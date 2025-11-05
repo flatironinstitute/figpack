@@ -60,14 +60,14 @@ function parseFigure(row: any): Figure {
 		figpackManageUrl: row.figpack_manage_url,
 		channel: row.channel as 'default' | 'ephemeral',
 		isEphemeral: Boolean(row.is_ephemeral),
-		sourceUrl: row.source_url,
+		// sourceUrl: row.source_url,
 	};
 }
 
 export async function handleCreateFigure(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
 		const body = (await request.json()) as any;
-		const { apiKey: apiKeyFromBody, ephemeral, bucket: bucketName, sourceUrl, figpackVersion, totalFiles, totalSize, title } = body;
+		const { apiKey: apiKeyFromBody, ephemeral, bucket: bucketName, figpackVersion, totalFiles, totalSize, title } = body;
 
 		// In version 0.3.0 of the python package we used apiKey in the body, so we'll keep supporting that now
 
@@ -89,8 +89,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			);
 		}
 
-		console.log(`--- Parsing bucket information ---`);
-
 		const targetBucket = parseBucket(bucketRow);
 
 		let userEmail = 'anonymous';
@@ -103,8 +101,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 				return json({ success: false, message: 'Invalid API key' }, 401);
 			}
 			userEmail = authResult.user.email;
-
-			console.log(`--- User authenticated: ${userEmail} ---`);
 
 			// Check if user is authorized for this bucket
 			const isAdmin = authResult.isAdmin;
@@ -124,8 +120,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 				403,
 			);
 		}
-
-		console.log(`--- User authorization status: ${isUserAuthorized} ---`);
 
 		// For non-ephemeral figures, API key is required
 		if (!ephemeral && !apiKey) {
@@ -149,25 +143,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			);
 		}
 
-		// Check if sourceUrl is provided and if it already exists
-		if (sourceUrl) {
-			console.log(`--- Checking for existing figure with source URL: ${sourceUrl} ---`);
-			const existingWithSourceUrl = await env.figpack_db
-				.prepare('SELECT figure_url FROM figures WHERE source_url = ?')
-				.bind(sourceUrl)
-				.first();
-
-			if (existingWithSourceUrl) {
-				return json(
-					{
-						success: false,
-						message: `A figure with source URL "${sourceUrl}" already exists: ${existingWithSourceUrl.figure_url}`,
-					},
-					400,
-				);
-			}
-		}
-
 		const baseFigureString = `${figureId}`;
 		let count = 0;
 		let figureUrlToUse: string | undefined;
@@ -175,7 +150,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 		let existingFigure: any = null;
 
 		while (true) {
-			console.log(`--- Checking figure string: ${baseFigureString}${count > 0 ? `-${count}` : ''} ---`);
 			const candidateFigureString = `${baseFigureString}${count > 0 ? `-${count}` : ''}`;
 			const channel = ephemeral ? 'ephemeral' : 'default';
 			const candidateFigureUrl = `${targetBucket.bucketBaseUrl}/figures/${channel}/${candidateFigureString}/index.html`;
@@ -204,8 +178,6 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			}
 		}
 
-		console.log(`--- Final figure URL to use: ${figureUrlToUse} ---`);
-
 		if (figureIsExistingAndCompleted || existingFigure) {
 			// Figure already exists, return its information
 			return json(
@@ -230,8 +202,8 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
           figure_url, bucket, status, owner_email,
           upload_started, upload_updated, expiration,
           figpack_version, total_files, total_size, title,
-          created_at, updated_at, pinned, channel, is_ephemeral, source_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          created_at, updated_at, pinned, channel, is_ephemeral
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
 		const bindResult = prepareResult.bind(
@@ -251,15 +223,12 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			0, // pinned
 			ephemeral ? 'ephemeral' : 'default',
 			ephemeral ? 1 : 0,
-			sourceUrl ?? null,
 		);
 
 		const result = await bindResult.run();
 
 		// Fetch the created figure
 		const newFigure = await env.figpack_db.prepare('SELECT * FROM figures WHERE id = ?').bind(result.meta.last_row_id).first();
-
-		console.log(`--- New figure details: ${JSON.stringify(newFigure)} ---`);
 
 		// Update figpack.json in S3
 		try {
@@ -718,47 +687,6 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 		);
 	} catch (error) {
 		console.error('Finalize figure API error:', error);
-		return json({ success: false, message: 'Internal server error' }, 500);
-	}
-}
-
-export async function handleFindFigureBySourceUrl(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
-	try {
-		const url = new URL(request.url);
-		const sourceUrl = url.searchParams.get('sourceUrl');
-
-		if (!sourceUrl) {
-			return json(
-				{
-					success: false,
-					message: 'Missing required field: sourceUrl',
-				},
-				400,
-			);
-		}
-
-		// Find the figure by source URL
-		const figureRow = await env.figpack_db.prepare('SELECT * FROM figures WHERE source_url = ?').bind(sourceUrl).first();
-
-		if (!figureRow) {
-			return json({ success: false, message: 'Figure not found' }, 404);
-		}
-
-		return json(
-			{
-				success: true,
-				message: 'Figure found',
-				figure: parseFigure(figureRow),
-			},
-			200,
-			{
-				'X-RateLimit-Limit': '30',
-				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			},
-		);
-	} catch (error) {
-		console.error('Find figure by source URL API error:', error);
 		return json({ success: false, message: 'Internal server error' }, 500);
 	}
 }

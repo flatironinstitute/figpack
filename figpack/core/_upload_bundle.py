@@ -134,7 +134,6 @@ def _create_or_get_figure(
     total_size: Optional[int] = None,
     title: Optional[str] = None,
     ephemeral: bool = False,
-    source_url: Optional[str] = None,
 ) -> dict:
     """
     Create a new figure or get existing figure information
@@ -145,7 +144,6 @@ def _create_or_get_figure(
         total_size: Optional total size of files
         title: Optional title for the figure
         ephemeral: Whether to create an ephemeral figure
-        source_url: Optional source URL for the figure (must be unique)
 
     Returns:
         dict: Figure information from the API
@@ -171,8 +169,6 @@ def _create_or_get_figure(
         payload["title"] = title
     if ephemeral:
         payload["ephemeral"] = True
-    if source_url is not None:
-        payload["sourceUrl"] = source_url
 
     # Use the same endpoint for both regular and ephemeral figures
     url = f"{FIGPACK_API_BASE_URL}/figures/create"
@@ -242,7 +238,6 @@ def _upload_bundle(
     title: Optional[str] = None,
     ephemeral: bool = False,
     use_consolidated_metadata_only: bool = False,
-    source_url: Optional[str] = None,
 ) -> str:
     """
     Upload the prepared bundle to the cloud using the new database-driven approach
@@ -254,7 +249,6 @@ def _upload_bundle(
         ephemeral: Whether to create an ephemeral figure
         use_consolidated_metadata_only: If True, excludes individual zarr metadata files
             (.zgroup, .zarray, .zattrs) since they are included in .zmetadata
-        source_url: Optional source URL for the figure (must be unique)
     """
     tmpdir_path = pathlib.Path(tmpdir)
 
@@ -283,7 +277,6 @@ def _upload_bundle(
         total_size,
         title=title,
         ephemeral=ephemeral,
-        source_url=source_url,
     )
     figure_info = result.get("figure", {})
     figure_url = figure_info.get("figureUrl")
@@ -416,39 +409,6 @@ def _upload_bundle(
     print("Upload completed successfully")
 
     return figure_url
-
-
-def get_figure_by_source_url(source_url: str) -> Optional[str]:
-    """
-    Query the API for a figure URL by its source URL
-
-    Args:
-        source_url: The source URL to search for
-
-    Returns:
-        Optional[str]: The figure URL if found, None otherwise
-    """
-    payload = {"sourceUrl": source_url}
-
-    response = requests.post(
-        f"{FIGPACK_API_BASE_URL}/figures/find-by-source-url", json=payload
-    )
-
-    if not response.ok:
-        if response.status_code == 404:
-            return None
-        try:
-            error_data = response.json()
-            error_msg = error_data.get("message", "Unknown error")
-        except:
-            error_msg = f"HTTP {response.status_code}"
-        raise Exception(f"Failed to query figure by source URL: {error_msg}")
-
-    response_data = response.json()
-    if not response_data.get("success"):
-        return None
-
-    return response_data.get("figureUrl")
 
 
 def _determine_content_type(file_path: str) -> str:
