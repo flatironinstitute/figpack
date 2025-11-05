@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { InteractionMode } from "./TimeScrollToolbar";
-import { useTimeRange } from "../../TimeseriesSelectionContext";
+import { useTimeRange } from "../context-timeseries-selection/TimeseriesSelectionContext";
 
 type MouseData = {
   mouseDownAchorX: number | null;

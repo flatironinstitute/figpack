@@ -1,4 +1,4 @@
-import { useTimeseriesSelection } from "../../TimeseriesSelectionContext";
+import { useTimeseriesSelection } from "../context-timeseries-selection/TimeseriesSelectionContext";
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   idToNum,

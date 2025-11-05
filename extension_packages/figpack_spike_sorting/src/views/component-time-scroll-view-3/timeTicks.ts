@@ -83,6 +83,47 @@ const tickUnits: TickUnit[] = [
   },
 ];
 
+export const computeTimeTicks = (
+  width: number,
+  startTimeSec: number | undefined,
+  endTimeSec: number | undefined,
+  timeToPixel: (t: number) => number,
+): TimeTick[] => {
+  if (startTimeSec === undefined || endTimeSec === undefined) return [];
+  if (endTimeSec <= startTimeSec) return [];
+  const ret: TimeTick[] = [];
+  const pixelsPerSecond = width / (endTimeSec - startTimeSec);
+  // iterate over the defined tick scales and populate individual ticks of the appropriate scale.
+  for (const u of tickUnits) {
+    // pixels/second * seconds/tick = pixels/tick
+    const pixelsPerTick = pixelsPerSecond * u.secondsPerTick;
+    if (pixelsPerTick <= 50) continue; // ignore scales which would have too many ticks
+
+    const firstTickInRange = Math.ceil(startTimeSec / u.secondsPerTick);
+    const lastTickInRange = Math.floor(endTimeSec / u.secondsPerTick);
+    // A tick scale is major if it passes a minimum width or if there's fewer than 5 ticks at that scale.
+    const major = pixelsPerTick > 200 || lastTickInRange - firstTickInRange < 5;
+
+    for (
+      let tickNumber = firstTickInRange;
+      tickNumber <= lastTickInRange;
+      tickNumber++
+    ) {
+      // skip ticks which would be represented by the next-larger scale
+      if (tickNumber % u.countPerLargerUnit === 0) continue;
+
+      const v = tickNumber * u.secondsPerTick;
+      ret.push({
+        value: v,
+        label: u.scale_appropriate_label(tickNumber),
+        major,
+        xPixelPosition: timeToPixel(v),
+      });
+    }
+  }
+  return ret;
+};
+
 export const useTimeTicks = (
   width: number,
   startTimeSec: number | undefined,
@@ -90,39 +131,6 @@ export const useTimeTicks = (
   timeToPixel: (t: number) => number,
 ) => {
   return useMemo(() => {
-    if (startTimeSec === undefined || endTimeSec === undefined) return [];
-    if (endTimeSec <= startTimeSec) return [];
-    const ret: TimeTick[] = [];
-    const pixelsPerSecond = width / (endTimeSec - startTimeSec);
-    // iterate over the defined tick scales and populate individual ticks of the appropriate scale.
-    for (const u of tickUnits) {
-      // pixels/second * seconds/tick = pixels/tick
-      const pixelsPerTick = pixelsPerSecond * u.secondsPerTick;
-      if (pixelsPerTick <= 50) continue; // ignore scales which would have too many ticks
-
-      const firstTickInRange = Math.ceil(startTimeSec / u.secondsPerTick);
-      const lastTickInRange = Math.floor(endTimeSec / u.secondsPerTick);
-      // A tick scale is major if it passes a minimum width or if there's fewer than 5 ticks at that scale.
-      const major =
-        pixelsPerTick > 200 || lastTickInRange - firstTickInRange < 5;
-
-      for (
-        let tickNumber = firstTickInRange;
-        tickNumber <= lastTickInRange;
-        tickNumber++
-      ) {
-        // skip ticks which would be represented by the next-larger scale
-        if (tickNumber % u.countPerLargerUnit === 0) continue;
-
-        const v = tickNumber * u.secondsPerTick;
-        ret.push({
-          value: v,
-          label: u.scale_appropriate_label(tickNumber),
-          major,
-          xPixelPosition: timeToPixel(v),
-        });
-      }
-    }
-    return ret;
+    return computeTimeTicks(width, startTimeSec, endTimeSec, timeToPixel);
   }, [startTimeSec, endTimeSec, timeToPixel, width]);
 };

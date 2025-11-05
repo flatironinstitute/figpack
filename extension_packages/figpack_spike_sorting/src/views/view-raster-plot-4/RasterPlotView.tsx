@@ -1,7 +1,7 @@
 import {
   useTimeRange,
   useTimeseriesSelection,
-} from "../../TimeseriesSelectionContext";
+} from "../context-timeseries-selection/TimeseriesSelectionContext";
 import {
   FunctionComponent,
   useCallback,
@@ -15,6 +15,7 @@ import { idToNum, useSelectedUnitIds } from "../context-unit-selection";
 import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import { RasterPlotDataClient } from "./RasterPlotDataClient";
 import TimeScrollView3 from "../component-time-scroll-view-3/TimeScrollView3";
+import { DrawForExportFunction } from "../../figpack-interface";
 
 // Minimum height required per unit to show labels without overlap
 const MIN_UNIT_LABEL_HEIGHT = 15; // 15px minimum to prevent label overlap with 12px font
@@ -23,6 +24,7 @@ type Props = {
   dataClient: RasterPlotDataClient;
   width: number;
   height: number;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 const gridlineOpts = {
@@ -40,6 +42,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
   dataClient,
   width,
   height,
+  setDrawForExport,
 }) => {
   const { visibleStartTimeSec, visibleEndTimeSec } = useTimeRange();
   const { initializeTimeseriesSelection } = useTimeseriesSelection();
@@ -495,6 +498,8 @@ const RasterPlotView: FunctionComponent<Props> = ({
       onMouseMove={handleMouseMove}
       onMouseOut={handleMouseOut}
       yAxisInfo={yAxisInfo}
+      // drawContentForExport={draw}
+      setDrawForExport={setDrawForExport}
     />
   );
 };

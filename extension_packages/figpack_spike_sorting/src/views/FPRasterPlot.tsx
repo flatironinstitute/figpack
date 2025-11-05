@@ -1,5 +1,5 @@
 import { FunctionComponent, useEffect, useState } from "react";
-import { FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
+import { DrawForExportFunction, FPViewContext, FPViewContexts, ZarrGroup } from "../figpack-interface";
 import RasterPlotView from "./view-raster-plot-4/RasterPlotView";
 import { RasterPlotDataClient } from "./view-raster-plot-4/RasterPlotDataClient";
 import { ProvideUnitSelectionContext } from "./FPAutocorrelograms";
@@ -7,7 +7,7 @@ import {
   TimeseriesSelectionAction,
   TimeseriesSelectionContext,
   TimeseriesSelectionState,
-} from "../TimeseriesSelectionContext";
+} from "./context-timeseries-selection/TimeseriesSelectionContext";
 import { useProvideFPViewContext } from "../figpack-utils";
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
   contexts: FPViewContexts;
   width: number;
   height: number;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 export const FPRasterPlot: FunctionComponent<Props> = ({
@@ -22,6 +23,7 @@ export const FPRasterPlot: FunctionComponent<Props> = ({
   contexts,
   width,
   height,
+  setDrawForExport
 }) => {
   const dataClient = useDataClient(zarrGroup);
 
@@ -32,7 +34,7 @@ export const FPRasterPlot: FunctionComponent<Props> = ({
   return (
     <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
       <ProvideUnitSelectionContext context={contexts.unitSelection}>
-        <RasterPlotView dataClient={dataClient} width={width} height={height} />
+        <RasterPlotView dataClient={dataClient} width={width} height={height} setDrawForExport={setDrawForExport} />
       </ProvideUnitSelectionContext>
     </ProvideTimeseriesSelectionContext>
   );

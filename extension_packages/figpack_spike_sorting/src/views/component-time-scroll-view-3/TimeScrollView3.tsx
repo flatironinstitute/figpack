@@ -1,7 +1,4 @@
-import {
-  useTimeRange,
-  useTimeseriesSelection,
-} from "../../TimeseriesSelectionContext";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
   FunctionComponent,
   useCallback,
@@ -10,19 +7,25 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useTimeTicks } from "./timeTicks";
+import {
+  useTimeRange,
+  useTimeseriesSelection,
+} from "../context-timeseries-selection";
+import CustomActionsToolbar from "./CustomActionsToolbar";
+import suppressWheelScroll from "./supressWheelScroll";
+import TimeScrollToolbar, {
+  CustomToolbarAction,
+  InteractionMode,
+} from "./TimeScrollToolbar";
+import { computeTimeTicks, useTimeTicks } from "./timeTicks";
 import TSV2AxesLayer from "./TSV2AxesLayer";
 import TSV2CursorLayer from "./TSV2CursorLayer";
 import TSV2SelectionLayer from "./TSV2SelectionLayer";
 import useTimeScrollMouseWithModes from "./useTimeScrollMouseWithModes";
 import { useTimeScrollView3 } from "./useTimeScrollView3";
-import useYAxisTicks, { TickSet } from "./YAxisTicks";
-import TimeScrollToolbar, {
-  InteractionMode,
-  CustomToolbarAction,
-} from "./TimeScrollToolbar";
-import CustomActionsToolbar from "./CustomActionsToolbar";
-import suppressWheelScroll from "./supressWheelScroll";
+import useYAxisTicks, { computeYAxisTicks, TickSet } from "./YAxisTicks";
+import { DrawForExportFunction } from "../../figpack-interface";
+import { paintAxes } from "./TSV2PaintAxes";
 
 type Props = {
   width: number;
@@ -52,6 +55,17 @@ type Props = {
   onCanvasClick?: (x: number, y: number) => void;
   hideNavToolbar?: boolean;
   hideTimeAxisLabels?: boolean;
+  drawContentForExport?: (
+    context: CanvasRenderingContext2D,
+    canvasWidth: number,
+    canvasHeight: number,
+    margins: { left: number; right: number; top: number; bottom: number },
+    o: {
+      exporting?: boolean;
+      canceled?: boolean;
+    },
+  ) => Promise<any>;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -72,6 +86,8 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   onCanvasClick,
   hideNavToolbar = false,
   hideTimeAxisLabels = false,
+  drawContentForExport,
+  setDrawForExport,
 }) => {
   const {
     visibleStartTimeSec,
@@ -166,15 +182,16 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       />
     );
   }, [
+    gridlineOpts,
     canvasWidth,
     plotHeight,
     timeRange,
     margins,
     timeTicks,
-    yAxisInfo,
+    yAxisInfo?.showTicks,
+    yAxisInfo?.yLabel,
     yTickSet,
     hideTimeAxisLabels,
-    gridlineOpts,
   ]);
 
   const currentTimePixels = useMemo(
@@ -290,6 +307,80 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     onCanvasElement(canvasElement, canvasWidth, canvasHeight, margins);
   }, [canvasElement, canvasWidth, canvasHeight, margins, onCanvasElement]);
 
+  useEffect(() => {
+    if (!setDrawForExport) return;
+    const drawForExport: DrawForExportFunction = async (opts: {
+      context: CanvasRenderingContext2D;
+      width: number;
+      height: number;
+    }) => {
+      if (!opts) return;
+      // for debugging, need to determine full traceback here
+      if (!margins) return;
+
+      const yToPixelLocal = (y: number) => {
+        const y0 = yAxisInfo?.yMin || 0;
+        const y1 = yAxisInfo?.yMax || 0;
+        if (y1 <= y0) return 0;
+        return (
+          opts.height -
+          margins.bottom -
+          ((y - y0) / (y1 - y0)) * (opts.height - margins.top - margins.bottom)
+        );
+      };
+
+      // draw axes
+      const timeTicks = computeTimeTicks(
+        opts.width,
+        visibleStartTimeSec,
+        visibleEndTimeSec,
+        timeToPixel,
+      );
+      const yTickSet = computeYAxisTicks({
+        datamin: yAxisInfo?.yMin,
+        datamax: yAxisInfo?.yMax,
+        pixelHeight: opts.height,
+      });
+      for (const t of yTickSet.ticks) {
+        t.pixelValue = yToPixelLocal(t.dataValue);
+      }
+      paintAxes(opts.context, {
+        timeRange,
+        timeTicks,
+        margins,
+        gridlineOpts,
+        yTickSet,
+        yLabel: yAxisInfo?.yLabel,
+        width: opts.width,
+        height: opts.height,
+        hideTimeAxisLabels,
+      });
+
+      // draw content
+      if (!drawContentForExport) return;
+      await drawContentForExport(
+        opts.context,
+        opts.width,
+        opts.height,
+        margins,
+        { exporting: true },
+      );
+    };
+    setDrawForExport(drawForExport);
+  }, [
+    drawContentForExport,
+    setDrawForExport,
+    margins,
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    timeToPixel,
+    timeRange,
+    gridlineOpts,
+    yAxisInfo,
+    hideTimeAxisLabels,
+    yToPixel,
+  ]);
+
   const content = useMemo(() => {
     return (
       <div
@@ -323,6 +414,9 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       </div>
     );
   }, [
+    axesLayer,
+    cursorLayer,
+    selectionLayer,
     canvasWidth,
     plotHeight,
     handleKeyDown,
@@ -333,9 +427,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     handleMouseOut2,
     requireClickToZoom,
     isViewClicked,
-    axesLayer,
-    cursorLayer,
-    selectionLayer,
   ]);
 
   const timeScrollToolbar = useMemo(() => {

@@ -112,40 +112,53 @@ const simplerGridFit = (dataRange: number, maxGridLines: number) => {
     : { step: candidates[i], scale: baseStep };
 };
 
-const useYAxisTicks = (props: YAxisProps) => {
+export const computeYAxisTicks = (props: YAxisProps): TickSet => {
   const { datamin, datamax, userSpecifiedZoom } = props;
   let { pixelHeight } = props;
   if (pixelHeight <= 1) pixelHeight = 1; // safely handle case where pixelHeight is negative or zero
   const yZoom = userSpecifiedZoom ?? 1;
-  return useMemo(() => {
-    if (datamin === undefined || datamax === undefined || datamin === datamax)
-      return emptyTickSet;
-    const _dataMin = datamin / yZoom;
-    const _dataMax = datamax / yZoom;
-    const dataRange = _dataMax - _dataMin;
 
-    const minGridLines = pixelHeight / maxGridSpacingPx;
-    const maxGridLines = pixelHeight / minGridSpacingPx;
+  if (datamin === undefined || datamax === undefined || datamin === datamax)
+    return emptyTickSet;
+  const _dataMin = datamin / yZoom;
+  const _dataMax = datamax / yZoom;
+  const dataRange = _dataMax - _dataMin;
 
-    const gridInfo = simplerGridFit(dataRange, maxGridLines);
-    const scaledStep = gridInfo.step * Math.pow(10, gridInfo.scale);
+  const minGridLines = pixelHeight / maxGridSpacingPx;
+  const maxGridLines = pixelHeight / minGridSpacingPx;
 
-    if (dataRange / scaledStep < minGridLines) {
-      console.warn(
-        `Error: Unable to compute valid y-axis step size. Suppressing display.`,
-      );
-      return emptyTickSet;
-    }
-    const startFrom = alignWithStepSize(_dataMin, gridInfo.scale);
-    const steps = enumerateScaledSteps(
-      startFrom,
-      _dataMin,
-      _dataMax,
-      scaledStep,
-      gridInfo.scale,
+  const gridInfo = simplerGridFit(dataRange, maxGridLines);
+  const scaledStep = gridInfo.step * Math.pow(10, gridInfo.scale);
+
+  if (dataRange / scaledStep < minGridLines) {
+    console.warn(
+      `Error: Unable to compute valid y-axis step size. Suppressing display.`,
     );
-    return { ticks: steps, datamin: _dataMin, datamax: _dataMax };
-  }, [datamax, datamin, yZoom, pixelHeight]);
+    return emptyTickSet;
+  }
+  const startFrom = alignWithStepSize(_dataMin, gridInfo.scale);
+  const steps = enumerateScaledSteps(
+    startFrom,
+    _dataMin,
+    _dataMax,
+    scaledStep,
+    gridInfo.scale,
+  );
+  return { ticks: steps, datamin: _dataMin, datamax: _dataMax };
+};
+
+const useYAxisTicks = (props: YAxisProps) => {
+  const { datamin, datamax, userSpecifiedZoom } = props;
+  let { pixelHeight } = props;
+  if (pixelHeight <= 1) pixelHeight = 1; // safely handle case where pixelHeight is negative or zero
+  return useMemo(() => {
+    return computeYAxisTicks({
+      datamin,
+      datamax,
+      userSpecifiedZoom,
+      pixelHeight,
+    });
+  }, [datamax, datamin, pixelHeight, userSpecifiedZoom]);
 };
 
 export default useYAxisTicks;

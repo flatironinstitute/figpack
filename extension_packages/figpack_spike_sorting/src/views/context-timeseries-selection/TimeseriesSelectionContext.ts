@@ -48,6 +48,186 @@ type TimeseriesSelectionContextType = {
   dispatch: (action: TimeseriesSelectionAction) => void;
 };
 
+export const timeseriesSelectionReducer = (
+  state: TimeseriesSelectionState,
+  action: TimeseriesSelectionAction,
+): TimeseriesSelectionState => {
+  switch (action.type) {
+    case "initializeTimeseries": {
+      const newStartTimeSec =
+        state.startTimeSec === undefined
+          ? action.startTimeSec
+          : Math.min(state.startTimeSec, action.startTimeSec);
+
+      const newEndTimeSec =
+        state.endTimeSec === undefined
+          ? action.endTimeSec
+          : Math.max(state.endTimeSec, action.endTimeSec);
+
+      let newVisibleStartTimeSec = state.visibleStartTimeSec;
+      let newVisibleEndTimeSec = state.visibleEndTimeSec;
+      if (!state.visibleTimeRangeHasBeenSetAtLeastOnce) {
+        if (
+          action.initialVisibleStartTimeSec !== undefined &&
+          action.initialVisibleEndTimeSec !== undefined
+        ) {
+          // we are setting an initial visible time range
+          if (
+            state.visibleStartTimeSec === undefined ||
+            state.visibleStartTimeSec > action.initialVisibleStartTimeSec
+          ) {
+            newVisibleStartTimeSec = action.initialVisibleStartTimeSec;
+          }
+          if (
+            state.visibleEndTimeSec === undefined ||
+            state.visibleEndTimeSec < action.initialVisibleEndTimeSec
+          ) {
+            newVisibleEndTimeSec = action.initialVisibleEndTimeSec;
+          }
+        }
+      }
+
+      return {
+        startTimeSec: newStartTimeSec,
+        endTimeSec: newEndTimeSec,
+        visibleStartTimeSec: newVisibleStartTimeSec,
+        visibleEndTimeSec: newVisibleEndTimeSec,
+        visibleTimeRangeHasBeenSetAtLeastOnce:
+          state.visibleTimeRangeHasBeenSetAtLeastOnce,
+        currentTime: state.currentTime,
+      };
+    }
+    case "setVisibleTimeRange": {
+      let newVisibleStartTimeSec = action.visibleStartTimeSec;
+      let newVisibleEndTimeSec = action.visibleEndTimeSec;
+
+      if (state.startTimeSec !== undefined && state.endTimeSec !== undefined) {
+        // Adjust to fit within bounds if they exist
+        newVisibleStartTimeSec = Math.max(
+          state.startTimeSec,
+          newVisibleStartTimeSec,
+        );
+        newVisibleEndTimeSec = Math.min(state.endTimeSec, newVisibleEndTimeSec);
+      }
+
+      return {
+        ...state,
+        visibleStartTimeSec: newVisibleStartTimeSec,
+        visibleEndTimeSec: newVisibleEndTimeSec,
+        visibleTimeRangeHasBeenSetAtLeastOnce: true,
+      };
+    }
+    case "zoomVisibleTimeRange": {
+      let t1 = state.visibleStartTimeSec;
+      let t2 = state.visibleEndTimeSec;
+      if (t1 === undefined || t2 === undefined) {
+        return state;
+      }
+      const visibleDuration = t2 - t1;
+      const newVisibleDuration = visibleDuration * action.factor;
+      const anchorTime = t1; // anchor time is the fixed point
+      const newVisibleStartTimeSecFrac = (t1 - anchorTime) / visibleDuration;
+      const newVisibleEndTimeSecFrac = (t2 - anchorTime) / visibleDuration;
+
+      t1 = anchorTime + newVisibleStartTimeSecFrac * newVisibleDuration;
+      t2 = anchorTime + newVisibleEndTimeSecFrac * newVisibleDuration;
+
+      // ensure that the new visible time range is within the bounds
+      if (state.endTimeSec !== undefined && state.startTimeSec !== undefined) {
+        if (t2 > state.endTimeSec) {
+          const delta = t2 - state.endTimeSec;
+          t1 -= delta;
+          t2 -= delta;
+        }
+        if (t1 < state.startTimeSec) {
+          const delta = state.startTimeSec - t1;
+          t1 += delta;
+          t2 += delta;
+        }
+        if (t2 > state.endTimeSec) {
+          t2 = state.endTimeSec;
+        }
+      }
+
+      return {
+        ...state,
+        visibleStartTimeSec: t1,
+        visibleEndTimeSec: t2,
+      };
+    }
+    case "translateVisibleTimeRangeFrac": {
+      let t1 = state.visibleStartTimeSec;
+      let t2 = state.visibleEndTimeSec;
+      if (t1 === undefined || t2 === undefined) {
+        return state;
+      }
+      const visibleDuration = t2 - t1;
+      const deltaT = visibleDuration * action.frac;
+      t1 += deltaT;
+      t2 += deltaT;
+
+      // ensure that the new visible time range is within the bounds
+      if (state.endTimeSec !== undefined && state.startTimeSec !== undefined) {
+        if (t2 > state.endTimeSec) {
+          const delta = t2 - state.endTimeSec;
+          t1 -= delta;
+          t2 -= delta;
+        }
+        if (t1 < state.startTimeSec) {
+          const delta = state.startTimeSec - t1;
+          t1 += delta;
+          t2 += delta;
+        }
+        if (t2 > state.endTimeSec) {
+          t2 = state.endTimeSec;
+        }
+      }
+
+      return {
+        ...state,
+        visibleStartTimeSec: t1,
+        visibleEndTimeSec: t2,
+      };
+    }
+    case "setCurrentTime": {
+      if (action.ensureVisible) {
+        let newVisibleStartTimeSec = state.visibleStartTimeSec;
+        let newVisibleEndTimeSec = state.visibleEndTimeSec;
+        if (
+          newVisibleStartTimeSec !== undefined &&
+          newVisibleEndTimeSec !== undefined &&
+          action.currentTime !== undefined
+        ) {
+          if (action.currentTime < newVisibleStartTimeSec) {
+            const visibleSpan = newVisibleEndTimeSec - newVisibleStartTimeSec;
+            const a = visibleSpan * 0.1;
+            newVisibleStartTimeSec = action.currentTime - a;
+            newVisibleEndTimeSec = newVisibleStartTimeSec + visibleSpan;
+          } else if (action.currentTime > newVisibleEndTimeSec) {
+            const visibleSpan = newVisibleEndTimeSec - newVisibleStartTimeSec;
+            const a = visibleSpan * 0.1;
+            newVisibleEndTimeSec = action.currentTime + a;
+            newVisibleStartTimeSec = newVisibleEndTimeSec - visibleSpan;
+          }
+        }
+        return {
+          ...state,
+          currentTime: action.currentTime,
+          visibleStartTimeSec: newVisibleStartTimeSec,
+          visibleEndTimeSec: newVisibleEndTimeSec,
+        };
+      } else {
+        return {
+          ...state,
+          currentTime: action.currentTime,
+        };
+      }
+    }
+    default:
+      return state;
+  }
+};
+
 export const TimeseriesSelectionContext = React.createContext<
   TimeseriesSelectionContextType | undefined
 >(undefined);
