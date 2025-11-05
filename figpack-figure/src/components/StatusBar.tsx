@@ -12,10 +12,11 @@ import { AboutDialog } from "./AboutDialog";
 import FigureAnnotationsStatusComponent from "./FigureAnnotationsStatusComponent";
 import SvgExportDialog from "./SvgExportDialog";
 
-const AboutButton: React.FC<{ title?: string; description?: string }> = ({
-  title,
-  description,
-}) => {
+const AboutButton: React.FC<{
+  title?: string;
+  description?: string;
+  script?: string;
+}> = ({ title, description, script }) => {
   const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
 
   const handleAboutClick = () => {
@@ -45,6 +46,7 @@ const AboutButton: React.FC<{ title?: string; description?: string }> = ({
         onClose={handleCloseDialog}
         title={title}
         description={description}
+        script={script}
       />
     </>
   );
@@ -96,13 +98,16 @@ export const StatusBar: React.FC<{
   // Extract title and description from zarr data
   const title = zarrData?.attrs?.title;
   const description = zarrData?.attrs?.description;
+  const script = zarrData?.attrs?.script;
 
   const figpackManageUrl = figureInfoResult?.figureInfo
     ? figureInfoResult.figureInfo.figpackManageUrl ||
       "https://manage.figpack.org"
     : undefined;
 
-  const aboutButton = <AboutButton title={title} description={description} />;
+  const aboutButton = (
+    <AboutButton title={title} description={description} script={script} />
+  );
 
   const manageButton =
     !embedded && figpackManageUrl ? (

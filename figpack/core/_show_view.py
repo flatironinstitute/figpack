@@ -91,6 +91,7 @@ def _show_view(
     ephemeral: bool,
     title: str,
     description: Union[str, None],
+    script: Union[str, None],
     inline: bool,
     inline_height: int,
     wait_for_input: bool,
@@ -99,7 +100,9 @@ def _show_view(
     if upload:
         # Upload behavior: create temporary directory for this upload only
         with tempfile.TemporaryDirectory(prefix="figpack_upload_") as tmpdir:
-            prepare_figure_bundle(view, tmpdir, title=title, description=description)
+            prepare_figure_bundle(
+                view, tmpdir, title=title, description=description, script=script
+            )
 
             # Check for API key - required for regular uploads, optional for ephemeral
             api_key = os.environ.get("FIGPACK_API_KEY")
@@ -143,7 +146,7 @@ def _show_view(
 
         # Prepare the figure bundle in the subdirectory
         prepare_figure_bundle(
-            view, str(figure_dir), title=title, description=description
+            view, str(figure_dir), title=title, description=description, script=script
         )
 
         # Start or get existing server

@@ -1,6 +1,7 @@
 # Change Log
 
 - Improvements to TimeseriesGraph for interval series data
+- Include script in about dialog
 
 ## [0.3.2] - 2025-11-05
 

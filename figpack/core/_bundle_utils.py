@@ -15,7 +15,12 @@ thisdir = pathlib.Path(__file__).parent.resolve()
 
 
 def prepare_figure_bundle(
-    view: FigpackView, tmpdir: str, *, title: str, description: Optional[str] = None
+    view: FigpackView,
+    tmpdir: str,
+    *,
+    title: str,
+    description: Optional[str] = None,
+    script: Optional[str] = None,
 ) -> None:
     """
     Prepare a figure bundle in the specified temporary directory.
@@ -31,6 +36,7 @@ def prepare_figure_bundle(
         tmpdir: The temporary directory to prepare the bundle in
         title: Title for the figure (required)
         description: Optional description for the figure (markdown supported)
+        script: Optional script text used to generate the figure
     """
     html_dir = thisdir / ".." / "figpack-figure-dist"
     if not os.path.exists(html_dir):
@@ -61,10 +67,12 @@ def prepare_figure_bundle(
         zarr_group = Group(zarr_group)
         view.write_to_zarr_group(zarr_group)
 
-        # Add title and description as attributes on the top-level zarr group
+        # Add title and description and script as attributes on the top-level zarr group
         zarr_group.attrs["title"] = title
         if description is not None:
             zarr_group.attrs["description"] = description
+        if script is not None:
+            zarr_group.attrs["script"] = script
 
         # Discover and write extension JavaScript files
         required_extensions = _discover_required_extensions(view)

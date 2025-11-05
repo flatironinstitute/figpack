@@ -20,6 +20,7 @@ class FigpackView:
         *,
         title: str,
         description: Optional[str] = None,
+        script: Optional[str] = None,
         port: Optional[int] = None,
         open_in_browser: Optional[bool] = None,
         upload: Optional[bool] = None,
@@ -41,6 +42,7 @@ class FigpackView:
         Args:
             title: Title for browser tab and figure (required)
             description: Description text with markdown support (optional)
+            script: Optional script text used to generate the figure
             port: Local server port, random if None
             open_in_browser: Auto-open in browser, auto-detects by environment
             upload: Upload figure to figpack servers, auto-detects by environment
@@ -170,6 +172,7 @@ class FigpackView:
             ephemeral=ephemeral,
             title=title,
             description=description,
+            script=script,
             inline=inline,
             inline_height=inline_height,
             wait_for_input=wait_for_input,
