@@ -1,7 +1,10 @@
 # Change Log
 
+## [0.3.3] - 2025-11-06
+
 - Improvements to TimeseriesGraph for interval series data
 - Include script in about dialog
+- Documents in iframes and write to clipboard
 
 ## [0.3.2] - 2025-11-05
 

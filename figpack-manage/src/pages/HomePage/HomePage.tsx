@@ -86,6 +86,11 @@ const HomePage = () => {
               <code className={className}>{children}</code>
             );
           },
+          iframe({ ...props }) {
+            return (
+              <iframe {...props} allow={props.allow || "clipboard-write"} />
+            );
+          },
         }}
       >
         {homeContent}

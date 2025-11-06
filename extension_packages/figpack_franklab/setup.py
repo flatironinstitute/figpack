@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_franklab",
-    version="0.1.3",
+    version="0.1.4",
     description="Frank Lab specific extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",

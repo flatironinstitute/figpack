@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_experimental",
-    version="0.1.7",
+    version="0.1.8",
     description="Extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",

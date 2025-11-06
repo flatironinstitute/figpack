@@ -105,6 +105,9 @@ const MarkdownContent: FunctionComponent<MarkdownContentProps> = ({
             </code>
           );
         },
+        iframe({ ...props }) {
+          return <iframe {...props} allow={props.allow || "clipboard-write"} />;
+        },
       }}
       urlTransform={customUrlTransform}
     >
