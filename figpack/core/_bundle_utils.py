@@ -69,9 +69,9 @@ def prepare_figure_bundle(
 
         # Add title and description and script as attributes on the top-level zarr group
         zarr_group.attrs["title"] = title
-        if description is not None:
+        if description:
             zarr_group.attrs["description"] = description
-        if script is not None:
+        if script:
             zarr_group.attrs["script"] = script
 
         # Discover and write extension JavaScript files

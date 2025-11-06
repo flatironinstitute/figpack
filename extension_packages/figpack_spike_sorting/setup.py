@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_spike_sorting",
-    version="0.1.6",
+    version="0.1.7",
     description="Spike Sorting specific extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",

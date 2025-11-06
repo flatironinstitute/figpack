@@ -6,6 +6,7 @@ import { useFigureInfo } from "./hooks/useFigureInfo";
 import { useFigureUrl } from "./hooks/useFigureUrl";
 import { useWindowDimensions } from "./hooks/useWindowDimensions";
 import { useZarrData } from "./hooks/useZarrData";
+import { usePageVisibility } from "./hooks/usePageVisibility";
 import "./localStyles.css";
 // import { plugins } from "./main";
 import { DrawForExportFunction, FPViewContexts } from "./figpack-interface";
@@ -18,6 +19,35 @@ import { registeredFPExtensions } from "./extensionRegistry";
 import { customZarrDecoders } from "./customZarrDecodersRegistry";
 
 function App() {
+  const hasBeenVisible = usePageVisibility();
+  const { width, height } = useWindowDimensions();
+
+  // If page hasn't been visible yet, render minimal placeholder
+  if (!hasBeenVisible) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width,
+          height,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f5f5f5",
+        }}
+      >
+        {/* Empty placeholder - will load when visible */}
+      </div>
+    );
+  }
+
+  // Once visible, render the full app
+  return <AppContent />;
+}
+
+function AppContent() {
   const figureUrl = useFigureUrl();
   const { zarrData, refreshZarrData } = useZarrData(
     figureUrl,

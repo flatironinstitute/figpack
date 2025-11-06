@@ -30,7 +30,7 @@ class FigpackView:
         allow_origin: Optional[str] = None,
         wait_for_input: Optional[bool] = None,
         _dev: Optional[bool] = None,
-    ) -> None:
+    ):
         """
         Display a figpack view component with intelligent environment detection and flexible display options.
         See https://flatironinstitute.github.io/figpack/show_function.html for complete documentation.
@@ -163,7 +163,7 @@ class FigpackView:
             )
             print("")
 
-        _show_view(
+        return _show_view(
             self,
             port=port,
             open_in_browser=open_in_browser,
@@ -179,15 +179,22 @@ class FigpackView:
             _local_figure_name=_local_figure_name if _dev else None,
         )
 
-    def save(self, output_path: str, *, title: str, description: str = "") -> None:
+    def save(
+        self, output_path: str, *, title: str, description: str = "", script: str = ""
+    ) -> None:
         """
         Save as figure either to a folder or to a .tar.gz file
         Args:
             output_path: Output path (destination folder or .tar.gz file path)
+            title: Title for the figure
+            description: Description text with markdown support
+            script: Optional script text used to generate the figure
         """
         from ._save_figure import _save_figure
 
-        _save_figure(self, output_path, title=title, description=description)
+        _save_figure(
+            self, output_path, title=title, description=description, script=script
+        )
 
     def write_to_zarr_group(self, group: Group) -> None:
         """

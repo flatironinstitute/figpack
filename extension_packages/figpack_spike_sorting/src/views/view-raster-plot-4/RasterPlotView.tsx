@@ -292,8 +292,6 @@ const RasterPlotView: FunctionComponent<Props> = ({
     selectedUnitIdsList,
   ]);
 
-  console.log(selectedUnitIds, selectedUnitIndicesList, selectedUnitIdsList);
-
   const drawRasterPlot = useCallback(() => {
     if (!margins) return;
     const canvas = canvasRef.current;

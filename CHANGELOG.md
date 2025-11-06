@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.3.4] - 2025-11-06
+
+- show() returns URL of figure
+- Do not render until visible - improves performance when many figures are embedded in iframes
+
 ## [0.3.3] - 2025-11-06
 
 - Improvements to TimeseriesGraph for interval series data

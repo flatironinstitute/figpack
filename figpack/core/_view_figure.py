@@ -131,9 +131,7 @@ def view_figure(figure_path: str, port: Union[int, None] = None) -> None:
         )
         return
 
-    if not figure_pathlib.suffix.lower() in [".gz", ".tgz"] or not str(
-        figure_pathlib
-    ).endswith(".tar.gz"):
+    if not figure_path.endswith(".tar.gz") and not figure_path.endswith(".tgz"):
         print(f"Error: Archive file must be a .tar.gz file: {figure_path}")
         sys.exit(1)
 
