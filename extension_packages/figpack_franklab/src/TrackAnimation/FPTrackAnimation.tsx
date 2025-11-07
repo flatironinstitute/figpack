@@ -136,7 +136,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         const toCanvasX = (x: number) => offsetX + (x - client.xmin) * scale;
         const toCanvasY = (y: number) => offsetY + (client.ymax - y) * scale; // Flip Y axis
 
-        context.strokeStyle = "green";
+        context.strokeStyle = "darkgray";
         context.strokeRect(offsetX, offsetY, actualWidth, actualHeight);
 
         // Draw probability field as background heatmap
