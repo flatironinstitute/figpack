@@ -1,5 +1,7 @@
 # Change Log
 
+- figpack_franklab - improve track animation - export to SVG and fix coordinate transforms
+
 ## [0.3.4] - 2025-11-06
 
 - show() returns URL of figure

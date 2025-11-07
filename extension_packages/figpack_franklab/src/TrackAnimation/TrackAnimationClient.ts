@@ -33,16 +33,42 @@ export class TrackAnimationClient {
   static async create(zarrGroup: ZarrGroup): Promise<TrackAnimationClient> {
     const attrs = zarrGroup.attrs;
 
+    // Important and tricky
+    // We are going to calculate xmin, xmax, ymin, ymax
+    // rather than using the stored values directly because there is a subtle mismatch
+
+    const trackBinCorners = Array.from(
+      (await zarrGroup.getDatasetData(
+        "track_bin_corners",
+        {},
+      )) as ArrayLike<number>,
+    );
+    const xTrackBinCorners = trackBinCorners.slice(
+      0,
+      trackBinCorners.length / 2,
+    );
+    const yTrackBinCorners = trackBinCorners.slice(trackBinCorners.length / 2);
+
+    const minTrackBinCornerX = Math.min(...xTrackBinCorners);
+    // const maxTrackBinCornerX = Math.max(...xTrackBinCorners);
+    const minTrackBinCornerY = Math.min(...yTrackBinCorners);
+    // const maxTrackBinCornerY = Math.max(...yTrackBinCorners);
+
+    const xmin = minTrackBinCornerX - attrs.bin_width;
+    const xmax = xmin + attrs.xcount * attrs.bin_width;
+    const ymin = minTrackBinCornerY - attrs.bin_height;
+    const ymax = ymin + attrs.ycount * attrs.bin_height;
+
     return new TrackAnimationClient(
       zarrGroup,
       attrs.bin_height,
       attrs.bin_width,
       attrs.xcount,
       attrs.ycount,
-      attrs.xmin,
-      attrs.ymin,
-      attrs.xmax,
-      attrs.ymax,
+      xmin,
+      ymin,
+      xmax,
+      ymax,
       attrs.sampling_frequency_hz,
       attrs.timestamp_start,
       attrs.total_recording_frame_length,

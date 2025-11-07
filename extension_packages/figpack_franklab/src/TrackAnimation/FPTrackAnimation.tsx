@@ -12,7 +12,7 @@ import {
   drawTrackBins,
 } from "./TrackAnimationDrawing";
 import { useTrackAnimationClient } from "./useTrackAnimationClient";
-import { ZarrGroup } from "../figpack-interface";
+import { DrawForExportFunction, ZarrGroup } from "../figpack-interface";
 import { FPViewContext, FPViewContexts } from "../figpack-interface";
 import {
   TimeseriesSelectionAction,
@@ -27,6 +27,7 @@ type Props = {
   contexts: FPViewContexts;
   width: number;
   height: number;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 export const FPTrackAnimation: React.FC<Props> = (props) => {
@@ -43,6 +44,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
   zarrGroup,
   width,
   height,
+  setDrawForExport,
 }) => {
   const { currentTime, setCurrentTime } = useTimeseriesSelection();
 
@@ -93,40 +95,88 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
   const controlsHeight = 60;
   const canvasHeight = height - controlsHeight;
 
+  const drawFunction: DrawForExportFunction = useMemo(
+    () =>
+      async (o: {
+        context: CanvasRenderingContext2D;
+        width: number;
+        height: number;
+      }) => {
+        const { context, width: canvasWidth, height: canvasHeight } = o;
+        if (!client) return;
+        // Clear canvas
+        context.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Calculate uniform scaling to maintain aspect ratio
+        const padding = 20;
+        const drawWidth = canvasWidth - 2 * padding;
+        const drawHeight = canvasHeight - 2 * padding;
+        const scaleX = drawWidth / (client.xmax - client.xmin);
+        const scaleY = drawHeight / (client.ymax - client.ymin);
+
+        // Use minimum scale to maintain aspect ratio
+        const scale = Math.min(scaleX, scaleY);
+
+        // Calculate actual dimensions and centering offsets
+        const actualWidth = (client.xmax - client.xmin) * scale;
+        const actualHeight = (client.ymax - client.ymin) * scale;
+        const offsetX = padding + (drawWidth - actualWidth) / 2;
+        const offsetY = padding + (drawHeight - actualHeight) / 2;
+
+        // Helper functions with uniform scale and centered offsets
+        const toCanvasX = (x: number) => offsetX + (x - client.xmin) * scale;
+        const toCanvasY = (y: number) => offsetY + (client.ymax - y) * scale; // Flip Y axis
+
+        context.strokeStyle = "green";
+        context.strokeRect(offsetX, offsetY, actualWidth, actualHeight);
+
+        // Draw probability field as background heatmap
+        await drawProbabilityField(
+          context,
+          client,
+          currentFrame,
+          toCanvasX,
+          toCanvasY,
+        );
+
+        // Draw track bins in blue (semi-transparent over probability field)
+        await drawTrackBins(context, client, toCanvasX, toCanvasY);
+
+        // Draw current position (on top of everything)
+        await drawCurrentPosition(
+          context,
+          client,
+          currentFrame,
+          toCanvasX,
+          toCanvasY,
+        );
+
+        // Draw frame info
+        await drawFrameInfo(
+          context,
+          client,
+          currentFrame,
+          canvasWidth,
+          canvasHeight,
+        );
+      },
+    [client, currentFrame],
+  );
+
   // Canvas drawing
   const drawFrame = useCallback(async () => {
     if (!client || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, width, canvasHeight);
-
-    // Calculate scaling factors
-    const padding = 20;
-    const drawWidth = canvas.width - 2 * padding;
-    const drawHeight = canvas.height - 2 * padding;
-    const scaleX = drawWidth / (client.xmax - client.xmin);
-    const scaleY = drawHeight / (client.ymax - client.ymin);
-
-    // Helper function to convert coordinates
-    const toCanvasX = (x: number) => padding + (x - client.xmin) * scaleX;
-    const toCanvasY = (y: number) => padding + (client.ymax - y) * scaleY; // Flip Y axis
-
-    // Draw probability field as background heatmap
-    await drawProbabilityField(ctx, client, currentFrame, toCanvasX, toCanvasY);
-
-    // Draw track bins in blue (semi-transparent over probability field)
-    await drawTrackBins(ctx, client, toCanvasX, toCanvasY);
-
-    // Draw current position (on top of everything)
-    await drawCurrentPosition(ctx, client, currentFrame, toCanvasX, toCanvasY);
-
-    // Draw frame info
-    await drawFrameInfo(ctx, client, currentFrame, canvas.width, canvas.height);
-  }, [client, currentFrame, width, canvasHeight]);
+    await drawFunction({
+      context,
+      width,
+      height: canvasHeight,
+    });
+  }, [client, drawFunction, width, canvasHeight]);
 
   // Redraw when frame changes
   useEffect(() => {
@@ -151,6 +201,13 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
   // const handleFrameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   setCurrentFrame(parseInt(event.target.value));
   // };
+
+  // Register drawForExport callback
+  useEffect(() => {
+    if (setDrawForExport) {
+      setDrawForExport(drawFunction);
+    }
+  }, [setDrawForExport, drawFunction]);
 
   if (!client) {
     return (

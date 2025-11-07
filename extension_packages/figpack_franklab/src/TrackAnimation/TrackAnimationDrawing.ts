@@ -1,17 +1,159 @@
 import { TrackAnimationClient } from "./TrackAnimationClient";
 
-// Helper function to convert a normalized value (0-1) to a color
+// ============================================================================
+// COORDINATE SYSTEM DOCUMENTATION
+// ============================================================================
+//
+// SPATIAL COORDINATES (data space):
+//   - Origin: (xmin, ymin)
+//   - Positive X: right
+//   - Positive Y: up (standard Cartesian)
+//   - Range: [xmin, xmax] × [ymin, ymax]
+//
+// SPATIAL BINS (probability field):
+//   - Grid of xcount × ycount bins
+//   - Bin indices: binX ∈ [0, xcount-1], binY ∈ [0, ycount-1]
+//   - Linear index: binIndex = binY * xcount + binX (row-major)
+//   - binY=0 → bottom row (y near ymin)
+//   - binY=ycount-1 → top row (y near ymax)
+//   - Bin (binX, binY) spatial bounds:
+//     * Bottom-left corner: (xmin + binX * binWidth, ymin + binY * binHeight)
+//     * Top-right corner: (xmin + (binX+1) * binWidth, ymin + (binY+1) * binHeight)
+//
+// TRACK BINS (from Python):
+//   - Stored as "upper-left" corners in spatial coordinates
+//   - Format: [x1, x2, ..., xN, y1, y2, ..., yN] (2×N transposed)
+//   - "Upper-left" = top-left in spatial coords = (x, y_top) where y_top is MAX y
+//   - To draw: use UL corner as top-left, extend down by height, right by width
+//
+// CANVAS COORDINATES:
+//   - Origin: top-left (0, 0)
+//   - Positive X: right
+//   - Positive Y: down (FLIPPED from spatial Y-axis)
+//   - Transforms:
+//     * canvasX = offsetX + (spatialX - xmin) * scale
+//     * canvasY = offsetY + (ymax - spatialY) * scale  [note: ymax - spatialY]
+//
+// ============================================================================
+
+// ============================================================================
+// COORDINATE TRANSFORMATION UTILITIES
+// ============================================================================
+
+interface CoordinateTransform {
+  toCanvasX: (spatialX: number) => number;
+  toCanvasY: (spatialY: number) => number;
+  spatialWidthToCanvas: (width: number) => number;
+  spatialHeightToCanvas: (height: number) => number;
+}
+
+/**
+ * Create coordinate transformation functions
+ * Maps from spatial (Cartesian, Y-up) to canvas (Y-down)
+ * @unused - Available for future use
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function createCoordinateTransform(
+  client: TrackAnimationClient,
+  scale: number,
+  offsetX: number,
+  offsetY: number,
+): CoordinateTransform {
+  return {
+    toCanvasX: (spatialX: number) => offsetX + (spatialX - client.xmin) * scale,
+
+    toCanvasY: (spatialY: number) => offsetY + (client.ymax - spatialY) * scale, // Flip Y-axis
+
+    spatialWidthToCanvas: (width: number) => width * scale,
+
+    spatialHeightToCanvas: (height: number) => height * scale,
+  };
+}
+
+// ============================================================================
+// BIN INDEX UTILITIES
+// ============================================================================
+
+/**
+ * Convert linear bin index to 2D bin coordinates
+ * Uses row-major indexing: binIndex = binY * xcount + binX
+ */
+function binIndexToXY(binIndex: number, xcount: number): [number, number] {
+  const binX = binIndex % xcount;
+  const binY = Math.floor(binIndex / xcount);
+  return [binX, binY];
+}
+
+/**
+ * Convert 2D bin coordinates to linear index
+ * @unused - Available for future use
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function xyToBinIndex(binX: number, binY: number, xcount: number): number {
+  return binY * xcount + binX;
+}
+
+/**
+ * Get the bottom-left corner of a bin in spatial coordinates
+ * This is the natural drawing corner for canvas (since we draw down and right)
+ * @unused - Available for future use
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function binToBottomLeftCorner(
+  binX: number,
+  binY: number,
+  client: TrackAnimationClient,
+): [number, number] {
+  const spatialX = client.xmin + binX * client.binWidth;
+  const spatialY = client.ymin + binY * client.binHeight;
+  return [spatialX, spatialY];
+}
+
+/**
+ * Get the top-left corner of a bin in spatial coordinates
+ * Useful for matching "upper-left" corner convention
+ * @unused - Available for future use
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function binToTopLeftCorner(
+  binX: number,
+  binY: number,
+  client: TrackAnimationClient,
+): [number, number] {
+  const spatialX = client.xmin + binX * client.binWidth;
+  const spatialY = client.ymin + (binY + 1) * client.binHeight; // Top edge
+  return [spatialX, spatialY];
+}
+
+// ============================================================================
+// COLOR UTILITIES
+// ============================================================================
+
+/**
+ * Convert a normalized value (0-1) to a color
+ * Uses blue-to-red color scale for probability visualization
+ */
 const valueToColor = (normalizedValue: number): string => {
-  // Use a blue to red color scale
   // 0 = blue (low probability), 1 = red (high probability)
   const red = Math.round(255 * normalizedValue);
   const blue = Math.round(255 * (1 - normalizedValue));
-  const green = Math.round(128 * (1 - Math.abs(normalizedValue - 0.5) * 2)); // Peak at middle
-
+  const green = Math.round(128 * (1 - Math.abs(normalizedValue - 0.5) * 2));
   return `rgb(${red}, ${green}, ${blue})`;
 };
 
-// Helper function to draw probability field
+// ============================================================================
+// DRAWING FUNCTIONS
+// ============================================================================
+
+/**
+ * Draw probability field as a heatmap over spatial bins
+ *
+ * Process:
+ * 1. Load sparse probability data (locations as bin indices, values)
+ * 2. Iterate through all bins in the grid
+ * 3. For each bin: convert bin index → spatial coords → canvas coords
+ * 4. Draw filled rectangles with color based on probability value
+ */
 export const drawProbabilityField = async (
   ctx: CanvasRenderingContext2D,
   client: TrackAnimationClient,
@@ -19,12 +161,13 @@ export const drawProbabilityField = async (
   toCanvasX: (x: number) => number,
   toCanvasY: (y: number) => number,
 ) => {
+  // Load sparse probability data for this frame
   const probabilityData = await client.getProbabilityFieldData(frame);
   if (!probabilityData) return;
 
   const { locations, values, maxValue } = probabilityData;
 
-  // Create a map for quick lookup of values by spatial bin index
+  // Create a map for quick lookup of values by bin index
   const valueMap = new Map<number, number>();
   for (let i = 0; i < locations.length; i++) {
     valueMap.set(locations[i], values[i]);
@@ -32,42 +175,56 @@ export const drawProbabilityField = async (
 
   // Draw all spatial bins in the grid
   for (let binIndex = 0; binIndex < client.xcount * client.ycount; binIndex++) {
-    // Convert 1D bin index to 2D coordinates
-    const binX = (binIndex % client.xcount) - 1;
-    const binY = Math.floor(binIndex / client.xcount) - 1;
+    // Convert linear bin index to 2D coordinates
+    const [binX, binY] = binIndexToXY(binIndex, client.xcount);
 
-    // Calculate the actual spatial coordinates of this bin
+    // Get bottom-left corner of the bin in spatial coordinates
     const spatialX = client.xmin + binX * client.binWidth;
     const spatialY = client.ymin + binY * client.binHeight;
 
     // Convert to canvas coordinates
     const canvasX = toCanvasX(spatialX);
-    const canvasY = toCanvasY(spatialY);
+    const canvasY = toCanvasY(spatialY); // This is the top edge in canvas coords
+
+    // Calculate bin dimensions in canvas space
     const canvasBinWidth =
       client.binWidth * (toCanvasX(client.xmin + 1) - toCanvasX(client.xmin));
     const canvasBinHeight =
       client.binHeight * (toCanvasY(client.ymin) - toCanvasY(client.ymin + 1));
 
-    // Get the value for this bin, or use 0 if not present (sparse representation)
+    // Get the value for this bin (sparse representation - use 0 if not present)
     const value = valueMap.get(binIndex) || 0;
-
-    // Normalize the value (0-1 range)
     const normalizedValue = maxValue > 0 ? value / maxValue : 0;
 
     // Set color based on normalized value
     if (normalizedValue > 0) {
       ctx.fillStyle = valueToColor(normalizedValue);
     } else {
-      // Use a light gray for bins with no data (N/A)
+      // Light gray for bins with no data
       ctx.fillStyle = "rgba(240, 240, 240, 0.8)";
     }
 
-    // Draw the bin
-    ctx.fillRect(canvasX, canvasY, canvasBinWidth, canvasBinHeight);
+    // Draw the bin rectangle
+    ctx.fillRect(
+      canvasX,
+      canvasY - canvasBinHeight,
+      canvasBinWidth,
+      canvasBinHeight,
+    );
   }
 };
 
-// Helper function to draw track bins
+/**
+ * Draw track bins (the actual track structure)
+ *
+ * Process:
+ * 1. Load track bin corners (upper-left corners in spatial coords)
+ * 2. For each corner:
+ *    - Extract (x, y) from the [x1..xN, y1..yN] format
+ *    - Note: these are UPPER-LEFT (top-left) corners in spatial space
+ *    - Convert to canvas coords (where top-left is the natural drawing origin)
+ * 3. Draw rectangles extending down (in canvas) and right by bin dimensions
+ */
 export const drawTrackBins = async (
   ctx: CanvasRenderingContext2D,
   client: TrackAnimationClient,
@@ -78,28 +235,52 @@ export const drawTrackBins = async (
   ctx.strokeStyle = "rgba(0, 100, 255, 0.8)";
   ctx.lineWidth = 1;
 
-  // Load track bin corners (these are typically small, so we can load all)
+  // Load track bin corners
+  // Format: [x1, x2, ..., xN, y1, y2, ..., yN]
+  // These represent UPPER-LEFT corners in spatial coordinates
   const trackBinCorners = await client.getTrackBinCorners();
-  const nn = trackBinCorners.length / 2;
-  for (let i = 0; i < trackBinCorners.length / 2; i++) {
-    const x = trackBinCorners[i];
-    const y = trackBinCorners[i + nn];
+  const numBins = trackBinCorners.length / 2;
 
-    const canvasX = toCanvasX(x);
-    const canvasY = toCanvasY(y);
-    const binWidth =
+  for (let i = 0; i < numBins; i++) {
+    // Extract spatial coordinates
+    const spatialX = trackBinCorners[i]; // First half: X coordinates
+    const spatialY = trackBinCorners[i + numBins]; // Second half: Y coordinates
+
+    // Note: (spatialX, spatialY) is the LOWER-LEFT corner in spatial coords
+    // This is the BOTTOM edge (lowest Y) and LEFT edge (lowest X) of the bin
+
+    // Convert to canvas coordinates
+    // In canvas space, this becomes the top-left drawing origin (perfect!)
+    const canvasX = toCanvasX(spatialX);
+    const canvasY = toCanvasY(spatialY);
+
+    // Calculate bin dimensions in canvas space
+    const canvasBinWidth =
       client.trackBinWidth *
       (toCanvasX(client.xmin + 1) - toCanvasX(client.xmin));
-    const binHeight =
+    const canvasBinHeight =
       client.trackBinHeight *
       (toCanvasY(client.ymin) - toCanvasY(client.ymin + 1));
 
-    ctx.fillRect(canvasX, canvasY, binWidth, binHeight);
-    ctx.strokeRect(canvasX, canvasY, binWidth, binHeight);
+    // Draw rectangle from top-left corner, extending right and down
+    ctx.fillRect(
+      canvasX,
+      canvasY - canvasBinHeight,
+      canvasBinWidth,
+      canvasBinHeight,
+    );
+    ctx.strokeRect(
+      canvasX,
+      canvasY - canvasBinHeight,
+      canvasBinWidth,
+      canvasBinHeight,
+    );
   }
 };
 
-// Helper function to draw current position
+/**
+ * Draw the current position and head direction of the animal
+ */
 export const drawCurrentPosition = async (
   ctx: CanvasRenderingContext2D,
   client: TrackAnimationClient,
@@ -115,6 +296,7 @@ export const drawCurrentPosition = async (
 
   if (!position || headDir === undefined) return;
 
+  // Convert position to canvas coordinates
   const canvasX = toCanvasX(position[0]);
   const canvasY = toCanvasY(position[1]);
 
@@ -137,7 +319,9 @@ export const drawCurrentPosition = async (
   ctx.stroke();
 };
 
-// Helper function to draw frame info
+/**
+ * Draw frame information (timestamp) on the canvas
+ */
 export const drawFrameInfo = async (
   ctx: CanvasRenderingContext2D,
   client: TrackAnimationClient,
