@@ -1,6 +1,7 @@
 # Change Log
 
 - figpack_franklab - improve track animation - export to SVG and fix coordinate transforms
+- figpack_franklab - add controls to track animation (heatmap selection, playback speed, time bar)
 
 ## [0.3.4] - 2025-11-06
 

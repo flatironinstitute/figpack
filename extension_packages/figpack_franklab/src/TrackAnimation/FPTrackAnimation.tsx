@@ -46,7 +46,8 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
   height,
   setDrawForExport,
 }) => {
-  const { currentTime, setCurrentTime } = useTimeseriesSelection();
+  const { currentTime, setCurrentTime, startTimeSec, endTimeSec } =
+    useTimeseriesSelection();
 
   // const [currentFrame, setCurrentFrame] = useState(0);
 
@@ -56,6 +57,11 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playAnchorTime, setPlayAnchorTime] = useState(0);
   const [playAnchorCurrentTime, setPlayAnchorCurrentTime] = useState(0);
+
+  // New controls
+  const [brightness, setBrightness] = useState(1.0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [colorScheme, setColorScheme] = useState<string>("viridis");
 
   const client = useTrackAnimationClient(zarrGroup);
 
@@ -73,7 +79,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
 
     const animate = () => {
       const elapsedTime = (Date.now() - playAnchorTime) / 1000;
-      setCurrentTime(playAnchorCurrentTime + elapsedTime);
+      setCurrentTime(playAnchorCurrentTime + elapsedTime * playbackSpeed);
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -90,10 +96,13 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
     playAnchorTime,
     playAnchorCurrentTime,
     setCurrentTime,
+    playbackSpeed,
   ]);
 
+  const timeBarHeight = 40;
   const controlsHeight = 60;
-  const canvasHeight = height - controlsHeight;
+  const totalControlsHeight = timeBarHeight + controlsHeight;
+  const canvasHeight = height - totalControlsHeight;
 
   const drawFunction: DrawForExportFunction = useMemo(
     () =>
@@ -137,6 +146,8 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
           currentFrame,
           toCanvasX,
           toCanvasY,
+          brightness,
+          colorScheme,
         );
 
         // Draw track bins in blue (semi-transparent over probability field)
@@ -160,7 +171,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
           canvasHeight,
         );
       },
-    [client, currentFrame],
+    [client, currentFrame, brightness, colorScheme],
   );
 
   // Canvas drawing
@@ -198,6 +209,20 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
     }
   }, [isPlaying, currentTime]);
 
+  const handleTimeBarClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (startTimeSec === undefined || endTimeSec === undefined) return;
+
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const fraction = x / rect.width;
+      const newTime = startTimeSec + fraction * (endTimeSec - startTimeSec);
+
+      setCurrentTime(newTime);
+    },
+    [startTimeSec, endTimeSec, setCurrentTime],
+  );
+
   // const handleFrameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   setCurrentFrame(parseInt(event.target.value));
   // };
@@ -233,6 +258,53 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         height={canvasHeight}
         style={{ border: "1px solid #ccc", backgroundColor: "#f9f9f9" }}
       />
+      {/* Time Bar */}
+      <div
+        onClick={handleTimeBarClick}
+        style={{
+          height: timeBarHeight,
+          width: "100%",
+          backgroundColor: "#e8e8e8",
+          position: "relative",
+          cursor: "pointer",
+          borderBottom: "1px solid #ccc",
+        }}
+      >
+        {/* Time bar background */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: 10,
+            right: 10,
+            height: "8px",
+            transform: "translateY(-50%)",
+            backgroundColor: "#d0d0d0",
+            borderRadius: "4px",
+          }}
+        />
+        {/* Current time marker */}
+        {currentTime !== undefined &&
+          startTimeSec !== undefined &&
+          endTimeSec !== undefined && (
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: `calc(10px + ${((currentTime - startTimeSec) / (endTimeSec - startTimeSec)) * 100}%)`,
+                transform: "translate(-50%, -50%)",
+                width: "16px",
+                height: "16px",
+                backgroundColor: "#2196F3",
+                borderRadius: "50%",
+                border: "2px solid white",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+      </div>
+      {/* Existing controls */}
       <div
         style={{
           height: controlsHeight,
@@ -241,21 +313,85 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
           display: "flex",
           alignItems: "center",
           gap: "10px",
+          flexWrap: "wrap",
         }}
       >
-        <button onClick={togglePlayback} style={{ padding: "5px 10px" }}>
-          {isPlaying ? "Pause" : "Play"}
+        <button
+          onClick={togglePlayback}
+          style={{ padding: "5px 10px", fontSize: "16px" }}
+        >
+          {isPlaying ? "⏸" : "▶"}
         </button>
-        {/* <input
-          type="range"
-          min="0"
-          max={client.totalRecordingFrameLength - 1}
-          value={currentFrame}
-          onChange={handleFrameChange}
-          style={{ flex: 1 }}
-        /> */}
-        <span style={{ fontSize: "12px", minWidth: "100px" }}>
-          Frame: {currentFrame} / {client.totalRecordingFrameLength - 1}
+
+        <label
+          style={{
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+          }}
+        >
+          <select
+            value={playbackSpeed}
+            onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
+            style={{ padding: "3px 5px" }}
+          >
+            <option value={0.2}>x0.2</option>
+            <option value={0.5}>x0.5</option>
+            <option value={1}>x1</option>
+            <option value={2}>x2</option>
+            <option value={5}>x5</option>
+            <option value={10}>x10</option>
+            <option value={20}>x20</option>
+            <option value={50}>x50</option>
+          </select>
+        </label>
+
+        <label
+          style={{
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+          }}
+        >
+          Brightness:
+          <input
+            type="range"
+            min="0"
+            max="3"
+            step="0.1"
+            value={brightness}
+            onChange={(e) => setBrightness(parseFloat(e.target.value))}
+            style={{ width: "100px" }}
+          />
+        </label>
+
+        <label
+          style={{
+            fontSize: "12px",
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+          }}
+        >
+          Colormap:
+          <select
+            value={colorScheme}
+            onChange={(e) => setColorScheme(e.target.value)}
+            style={{ padding: "3px 5px" }}
+          >
+            <option value="blue-red">Blue-Red</option>
+            <option value="viridis">Viridis</option>
+            <option value="hot">Hot</option>
+            <option value="grayscale">Grayscale</option>
+            <option value="cool">Cool</option>
+          </select>
+        </label>
+
+        <span style={{ fontSize: "12px", minWidth: "80px" }}>
+          Time:{" "}
+          {currentTime !== undefined ? `${currentTime.toFixed(2)}s` : "N/A"}
         </span>
       </div>
     </div>
