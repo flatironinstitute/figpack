@@ -74,6 +74,11 @@ def _get_optimal_chunk_size(shape: tuple, dtype) -> tuple:
     """
     target_bytes = 5 * 1024 * 1024  # 5 MB
 
+    if np.prod(shape) <= 1:
+        # all dimensions are zero or one
+        # return shape of unspecified to let zarr choose on this edge case
+        return _UNSPECIFIED
+
     # Ensure dtype is a numpy dtype to get itemsize
     if isinstance(dtype, str):
         dtype = np.dtype(dtype)
@@ -85,11 +90,6 @@ def _get_optimal_chunk_size(shape: tuple, dtype) -> tuple:
     if total_bytes <= target_bytes:
         # Entire array fits comfortably in one chunk
         return shape
-
-    if total_bytes == 0:
-        # all dimensions are zero
-        # return shape of unspecified
-        return _UNSPECIFIED
 
     # Choose the first non-singleton dimension to chunk along
     for axis, dim in enumerate(shape):
