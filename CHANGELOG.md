@@ -1,7 +1,10 @@
 # Change Log
 
+## [0.3.5] - 2025-11-11
+
 - figpack_franklab - improve track animation - export to SVG and fix coordinate transforms
 - figpack_franklab - add controls to track animation (heatmap selection, playback speed, time bar)
+- figpack: improve default chunk size calculation for Zarr datasets
 
 ## [0.3.4] - 2025-11-06
 
