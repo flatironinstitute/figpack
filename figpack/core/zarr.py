@@ -30,7 +30,9 @@ class Group:
             kwargs["chunks"] = chunks
         else:
             if data is not _UNSPECIFIED:
-                kwargs["chunks"] = _get_optimal_chunk_size(data.shape, data.dtype)
+                chunks2 = _get_optimal_chunk_size(data.shape, data.dtype)
+                if chunks2 is not _UNSPECIFIED:
+                    kwargs["chunks"] = chunks2
         if compressor is not _UNSPECIFIED:
             kwargs["compressor"] = compressor
         if _check_zarr_version() == 2:
@@ -83,6 +85,11 @@ def _get_optimal_chunk_size(shape: tuple, dtype) -> tuple:
     if total_bytes <= target_bytes:
         # Entire array fits comfortably in one chunk
         return shape
+
+    if total_bytes == 0:
+        # all dimensions are zero
+        # return shape of unspecified
+        return _UNSPECIFIED
 
     # Choose the first non-singleton dimension to chunk along
     for axis, dim in enumerate(shape):
