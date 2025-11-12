@@ -1,5 +1,7 @@
 # Change Log
 
+- API hardening and rate limiting implemented in figpack-api-cf worker
+
 ## [0.3.5] - 2025-11-11
 
 - figpack_franklab - improve track animation - export to SVG and fix coordinate transforms

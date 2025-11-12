@@ -2,6 +2,7 @@ import { Env, Figure, RateLimitResult } from '../types';
 import { json } from '../utils';
 import { validateApiKey } from '../auth';
 import { updateFigureJson } from '../figureJsonManager';
+import { API_LIMITS } from '../config';
 
 // Helper function to parse figure from database
 function parseFigure(row: any): Figure {
@@ -411,6 +412,47 @@ export async function handleRenewBulkFigures(request: Request, env: Env, rateLim
 		const userEmail = authResult.user.email;
 		const now = Date.now();
 		const oneWeekFromNow = now + 7 * 24 * 60 * 60 * 1000;
+
+		// First, count how many figures would be renewed
+		const countResult = await env.figpack_db
+			.prepare(
+				`
+        SELECT COUNT(*) as count
+        FROM figures
+        WHERE owner_email = ?
+          AND pinned = 0
+          AND is_ephemeral = 0
+          AND expiration < ?
+          AND expiration > 0
+      `,
+			)
+			.bind(userEmail, oneWeekFromNow)
+			.first();
+
+		const figuresToRenew = (countResult?.count as number) || 0;
+
+		// Check bulk renew limit
+		if (figuresToRenew > API_LIMITS.MAX_BATCH_RENEW_FIGURES) {
+			return json(
+				{
+					success: false,
+					message: `Too many figures to renew in bulk. Maximum ${API_LIMITS.MAX_BATCH_RENEW_FIGURES} figures per bulk operation. You have ${figuresToRenew} figures that need renewal. Please renew figures individually or in smaller batches.`,
+				},
+				400,
+			);
+		}
+
+		// If no figures to renew, return early
+		if (figuresToRenew === 0) {
+			return json(
+				{
+					success: true,
+					message: 'No figures need renewal',
+					renewedCount: 0,
+				},
+				200,
+			);
+		}
 
 		// Renew all non-pinned, non-ephemeral figures owned by user that expire in less than 1 week
 		const result = await env.figpack_db

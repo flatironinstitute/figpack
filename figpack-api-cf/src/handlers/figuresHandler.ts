@@ -3,6 +3,8 @@ import { json } from '../utils';
 import { validateApiKey, authenticateUser } from '../auth';
 import { updateFigureJson } from '../figureJsonManager';
 import { listObjects, deleteObjects, S3BucketConfig } from '../s3Utils';
+import { API_LIMITS } from '../config';
+import { checkEphemeralFigureLimit } from '../rateLimit';
 
 // Helper function to create figure ID
 function createFigureId(): string {
@@ -141,6 +143,50 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 				},
 				403,
 			);
+		}
+
+		// Check per-user figure limit (count all figures for this user)
+		if (userEmail !== 'anonymous') {
+			const figureCountResult = await env.figpack_db
+				.prepare('SELECT COUNT(*) as count FROM figures WHERE owner_email = ?')
+				.bind(userEmail)
+				.first();
+
+			const currentFigureCount = (figureCountResult?.count as number) || 0;
+
+			if (currentFigureCount >= API_LIMITS.MAX_FIGURES_PER_USER) {
+				return json(
+					{
+						success: false,
+						message: `Figure limit reached. Maximum ${API_LIMITS.MAX_FIGURES_PER_USER} figures per user. You currently have ${currentFigureCount} figures.`,
+					},
+					429,
+				);
+			}
+		}
+
+		// Check global ephemeral figure limit
+		if (ephemeral) {
+			const ephemeralLimit = await checkEphemeralFigureLimit(env);
+
+			if (!ephemeralLimit.allowed) {
+				const resetTimeSeconds = Math.ceil(ephemeralLimit.resetTime / 1000);
+				const now = Math.floor(Date.now() / 1000);
+				const waitMinutes = Math.ceil((resetTimeSeconds - now) / 60);
+
+				return json(
+					{
+						success: false,
+						message: `Global ephemeral figure limit reached. Maximum ${ephemeralLimit.limit} ephemeral figures per ${API_LIMITS.EPHEMERAL_RATE_WINDOW_MS / 60000} minutes. Current count: ${ephemeralLimit.current}. Please wait ${waitMinutes} minute(s) and try again.`,
+					},
+					429,
+					{
+						'X-Ephemeral-Limit': ephemeralLimit.limit.toString(),
+						'X-Ephemeral-Current': ephemeralLimit.current.toString(),
+						'X-Ephemeral-Reset': resetTimeSeconds.toString(),
+					},
+				);
+			}
 		}
 
 		const baseFigureString = `${figureId}`;

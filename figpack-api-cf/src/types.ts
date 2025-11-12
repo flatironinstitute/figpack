@@ -29,6 +29,13 @@ export interface RateLimitResult {
 	resetTime: number;
 }
 
+export type EndpointType = 'general' | 'upload' | 'create_figure' | 'admin';
+
+export interface RateLimitConfig {
+	WINDOW_MS: number;
+	MAX_REQUESTS: number;
+}
+
 // Bucket interface
 export interface Bucket {
 	id?: number;

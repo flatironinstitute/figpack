@@ -2,6 +2,7 @@ import { Env, RateLimitResult, BatchUploadRequest, BatchUploadResponse, SignedUr
 import { json } from '../utils';
 import { authenticateUser } from '../auth';
 import { getSignedUploadUrl, S3BucketConfig } from '../s3Utils';
+import { API_LIMITS } from '../config';
 
 // File path validation functions
 function isZarrChunk(fileName: string): boolean {
@@ -102,6 +103,28 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 				{
 					success: false,
 					message: 'Files array cannot be empty',
+				},
+				400,
+			);
+		}
+
+		// Validate batch upload size limit
+		if (files.length > API_LIMITS.MAX_BATCH_UPLOAD_FILES) {
+			return json(
+				{
+					success: false,
+					message: `Too many files in batch upload. Maximum ${API_LIMITS.MAX_BATCH_UPLOAD_FILES} files per request. You provided ${files.length} files.`,
+				},
+				400,
+			);
+		}
+
+		// Validate total file count per figure limit
+		if (files.length > API_LIMITS.MAX_FILES_PER_FIGURE) {
+			return json(
+				{
+					success: false,
+					message: `Too many files for a single figure. Maximum ${API_LIMITS.MAX_FILES_PER_FIGURE} files per figure. You provided ${files.length} files.`,
 				},
 				400,
 			);

@@ -1,6 +1,7 @@
 import { Env } from './types';
 import { json, handleCors } from './utils';
 import { checkRateLimit } from './rateLimit';
+import { API_LIMITS } from './config';
 import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser } from './handlers/usersHandler';
 import { handleGetCurrentUser, handleRegenerateApiKey, handleUpdateCurrentUser } from './handlers/userHandler';
 import { handleGetUsageStats } from './handlers/usageStatsHandler';
@@ -34,13 +35,25 @@ export default {
 			return handleCors(request);
 		}
 
-		// Apply rate limiting
+		// Check request body size before processing
+		const contentLength = request.headers.get('content-length');
+		if (contentLength && parseInt(contentLength) > API_LIMITS.MAX_REQUEST_BODY_SIZE) {
+			return json(
+				{
+					success: false,
+					message: `Request body too large. Maximum size is ${API_LIMITS.MAX_REQUEST_BODY_SIZE} bytes`,
+				},
+				413,
+			);
+		}
+
+		// Apply rate limiting - use IP-based general rate limiting by default
 		const clientIP = request.headers.get('cf-connecting-ip') || 'unknown';
-		const rateLimitResult = checkRateLimit(clientIP, 30, 60 * 1000);
+		const rateLimitResult = await checkRateLimit(clientIP, 'ip', 'general', env);
 
 		if (!rateLimitResult.allowed) {
 			return json({ success: false, message: 'Too many requests. Please try again later.' }, 429, {
-				'X-RateLimit-Limit': '30',
+				'X-RateLimit-Limit': API_LIMITS.RATE_LIMIT_WINDOWS.GENERAL.MAX_REQUESTS.toString(),
 				'X-RateLimit-Remaining': '0',
 				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
 			});
