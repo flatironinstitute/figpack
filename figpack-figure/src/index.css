@@ -2,6 +2,8 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  color: #213547;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,7 +17,7 @@ a {
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #747bff;
 }
 
 body {
@@ -35,7 +37,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #f9f9f9;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -52,35 +54,38 @@ button:focus-visible {
   left: 0;
   right: 0;
   height: 30px;
-  background-color: #2a2a2a;
-  color: #ffffff;
+  background-color: #f5f5f5;
+  color: #333333;
   display: flex;
   align-items: center;
   padding: 0 12px;
   font-size: 12px;
-  border-top: 1px solid #444;
+  border-top: 1px solid #ddd;
   z-index: 1000;
 }
 
 .status-bar.warning {
-  background-color: #ff9800;
-  color: #000000;
+  background-color: #fff3cd;
+  color: #856404;
+  border-top: 1px solid #ffeaa7;
 }
 
 .status-bar.error {
-  background-color: #f44336;
-  color: #ffffff;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-top: 1px solid #f5c6cb;
 }
 
 .status-bar.expired {
-  background-color: #d32f2f;
-  color: #ffffff;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-top: 1px solid #f5c6cb;
 }
 
 .manage-button {
-  background-color: #444;
-  color: #fff;
-  border: none;
+  background-color: #e0e0e0;
+  color: #333;
+  border: 1px solid #ccc;
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
@@ -91,13 +96,13 @@ button:focus-visible {
 }
 
 .manage-button:hover {
-  background-color: #666;
+  background-color: #d0d0d0;
 }
 
 .about-button {
-  background-color: #444;
-  color: #fff;
-  border: none;
+  background-color: #e0e0e0;
+  color: #333;
+  border: 1px solid #ccc;
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
@@ -108,7 +113,7 @@ button:focus-visible {
 }
 
 .about-button:hover {
-  background-color: #666;
+  background-color: #d0d0d0;
 }
 
 .about-dialog-overlay {
@@ -125,13 +130,13 @@ button:focus-visible {
 }
 
 .about-dialog {
-  background-color: #2a2a2a;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #333333;
   border-radius: 8px;
   max-width: 600px;
   max-height: 80vh;
   width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   overflow: hidden;
 }
 
@@ -140,7 +145,7 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid #ddd;
 }
 
 .about-dialog-header h2 {
@@ -152,7 +157,7 @@ button:focus-visible {
 .about-dialog-close {
   background: none;
   border: none;
-  color: #ffffff;
+  color: #333333;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -166,7 +171,7 @@ button:focus-visible {
 }
 
 .about-dialog-close:hover {
-  background-color: #444;
+  background-color: #f0f0f0;
 }
 
 .about-dialog-content {
@@ -191,7 +196,8 @@ button:focus-visible {
 }
 
 .about-dialog-description code {
-  background-color: #444;
+  background-color: #f5f5f5;
+  color: #333;
   padding: 2px 4px;
   border-radius: 3px;
   font-family: 'Courier New', monospace;
@@ -199,7 +205,8 @@ button:focus-visible {
 }
 
 .about-dialog-description pre {
-  background-color: #444;
+  background-color: #f5f5f5;
+  color: #333;
   padding: 12px;
   border-radius: 4px;
   overflow-x: auto;
@@ -213,7 +220,7 @@ button:focus-visible {
 }
 
 .about-dialog-description blockquote {
-  border-left: 4px solid #666;
+  border-left: 4px solid #ccc;
   padding-left: 16px;
   margin: 12px 0;
   font-style: italic;
@@ -226,15 +233,15 @@ button:focus-visible {
 }
 
 .edits-notification {
-  color: #ff9800;
+  color: #e65100;
   font-weight: 500;
   margin-right: 8px;
 }
 
 .save-changes-button {
   background-color: #ff9800;
-  color: #000;
-  border: none;
+  color: #fff;
+  border: 1px solid #f57c00;
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
@@ -261,12 +268,12 @@ button:focus-visible {
 }
 
 .dialog-content {
-  background-color: #2a2a2a;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #333333;
   border-radius: 8px;
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   overflow: hidden;
 }
 
@@ -275,7 +282,7 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid #ddd;
 }
 
 .dialog-header h3 {
@@ -287,7 +294,7 @@ button:focus-visible {
 .dialog-close {
   background: none;
   border: none;
-  color: #ffffff;
+  color: #333333;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -301,7 +308,7 @@ button:focus-visible {
 }
 
 .dialog-close:hover {
-  background-color: #444;
+  background-color: #f0f0f0;
 }
 
 .dialog-body {
@@ -315,15 +322,15 @@ button:focus-visible {
 
 .dialog-footer {
   padding: 16px 20px;
-  border-top: 1px solid #444;
+  border-top: 1px solid #ddd;
   display: flex;
   justify-content: flex-end;
 }
 
 .dialog-button {
-  background-color: #444;
-  color: #fff;
-  border: none;
+  background-color: #e0e0e0;
+  color: #333;
+  border: 1px solid #ccc;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -332,7 +339,7 @@ button:focus-visible {
 }
 
 .dialog-button:hover {
-  background-color: #666;
+  background-color: #d0d0d0;
 }
 
 .dialog-fullscreen {
@@ -341,8 +348,8 @@ button:focus-visible {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #2a2a2a;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #333333;
   z-index: 2000;
   display: flex;
   flex-direction: column;
@@ -367,144 +374,4 @@ button:focus-visible {
 
 .dialog-content-fullscreen .dialog-footer {
   flex-shrink: 0;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-  
-  .status-bar {
-    background-color: #f5f5f5;
-    color: #333333;
-    border-top: 1px solid #ddd;
-  }
-  
-  .status-bar.warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border-top: 1px solid #ffeaa7;
-  }
-  
-  .status-bar.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-top: 1px solid #f5c6cb;
-  }
-  
-  .status-bar.expired {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-top: 1px solid #f5c6cb;
-  }
-
-  .manage-button {
-    background-color: #e0e0e0;
-    color: #333;
-    border: 1px solid #ccc;
-  }
-
-  .manage-button:hover {
-    background-color: #d0d0d0;
-  }
-
-  .about-button {
-    background-color: #e0e0e0;
-    color: #333;
-    border: 1px solid #ccc;
-  }
-
-  .about-button:hover {
-    background-color: #d0d0d0;
-  }
-
-  .about-dialog {
-    background-color: #ffffff;
-    color: #333333;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  .about-dialog-header {
-    border-bottom: 1px solid #ddd;
-  }
-
-  .about-dialog-close {
-    color: #333333;
-  }
-
-  .about-dialog-close:hover {
-    background-color: #f0f0f0;
-  }
-
-  .about-dialog-description code {
-    background-color: #f5f5f5;
-    color: #333;
-  }
-
-  .about-dialog-description pre {
-    background-color: #f5f5f5;
-    color: #333;
-  }
-
-  .about-dialog-description blockquote {
-    border-left: 4px solid #ccc;
-  }
-
-  .edits-notification {
-    color: #e65100;
-  }
-
-  .save-changes-button {
-    background-color: #ff9800;
-    color: #fff;
-    border: 1px solid #f57c00;
-  }
-
-  .save-changes-button:hover {
-    background-color: #f57c00;
-  }
-
-  .dialog-content {
-    background-color: #ffffff;
-    color: #333333;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  .dialog-header {
-    border-bottom: 1px solid #ddd;
-  }
-
-  .dialog-close {
-    color: #333333;
-  }
-
-  .dialog-close:hover {
-    background-color: #f0f0f0;
-  }
-
-  .dialog-footer {
-    border-top: 1px solid #ddd;
-  }
-
-  .dialog-button {
-    background-color: #e0e0e0;
-    color: #333;
-    border: 1px solid #ccc;
-  }
-
-  .dialog-button:hover {
-    background-color: #d0d0d0;
-  }
-
-  .dialog-fullscreen {
-    background-color: #ffffff;
-    color: #333333;
-  }
 }

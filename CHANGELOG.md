@@ -1,6 +1,7 @@
 # Change Log
 
 - API hardening and rate limiting implemented in figpack-api-cf worker
+- Remove dark mode in figpack-figure
 
 ## [0.3.5] - 2025-11-11
 
