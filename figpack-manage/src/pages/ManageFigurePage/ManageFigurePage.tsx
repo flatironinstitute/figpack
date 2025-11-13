@@ -74,7 +74,9 @@ const ManageFigurePage: React.FC = () => {
     apiKey,
     () => {
       // On successful delete, redirect to home
-      window.location.href = "/";
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     },
   );
 

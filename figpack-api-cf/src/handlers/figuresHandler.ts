@@ -1,10 +1,10 @@
-import { Env, Figure, Bucket, RateLimitResult } from '../types';
-import { json } from '../utils';
-import { validateApiKey, authenticateUser } from '../auth';
-import { updateFigureJson } from '../figureJsonManager';
-import { listObjects, deleteObjects, S3BucketConfig } from '../s3Utils';
+import { authenticateUser, validateApiKey } from '../auth';
 import { API_LIMITS } from '../config';
+import { updateFigureJson } from '../figureJsonManager';
 import { checkEphemeralFigureLimit } from '../rateLimit';
+import { S3BucketConfig } from '../s3Utils';
+import { Bucket, Env, Figure, RateLimitResult } from '../types';
+import { json } from '../utils';
 
 // Helper function to create figure ID
 function createFigureId(): string {
@@ -527,69 +527,38 @@ export async function handleDeleteFigure(request: Request, env: Env, rateLimitRe
 			);
 		}
 
-		// Delete files from S3
-		let numFilesDeleted = 0;
-		try {
-			const bucketName = figure.bucket || 'figpack-figures';
-			const bucketRow = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?').bind(bucketName).first();
+		// It's very difficult (if not impossible) to delete all the figure files
+		// in a cloudflare worker. DOMParser is used by aws-s3 but not supported in cloudflare workers.
+		// So instead, we're going to set deleted=true in the figpack.json file to mark it as deleted.
+		// and then we'll find a way to clean up the files later.
 
-			if (bucketRow) {
-				const provider = bucketRow.provider as string;
-				let bucketUri: string;
-				if (provider === 'cloudflare') {
-					bucketUri = `r2://${bucketName}`;
-				} else {
-					bucketUri = `s3://${bucketName}`;
-				}
+		await updateFigureJson(figureUrl, env, { deleted: true });
 
-				const s3Bucket: S3BucketConfig = {
-					uri: bucketUri,
-					credentials: JSON.stringify({
-						accessKeyId: bucketRow.aws_access_key_id,
-						secretAccessKey: bucketRow.aws_secret_access_key,
-						endpoint: bucketRow.s3_endpoint,
-					}),
-				};
+		// // List all objects with the figure's prefix
+		// let continuationToken: string | undefined;
+		// const objectsToDelete: string[] = [];
 
-				const bucketBaseUrl = bucketRow.bucket_base_url as string;
-				const prefix = `${bucketBaseUrl}/`;
+		// do {
+		// 	const result = await listObjects(s3Bucket, keyPrefix, { continuationToken });
+		// 	console.log(result);
+		// 	objectsToDelete.push(...result.objects.map((obj) => obj.Key));
+		// 	continuationToken = result.continuationToken;
+		// } while (continuationToken);
 
-				if (!figureUrl.startsWith(prefix)) {
-					throw new Error(`Figure URL must start with ${prefix}`);
-				}
+		// // Double check that all keys are within the figure's directory
+		// for (const key of objectsToDelete) {
+		// 	const url0 = `${bucketBaseUrl}/${key}`;
+		// 	if (!url0.startsWith(figureUrlWithoutIndexHtml)) {
+		// 		throw new Error(`Internal error: Attempting to delete key outside of figure directory: ${key}`);
+		// 	}
+		// }
 
-				const figureUrlWithoutIndexHtml = figureUrl.endsWith('/index.html') ? figureUrl.slice(0, -'/index.html'.length) : figureUrl;
-
-				const keyPrefix = figureUrlWithoutIndexHtml.slice(prefix.length) + '/';
-
-				// List all objects with the figure's prefix
-				let continuationToken: string | undefined;
-				const objectsToDelete: string[] = [];
-
-				do {
-					const result = await listObjects(s3Bucket, keyPrefix, { continuationToken });
-					objectsToDelete.push(...result.objects.map((obj) => obj.Key));
-					continuationToken = result.continuationToken;
-				} while (continuationToken);
-
-				// Double check that all keys are within the figure's directory
-				for (const key of objectsToDelete) {
-					const url0 = `${bucketBaseUrl}/${key}`;
-					if (!url0.startsWith(figureUrlWithoutIndexHtml)) {
-						throw new Error(`Internal error: Attempting to delete key outside of figure directory: ${key}`);
-					}
-				}
-
-				// Delete the objects from S3
-				if (objectsToDelete.length > 0) {
-					await deleteObjects(s3Bucket, objectsToDelete);
-					numFilesDeleted = objectsToDelete.length;
-				}
-			}
-		} catch (error) {
-			console.error('Error deleting S3 files:', error);
-			// Don't fail the request if S3 deletion fails
-		}
+		// // Delete the objects from S3
+		// if (objectsToDelete.length > 0) {
+		// 	console.log(`Deleting ${objectsToDelete.length} objects for figure ${figureUrl}: `, objectsToDelete);
+		// 	await deleteObjects(s3Bucket, objectsToDelete);
+		// 	numFilesDeleted = objectsToDelete.length;
+		// }
 
 		// Delete the figure from database
 		await env.figpack_db.prepare('DELETE FROM figures WHERE figure_url = ?').bind(figureUrl).run();
@@ -598,7 +567,7 @@ export async function handleDeleteFigure(request: Request, env: Env, rateLimitRe
 			{
 				success: true,
 				message: 'Figure deleted successfully',
-				numFilesDeleted,
+				numFilesDeleted: 0,
 			},
 			200,
 			{

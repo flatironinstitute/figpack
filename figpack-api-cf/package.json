@@ -14,13 +14,13 @@
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"prettier": "^3.0.0",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
-		"wrangler": "^4.45.4",
-		"prettier": "^3.0.0"
+		"wrangler": "^4.45.4"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.922.0",
+		"@aws-sdk/client-s3": "^3.930.0",
 		"@aws-sdk/s3-request-presigner": "^3.922.0"
 	}
 }

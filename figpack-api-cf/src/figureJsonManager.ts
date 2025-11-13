@@ -33,7 +33,7 @@ function rowToFigure(row: any): Figure {
 	};
 }
 
-export async function updateFigureJson(figureUrl: string, env: Env): Promise<void> {
+export async function updateFigureJson(figureUrl: string, env: Env, additionalFields?: { [key: string]: any }): Promise<void> {
 	// Get the figure from the database
 	const figureRow = await env.figpack_db.prepare('SELECT * FROM figures WHERE figure_url = ?;').bind(figureUrl).first();
 
@@ -70,6 +70,12 @@ export async function updateFigureJson(figureUrl: string, env: Env): Promise<voi
 			description: figure.pinDescription,
 			timestamp: figure.pinnedTimestamp,
 		};
+	}
+
+	if (additionalFields) {
+		for (const key of Object.keys(additionalFields)) {
+			jsonContent[key] = additionalFields[key];
+		}
 	}
 
 	const bucketName = figure.bucket || 'figpack-figures';
