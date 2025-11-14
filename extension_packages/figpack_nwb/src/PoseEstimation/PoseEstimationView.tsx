@@ -21,7 +21,7 @@ const PoseEstimationView: React.FC<Props> = ({ data, width, height }) => {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [showLabels, setShowLabels] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
   const [playAnchorTime, setPlayAnchorTime] = useState(0);
   const [playAnchorCurrentTime, setPlayAnchorCurrentTime] = useState(0);
 
