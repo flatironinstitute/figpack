@@ -1,5 +1,7 @@
 # Change Log
 
+- figpack-figure: check if has been deleted and show appropriate message
+
 ## [0.3.6] - 2025-11-14
 
 - API hardening and rate limiting implemented in figpack-api-cf worker

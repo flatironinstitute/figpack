@@ -9,6 +9,7 @@ export type FigureInfo = {
   totalFiles?: number;
   figureManagementUrl?: string; // to phase out
   figpackManageUrl?: string; // new
+  deleted?: boolean;
 };
 
 export type FigureInfoResult = {
@@ -18,6 +19,7 @@ export type FigureInfoResult = {
   isExpired: boolean;
   expirationTime: Date | null;
   timeUntilExpiration: string | null;
+  deleted: boolean;
 };
 
 const queryParams = new URLSearchParams(window.location.search);
@@ -113,5 +115,6 @@ export const useFigureInfo = (): FigureInfoResult => {
     isExpired,
     expirationTime,
     timeUntilExpiration,
+    deleted: figureInfo?.deleted || false,
   };
 };

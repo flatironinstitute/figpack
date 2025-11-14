@@ -185,6 +185,17 @@ function AppContent() {
       >
         This figure has expired.
       </div>
+    ) : figureInfoResult.deleted ? (
+      <div
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: "24px",
+          color: "#d32f2f",
+        }}
+      >
+        This figure has been deleted.
+      </div>
     ) : (
       <FPView2
         zarrGroup={zarrData}
