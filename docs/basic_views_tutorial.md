@@ -201,6 +201,14 @@ graph.show(title="Uniform Timeseries Example", open_in_browser=True)
 
 <iframe data-src="./tutorial_uniform_timeseries/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
+### Real-World Example
+
+Here's an electrophysiology array demonstrating efficient rendering of uniform timeseries data with multiple channels:
+
+<iframe data-src="https://figures.figpack.org/figures/default/553173cf7d0c0e5a50818d86/index.html" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+
+*Data courtesy of [The Gillespie Lab](https://www.gillespie-lab.com/)*
+
 ## MultiChannelTimeseries
 
 For multi-channel data like sensor arrays:
