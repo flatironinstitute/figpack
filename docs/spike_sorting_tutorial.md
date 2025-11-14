@@ -136,6 +136,10 @@ view.show(title="Raster Plot Example", open_in_browser=True)
 
 <iframe data-src="./spike_sorting_tutorial_raster_plot/index.html?embedded=1" width="100%" height="450" frameborder="0" loading="lazy"></iframe>
 
+Here's an example using real data from the DANDI Archive:
+
+<iframe data-src="https://figures.figpack.org/figures/default/40f688d9a3b216b3eff759ca/index.html" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+
 ## Spike Amplitudes
 
 Visualize spike amplitudes over time to assess unit stability:
