@@ -1,6 +1,7 @@
 # Change Log
 
 - figpack-figure: check if has been deleted and show appropriate message
+- Implement PoseEstimation view in figpack_nwb extension
 
 ## [0.3.6] - 2025-11-14
 

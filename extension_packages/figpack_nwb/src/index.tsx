@@ -2,6 +2,7 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import FPPlaneSegmentation from "./PlaneSegmentation/FPPlaneSegmentation";
+import FPPoseEstimation from "./PoseEstimation";
 import {
   FPViewComponent,
   FPViewContext,
@@ -88,6 +89,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "nwb.PlaneSegmentation",
     render: makeRenderFunction(FPPlaneSegmentation),
+  });
+  registerFPViewComponent({
+    name: "nwb.PoseEstimation",
+    render: makeRenderFunction(FPPoseEstimation),
   });
 
   // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;
