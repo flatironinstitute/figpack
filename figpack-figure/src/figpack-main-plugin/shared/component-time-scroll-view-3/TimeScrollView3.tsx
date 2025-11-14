@@ -429,6 +429,14 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     isViewClicked,
   ]);
 
+  const inlineActions = useMemo(() => {
+    return customToolbarActions?.filter((action) => action.inline) || [];
+  }, [customToolbarActions]);
+
+  const nonInlineActions = useMemo(() => {
+    return customToolbarActions?.filter((action) => !action.inline) || [];
+  }, [customToolbarActions]);
+
   const timeScrollToolbar = useMemo(() => {
     return (
       <TimeScrollToolbar
@@ -438,6 +446,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         onInteractionModeChange={setInteractionMode}
         currentTime={currentTime}
         onZoomToFit={handleZoomToFit}
+        inlineCustomActions={inlineActions}
       />
     );
   }, [
@@ -446,6 +455,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     setInteractionMode,
     currentTime,
     handleZoomToFit,
+    inlineActions,
   ]);
 
   const customActionsToolbar = useMemo(() => {
@@ -453,10 +463,10 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       <CustomActionsToolbar
         width={width}
         height={40}
-        customActions={customToolbarActions}
+        customActions={nonInlineActions}
       />
     );
-  }, [width, customToolbarActions]);
+  }, [width, nonInlineActions]);
 
   return (
     <div

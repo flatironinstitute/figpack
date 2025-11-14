@@ -260,6 +260,8 @@ class TGLineSeries:
         group.attrs["color"] = self.color
         group.attrs["width"] = self.width
         group.attrs["dash"] = self.dash if self.dash is not None else []
+        group.attrs["y_min"] = float(np.nanmin(self.y))
+        group.attrs["y_max"] = float(np.nanmax(self.y))
         group.create_dataset("t", data=self.t)
         group.create_dataset("y", data=self.y)
 
@@ -298,6 +300,8 @@ class TGMarkerSeries:
         group.attrs["color"] = self.color
         group.attrs["radius"] = self.radius
         group.attrs["shape"] = self.shape
+        group.attrs["y_min"] = float(np.nanmin(self.y))
+        group.attrs["y_max"] = float(np.nanmax(self.y))
 
 
 class TGIntervalSeries:
@@ -582,6 +586,12 @@ class TGUniformSeries:
 
         if self.channel_spacing is not None:
             group.attrs["channel_spacing"] = float(self.channel_spacing)
+
+        y_min = np.nanmin(self.data)
+        y_max = np.nanmax(self.data)
+        if not np.isnan(y_min) and not np.isnan(y_max):
+            group.attrs["y_min"] = float(y_min)
+            group.attrs["y_max"] = float(y_max)
 
         # Store original data with optimal chunking
         original_chunks = self._calculate_optimal_chunk_size(self.data.shape)

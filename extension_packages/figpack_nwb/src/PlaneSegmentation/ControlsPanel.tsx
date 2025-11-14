@@ -26,7 +26,10 @@ const ControlsPanel: React.FC<Props> = ({
         gap: "20px",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <div
+        title="Adjust the brightness of the image"
+        style={{ display: "flex", alignItems: "center", gap: "10px" }}
+      >
         <label>Brightness:</label>
         <input
           type="range"
@@ -38,7 +41,10 @@ const ControlsPanel: React.FC<Props> = ({
         />
         <span>{brightness}</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+      <div
+        title="Toggle the visibility of labels"
+        style={{ display: "flex", alignItems: "center", gap: "5px" }}
+      >
         <input
           type="checkbox"
           id="showLabels"

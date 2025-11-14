@@ -200,12 +200,12 @@ export const timeseriesSelectionReducer = (
         ) {
           if (action.currentTime < newVisibleStartTimeSec) {
             const visibleSpan = newVisibleEndTimeSec - newVisibleStartTimeSec;
-            const a = visibleSpan * 0.1;
+            const a = visibleSpan * 0.5;
             newVisibleStartTimeSec = action.currentTime - a;
             newVisibleEndTimeSec = newVisibleStartTimeSec + visibleSpan;
           } else if (action.currentTime > newVisibleEndTimeSec) {
             const visibleSpan = newVisibleEndTimeSec - newVisibleStartTimeSec;
-            const a = visibleSpan * 0.1;
+            const a = visibleSpan * 0.5;
             newVisibleEndTimeSec = action.currentTime + a;
             newVisibleStartTimeSec = newVisibleEndTimeSec - visibleSpan;
           }

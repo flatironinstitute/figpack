@@ -79,7 +79,9 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
 
     const animate = () => {
       const elapsedTime = (Date.now() - playAnchorTime) / 1000;
-      setCurrentTime(playAnchorCurrentTime + elapsedTime * playbackSpeed);
+      setCurrentTime(playAnchorCurrentTime + elapsedTime * playbackSpeed, {
+        ensureVisible: true,
+      });
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -139,7 +141,10 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         context.strokeStyle = "darkgray";
         context.strokeRect(offsetX, offsetY, actualWidth, actualHeight);
 
-        // Draw probability field as background heatmap
+        // Draw track bins first using the lowest heatmap color (no transparency)
+        await drawTrackBins(context, client, toCanvasX, toCanvasY, colorScheme);
+
+        // Draw probability field on top so the decode field is visible
         await drawProbabilityField(
           context,
           client,
@@ -149,9 +154,6 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
           brightness,
           colorScheme,
         );
-
-        // Draw track bins in blue (semi-transparent over probability field)
-        await drawTrackBins(context, client, toCanvasX, toCanvasY);
 
         // Draw current position (on top of everything)
         await drawCurrentPosition(
@@ -317,6 +319,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         }}
       >
         <button
+          title={isPlaying ? "Pause" : "Play"}
           onClick={togglePlayback}
           style={{ padding: "5px 10px", fontSize: "16px" }}
         >
@@ -324,6 +327,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         </button>
 
         <label
+          title="Adjust the brightness"
           style={{
             fontSize: "12px",
             display: "flex",
@@ -336,6 +340,8 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
             onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
             style={{ padding: "3px 5px" }}
           >
+            <option value={0.05}>x0.05</option>
+            <option value={0.1}>x0.1</option>
             <option value={0.2}>x0.2</option>
             <option value={0.5}>x0.5</option>
             <option value={1}>x1</option>
@@ -348,6 +354,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         </label>
 
         <label
+          title="Toggle the visibility of labels"
           style={{
             fontSize: "12px",
             display: "flex",
@@ -368,6 +375,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
         </label>
 
         <label
+          title="Select colormap"
           style={{
             fontSize: "12px",
             display: "flex",

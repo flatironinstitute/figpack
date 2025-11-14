@@ -281,8 +281,8 @@ export const drawProbabilityField = async (
       const brightnessAdjustedValue = Math.min(1, normalizedValue * brightness);
       ctx.fillStyle = valueToColor(brightnessAdjustedValue, colorScheme);
     } else {
-      // Light gray for bins with no data
-      ctx.fillStyle = "rgba(240, 240, 240, 0.8)";
+      // don't display zero-probability bins
+      continue;
     }
 
     // Draw the bin rectangle
@@ -311,9 +311,12 @@ export const drawTrackBins = async (
   client: TrackAnimationClient,
   toCanvasX: (x: number) => number,
   toCanvasY: (y: number) => number,
+  colorScheme: string = "blue-red",
 ) => {
-  ctx.fillStyle = "rgba(0, 100, 255, 0.3)"; // Blue with transparency
-  ctx.strokeStyle = "rgba(0, 100, 255, 0.8)";
+  // Use the lowest value (0) of the heatmap color scheme, no transparency
+  const trackColor = valueToColor(0, colorScheme);
+  ctx.fillStyle = trackColor;
+  ctx.strokeStyle = trackColor;
   ctx.lineWidth = 1;
 
   // Load track bin corners

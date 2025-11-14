@@ -55,10 +55,6 @@ export const FPTimeseriesGraphChild: React.FC<{
     right: number;
   } | null>(null);
 
-  const [yRange, setYRange] = useState<
-    { yMin: number; yMax: number } | undefined
-  >(undefined);
-
   useEffect(() => {
     if (!client) return;
     initializeTimeseriesSelection({
@@ -67,9 +63,39 @@ export const FPTimeseriesGraphChild: React.FC<{
       initialVisibleStartTimeSec: client.limits.tMin,
       initialVisibleEndTimeSec: client.limits.tMax,
     });
-    // Y-range will be calculated dynamically from loaded data
-    setYRange({ yMin: 0, yMax: 10 }); // Default fallback
   }, [initializeTimeseriesSelection, client]);
+
+  const [yRangeMode, setYRangeMode] = useState<"global" | "window">("window");
+
+  const globalYRange = useMemo(() => {
+    let yMin: number | undefined = undefined;
+    let yMax: number | undefined = undefined;
+    for (const s of client?.series || []) {
+      if (s.seriesType === "line" || s.seriesType === "marker") {
+        console.log("series yMin/yMax:", s.seriesType, s.yMin, s.yMax);
+        if (yMin === undefined || s.yMin < yMin) {
+          yMin = s.yMin;
+        }
+        if (yMax === undefined || s.yMax > yMax) {
+          yMax = s.yMax;
+        }
+      } else if (s.seriesType === "uniform") {
+        console.log("series yMin/yMax:", s.seriesType, s.yMin, s.yMax);
+        for (let ch = 0; ch < s.nChannels; ch++) {
+          const offset = s.channelSpacing ? -ch * s.channelSpacing : 0;
+          const channelYMin = s.yMin + offset;
+          const channelYMax = s.yMax + offset;
+          if (yMin === undefined || channelYMin < yMin) {
+            yMin = channelYMin;
+          }
+          if (yMax === undefined || channelYMax > yMax) {
+            yMax = channelYMax;
+          }
+        }
+      }
+    }
+    return { yMin, yMax };
+  }, [client]);
 
   const draw = useMemo(() => {
     if (!client) return undefined;
@@ -79,8 +105,33 @@ export const FPTimeseriesGraphChild: React.FC<{
       visibleStartTimeSec,
       visibleEndTimeSec,
       client,
+      globalYRange: {
+        yMin: globalYRange.yMin ?? 0,
+        yMax: globalYRange.yMax ?? 10,
+      },
+      yRangeMode,
     });
-  }, [visibleStartTimeSec, visibleEndTimeSec, client]);
+  }, [
+    visibleStartTimeSec,
+    visibleEndTimeSec,
+    client,
+    globalYRange,
+    yRangeMode,
+  ]);
+
+  const [yRangeUsedByDraw, setYRangeUsedByDraw] = useState<{
+    yMin: number;
+    yMax: number;
+  } | null>(null);
+
+  const yAxisInfo = useMemo(() => {
+    return {
+      showTicks: true,
+      yMin: yRangeUsedByDraw ? yRangeUsedByDraw.yMin : 0,
+      yMax: yRangeUsedByDraw ? yRangeUsedByDraw.yMax : 10,
+      yLabel: client ? client.yLabel : "",
+    };
+  }, [yRangeUsedByDraw, client]);
 
   useEffect(() => {
     if (!context) return;
@@ -90,22 +141,53 @@ export const FPTimeseriesGraphChild: React.FC<{
       exporting: false,
       canceled: false,
     };
-    draw(context, canvasWidth, canvasHeight, margins, opts).then((yr) =>
-      setYRange(yr),
-    );
+    draw(context, canvasWidth, canvasHeight, margins, opts).then((result) => {
+      if (!result) return;
+      setYRangeUsedByDraw(result.yRange);
+    });
     return () => {
       opts.canceled = true;
     };
   }, [context, margins, draw, canvasWidth, canvasHeight]);
 
-  const yAxisInfo = useMemo(() => {
-    return {
-      showTicks: true,
-      yMin: yRange ? yRange.yMin : 0,
-      yMax: yRange ? yRange.yMax : 10,
-      yLabel: client ? client.yLabel : "",
-    };
-  }, [yRange, client]);
+  const customToolbarActions = useMemo(() => {
+    return [
+      {
+        id: "y-range-mode",
+        label: "Y Range Mode",
+        inline: true,
+        component: (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: "500",
+              color: "#495057",
+              userSelect: "none",
+            }}
+            title="Window Y range (checked) vs Global Y range (unchecked)"
+          >
+            <input
+              type="checkbox"
+              checked={yRangeMode === "window"}
+              onChange={(e) => {
+                setYRangeMode(e.target.checked ? "window" : "global");
+              }}
+              style={{
+                cursor: "pointer",
+                width: "14px",
+                height: "14px",
+              }}
+            />
+            <span>Y↕</span>
+          </label>
+        ),
+      },
+    ];
+  }, [yRangeMode]);
 
   return (
     <TimeScrollView3
@@ -124,6 +206,7 @@ export const FPTimeseriesGraphChild: React.FC<{
       hideTimeAxisLabels={client?.hideTimeAxisLabels ?? false}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}
+      customToolbarActions={customToolbarActions}
     />
   );
 };
@@ -763,6 +846,8 @@ type LineSeries = {
   t: DatasetDataType;
   y: DatasetDataType;
   dash?: [number, number]; // e.g., [5, 5] for dashed lines
+  yMin: number;
+  yMax: number;
 };
 
 type MarkerSeries = {
@@ -772,6 +857,8 @@ type MarkerSeries = {
   shape: string; // e.g., "circle", "square"
   t: DatasetDataType;
   y: DatasetDataType;
+  yMin: number;
+  yMax: number;
 };
 
 type IntervalSeries = {
@@ -794,6 +881,8 @@ type UniformSeries = {
   downsampleFactors: number[];
   zarrGroup: ZarrGroup;
   channelSpacing?: number;
+  yMin: number;
+  yMax: number;
 };
 
 const useTimeseriesGraphClient = (zarrGroup: ZarrGroup) => {
@@ -821,7 +910,12 @@ class TimeseriesGraphClient {
       | IntervalSeries
       | UniformSeries
     )[],
-    public limits: { tMin: number; tMax: number },
+    public limits: {
+      tMin: number;
+      tMax: number;
+      globalYMin?: number;
+      globalYMax?: number;
+    },
     public yLabel: string,
     public legendOpts: { location?: string; hideLegend?: boolean } = {},
     public seriesNames: string[] = [],
@@ -861,6 +955,8 @@ class TimeseriesGraphClient {
           t,
           y,
           dash: attrs["dash"] || undefined,
+          yMin: attrs["y_min"],
+          yMax: attrs["y_max"],
         });
       } else if (attrs["series_type"] === "marker") {
         const t = await seriesGroup.getDatasetData("t", {});
@@ -880,6 +976,8 @@ class TimeseriesGraphClient {
           shape: attrs["shape"] || "circle",
           t,
           y,
+          yMin: attrs["y_min"],
+          yMax: attrs["y_max"],
         });
       } else if (attrs["series_type"] === "interval") {
         const t_start = await seriesGroup.getDatasetData("t_start", {});
@@ -912,6 +1010,8 @@ class TimeseriesGraphClient {
           downsampleFactors: attrs["downsample_factors"] || [],
           zarrGroup: seriesGroup,
           channelSpacing: attrs["channel_spacing"],
+          yMin: attrs["y_min"],
+          yMax: attrs["y_max"],
         });
       } else {
         console.warn(
@@ -922,12 +1022,17 @@ class TimeseriesGraphClient {
     }
     let tMin: number | undefined = undefined;
     let tMax: number | undefined = undefined;
+    let globalYMin: number | undefined = undefined;
+    let globalYMax: number | undefined = undefined;
     for (const s of series) {
       if (s.seriesType === "line" || s.seriesType === "marker") {
         for (let i = 0; i < s.t.length; i++) {
           const t = s.t[i] as number;
           if (tMin === undefined || t < tMin) tMin = t;
           if (tMax === undefined || t > tMax) tMax = t;
+          const y = s.y[i] as number;
+          if (globalYMin === undefined || y < globalYMin) globalYMin = y;
+          if (globalYMax === undefined || y > globalYMax) globalYMax = y;
         }
       } else if (s.seriesType === "interval") {
         for (let i = 0; i < s.t_start.length; i++) {
@@ -941,6 +1046,12 @@ class TimeseriesGraphClient {
           s.startTimeSec + (s.nTimepoints - 1) / s.samplingFrequencyHz;
         if (tMin === undefined || s.startTimeSec < tMin) tMin = s.startTimeSec;
         if (tMax === undefined || endTime > tMax) tMax = endTime;
+        if (s.yMin !== undefined && s.yMax !== undefined) {
+          if (globalYMin === undefined || s.yMin < globalYMin)
+            globalYMin = s.yMin;
+          if (globalYMax === undefined || s.yMax > globalYMax)
+            globalYMax = s.yMax;
+        }
       }
     }
     if (tMin === undefined) tMin = 0;
@@ -948,6 +1059,8 @@ class TimeseriesGraphClient {
     const limits = {
       tMin,
       tMax,
+      globalYMin,
+      globalYMax,
     };
     const yLabel = zarrGroup.attrs["y_label"] || "";
     const legendOpts = zarrGroup.attrs["legend_opts"] || {};
@@ -970,10 +1083,14 @@ const createDraw = ({
   visibleStartTimeSec,
   visibleEndTimeSec,
   client,
+  globalYRange,
+  yRangeMode,
 }: {
   visibleStartTimeSec: number;
   visibleEndTimeSec: number;
   client: TimeseriesGraphClient;
+  globalYRange: { yMin: number; yMax: number };
+  yRangeMode: "global" | "window";
 }) => {
   return async (
     context: CanvasRenderingContext2D,
@@ -992,27 +1109,27 @@ const createDraw = ({
     if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
       return;
 
-    // Collect y-limits from all loaded series data
-    let globalYMin: number | undefined = undefined;
-    let globalYMax: number | undefined = undefined;
-
-    // Helper function to update global y-limits
-    const updateYLimits = (values: number[]) => {
-      for (const value of values) {
-        if (!isNaN(value) && isFinite(value)) {
-          if (globalYMin === undefined || value < globalYMin)
-            globalYMin = value;
-          if (globalYMax === undefined || value > globalYMax)
-            globalYMax = value;
-        }
-      }
-    };
-
     // Load data and collect y-limits for each series
     const loadedSeriesData: Array<{
       series: LineSeries | MarkerSeries | IntervalSeries | UniformSeries;
       data?: any;
     }> = [];
+
+    const windowYRange = {
+      yMin: undefined as number | undefined,
+      yMax: undefined as number | undefined,
+    };
+
+    const updateWindowYRange = (values: number[]) => {
+      for (const v of values) {
+        if (windowYRange.yMin === undefined || v < windowYRange.yMin) {
+          windowYRange.yMin = v;
+        }
+        if (windowYRange.yMax === undefined || v > windowYRange.yMax) {
+          windowYRange.yMax = v;
+        }
+      }
+    };
 
     for (const s of client.series) {
       if (s.seriesType === "line" || s.seriesType === "marker") {
@@ -1024,8 +1141,9 @@ const createDraw = ({
             visibleYValues.push(s.y[i] as number);
           }
         }
-        updateYLimits(visibleYValues);
         loadedSeriesData.push({ series: s });
+        // Update y-limits
+        updateWindowYRange(visibleYValues);
       } else if (s.seriesType === "interval") {
         // Interval series don't contribute to y-limits
         loadedSeriesData.push({ series: s });
@@ -1057,7 +1175,7 @@ const createDraw = ({
               const values = Array.from(uniformData.data[ch]).map(
                 (v) => v + offset,
               );
-              updateYLimits(values);
+              updateWindowYRange(values);
             }
           } else {
             uniformData = await loadDownsampledData(
@@ -1073,7 +1191,7 @@ const createDraw = ({
               const values = Array.from(uniformData.data[ch]).map(
                 (v) => v + offset,
               );
-              updateYLimits(values);
+              updateWindowYRange(values);
             }
           }
           loadedSeriesData.push({ series: s, data: uniformData });
@@ -1087,20 +1205,20 @@ const createDraw = ({
       }
     }
 
-    let yRange: { yMin: number; yMax: number };
-
-    // Add small padding (5% of range)
-    if (globalYMin !== undefined && globalYMax !== undefined) {
-      const range = globalYMax - globalYMin;
-      const padding = range * 0.05;
-      yRange = {
-        yMin: globalYMin - padding,
-        yMax: globalYMax + padding,
-      };
-    } else {
-      // Default y-range if no data
-      yRange = { yMin: 0, yMax: 10 };
-    }
+    let yRange =
+      yRangeMode === "global"
+        ? globalYRange
+        : windowYRange.yMin !== undefined && windowYRange.yMax !== undefined
+          ? windowYRange
+          : globalYRange;
+    yRange.yMin = yRange.yMin ?? 0;
+    yRange.yMax = yRange.yMax ?? 10;
+    // pad it by 5% on each side
+    const yPadding = (yRange.yMax! - yRange.yMin!) * 0.05;
+    yRange = {
+      yMin: yRange.yMin! - yPadding,
+      yMax: yRange.yMax! + yPadding,
+    };
 
     // Set clipping region to graph area
     context.save();
@@ -1125,8 +1243,8 @@ const createDraw = ({
       return (
         canvasHeight -
         margins.bottom -
-        ((v - (yRange ? yRange.yMin : 0)) /
-          ((yRange ? yRange.yMax : 10) - (yRange ? yRange.yMin : 0))) *
+        ((v - (yRange.yMin ?? 0)) /
+          ((yRange.yMax ?? 10) - (yRange.yMin ?? 0))) *
           (canvasHeight - margins.top - margins.bottom)
       );
     };
@@ -1168,6 +1286,11 @@ const createDraw = ({
     // Paint legend after restoring canvas state (so it's not clipped)
     paintLegend(context, client, { margins, canvasWidth });
 
-    return yRange;
+    return {
+      yRange: {
+        yMin: yRange.yMin ?? 0,
+        yMax: yRange.yMax! ?? 10,
+      },
+    };
   };
 };

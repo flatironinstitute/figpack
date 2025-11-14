@@ -11,6 +11,7 @@ export type CustomToolbarAction = {
   isActive?: boolean;
   tooltip?: string;
   component?: React.ReactNode; // Add support for custom React components
+  inline?: boolean; // Whether to render inline in the main toolbar (vs separate row)
 };
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
   currentTime?: number;
   onZoomToFit?: () => void;
   onExport?: () => void;
+  inlineCustomActions?: CustomToolbarAction[];
 };
 
 const formatTime = (timeSec: number): string => {
@@ -41,6 +43,7 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
   currentTime,
   onZoomToFit,
   onExport,
+  inlineCustomActions,
 }) => {
   const { zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange();
 
@@ -301,8 +304,30 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
         )}
       </div>
 
-      {/* Right side - Time display */}
+      {/* Right side - Inline custom actions and time display */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        {inlineCustomActions && inlineCustomActions.length > 0 && (
+          <>
+            {inlineCustomActions.map((action) =>
+              action.component ? (
+                <div
+                  key={action.id}
+                  style={{ display: "flex", alignItems: "center" }}
+                >
+                  {action.component}
+                </div>
+              ) : null,
+            )}
+            <div
+              style={{
+                width: "1px",
+                height: "20px",
+                backgroundColor: "#dee2e6",
+                margin: "0 4px",
+              }}
+            />
+          </>
+        )}
         <span style={{ color: "#6c757d", fontWeight: "500" }}>Time:</span>
         <span
           style={{

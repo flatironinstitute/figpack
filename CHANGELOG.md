@@ -1,8 +1,11 @@
 # Change Log
 
+## [0.3.6] - 2025-11-14
+
 - API hardening and rate limiting implemented in figpack-api-cf worker
 - Remove dark mode in figpack-figure
 - Fix figure deletion
+- Improve TimeseriesGraph and TrackAnimation - Gillespie/Shvartsman feedback
 
 ## [0.3.5] - 2025-11-11
 
