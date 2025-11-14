@@ -142,13 +142,7 @@ class PoseEstimation(figpack.ExtensionView):
         group.create_dataset("timestamps", data=self.timestamps)
 
         # Store combined pose data as 3D array (Time x Nodes x Dimension)
-        # Use reasonable chunking for efficient access
-        chunk_time = min(1000, len(self.timestamps))
-        group.create_dataset(
-            "pose_data",
-            data=self.pose_data,
-            chunks=(chunk_time, len(self.items), 2),
-        )
+        group.create_dataset("pose_data", data=self.pose_data)
 
         # Store node names and descriptions as lists in attributes
         # (zarr doesn't handle string arrays well without object_codec)
