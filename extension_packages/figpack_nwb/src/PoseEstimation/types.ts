@@ -1,5 +1,6 @@
 export type PoseEstimationData = {
-  timestamps: Float32Array | Float64Array;
+  startTime: number;
+  rate: number;
   poseData: Float32Array | Float64Array; // 3D array flattened (Time x Nodes x 2)
   nodeNames: string[];
   nodeDescriptions: string[];

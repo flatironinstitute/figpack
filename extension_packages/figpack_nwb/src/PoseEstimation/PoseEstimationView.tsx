@@ -31,25 +31,16 @@ const PoseEstimationView: React.FC<Props> = ({ data, width, height }) => {
   const currentTimeIndex = useMemo(() => {
     if (currentTime === undefined) return 0;
 
-    // Find the closest timestamp index
-    let closestIdx = 0;
-    let minDiff = Math.abs(data.timestamps[0] - currentTime);
-
-    for (let i = 1; i < data.numTimepoints; i++) {
-      const diff = Math.abs(data.timestamps[i] - currentTime);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestIdx = i;
-      }
-    }
-
-    return closestIdx;
-  }, [currentTime, data.timestamps, data.numTimepoints]);
+    const startTime = data.startTime;
+    const rate = data.rate;
+    const index = Math.round((currentTime - startTime) * rate);
+    return Math.min(Math.max(index, 0), data.numTimepoints - 1);
+  }, [currentTime, data.startTime, data.rate, data.numTimepoints]);
 
   // Initialize timeseries selection with data bounds
   useEffect(() => {
     if (data && startTimeSec === undefined && endTimeSec === undefined) {
-      const minTime = data.timestamps[0];
+      const minTime = data.startTime;
       setCurrentTime(minTime);
     }
   }, [data, startTimeSec, endTimeSec, setCurrentTime]);
@@ -63,7 +54,7 @@ const PoseEstimationView: React.FC<Props> = ({ data, width, height }) => {
       const newTime = playAnchorCurrentTime + elapsedTime * playbackSpeed;
 
       // Check if we've reached the end
-      const maxTime = data.timestamps[data.numTimepoints - 1];
+      const maxTime = data.startTime + (data.numTimepoints - 1) / data.rate;
       if (newTime >= maxTime) {
         setIsPlaying(false);
         setCurrentTime(maxTime);
@@ -112,8 +103,8 @@ const PoseEstimationView: React.FC<Props> = ({ data, width, height }) => {
       const x = e.clientX - rect.left;
       const fraction = x / rect.width;
 
-      const minTime = data.timestamps[0];
-      const maxTime = data.timestamps[data.numTimepoints - 1];
+      const minTime = data.startTime;
+      const maxTime = data.startTime + (data.numTimepoints - 1) / data.rate;
       const newTime = minTime + fraction * (maxTime - minTime);
 
       setCurrentTime(newTime);
@@ -130,8 +121,8 @@ const PoseEstimationView: React.FC<Props> = ({ data, width, height }) => {
     return <div>Loading...</div>;
   }
 
-  const minTime = data.timestamps[0];
-  const maxTime = data.timestamps[data.numTimepoints - 1];
+  const minTime = data.startTime;
+  const maxTime = data.startTime + (data.numTimepoints - 1) / data.rate;
   const timeProgress =
     currentTime !== undefined
       ? ((currentTime - minTime) / (maxTime - minTime)) * 100

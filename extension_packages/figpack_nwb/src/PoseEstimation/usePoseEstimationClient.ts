@@ -22,12 +22,10 @@ export const usePoseEstimationClient = (
         const yMax = attrs.y_max as number;
         const description = (attrs.description as string) || "";
 
-        // Load timestamps
-        const timestamps = await zarrGroup.getDatasetData("timestamps", {});
+        const startTime = attrs.start_time as number;
+        const rate = attrs.rate as number;
+
         if (cancelled) return;
-        if (!timestamps) {
-          throw new Error("Failed to load timestamps");
-        }
 
         // Load pose data (3D array: Time x Nodes x 2)
         const poseData = await zarrGroup.getDatasetData("pose_data", {});
@@ -49,7 +47,8 @@ export const usePoseEstimationClient = (
         if (cancelled) return;
 
         setData({
-          timestamps: timestamps as Float32Array | Float64Array,
+          startTime,
+          rate,
           poseData: poseData as Float32Array | Float64Array,
           nodeNames,
           nodeDescriptions,

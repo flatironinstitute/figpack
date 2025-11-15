@@ -123,7 +123,7 @@ const PoseEstimationCanvas: React.FC<Props> = ({
     });
 
     // Draw time info
-    const currentTime = data.timestamps[currentTimeIndex];
+    const currentTime = data.startTime + currentTimeIndex / data.rate;
     ctx.fillStyle = "#333";
     ctx.font = "14px sans-serif";
     ctx.textAlign = "left";

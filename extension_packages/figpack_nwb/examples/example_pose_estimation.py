@@ -53,7 +53,8 @@ def create_synthetic_pose_data():
 
         item = PoseEstimationItem(
             name=node_name,
-            timestamps=timestamps.copy(),
+            start_time=0,
+            rate=fps,
             data=data,
             description=f"Synthetic {node_name} position data",
         )
@@ -67,7 +68,7 @@ def example_with_synthetic_data():
     print("Creating synthetic pose estimation data...")
     items = create_synthetic_pose_data()
 
-    print(f"Created {len(items)} nodes with {len(items[0].timestamps)} timepoints")
+    print(f"Created {len(items)} nodes with synthetic data.")
 
     # Create the view
     view = PoseEstimation(
@@ -98,15 +99,16 @@ def example_with_nwb_data():
     except Exception as e:
         print(f"Error loading from NWB: {e}")
         print("This example requires a valid NWB file with PoseEstimationSeries data.")
-        print("Falling back to synthetic data...")
-        example_with_synthetic_data()
 
 
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) > 1 and sys.argv[1] == "--nwb":
+    has_nwb_flag = "--nwb" in sys.argv
+
+    if has_nwb_flag:
         # Try to load from NWB
+        print("Running NWB data example...")
         example_with_nwb_data()
     else:
         # Use synthetic data

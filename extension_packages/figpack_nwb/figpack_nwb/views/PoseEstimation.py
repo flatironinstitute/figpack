@@ -11,7 +11,8 @@ class PoseEstimationItem:
     """A single node in the pose estimation"""
 
     name: str
-    timestamps: np.ndarray  # shape (T,)
+    start_time: float
+    rate: float
     data: np.ndarray  # shape (T, 2) for 2D positions
     description: str = ""
 
@@ -51,26 +52,34 @@ class PoseEstimation(figpack.ExtensionView):
         if not items:
             raise ValueError("No pose estimation items provided")
 
-        # Validate that all timestamps are equal
-        first_timestamps = items[0].timestamps
+        # Validate that all start times and rates are identical
+        first_start_time = items[0].start_time
+        first_rate = items[0].rate
         for item in items[1:]:
-            if not np.array_equal(item.timestamps, first_timestamps):
+            if item.start_time != first_start_time:
                 raise ValueError(
-                    f"All nodes must have identical timestamps. "
-                    f"Node '{item.name}' has different timestamps than '{items[0].name}'"
+                    f"All nodes must have identical start times. "
+                    f"Node '{item.name}' has different start times than '{items[0].name}'"
+                )
+            if item.rate != first_rate:
+                raise ValueError(
+                    f"All nodes must have identical rates. "
+                    f"Node '{item.name}' has different rates than '{items[0].name}'"
                 )
 
         # Validate data shapes
-        num_timepoints = len(first_timestamps)
+        num_timepoints = items[0].data.shape[0]
         for item in items:
-            if item.data.shape != (num_timepoints, 2):
+            if item.data.shape[0] != num_timepoints:
                 raise ValueError(
-                    f"Node '{item.name}' has data shape {item.data.shape}, "
-                    f"expected ({num_timepoints}, 2)"
+                    f"All nodes must have identical number of timepoints. "
+                    f"Node '{item.name}' has {item.data.shape[0]} timepoints, "
+                    f"expected {num_timepoints}"
                 )
 
         self.items = items
-        self.timestamps = first_timestamps
+        self.rate = first_rate
+        self.start_time = first_start_time
 
         # Combine all node data into 3D array (Time x Nodes x Dimension)
         self.pose_data = np.stack([item.data for item in items], axis=1)
@@ -100,15 +109,24 @@ class PoseEstimation(figpack.ExtensionView):
         assert isinstance(X, lindi.LindiH5pyGroup)
 
         # Get the nodes
-        nodes = X["nodes"]
+        if "nodes" in X:
+            nodes = X["nodes"]
+        else:
+            nodes = []
+            for key in X.keys():
+                if isinstance(X[key], lindi.LindiH5pyGroup):
+                    if X[key].attrs.get("neurodata_type", "") == "PoseEstimationSeries":
+                        nodes.append(key)
         items = []
         for node in nodes:
             print(f"Loading node: {node}")
             Y = X[node]
             assert isinstance(Y, lindi.LindiH5pyGroup)
+            start_time, rate = _get_start_time_and_rate(Y)
             item = PoseEstimationItem(
                 name=str(node),
-                timestamps=Y["timestamps"][:],
+                start_time=start_time,
+                rate=rate,
                 data=Y["data"][:],
                 description=Y.attrs.get("description", ""),
             )
@@ -132,14 +150,14 @@ class PoseEstimation(figpack.ExtensionView):
         # Store metadata
         group.attrs["description"] = self.description
         group.attrs["num_nodes"] = len(self.items)
-        group.attrs["num_timepoints"] = len(self.timestamps)
+        first_item = self.items[0]
+        group.attrs["num_timepoints"] = first_item.data.shape[0]
+        group.attrs["rate"] = self.rate
+        group.attrs["start_time"] = self.start_time
         group.attrs["x_min"] = self.x_min
         group.attrs["x_max"] = self.x_max
         group.attrs["y_min"] = self.y_min
         group.attrs["y_max"] = self.y_max
-
-        # Store timestamps (shared by all nodes)
-        group.create_dataset("timestamps", data=self.timestamps)
 
         # Store combined pose data as 3D array (Time x Nodes x Dimension)
         group.create_dataset("pose_data", data=self.pose_data)
@@ -151,3 +169,17 @@ class PoseEstimation(figpack.ExtensionView):
 
         group.attrs["node_names"] = node_names
         group.attrs["node_descriptions"] = node_descriptions
+
+
+def _get_start_time_and_rate(node_group):
+    if "timestamps" in node_group:
+        first_timestamps = node_group["timestamps"][:1000]
+        start_time = float(first_timestamps[0])
+        rate = 1 / np.median(np.diff(first_timestamps))
+    elif "starting_time" in node_group:
+        starting_time_ds = node_group["starting_time"]
+        start_time = float(starting_time_ds[0])
+        rate = float(starting_time_ds.attrs["rate"])
+    else:
+        raise ValueError("Node group lacks timestamps or starting_time dataset")
+    return start_time, rate
