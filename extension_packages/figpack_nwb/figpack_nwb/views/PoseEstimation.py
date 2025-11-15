@@ -178,7 +178,7 @@ def _get_start_time_and_rate(node_group):
         rate = 1 / np.median(np.diff(first_timestamps))
     elif "starting_time" in node_group:
         starting_time_ds = node_group["starting_time"]
-        start_time = float(starting_time_ds[0])
+        start_time = float(starting_time_ds[()])
         rate = float(starting_time_ds.attrs["rate"])
     else:
         raise ValueError("Node group lacks timestamps or starting_time dataset")
