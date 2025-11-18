@@ -40,6 +40,11 @@ export const API_LIMITS = {
 			WINDOW_MS: 60 * 1000, // 1 minute
 			MAX_REQUESTS: 120,
 		},
+		// Send API key via email (very restrictive to prevent abuse)
+		SEND_API_KEY: {
+			WINDOW_MS: 60 * 60 * 1000, // 1 hour
+			MAX_REQUESTS: 3,
+		},
 	},
 
 	// Rate limit cleanup

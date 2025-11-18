@@ -3,6 +3,7 @@
 export interface Env {
 	figpack_db: D1Database;
 	BOOTSTRAP_KEY: string; // Add as a secret in Cloudflare
+	RESEND_API_KEY: string; // Add as a secret in Cloudflare for email sending
 }
 
 // User interface matching original API (camelCase)
@@ -29,7 +30,7 @@ export interface RateLimitResult {
 	resetTime: number;
 }
 
-export type EndpointType = 'general' | 'upload' | 'create_figure' | 'admin';
+export type EndpointType = 'general' | 'upload' | 'create_figure' | 'admin' | 'send_api_key';
 
 export interface RateLimitConfig {
 	WINDOW_MS: number;

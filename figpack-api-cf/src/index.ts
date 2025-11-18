@@ -4,6 +4,7 @@ import { checkRateLimit } from './rateLimit';
 import { API_LIMITS } from './config';
 import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser } from './handlers/usersHandler';
 import { handleGetCurrentUser, handleRegenerateApiKey, handleUpdateCurrentUser } from './handlers/userHandler';
+import { handleSendApiKey } from './handlers/sendApiKeyHandler';
 import { handleGetUsageStats } from './handlers/usageStatsHandler';
 import { handleGetBuckets, handleCreateBucket, handleUpdateBucket, handleDeleteBucket } from './handlers/bucketsHandler';
 import {
@@ -94,6 +95,43 @@ export default {
 		if (url.pathname === '/user/usage-stats') {
 			if (request.method.toUpperCase() === 'GET') {
 				return handleGetUsageStats(request, env, rateLimitResult);
+			}
+			return json({ success: false, message: 'Method not allowed' }, 405);
+		}
+
+		// Send API key via email endpoint - with special rate limiting
+		if (url.pathname === '/user/send-api-key') {
+			if (request.method.toUpperCase() === 'POST') {
+				// Apply strict rate limiting by IP
+				const sendApiKeyRateLimitIP = await checkRateLimit(clientIP, 'ip', 'send_api_key', env);
+
+				if (!sendApiKeyRateLimitIP.allowed) {
+					return json({ success: false, message: 'Too many requests. Please try again later.' }, 429, {
+						'X-RateLimit-Limit': API_LIMITS.RATE_LIMIT_WINDOWS.SEND_API_KEY.MAX_REQUESTS.toString(),
+						'X-RateLimit-Remaining': '0',
+						'X-RateLimit-Reset': Math.ceil(sendApiKeyRateLimitIP.resetTime / 1000).toString(),
+					});
+				}
+
+				// Also check rate limiting by email (extract from body)
+				try {
+					const body = (await request.clone().json()) as any;
+					if (body.email) {
+						const sendApiKeyRateLimitEmail = await checkRateLimit(body.email, 'user', 'send_api_key', env);
+
+						if (!sendApiKeyRateLimitEmail.allowed) {
+							return json({ success: false, message: 'Too many requests for this email. Please try again later.' }, 429, {
+								'X-RateLimit-Limit': API_LIMITS.RATE_LIMIT_WINDOWS.SEND_API_KEY.MAX_REQUESTS.toString(),
+								'X-RateLimit-Remaining': '0',
+								'X-RateLimit-Reset': Math.ceil(sendApiKeyRateLimitEmail.resetTime / 1000).toString(),
+							});
+						}
+					}
+				} catch (err) {
+					// If we can't parse the body, continue with IP-only rate limiting
+				}
+
+				return handleSendApiKey(request, env, sendApiKeyRateLimitIP);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}
