@@ -71,6 +71,10 @@ jobs:
           npm install
           npm run build
           pip install -e .
+          cd ../figpack_franklab
+          npm install
+          npm run build
+          pip install -e .
 
       - name: Build documentation
         run: |
