@@ -1,7 +1,13 @@
 # Change Log
 
+## [0.3.7] - 2025-11-18
+
 - figpack-figure: check if has been deleted and show appropriate message
 - Implement PoseEstimation view in figpack_nwb extension
+- Improved handling of deleted figures
+- Simplification of s3 client in figpack-api-cf worker
+- Use global max value for color scaling in Track Animation view
+- Make Track Animation example and add to misc tutorial in docs
 
 ## [0.3.6] - 2025-11-14
 

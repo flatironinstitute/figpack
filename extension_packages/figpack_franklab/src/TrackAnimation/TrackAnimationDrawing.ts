@@ -239,12 +239,19 @@ export const drawProbabilityField = async (
   toCanvasY: (y: number) => number,
   brightness: number = 1.0,
   colorScheme: string = "blue-red",
+  globalMaxValue: number | null = null,
 ) => {
   // Load sparse probability data for this frame
   const probabilityData = await client.getProbabilityFieldData(frame);
   if (!probabilityData) return;
 
-  const { locations, values, maxValue } = probabilityData;
+  const { locations, values, maxValue: localMaxValue } = probabilityData;
+  const maxValue = globalMaxValue !== null ? globalMaxValue : localMaxValue;
+  if (localMaxValue > maxValue) {
+    console.warn(
+      `Local max value ${localMaxValue} exceeds global max value ${maxValue}`,
+    );
+  }
 
   // Create a map for quick lookup of values by bin index
   const valueMap = new Map<number, number>();

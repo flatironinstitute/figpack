@@ -56,6 +56,7 @@ function AppContent() {
   const [putFigureFilesInterface, setPutFigureFilesInterface] =
     useState<PutFigureFilesInterface | null>(null);
   const { width, height } = useWindowDimensions();
+  const [showEvenThoughDeleted, setShowEvenThoughDeleted] = useState(false);
 
   const [drawForExport, setDrawForExport] = useState<
     DrawForExportFunction | undefined
@@ -185,7 +186,7 @@ function AppContent() {
       >
         This figure has expired.
       </div>
-    ) : figureInfoResult.deleted ? (
+    ) : figureInfoResult.deleted && !showEvenThoughDeleted ? (
       <div
         style={{
           justifyContent: "center",
@@ -194,7 +195,11 @@ function AppContent() {
           color: "#d32f2f",
         }}
       >
-        This figure has been deleted.
+        This figure has been deleted. However, it may not have been removed from
+        the storage bucket yet. To try to view it anyway,{" "}
+        <button onClick={() => setShowEvenThoughDeleted(true)}>
+          click here.
+        </button>
       </div>
     ) : (
       <FPView2
@@ -221,6 +226,10 @@ function AppContent() {
       figureAnnotations={figureAnnotations}
       figureAnnotationsDispatch={figureAnnotationsDispatch}
       drawForExport={drawForExport}
+      deleted={figureInfoResult.deleted && !showEvenThoughDeleted}
+      reallyDeletedButShowingAnyway={
+        figureInfoResult.deleted && showEvenThoughDeleted
+      }
     />
   );
 

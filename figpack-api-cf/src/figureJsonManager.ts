@@ -1,5 +1,5 @@
+import { BucketInfo, putObject } from './s3Utils';
 import { Env, Figure } from './types';
-import { putObject, S3BucketConfig } from './s3Utils';
 
 // Helper to convert database row to Figure object
 function rowToFigure(row: any): Figure {
@@ -60,6 +60,7 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 		updatedAt: figure.updatedAt,
 		figureManagementUrl: figure.figureManagementUrl || '',
 		figpackManageUrl: figure.figpackManageUrl || '',
+		deleted: false,
 	};
 
 	// Only include owner email and pin info if the figure is pinned
@@ -90,22 +91,15 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 	const bucketBaseUrl = bucketRow.bucket_base_url as string;
 	const provider = bucketRow.provider as string;
 
-	// Construct bucket URI from the bucket name
-	let bucketUri: string;
-	if (provider === 'cloudflare') {
-		bucketUri = `r2://${bucketName}`;
-	} else {
-		bucketUri = `s3://${bucketName}`;
-	}
+	const region = bucketRow.region || (provider === 'cloudflare' ? 'auto' : ' us-east-1');
 
-	// Create S3 bucket configuration
-	const s3Bucket: S3BucketConfig = {
-		uri: bucketUri,
-		credentials: JSON.stringify({
-			accessKeyId: bucketRow.aws_access_key_id,
-			secretAccessKey: bucketRow.aws_secret_access_key,
-			endpoint: bucketRow.s3_endpoint,
-		}),
+	const bucketInfo: BucketInfo = {
+		provider,
+		bucketName,
+		accessKeyId: bucketRow.aws_access_key_id,
+		secretAccessKey: bucketRow.aws_secret_access_key,
+		endpoint: bucketRow.s3_endpoint,
+		region,
 	};
 
 	try {
@@ -121,7 +115,7 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 		const key = figureUrlWithoutIndexHtml.slice(prefix.length) + '/figpack.json';
 
 		// Store the JSON file in the figure's directory
-		await putObject(s3Bucket, key, JSON.stringify(jsonContent, null, 2), 'application/json');
+		await putObject(bucketInfo, key, JSON.stringify(jsonContent, null, 2), 'application/json');
 	} catch (error) {
 		console.error('Error updating figpack.json:', error);
 		throw error;

@@ -2,7 +2,6 @@ import { authenticateUser, validateApiKey } from '../auth';
 import { API_LIMITS } from '../config';
 import { updateFigureJson } from '../figureJsonManager';
 import { checkEphemeralFigureLimit } from '../rateLimit';
-import { S3BucketConfig } from '../s3Utils';
 import { Bucket, Env, Figure, RateLimitResult } from '../types';
 import { json } from '../utils';
 
@@ -191,7 +190,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 
 		const baseFigureString = `${figureId}`;
 		let count = 0;
-		let figureUrlToUse: string | undefined;
+		let figureUrlToUse: string | undefined = undefined;
 		let figureIsExistingAndCompleted = false;
 		let existingFigure: any = null;
 
@@ -222,6 +221,16 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 					500,
 				);
 			}
+		}
+
+		if (!figureUrlToUse) {
+			return json(
+				{
+					success: false,
+					message: 'Failed to generate figure URL',
+				},
+				500,
+			);
 		}
 
 		if (figureIsExistingAndCompleted || existingFigure) {
@@ -278,7 +287,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 
 		// Update figpack.json in S3
 		try {
-			await updateFigureJson(figureUrlToUse!, env);
+			await updateFigureJson(figureUrlToUse, env);
 		} catch (error) {
 			console.error('Error updating figpack.json:', error);
 			// Don't fail the request if figpack.json update fails

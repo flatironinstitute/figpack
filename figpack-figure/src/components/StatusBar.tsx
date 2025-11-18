@@ -83,6 +83,8 @@ export const StatusBar: React.FC<{
   figureAnnotations?: FigureAnnotationsState;
   figureAnnotationsDispatch?: (a: FigureAnnotationsAction) => void;
   drawForExport?: DrawForExportFunction;
+  deleted?: boolean;
+  reallyDeletedButShowingAnyway?: boolean;
 }> = ({
   zarrData,
   figureInfoResult,
@@ -92,6 +94,8 @@ export const StatusBar: React.FC<{
   figureAnnotations,
   figureAnnotationsDispatch,
   drawForExport,
+  deleted,
+  reallyDeletedButShowingAnyway: deletedButShowingAnyway,
 }) => {
   const { embedded } = useUrlParams();
 
@@ -142,22 +146,23 @@ export const StatusBar: React.FC<{
 
   const figureInfo = figureInfoResult?.figureInfo;
 
-  const exportAsSvgButton = drawForExport ? (
-    <>
-      <button
-        className="export-svg-button"
-        title="Export figure as SVG"
-        onClick={() => setIsExportDialogOpen(true)}
-      >
-        Export as SVG
-      </button>
-      <SvgExportDialog
-        isOpen={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        drawForExport={drawForExport}
-      />
-    </>
-  ) : null;
+  const exportAsSvgButton =
+    drawForExport && !deleted ? (
+      <>
+        <button
+          className="export-svg-button"
+          title="Export figure as SVG"
+          onClick={() => setIsExportDialogOpen(true)}
+        >
+          Export as SVG
+        </button>
+        <SvgExportDialog
+          isOpen={isExportDialogOpen}
+          onClose={() => setIsExportDialogOpen(false)}
+          drawForExport={drawForExport}
+        />
+      </>
+    ) : null;
 
   if (figureInfo?.status && figureInfo?.status !== "completed") {
     return (
@@ -183,7 +188,11 @@ export const StatusBar: React.FC<{
     );
   }
 
-  if (figureInfoResult?.timeUntilExpiration) {
+  if (
+    !deleted &&
+    !deletedButShowingAnyway &&
+    figureInfoResult?.timeUntilExpiration
+  ) {
     return (
       <div className="status-bar">
         <span>Expires in: {figureInfoResult.timeUntilExpiration}</span>

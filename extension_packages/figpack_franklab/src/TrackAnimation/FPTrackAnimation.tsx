@@ -153,6 +153,7 @@ export const FPTrackAnimationChild: React.FC<Props> = ({
           toCanvasY,
           brightness,
           colorScheme,
+          client.globalMaxValue,
         );
 
         // Draw current position (on top of everything)

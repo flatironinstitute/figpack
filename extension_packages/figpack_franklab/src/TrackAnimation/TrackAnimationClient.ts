@@ -27,7 +27,8 @@ export class TrackAnimationClient {
     public totalRecordingFrameLength: number,
     public trackBinHeight: number,
     public trackBinWidth: number,
-    private trackBinCornersCache?: number[],
+    private trackBinCornersCache: number[] | undefined,
+    public globalMaxValue: number | null,
   ) {}
 
   static async create(zarrGroup: ZarrGroup): Promise<TrackAnimationClient> {
@@ -74,6 +75,8 @@ export class TrackAnimationClient {
       attrs.total_recording_frame_length,
       attrs.track_bin_height,
       attrs.track_bin_width,
+      undefined,
+      attrs.global_max_value || null,
     );
   }
 

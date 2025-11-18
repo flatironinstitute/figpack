@@ -139,6 +139,9 @@ class TrackAnimation(figpack.ExtensionView):
         group.attrs["total_recording_frame_length"] = self.total_recording_frame_length
         group.attrs["track_bin_height"] = self.track_bin_height
         group.attrs["track_bin_width"] = self.track_bin_width
+        group.attrs["global_max_value"] = (
+            float(np.max(self.values)) if self.values.size > 0 else None
+        )
 
         # Store arrays as datasets
         group.create_dataset("frame_bounds", data=self.frame_bounds)

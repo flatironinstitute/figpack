@@ -1,8 +1,8 @@
-import { Env, RateLimitResult, BatchUploadRequest, BatchUploadResponse, SignedUrlInfo } from '../types';
-import { json } from '../utils';
 import { authenticateUser } from '../auth';
-import { getSignedUploadUrl, S3BucketConfig } from '../s3Utils';
 import { API_LIMITS } from '../config';
+import { BucketInfo, getSignedUploadUrl } from '../s3Utils';
+import { BatchUploadRequest, Env, RateLimitResult, SignedUrlInfo } from '../types';
+import { json } from '../utils';
 
 // File path validation functions
 function isZarrChunk(fileName: string): boolean {
@@ -229,13 +229,22 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 		}
 
 		// Create S3 bucket configuration
-		const s3Bucket: S3BucketConfig = {
-			uri: bucketUri,
-			credentials: JSON.stringify({
-				accessKeyId: bucketRow.aws_access_key_id,
-				secretAccessKey: bucketRow.aws_secret_access_key,
-				endpoint: bucketRow.s3_endpoint,
-			}),
+		// const s3Bucket: S3BucketConfig = {
+		// 	uri: bucketUri,
+		// 	credentials: JSON.stringify({
+		// 		accessKeyId: bucketRow.aws_access_key_id,
+		// 		secretAccessKey: bucketRow.aws_secret_access_key,
+		// 		endpoint: bucketRow.s3_endpoint,
+		// 	}),
+		// };
+
+		const bucketInfo: BucketInfo = {
+			provider,
+			bucketName,
+			accessKeyId: bucketRow.aws_access_key_id,
+			secretAccessKey: bucketRow.aws_secret_access_key,
+			endpoint: bucketRow.s3_endpoint,
+			region: bucketRow.region || (provider === 'cloudflare' ? 'auto' : ' us-east-1'),
 		};
 
 		// Validate all files and generate signed URLs
@@ -300,7 +309,7 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 
 			// Generate signed URL
 			try {
-				const signedUrl = await getSignedUploadUrl(s3Bucket, fileKey);
+				const signedUrl = await getSignedUploadUrl(bucketInfo, fileKey);
 
 				signedUrls.push({
 					relativePath,
