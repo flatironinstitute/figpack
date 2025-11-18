@@ -30,7 +30,7 @@ export interface RateLimitResult {
 	resetTime: number;
 }
 
-export type EndpointType = 'general' | 'upload' | 'create_figure' | 'admin' | 'send_api_key';
+export type EndpointType = 'general' | 'upload' | 'create_figure' | 'admin' | 'send_api_key' | 'request_account';
 
 export interface RateLimitConfig {
 	WINDOW_MS: number;

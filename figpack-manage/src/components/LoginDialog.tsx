@@ -27,7 +27,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
 }) => {
   const [apiKey, setApiKey] = useState("");
   const [showForgotKey, setShowForgotKey] = useState(false);
+  const [showRequestAccount, setShowRequestAccount] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [researchDescription, setResearchDescription] = useState("");
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -45,7 +48,10 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
   const handleClose = () => {
     setApiKey("");
     setShowForgotKey(false);
+    setShowRequestAccount(false);
     setEmail("");
+    setName("");
+    setResearchDescription("");
     setMessage(null);
     onClose();
   };
@@ -96,11 +102,84 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
     }
   };
 
+  const handleRequestAccount = async () => {
+    if (!email.trim()) {
+      setMessage({ type: "error", text: "Please enter your email address" });
+      return;
+    }
+
+    if (!name.trim()) {
+      setMessage({ type: "error", text: "Please enter your name" });
+      return;
+    }
+
+    if (!researchDescription.trim()) {
+      setMessage({
+        type: "error",
+        text: "Please enter a research description",
+      });
+      return;
+    }
+
+    setSending(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(
+        FIGPACK_API_BASE_URL + "/user/request-account",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            name: name.trim(),
+            researchDescription: researchDescription.trim(),
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({
+          type: "success",
+          text: "Your account request has been submitted. An administrator will review it and contact you via email.",
+        });
+        setEmail("");
+        setName("");
+        setResearchDescription("");
+      } else {
+        setMessage({
+          type: "error",
+          text:
+            data.message ||
+            "Failed to submit account request. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to request account:", error);
+      setMessage({
+        type: "error",
+        text: "Network error. Please check your connection and try again.",
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const getDialogTitle = () => {
+    if (showRequestAccount) return "Request Account";
+    if (showForgotKey) return "Forgot API Key";
+    return "Login";
+  };
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{showForgotKey ? "Forgot API Key" : "Login"}</DialogTitle>
+      <DialogTitle>{getDialogTitle()}</DialogTitle>
       <DialogContent>
-        {!showForgotKey ? (
+        {!showForgotKey && !showRequestAccount ? (
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Enter your Figpack API key to access your account and manage your
@@ -122,13 +201,22 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                 component="button"
                 variant="body2"
                 onClick={() => setShowForgotKey(true)}
-                sx={{ cursor: "pointer" }}
+                sx={{ cursor: "pointer", mr: 2 }}
               >
                 Forgot your API key?
               </Link>
+              {" | "}
+              <Link
+                component="button"
+                variant="body2"
+                onClick={() => setShowRequestAccount(true)}
+                sx={{ cursor: "pointer", ml: 2 }}
+              >
+                Request an account
+              </Link>
             </Typography>
           </Stack>
-        ) : (
+        ) : showForgotKey ? (
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Enter your email address and we'll send you your API key if an
@@ -169,11 +257,72 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
               </Link>
             </Typography>
           </Stack>
+        ) : (
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Request a new Figpack account. An administrator will review your
+              request and contact you via email.
+            </Typography>
+            {message && (
+              <Alert severity={message.type} onClose={() => setMessage(null)}>
+                {message.text}
+              </Alert>
+            )}
+            <TextField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your.email@example.com"
+              fullWidth
+              autoFocus
+              disabled={sending}
+              required
+            />
+            <TextField
+              label="Name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your full name"
+              fullWidth
+              disabled={sending}
+              required
+            />
+            <TextField
+              label="Research Description"
+              multiline
+              rows={4}
+              value={researchDescription}
+              onChange={(e) => setResearchDescription(e.target.value)}
+              placeholder="Briefly describe your research and how you plan to use Figpack (10-2000 characters)"
+              fullWidth
+              disabled={sending}
+              required
+              helperText={`${researchDescription.length}/2000 characters`}
+            />
+            <Typography variant="body2" sx={{ textAlign: "center" }}>
+              <Link
+                component="button"
+                variant="body2"
+                onClick={() => {
+                  setShowRequestAccount(false);
+                  setMessage(null);
+                  setEmail("");
+                  setName("");
+                  setResearchDescription("");
+                }}
+                sx={{ cursor: "pointer" }}
+              >
+                Back to login
+              </Link>
+            </Typography>
+          </Stack>
         )}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        {!showForgotKey ? (
+        {!showForgotKey && !showRequestAccount ? (
           <Button
             onClick={handleSubmit}
             variant="contained"
@@ -181,13 +330,26 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
           >
             Login
           </Button>
-        ) : (
+        ) : showForgotKey ? (
           <Button
             onClick={handleSendApiKey}
             variant="contained"
             disabled={!email.trim() || sending}
           >
             {sending ? "Sending..." : "Send API Key"}
+          </Button>
+        ) : (
+          <Button
+            onClick={handleRequestAccount}
+            variant="contained"
+            disabled={
+              !email.trim() ||
+              !name.trim() ||
+              !researchDescription.trim() ||
+              sending
+            }
+          >
+            {sending ? "Submitting..." : "Submit Request"}
           </Button>
         )}
       </DialogActions>

@@ -5,6 +5,7 @@ import { API_LIMITS } from './config';
 import { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser } from './handlers/usersHandler';
 import { handleGetCurrentUser, handleRegenerateApiKey, handleUpdateCurrentUser } from './handlers/userHandler';
 import { handleSendApiKey } from './handlers/sendApiKeyHandler';
+import { handleRequestAccount } from './handlers/requestAccountHandler';
 import { handleGetUsageStats } from './handlers/usageStatsHandler';
 import { handleGetBuckets, handleCreateBucket, handleUpdateBucket, handleDeleteBucket } from './handlers/bucketsHandler';
 import {
@@ -132,6 +133,43 @@ export default {
 				}
 
 				return handleSendApiKey(request, env, sendApiKeyRateLimitIP);
+			}
+			return json({ success: false, message: 'Method not allowed' }, 405);
+		}
+
+		// Request account endpoint - with special rate limiting
+		if (url.pathname === '/user/request-account') {
+			if (request.method.toUpperCase() === 'POST') {
+				// Apply strict rate limiting by IP
+				const requestAccountRateLimitIP = await checkRateLimit(clientIP, 'ip', 'request_account', env);
+
+				if (!requestAccountRateLimitIP.allowed) {
+					return json({ success: false, message: 'Too many requests. Please try again later.' }, 429, {
+						'X-RateLimit-Limit': API_LIMITS.RATE_LIMIT_WINDOWS.REQUEST_ACCOUNT.MAX_REQUESTS.toString(),
+						'X-RateLimit-Remaining': '0',
+						'X-RateLimit-Reset': Math.ceil(requestAccountRateLimitIP.resetTime / 1000).toString(),
+					});
+				}
+
+				// Also check rate limiting by email (extract from body)
+				try {
+					const body = (await request.clone().json()) as any;
+					if (body.email) {
+						const requestAccountRateLimitEmail = await checkRateLimit(body.email, 'user', 'request_account', env);
+
+						if (!requestAccountRateLimitEmail.allowed) {
+							return json({ success: false, message: 'Too many requests for this email. Please try again later.' }, 429, {
+								'X-RateLimit-Limit': API_LIMITS.RATE_LIMIT_WINDOWS.REQUEST_ACCOUNT.MAX_REQUESTS.toString(),
+								'X-RateLimit-Remaining': '0',
+								'X-RateLimit-Reset': Math.ceil(requestAccountRateLimitEmail.resetTime / 1000).toString(),
+							});
+						}
+					}
+				} catch (err) {
+					// If we can't parse the body, continue with IP-only rate limiting
+				}
+
+				return handleRequestAccount(request, env, requestAccountRateLimitIP);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}

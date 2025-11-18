@@ -45,6 +45,11 @@ export const API_LIMITS = {
 			WINDOW_MS: 60 * 60 * 1000, // 1 hour
 			MAX_REQUESTS: 3,
 		},
+		// Request account (very restrictive to prevent spam)
+		REQUEST_ACCOUNT: {
+			WINDOW_MS: 60 * 60 * 1000, // 1 hour
+			MAX_REQUESTS: 3,
+		},
 	},
 
 	// Rate limit cleanup
