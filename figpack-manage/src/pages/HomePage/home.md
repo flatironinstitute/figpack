@@ -41,12 +41,19 @@ This will create a figure stored locally on your machine and open it in your bro
 
 If you want to **upload and share** your figures with others, you'll need to set your API key:
 
+```bash
+export FIGPACK_API_KEY=your_api_key_here
+```
+
+Then use one of the following methods to upload your figure:
+
 **Option 1: Environment Variable**
 
 ```bash
-export FIGPACK_API_KEY=your_api_key_here
 export FIGPACK_UPLOAD=1
 ```
+
+Then run your script as usual.
 
 **Option 2: Upload Parameter**
 
@@ -61,8 +68,4 @@ When uploading, your figure will be stored in the figpack cloud and you'll recei
 
 ## Need Help?
 
-- [API Reference](https://flatironinstitute.github.io/figpack/api/index.html) - Complete API documentation
-
-- Check out the [Basic Views Tutorial](https://flatironinstitute.github.io/figpack/basic_views_tutorial.html) for more examples
-- Visit the [Spike Sorting Tutorial](https://flatironinstitute.github.io/figpack/spike_sorting_tutorial.html) for neuroscience applications
-- Browse your figures in the "Figures" tab above (requires login)
+For more detailed instructions and advanced features, check out the [official documentation](https://flatironinstitute.github.io/figpack) or reach out to the authors.
