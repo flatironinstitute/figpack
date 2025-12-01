@@ -109,15 +109,7 @@ const HomePage = () => {
                 startIcon={<Login />}
                 onClick={handleOpenLogin}
               >
-                Login
-              </Button>
-              <Button
-                color="inherit"
-                size="small"
-                startIcon={<PersonAdd />}
-                onClick={handleOpenLogin}
-              >
-                Create Account
+                Login or Create Account
               </Button>
             </Stack>
           }
