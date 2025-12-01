@@ -4,6 +4,7 @@ export interface Env {
 	figpack_db: D1Database;
 	BOOTSTRAP_KEY: string; // Add as a secret in Cloudflare
 	RESEND_API_KEY: string; // Add as a secret in Cloudflare for email sending
+	NEW_ACCOUNT_ACCESS_CODES: string; // Comma-separated list of valid access codes for account creation
 }
 
 // User interface matching original API (camelCase)

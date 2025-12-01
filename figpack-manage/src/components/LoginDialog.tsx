@@ -31,6 +31,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [researchDescription, setResearchDescription] = useState("");
+  const [accessCode, setAccessCode] = useState("");
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -52,6 +53,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
     setEmail("");
     setName("");
     setResearchDescription("");
+    setAccessCode("");
     setMessage(null);
     onClose();
   };
@@ -121,6 +123,14 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
       return;
     }
 
+    if (!accessCode.trim()) {
+      setMessage({
+        type: "error",
+        text: "Please enter an access code",
+      });
+      return;
+    }
+
     setSending(true);
     setMessage(null);
 
@@ -136,6 +146,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
             email: email.trim(),
             name: name.trim(),
             researchDescription: researchDescription.trim(),
+            accessCode: accessCode.trim(),
           }),
         },
       );
@@ -145,17 +156,18 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
       if (response.ok) {
         setMessage({
           type: "success",
-          text: "Your account request has been submitted. An administrator will review it and contact you via email.",
+          text:
+            data.message ||
+            "Your account has been created successfully! Please check your email for your API key.",
         });
         setEmail("");
         setName("");
         setResearchDescription("");
+        setAccessCode("");
       } else {
         setMessage({
           type: "error",
-          text:
-            data.message ||
-            "Failed to submit account request. Please try again.",
+          text: data.message || "Failed to create account. Please try again.",
         });
       }
     } catch (error) {
@@ -212,7 +224,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                 onClick={() => setShowRequestAccount(true)}
                 sx={{ cursor: "pointer", ml: 2 }}
               >
-                Request an account
+                Create a new account
               </Link>
             </Typography>
           </Stack>
@@ -260,8 +272,9 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
         ) : (
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Request a new Figpack account. An administrator will review your
-              request and contact you via email.
+              Create a new Figpack account. You will need a valid access code to
+              proceed. If you don't have an access code, please contact the
+              authors to obtain one.
             </Typography>
             {message && (
               <Alert severity={message.type} onClose={() => setMessage(null)}>
@@ -269,13 +282,24 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
               </Alert>
             )}
             <TextField
+              label="Access Code"
+              type="text"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              placeholder="Enter your access code"
+              fullWidth
+              autoFocus
+              disabled={sending}
+              required
+              helperText="Required: Contact the authors if you need an access code"
+            />
+            <TextField
               label="Email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your.email@example.com"
               fullWidth
-              autoFocus
               disabled={sending}
               required
             />
@@ -311,6 +335,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
                   setEmail("");
                   setName("");
                   setResearchDescription("");
+                  setAccessCode("");
                 }}
                 sx={{ cursor: "pointer" }}
               >
@@ -343,13 +368,14 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
             onClick={handleRequestAccount}
             variant="contained"
             disabled={
+              !accessCode.trim() ||
               !email.trim() ||
               !name.trim() ||
               !researchDescription.trim() ||
               sending
             }
           >
-            {sending ? "Submitting..." : "Submit Request"}
+            {sending ? "Creating..." : "Create Account"}
           </Button>
         )}
       </DialogActions>

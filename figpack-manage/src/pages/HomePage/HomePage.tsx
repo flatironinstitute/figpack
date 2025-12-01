@@ -1,17 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Paper,
   IconButton,
   Tooltip,
   ClickAwayListener,
   Box,
+  Alert,
+  Button,
+  Stack,
 } from "@mui/material";
-import { ContentCopy } from "@mui/icons-material";
+import { ContentCopy, Login, PersonAdd } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import homeContent from "./home.md?raw";
+import { useAuth } from "../../hooks/useAuth";
+import LoginDialog from "../../components/LoginDialog";
 
 const CopyableCodeBlock: React.FC<{
   children: string;
@@ -70,8 +75,61 @@ const CopyableCodeBlock: React.FC<{
 };
 
 const HomePage = () => {
+  const { isLoggedIn, user, login } = useAuth();
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+
+  const handleOpenLogin = () => {
+    setLoginDialogOpen(true);
+  };
+
+  const handleCloseLogin = () => {
+    setLoginDialogOpen(false);
+  };
+
+  const handleLogin = (apiKey: string) => {
+    login(apiKey);
+  };
+
   return (
     <Paper sx={{ p: 4, borderRadius: 2 }}>
+      {/* Authentication Status Banner */}
+      {isLoggedIn && user ? (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          Logged in as <strong>{user.email}</strong>
+        </Alert>
+      ) : (
+        <Alert
+          severity="info"
+          sx={{ mb: 3 }}
+          action={
+            <Stack direction="row" spacing={1}>
+              <Button
+                color="inherit"
+                size="small"
+                startIcon={<Login />}
+                onClick={handleOpenLogin}
+              >
+                Login
+              </Button>
+              <Button
+                color="inherit"
+                size="small"
+                startIcon={<PersonAdd />}
+                onClick={handleOpenLogin}
+              >
+                Create Account
+              </Button>
+            </Stack>
+          }
+        >
+          Not logged in.{" "}
+          <strong>
+            You only need an account if you want to upload figures for sharing.
+          </strong>{" "}
+          Local figure creation works without authentication.
+        </Alert>
+      )}
+
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -95,6 +153,13 @@ const HomePage = () => {
       >
         {homeContent}
       </ReactMarkdown>
+
+      {/* Login Dialog */}
+      <LoginDialog
+        open={loginDialogOpen}
+        onClose={handleCloseLogin}
+        onLogin={handleLogin}
+      />
     </Paper>
   );
 };
