@@ -1,22 +1,22 @@
-import React, { useState } from "react";
+import { ContentCopy, Login } from "@mui/icons-material";
 import {
-  Paper,
-  IconButton,
-  Tooltip,
-  ClickAwayListener,
-  Box,
   Alert,
+  Box,
   Button,
+  ClickAwayListener,
+  IconButton,
+  Paper,
   Stack,
+  Tooltip,
 } from "@mui/material";
-import { ContentCopy, Login, PersonAdd } from "@mui/icons-material";
+import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import homeContent from "./home.md?raw";
-import { useAuth } from "../../hooks/useAuth";
+import remarkGfm from "remark-gfm";
 import LoginDialog from "../../components/LoginDialog";
+import { useAuth } from "../../hooks/useAuth";
+import homeContent from "./home.md?raw";
 
 const CopyableCodeBlock: React.FC<{
   children: string;
