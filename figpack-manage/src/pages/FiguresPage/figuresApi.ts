@@ -42,6 +42,7 @@ export interface FigureListParams {
   status?: "uploading" | "completed" | "failed";
   search?: string;
   bucket?: string;
+  pinned?: boolean;
   sortBy?:
     | "createdAt"
     | "updatedAt"
@@ -64,6 +65,7 @@ export const getFigures = async (
     status,
     search,
     bucket,
+    pinned,
     sortBy = "createdAt",
     sortOrder = "desc",
   } = params;
@@ -95,6 +97,10 @@ export const getFigures = async (
 
     if (bucket && bucket.trim()) {
       queryParams.append("bucket", bucket.trim());
+    }
+
+    if (pinned !== undefined) {
+      queryParams.append("pinned", pinned.toString());
     }
 
     const response = await fetch(

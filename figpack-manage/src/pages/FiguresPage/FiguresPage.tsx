@@ -68,6 +68,7 @@ const FiguresPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [bucketFilter, setBucketFilter] = useState<string>("");
+  const [pinnedFilter, setPinnedFilter] = useState(false);
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showAll, setShowAll] = useState(false);
@@ -175,6 +176,10 @@ const FiguresPage: React.FC = () => {
       params.bucket = bucketFilter;
     }
 
+    if (pinnedFilter) {
+      params.pinned = true;
+    }
+
     if (search.trim()) {
       params.search = search.trim();
     }
@@ -200,6 +205,7 @@ const FiguresPage: React.FC = () => {
     search,
     statusFilter,
     bucketFilter,
+    pinnedFilter,
     sortBy,
     sortOrder,
     showAll,
@@ -217,7 +223,15 @@ const FiguresPage: React.FC = () => {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter, bucketFilter, sortBy, sortOrder, showAll]);
+  }, [
+    search,
+    statusFilter,
+    bucketFilter,
+    pinnedFilter,
+    sortBy,
+    sortOrder,
+    showAll,
+  ]);
 
   // Handlers
   const handleRefresh = () => {
@@ -256,6 +270,12 @@ const FiguresPage: React.FC = () => {
 
   const handleShowAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowAll(event.target.checked);
+  };
+
+  const handlePinnedFilterChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setPinnedFilter(event.target.checked);
   };
 
   const getBacklinkCount = (figureUrl: string) => {
@@ -315,6 +335,18 @@ const FiguresPage: React.FC = () => {
                 label="View all figures (Admin)"
               />
             )}
+
+            {/* Pinned Filter Toggle */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={pinnedFilter}
+                  onChange={handlePinnedFilterChange}
+                  disabled={loading}
+                />
+              }
+              label="Show only pinned figures"
+            />
 
             {/* Filters */}
             <Stack

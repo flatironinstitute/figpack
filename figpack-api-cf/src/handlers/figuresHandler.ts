@@ -399,6 +399,7 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		const status = url.searchParams.get('status');
 		const search = url.searchParams.get('search');
 		const bucket = url.searchParams.get('bucket');
+		const pinned = url.searchParams.get('pinned') === 'true';
 		const sortBy = url.searchParams.get('sortBy') || 'created_at';
 		const sortOrder = url.searchParams.get('sortOrder') || 'desc';
 
@@ -440,6 +441,11 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		if (bucket && bucket.trim()) {
 			conditions.push('bucket = ?');
 			values.push(bucket.trim());
+		}
+
+		// Add pinned filter
+		if (pinned) {
+			conditions.push('pinned = 1');
 		}
 
 		// Add search filter (simplified - searching in title and figure_url)
