@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.3.8] - 2025-12-02
+
 - Share button in status bar
 - Support t_start and t_end url parameters to set initial time range
 - Support viewing figures from other users of the same bucket
