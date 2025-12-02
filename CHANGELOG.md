@@ -5,6 +5,7 @@
 - Share button in status bar
 - Support t_start and t_end url parameters to set initial time range
 - Support viewing figures from other users of the same bucket
+- Allow ephemeral=True with upload=True
 
 ## [0.3.7] - 2025-11-18
 

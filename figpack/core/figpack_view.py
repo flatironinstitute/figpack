@@ -68,17 +68,8 @@ class FigpackView:
                 upload = False
 
         if upload is True:
-            if ephemeral is True:
-                # ephemeral is reserved for the case where we don't specify upload
-                # and we are in a notebook in a remote environment such as
-                # colab or jupyterhub
-                raise ValueError(
-                    "ephemeral cannot be set to True if upload is set to True"
-                )
-            else:
-                ephemeral = (
-                    False  # if we excplicitly set upload=True, force ephemeral=False
-                )
+            if ephemeral is None:
+                ephemeral = False  # if we explicitly set upload=True, default ephemeral to False
 
         # determine inline
         if inline is None:
