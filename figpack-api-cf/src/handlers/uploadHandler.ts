@@ -241,6 +241,7 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 		const bucketInfo: BucketInfo = {
 			provider,
 			bucketName,
+			nativeBucketName: bucketRow.native_bucket_name || bucketName,
 			accessKeyId: bucketRow.aws_access_key_id,
 			secretAccessKey: bucketRow.aws_secret_access_key,
 			endpoint: bucketRow.s3_endpoint,

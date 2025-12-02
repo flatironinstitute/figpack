@@ -96,6 +96,7 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 	const bucketInfo: BucketInfo = {
 		provider,
 		bucketName,
+		nativeBucketName: bucketRow.native_bucket_name || bucketName,
 		accessKeyId: bucketRow.aws_access_key_id,
 		secretAccessKey: bucketRow.aws_secret_access_key,
 		endpoint: bucketRow.s3_endpoint,

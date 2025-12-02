@@ -44,6 +44,8 @@ import { useAuth } from "../../hooks/useAuth";
 import { useBacklinks } from "../../hooks/useBacklinks";
 import type { FigureListItem, FigureListParams } from "./figuresApi";
 import { getFigures } from "./figuresApi";
+import type { BucketListItem } from "./bucketsApi";
+import { getUserBuckets } from "./bucketsApi";
 import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
 import { useNavigate } from "react-router-dom";
 
@@ -65,9 +67,14 @@ const FiguresPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [bucketFilter, setBucketFilter] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showAll, setShowAll] = useState(false);
+
+  // Buckets
+  const [buckets, setBuckets] = useState<BucketListItem[]>([]);
+  const [bucketsLoading, setBucketsLoading] = useState(false);
 
   const limit = 25; // Items per page
 
@@ -118,6 +125,25 @@ const FiguresPage: React.FC = () => {
     return expiration && expiration <= Date.now();
   }, []);
 
+  // Load buckets
+  const loadBuckets = useCallback(async () => {
+    if (!apiKey) return;
+
+    setBucketsLoading(true);
+
+    try {
+      const result = await getUserBuckets(apiKey);
+
+      if (result.success) {
+        setBuckets(result.buckets || []);
+      }
+    } catch (err) {
+      console.error("Error loading buckets:", err);
+    } finally {
+      setBucketsLoading(false);
+    }
+  }, [apiKey]);
+
   // Load figures
   const loadFigures = useCallback(async () => {
     if (!apiKey) return;
@@ -145,6 +171,10 @@ const FiguresPage: React.FC = () => {
       params.status = statusFilter as "uploading" | "completed" | "failed";
     }
 
+    if (bucketFilter) {
+      params.bucket = bucketFilter;
+    }
+
     if (search.trim()) {
       params.search = search.trim();
     }
@@ -163,9 +193,23 @@ const FiguresPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [apiKey, page, limit, search, statusFilter, sortBy, sortOrder, showAll]);
+  }, [
+    apiKey,
+    page,
+    limit,
+    search,
+    statusFilter,
+    bucketFilter,
+    sortBy,
+    sortOrder,
+    showAll,
+  ]);
 
   // Effects
+  useEffect(() => {
+    loadBuckets();
+  }, [loadBuckets]);
+
   useEffect(() => {
     loadFigures();
   }, [loadFigures]);
@@ -173,7 +217,7 @@ const FiguresPage: React.FC = () => {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter, sortBy, sortOrder, showAll]);
+  }, [search, statusFilter, bucketFilter, sortBy, sortOrder, showAll]);
 
   // Handlers
   const handleRefresh = () => {
@@ -186,6 +230,10 @@ const FiguresPage: React.FC = () => {
 
   const handleStatusFilterChange = (event: any) => {
     setStatusFilter(event.target.value);
+  };
+
+  const handleBucketFilterChange = (event: any) => {
+    setBucketFilter(event.target.value);
   };
 
   const handleSortChange = (field: string) => {
@@ -304,6 +352,23 @@ const FiguresPage: React.FC = () => {
                     {getStatusLabel("uploading")}
                   </MenuItem>
                   <MenuItem value="failed">{getStatusLabel("failed")}</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel>Bucket</InputLabel>
+                <Select
+                  value={bucketFilter}
+                  onChange={handleBucketFilterChange}
+                  label="Bucket"
+                  disabled={bucketsLoading}
+                >
+                  <MenuItem value="">All Buckets</MenuItem>
+                  {buckets.map((bucket) => (
+                    <MenuItem key={bucket.id} value={bucket.name}>
+                      {bucket.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Stack>

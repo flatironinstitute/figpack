@@ -47,6 +47,8 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
     // Flattened authorization
     isPublic: false,
     authorizedUsers: [] as string[],
+    // Native bucket name
+    nativeBucketName: "",
   });
 
   const [newUserEmail, setNewUserEmail] = useState("");
@@ -65,6 +67,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         s3Endpoint: "",
         isPublic: false,
         authorizedUsers: [],
+        nativeBucketName: "",
       });
       setNewUserEmail("");
       setFormErrors({});
@@ -258,6 +261,22 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             error={!!formErrors.s3Endpoint}
             helperText={formErrors.s3Endpoint}
             placeholder={getEndpointPlaceholder()}
+            margin="normal"
+            disabled={loading}
+          />
+
+          <TextField
+            fullWidth
+            label="Native Bucket Name (Optional)"
+            value={formData.nativeBucketName}
+            onChange={(e) =>
+              handleInputChange("nativeBucketName", e.target.value)
+            }
+            error={!!formErrors.nativeBucketName}
+            helperText={
+              formErrors.nativeBucketName ||
+              "Actual bucket name on Cloudflare/AWS. Defaults to Bucket Name if not specified."
+            }
             margin="normal"
             disabled={loading}
           />

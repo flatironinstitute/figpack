@@ -51,6 +51,8 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
     // Flattened authorization
     isPublic: false,
     authorizedUsers: [] as string[],
+    // Native bucket name
+    nativeBucketName: "",
   });
 
   const [newUserEmail, setNewUserEmail] = useState("");
@@ -70,6 +72,8 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         // Flattened authorization
         isPublic: bucket.isPublic,
         authorizedUsers: [...bucket.authorizedUsers],
+        // Native bucket name
+        nativeBucketName: bucket.nativeBucketName || "",
       });
       setNewUserEmail("");
       setFormErrors({});
@@ -132,6 +136,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         authorizedUsers: formData.authorizedUsers,
         awsAccessKeyId: formData.awsAccessKeyId,
         s3Endpoint: formData.s3Endpoint,
+        nativeBucketName: formData.nativeBucketName || undefined,
       };
 
       // Only update secret key if provided (for security)
@@ -277,6 +282,22 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
             error={!!formErrors.s3Endpoint}
             helperText={formErrors.s3Endpoint}
             placeholder={getEndpointPlaceholder()}
+            margin="normal"
+            disabled={loading}
+          />
+
+          <TextField
+            fullWidth
+            label="Native Bucket Name (Optional)"
+            value={formData.nativeBucketName}
+            onChange={(e) =>
+              handleInputChange("nativeBucketName", e.target.value)
+            }
+            error={!!formErrors.nativeBucketName}
+            helperText={
+              formErrors.nativeBucketName ||
+              "Actual bucket name on Cloudflare/AWS. Defaults to Bucket Name if not specified."
+            }
             margin="normal"
             disabled={loading}
           />

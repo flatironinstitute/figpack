@@ -7,7 +7,13 @@ import { handleGetCurrentUser, handleRegenerateApiKey, handleUpdateCurrentUser }
 import { handleSendApiKey } from './handlers/sendApiKeyHandler';
 import { handleRequestAccount } from './handlers/requestAccountHandler';
 import { handleGetUsageStats } from './handlers/usageStatsHandler';
-import { handleGetBuckets, handleCreateBucket, handleUpdateBucket, handleDeleteBucket } from './handlers/bucketsHandler';
+import {
+	handleGetBuckets,
+	handleCreateBucket,
+	handleUpdateBucket,
+	handleDeleteBucket,
+	handleListUserBuckets,
+} from './handlers/bucketsHandler';
 import {
 	handleCreateFigure,
 	handleGetFigure,
@@ -170,6 +176,13 @@ export default {
 				}
 
 				return handleRequestAccount(request, env, requestAccountRateLimitIP);
+			}
+			return json({ success: false, message: 'Method not allowed' }, 405);
+		}
+
+		if (url.pathname === '/buckets/list') {
+			if (request.method.toUpperCase() === 'GET') {
+				return handleListUserBuckets(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}

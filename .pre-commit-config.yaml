@@ -45,6 +45,10 @@ repos:
         name: Format figpack_slides package files
         entry: bash -c 'cd extension_packages/figpack_slides && npm run format'
         language: system
+      - id: npm-format-figpack-api-cf
+        name: Format figpack-api-cf package files
+        entry: bash -c 'cd figpack-api-cf && npm run format'
+        language: system
       - id: check-figpack-interfaces
         name: Check figpack-interface.ts files are identical
         entry: scripts/check-figpack-interfaces.js

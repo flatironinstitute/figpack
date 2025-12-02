@@ -398,11 +398,25 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
 		const status = url.searchParams.get('status');
 		const search = url.searchParams.get('search');
+		const bucket = url.searchParams.get('bucket');
 		const sortBy = url.searchParams.get('sortBy') || 'created_at';
 		const sortOrder = url.searchParams.get('sortOrder') || 'desc';
 
 		const skip = (page - 1) * limit;
 		const showAll = all && authResult.isAdmin;
+
+		// Check if user is authorized to see all figures in the filtered bucket
+		let showAllInBucket = false;
+		if (bucket && bucket.trim() && !showAll) {
+			const bucketRow = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?').bind(bucket.trim()).first();
+			if (bucketRow) {
+				const bucketData = parseBucket(bucketRow);
+				// If user is in authorizedUsers list (and bucket is not public), show all figures
+				if (!bucketData.isPublic && bucketData.authorizedUsers.includes(authResult.user.email)) {
+					showAllInBucket = true;
+				}
+			}
+		}
 
 		// Build query
 		let query = 'SELECT * FROM figures';
@@ -410,8 +424,8 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		const conditions: string[] = [];
 		const values: any[] = [];
 
-		// Filter by owner if not showing all
-		if (!showAll) {
+		// Filter by owner if not showing all and not authorized for the bucket
+		if (!showAll && !showAllInBucket) {
 			conditions.push('owner_email = ?');
 			values.push(authResult.user.email);
 		}
@@ -420,6 +434,12 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		if (status && ['uploading', 'completed', 'failed'].includes(status)) {
 			conditions.push('status = ?');
 			values.push(status);
+		}
+
+		// Add bucket filter
+		if (bucket && bucket.trim()) {
+			conditions.push('bucket = ?');
+			values.push(bucket.trim());
 		}
 
 		// Add search filter (simplified - searching in title and figure_url)

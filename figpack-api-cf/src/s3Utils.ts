@@ -69,7 +69,8 @@ export function createS3Client(bucketInfo: BucketInfo): S3Client {
 // Generate a presigned upload URL for a file
 export async function getSignedUploadUrl(bucketInfo: BucketInfo, key: string): Promise<string> {
 	const client = createS3Client(bucketInfo);
-	const bucketName = bucketInfo.bucketName;
+	// Use native bucket name for S3 API calls, fall back to bucketName if not defined
+	const bucketName = bucketInfo.nativeBucketName || bucketInfo.bucketName;
 
 	const command = new PutObjectCommand({
 		Bucket: bucketName,
@@ -87,6 +88,7 @@ export async function getSignedUploadUrl(bucketInfo: BucketInfo, key: string): P
 export type BucketInfo = {
 	provider: string;
 	bucketName: string;
+	nativeBucketName: string; // Actual bucket name on Cloudflare/AWS
 	accessKeyId: string;
 	secretAccessKey: string;
 	endpoint: string;
@@ -94,7 +96,7 @@ export type BucketInfo = {
 };
 
 export const bucketInfoToString = (bucketInfo: BucketInfo): string => {
-	return `${bucketInfo.provider}:${bucketInfo.bucketName}:${bucketInfo.accessKeyId}:${bucketInfo.secretAccessKey}:${bucketInfo.endpoint}:${bucketInfo.region}`;
+	return `${bucketInfo.provider}:${bucketInfo.bucketName}:${bucketInfo.nativeBucketName}:${bucketInfo.accessKeyId}:${bucketInfo.secretAccessKey}:${bucketInfo.endpoint}:${bucketInfo.region}`;
 };
 
 // Upload an object directly to S3
@@ -105,7 +107,8 @@ export async function putObject(
 	contentType: string = 'application/octet-stream',
 ): Promise<void> {
 	const client = createS3Client(bucketInfo);
-	const bucketName = bucketInfo.bucketName;
+	// Use native bucket name for S3 API calls, fall back to bucketName if not defined
+	const bucketName = bucketInfo.nativeBucketName || bucketInfo.bucketName;
 
 	const command = new PutObjectCommand({
 		Bucket: bucketName,
@@ -120,7 +123,8 @@ export async function putObject(
 // Delete a single object from S3
 export async function deleteObject(bucketInfo: BucketInfo, key: string): Promise<void> {
 	const client = createS3Client(bucketInfo);
-	const bucketName = bucketInfo.bucketName;
+	// Use native bucket name for S3 API calls, fall back to bucketName if not defined
+	const bucketName = bucketInfo.nativeBucketName || bucketInfo.bucketName;
 
 	const command = new DeleteObjectCommand({
 		Bucket: bucketName,
@@ -135,7 +139,8 @@ export async function deleteObjects(bucketInfo: BucketInfo, keys: string[]): Pro
 	if (keys.length === 0) return;
 
 	const client = createS3Client(bucketInfo);
-	const bucketName = bucketInfo.bucketName;
+	// Use native bucket name for S3 API calls, fall back to bucketName if not defined
+	const bucketName = bucketInfo.nativeBucketName || bucketInfo.bucketName;
 
 	// S3 allows max 1000 objects per delete operation
 	const chunkSize = 1000;
@@ -163,7 +168,8 @@ export async function listObjects(
 	options: { continuationToken?: string; maxObjects?: number } = {},
 ): Promise<{ objects: { Key: string; Size: number }[]; continuationToken?: string }> {
 	const client = createS3Client(bucketInfo);
-	const bucketName = bucketInfo.bucketName;
+	// Use native bucket name for S3 API calls, fall back to bucketName if not defined
+	const bucketName = bucketInfo.nativeBucketName || bucketInfo.bucketName;
 
 	const command = new ListObjectsV2Command({
 		Bucket: bucketName,

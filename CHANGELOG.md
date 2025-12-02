@@ -1,7 +1,10 @@
 # Change Log
 
+## [Unreleased]
+
 - Share button in status bar
-- Suppport t_start and t_end url parameters to set initial time range
+- Support t_start and t_end url parameters to set initial time range
+- Support viewing figures from other users of the same bucket
 
 ## [0.3.7] - 2025-11-18
 

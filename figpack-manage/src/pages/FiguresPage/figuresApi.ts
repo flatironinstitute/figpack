@@ -41,6 +41,7 @@ export interface FigureListParams {
   limit?: number;
   status?: "uploading" | "completed" | "failed";
   search?: string;
+  bucket?: string;
   sortBy?:
     | "createdAt"
     | "updatedAt"
@@ -62,6 +63,7 @@ export const getFigures = async (
     limit = 50,
     status,
     search,
+    bucket,
     sortBy = "createdAt",
     sortOrder = "desc",
   } = params;
@@ -89,6 +91,10 @@ export const getFigures = async (
 
     if (search && search.trim()) {
       queryParams.append("search", search.trim());
+    }
+
+    if (bucket && bucket.trim()) {
+      queryParams.append("bucket", bucket.trim());
     }
 
     const response = await fetch(

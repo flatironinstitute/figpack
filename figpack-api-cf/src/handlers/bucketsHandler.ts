@@ -1,6 +1,6 @@
 import { Env, Bucket, AuthResult, RateLimitResult } from '../types';
 import { json } from '../utils';
-import { authenticateAdmin } from '../auth';
+import { authenticateAdmin, authenticateUser } from '../auth';
 
 // Helper function to parse JSON fields from database
 function parseBucket(row: any): Bucket {
@@ -17,6 +17,7 @@ function parseBucket(row: any): Bucket {
 		s3Endpoint: row.s3_endpoint,
 		isPublic: Boolean(row.is_public),
 		authorizedUsers: JSON.parse(row.authorized_users || '[]'),
+		nativeBucketName: row.native_bucket_name || undefined,
 	};
 }
 
@@ -26,6 +27,60 @@ function sanitizeBucket(bucket: Bucket): Bucket {
 		...bucket,
 		awsSecretAccessKey: '***HIDDEN***',
 	};
+}
+
+export async function handleListUserBuckets(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
+	try {
+		// Extract API key
+		const apiKey = request.headers.get('x-api-key');
+
+		if (!apiKey) {
+			return json({ success: false, message: 'API key is required' }, 400);
+		}
+
+		// Authenticate user (not admin-only)
+		const authResult = await authenticateUser(apiKey, env);
+
+		if (!authResult.isValid || !authResult.user) {
+			return json({ success: false, message: 'Invalid API key' }, 401);
+		}
+
+		const userEmail = authResult.user.email;
+		const isAdmin = authResult.isAdmin;
+
+		// Get all buckets
+		const result = await env.figpack_db.prepare('SELECT * FROM buckets ORDER BY name ASC').all();
+
+		// Filter buckets based on user permissions
+		const allBuckets = result.results.map(parseBucket);
+		const accessibleBuckets = allBuckets.filter((bucket: Bucket) => {
+			// Admins can see all buckets
+			if (isAdmin) return true;
+			// Everyone can see public buckets
+			if (bucket.isPublic) return true;
+			// Users can see buckets they're authorized for
+			return bucket.authorizedUsers.includes(userEmail);
+		});
+
+		// Return sanitized buckets (hide secret keys)
+		const buckets = accessibleBuckets.map(sanitizeBucket);
+
+		return json(
+			{
+				success: true,
+				buckets,
+			},
+			200,
+			{
+				'X-RateLimit-Limit': '60',
+				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+			},
+		);
+	} catch (error) {
+		console.error('Error listing user buckets:', error);
+		return json({ success: false, message: 'Failed to list buckets' }, 500);
+	}
 }
 
 export async function handleGetBuckets(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
@@ -106,6 +161,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			s3Endpoint,
 			isPublic,
 			authorizedUsers,
+			nativeBucketName,
 		} = bucketData;
 
 		if (!name || !provider || !description || !bucketBaseUrl) {
@@ -174,15 +230,18 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 		// Create the bucket
 		const now = Date.now();
 
+		// Use nativeBucketName if provided, otherwise default to name
+		const bucketNativeName = nativeBucketName || name;
+
 		const result = await env.figpack_db
 			.prepare(
 				`
         INSERT INTO buckets (
           name, provider, description, bucket_base_url,
           aws_access_key_id, aws_secret_access_key, s3_endpoint,
-          is_public, authorized_users,
+          is_public, authorized_users, native_bucket_name,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
 			)
 			.bind(
@@ -195,6 +254,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				endpoint,
 				bucketIsPublic ? 1 : 0,
 				JSON.stringify(bucketAuthorizedUsers),
+				bucketNativeName,
 				now,
 				now,
 			)
@@ -334,6 +394,12 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 				updates.push('authorized_users = ?');
 				values.push(JSON.stringify(bucketData.authorization.authorizedUsers));
 			}
+		}
+
+		// Update native bucket name if provided
+		if (bucketData.nativeBucketName !== undefined) {
+			updates.push('native_bucket_name = ?');
+			values.push(bucketData.nativeBucketName || null);
 		}
 
 		// Update timestamp

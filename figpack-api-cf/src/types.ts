@@ -54,6 +54,8 @@ export interface Bucket {
 	// Authorization (flattened from nested object)
 	isPublic: boolean;
 	authorizedUsers: string[]; // JSON string array in DB, parsed array in code
+	// Native bucket name (actual bucket name on Cloudflare/AWS, defaults to name if not specified)
+	nativeBucketName?: string;
 }
 
 // Figure interface

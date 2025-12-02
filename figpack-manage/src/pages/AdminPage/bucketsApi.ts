@@ -14,6 +14,8 @@ export interface Bucket {
   // Flattened authorization (migrated from nested structure)
   isPublic: boolean;
   authorizedUsers: string[];
+  // Native bucket name (actual bucket name on Cloudflare/AWS, defaults to name if not specified)
+  nativeBucketName?: string;
 }
 
 export interface BucketApiResponse {
