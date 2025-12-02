@@ -1,5 +1,8 @@
 # Change Log
 
+- Share button in status bar
+- Suppport t_start and t_end url parameters to set initial time range
+
 ## [0.3.7] - 2025-11-18
 
 - figpack-figure: check if has been deleted and show appropriate message

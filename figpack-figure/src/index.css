@@ -116,6 +116,26 @@ button:focus-visible {
   background-color: #d0d0d0;
 }
 
+.share-button {
+  background-color: #e0e0e0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  height: 22px;
+  margin-left: 12px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.share-button:hover {
+  background-color: #d0d0d0;
+}
+
 .about-dialog-overlay {
   position: fixed;
   top: 0;

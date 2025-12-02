@@ -10,6 +10,7 @@ import { FigureInfoResult } from "../hooks/useFigureInfo";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
 import FigureAnnotationsStatusComponent from "./FigureAnnotationsStatusComponent";
+import ShareDialog from "./ShareDialog";
 import SvgExportDialog from "./SvgExportDialog";
 
 const AboutButton: React.FC<{
@@ -72,6 +73,41 @@ const ManageButton: React.FC<{ figpackManageUrl: string }> = ({
   );
 };
 
+const ShareButton: React.FC<{ figureUrl: string }> = ({ figureUrl }) => {
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
+  const handleShareClick = () => {
+    setIsShareDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsShareDialogOpen(false);
+  };
+
+  // Only show the Share button if the URL starts with https://
+  if (!figureUrl.startsWith("https://")) {
+    return null;
+  }
+
+  return (
+    <>
+      <button
+        onClick={handleShareClick}
+        className="share-button"
+        title="Share this figure"
+      >
+        <span>↗</span>
+        <span>Share</span>
+      </button>
+      <ShareDialog
+        isOpen={isShareDialogOpen}
+        onClose={handleCloseDialog}
+        figureUrl={figureUrl}
+      />
+    </>
+  );
+};
+
 export const StatusBar: React.FC<{
   zarrData: ZarrGroup | null;
   figureUrl: string;
@@ -87,6 +123,7 @@ export const StatusBar: React.FC<{
   reallyDeletedButShowingAnyway?: boolean;
 }> = ({
   zarrData,
+  figureUrl,
   figureInfoResult,
   figureAnnotationsIsDirty,
   revertFigureAnnotations,
@@ -117,6 +154,8 @@ export const StatusBar: React.FC<{
     !embedded && figpackManageUrl ? (
       <ManageButton figpackManageUrl={figpackManageUrl} />
     ) : null;
+
+  const shareButton = <ShareButton figureUrl={figureUrl} />;
 
   const curating = figureAnnotations?.editingAnnotations || false;
   const setCurating = useCallback(
@@ -170,6 +209,7 @@ export const StatusBar: React.FC<{
         <span>Upload status: {figureInfo.status}</span>
         {aboutButton}
         {manageButton}
+        {shareButton}
         {exportAsSvgButton}
       </div>
     );
@@ -183,6 +223,7 @@ export const StatusBar: React.FC<{
         </span>
         {aboutButton}
         {manageButton}
+        {shareButton}
         {exportAsSvgButton}
       </div>
     );
@@ -198,6 +239,7 @@ export const StatusBar: React.FC<{
         <span>Expires in: {figureInfoResult.timeUntilExpiration}</span>
         {aboutButton}
         {manageButton}
+        {shareButton}
         {figureAnnotationsStatusComponent}
         {exportAsSvgButton}
       </div>
@@ -209,6 +251,7 @@ export const StatusBar: React.FC<{
       <span>Figure ready</span>
       {aboutButton}
       {manageButton}
+      {shareButton}
       {figureAnnotationsStatusComponent}
       {exportAsSvgButton}
     </div>

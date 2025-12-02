@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FPView2 } from "./components/FPView";
 import { StatusBar } from "./components/StatusBar";
+import { StatusBarWithUrlParams } from "./components/StatusBarWithUrlParams";
 import { useExtensionDevUrls } from "./hooks/useExtensionDevUrls";
 import { useFigureInfo } from "./hooks/useFigureInfo";
 import { useFigureUrl } from "./hooks/useFigureUrl";
@@ -17,6 +18,7 @@ import { useSavedFigureAnnotations } from "./hooks/useSavedFigureAnnotations";
 import { registeredFPViewContextCreators } from "./contextRegistry";
 import { registeredFPExtensions } from "./extensionRegistry";
 import { customZarrDecoders } from "./customZarrDecodersRegistry";
+import { ProvideTimeseriesSelectionContext } from "./figpack-main-plugin/views/FPMultiChannelTimeseries";
 
 function App() {
   const hasBeenVisible = usePageVisibility();
@@ -214,7 +216,26 @@ function AppContent() {
       />
     );
 
-  const statusBar = (
+  const statusBar = contexts?.timeseriesSelection ? (
+    <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
+      <StatusBarWithUrlParams
+        zarrData={zarrData || null}
+        figureUrl={figureUrl}
+        figureInfoResult={figureInfoResult}
+        onRefreshZarrData={refreshZarrData}
+        figureAnnotationsIsDirty={figureAnnotationsIsDirty}
+        revertFigureAnnotations={revertFigureAnnotations}
+        saveFigureAnnotations={saveFigureAnnotations}
+        figureAnnotations={figureAnnotations}
+        figureAnnotationsDispatch={figureAnnotationsDispatch}
+        drawForExport={drawForExport}
+        deleted={figureInfoResult.deleted && !showEvenThoughDeleted}
+        reallyDeletedButShowingAnyway={
+          figureInfoResult.deleted && showEvenThoughDeleted
+        }
+      />
+    </ProvideTimeseriesSelectionContext>
+  ) : (
     <StatusBar
       zarrData={zarrData || null}
       figureUrl={figureUrl}
