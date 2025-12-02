@@ -16,7 +16,8 @@ export const FPSpectrogram: React.FC<{
   width: number;
   height: number;
   contexts: FPViewContexts;
-}> = ({ zarrGroup, width, height, contexts }) => {
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
+}> = ({ zarrGroup, width, height, contexts, setDrawForExport }) => {
   return (
     <ProvideTimeseriesSelectionContext context={contexts.timeseriesSelection}>
       <FPSpectrogramChild
@@ -24,6 +25,7 @@ export const FPSpectrogram: React.FC<{
         contexts={contexts}
         width={width}
         height={height}
+        setDrawForExport={setDrawForExport}
       />
     </ProvideTimeseriesSelectionContext>
   );

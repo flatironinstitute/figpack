@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.3.9] - 2025-12-02
+
+- Fix export SVG for Spectrogram view
+
 ## [0.3.8] - 2025-12-02
 
 - Share button in status bar
