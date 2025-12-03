@@ -47,13 +47,14 @@ import { getFigures } from "./figuresApi";
 import type { BucketListItem } from "./bucketsApi";
 import { getUserBuckets } from "./bucketsApi";
 import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const FiguresPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { apiKey, user } = useAuth();
   const { backlinks, loading: backlinksLoading } = useBacklinks();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // State
   const [figures, setFigures] = useState<FigureListItem[]>([]);
@@ -62,22 +63,69 @@ const FiguresPage: React.FC = () => {
 
   const isAdmin = user?.isAdmin || false;
 
-  // Pagination and filtering
-  const [page, setPage] = useState(1);
+  // Helper function to get initial state from URL params
+  const getInitialState = () => {
+    return {
+      page: parseInt(searchParams.get("page") || "1", 10),
+      search: searchParams.get("q") || "",
+      statusFilter: searchParams.get("status") || "",
+      bucketFilter: searchParams.get("bucket") || "",
+      pinnedFilter: searchParams.get("pinned") === "true",
+      sortBy: searchParams.get("sort_by") || "createdAt",
+      sortOrder: (searchParams.get("sort_order") || "desc") as "asc" | "desc",
+      showAll: searchParams.get("show_all") === "true",
+    };
+  };
+
+  // Pagination and filtering - initialize from URL
+  const initialState = getInitialState();
+  const [page, setPage] = useState(initialState.page);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [bucketFilter, setBucketFilter] = useState<string>("");
-  const [pinnedFilter, setPinnedFilter] = useState(false);
-  const [sortBy, setSortBy] = useState<string>("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [showAll, setShowAll] = useState(false);
+  const [search, setSearch] = useState(initialState.search);
+  const [statusFilter, setStatusFilter] = useState<string>(
+    initialState.statusFilter,
+  );
+  const [bucketFilter, setBucketFilter] = useState<string>(
+    initialState.bucketFilter,
+  );
+  const [pinnedFilter, setPinnedFilter] = useState(initialState.pinnedFilter);
+  const [sortBy, setSortBy] = useState<string>(initialState.sortBy);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(
+    initialState.sortOrder,
+  );
+  const [showAll, setShowAll] = useState(initialState.showAll);
 
   // Buckets
   const [buckets, setBuckets] = useState<BucketListItem[]>([]);
   const [bucketsLoading, setBucketsLoading] = useState(false);
 
   const limit = 25; // Items per page
+
+  // Update URL when filter state changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (page > 1) params.set("page", page.toString());
+    if (search) params.set("q", search);
+    if (statusFilter) params.set("status", statusFilter);
+    if (bucketFilter) params.set("bucket", bucketFilter);
+    if (pinnedFilter) params.set("pinned", "true");
+    if (sortBy !== "createdAt") params.set("sort_by", sortBy);
+    if (sortOrder !== "desc") params.set("sort_order", sortOrder);
+    if (showAll) params.set("show_all", "true");
+
+    setSearchParams(params, { replace: true });
+  }, [
+    page,
+    search,
+    statusFilter,
+    bucketFilter,
+    pinnedFilter,
+    sortBy,
+    sortOrder,
+    showAll,
+    setSearchParams,
+  ]);
 
   // Format functions
   const formatDate = useCallback((timestamp: number) => {
