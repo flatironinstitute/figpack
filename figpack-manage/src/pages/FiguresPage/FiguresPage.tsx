@@ -268,19 +268,6 @@ const FiguresPage: React.FC = () => {
     loadFigures();
   }, [loadFigures]);
 
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [
-    search,
-    statusFilter,
-    bucketFilter,
-    pinnedFilter,
-    sortBy,
-    sortOrder,
-    showAll,
-  ]);
-
   // Handlers
   const handleRefresh = () => {
     loadFigures();
@@ -288,14 +275,17 @@ const FiguresPage: React.FC = () => {
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
+    setPage(1);
   };
 
   const handleStatusFilterChange = (event: any) => {
     setStatusFilter(event.target.value);
+    setPage(1);
   };
 
   const handleBucketFilterChange = (event: any) => {
     setBucketFilter(event.target.value);
+    setPage(1);
   };
 
   const handleSortChange = (field: string) => {
@@ -305,6 +295,7 @@ const FiguresPage: React.FC = () => {
       setSortBy(field);
       setSortOrder("desc");
     }
+    setPage(1);
   };
 
   const handlePageChange = (
@@ -318,12 +309,14 @@ const FiguresPage: React.FC = () => {
 
   const handleShowAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowAll(event.target.checked);
+    setPage(1);
   };
 
   const handlePinnedFilterChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setPinnedFilter(event.target.checked);
+    setPage(1);
   };
 
   const getBacklinkCount = (figureUrl: string) => {

@@ -371,6 +371,16 @@ const paintInterval = (
     options;
   const darkerColor = darkenColor(series.color, 0.4);
 
+  let borderColor: string | undefined;
+  if (series.borderColor === "auto" || !series.borderColor) {
+    // by default, use darker shade of fill color
+    borderColor = darkerColor;
+  } else if (series.borderColor === "none") {
+    borderColor = undefined;
+  } else {
+    borderColor = series.borderColor;
+  }
+
   context.fillStyle = series.color;
   context.globalAlpha = series.alpha;
 
@@ -390,19 +400,21 @@ const paintInterval = (
       canvasHeight, // Fill the full height of the canvas
     );
 
-    // Stroke only the left and right edges with darker color
-    context.strokeStyle = darkerColor;
-    context.lineWidth = 1;
-    context.globalAlpha = 1; // Use full opacity for the edges
+    if (borderColor) {
+      // Stroke only the left and right edges with border color
+      context.strokeStyle = borderColor;
+      context.lineWidth = 1;
+      context.globalAlpha = 1; // Use full opacity for the edges
 
-    context.beginPath();
-    // Left edge
-    context.moveTo(xStart, 0);
-    context.lineTo(xStart, canvasHeight);
-    // Right edge
-    context.moveTo(xEnd, 0);
-    context.lineTo(xEnd, canvasHeight);
-    context.stroke();
+      context.beginPath();
+      // Left edge
+      context.moveTo(xStart, 0);
+      context.lineTo(xStart, canvasHeight);
+      // Right edge
+      context.moveTo(xEnd, 0);
+      context.lineTo(xEnd, canvasHeight);
+      context.stroke();
+    }
 
     // Reset alpha for next iteration
     context.globalAlpha = series.alpha;
@@ -865,6 +877,7 @@ type IntervalSeries = {
   alpha: number;
   t_start: DatasetDataType;
   t_end: DatasetDataType;
+  borderColor: "auto" | "none" | string;
 };
 
 type UniformSeries = {
@@ -994,6 +1007,7 @@ class TimeseriesGraphClient {
           alpha: attrs["alpha"] || 0.5,
           t_start,
           t_end,
+          borderColor: attrs["border_color"] || false,
         });
       } else if (attrs["series_type"] === "uniform") {
         series.push({

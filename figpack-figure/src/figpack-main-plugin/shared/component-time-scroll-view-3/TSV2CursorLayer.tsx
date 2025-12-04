@@ -34,9 +34,17 @@ const paintCursor = (
     currentTimePixels !== undefined &&
     currentTimeIntervalPixels === undefined
   ) {
-    // Draw highlight region
-    context.fillStyle = "rgba(255, 255, 0, 0.1)";
-    const highlightWidth = 4; // Width of highlight region
+    // Draw border line first (darker and thicker)
+    context.strokeStyle = "rgba(60, 60, 60, 0.5)";
+    context.lineWidth = 4;
+    context.beginPath();
+    context.moveTo(currentTimePixels, margins.top);
+    context.lineTo(currentTimePixels, context.canvas.height - margins.bottom);
+    context.stroke();
+
+    // Draw highlight region on top (bright white for visibility)
+    context.fillStyle = "rgba(255, 255, 255, 0.5)";
+    const highlightWidth = 2; // Width of highlight region (inner bright line)
     context.fillRect(
       currentTimePixels - highlightWidth / 2,
       margins.top,
@@ -44,13 +52,44 @@ const paintCursor = (
       context.canvas.height - margins.bottom - margins.top,
     );
 
-    // Draw border line
-    context.strokeStyle = "rgba(200, 200, 0, 0.4)";
-    context.lineWidth = 1;
+    // Draw triangle carets at top and bottom
+    const triangleWidth = 10;
+    const triangleHeight = 5;
+    const triangleStrokeStyle = "rgba(200, 0, 0, 0.9)";
+    const triangleFillStyle = "rgba(255, 100, 100, 0.9)";
+
+    // Top triangle (pointing downward)
+    context.strokeStyle = triangleStrokeStyle;
+    context.lineWidth = 2;
     context.beginPath();
-    context.moveTo(currentTimePixels, margins.top);
-    context.lineTo(currentTimePixels, context.canvas.height - margins.bottom);
+    context.moveTo(currentTimePixels, margins.top + triangleHeight); // Bottom point (pointing down)
+    context.lineTo(currentTimePixels - triangleWidth / 2, margins.top); // Top left
+    context.lineTo(currentTimePixels + triangleWidth / 2, margins.top); // Top right
+    context.closePath();
     context.stroke();
+    context.fillStyle = triangleFillStyle;
+    context.fill();
+
+    // Bottom triangle (pointing upward)
+    context.strokeStyle = triangleStrokeStyle;
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(
+      currentTimePixels,
+      context.canvas.height - margins.bottom - triangleHeight,
+    ); // Top point (pointing up)
+    context.lineTo(
+      currentTimePixels - triangleWidth / 2,
+      context.canvas.height - margins.bottom,
+    ); // Bottom left
+    context.lineTo(
+      currentTimePixels + triangleWidth / 2,
+      context.canvas.height - margins.bottom,
+    ); // Bottom right
+    context.closePath();
+    context.stroke();
+    context.fillStyle = triangleFillStyle;
+    context.fill();
   }
 };
 

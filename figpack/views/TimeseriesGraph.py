@@ -122,6 +122,7 @@ class TimeseriesGraph(FigpackView):
         t_end: np.ndarray,
         color: str = "lightblue",
         alpha: float = 0.5,
+        border_color: str = "auto",  # auto, none, or specific color
     ) -> None:
         """
         Add an interval series to the graph
@@ -132,6 +133,7 @@ class TimeseriesGraph(FigpackView):
             t_end: End times of intervals
             color: Fill color
             alpha: Transparency (0-1)
+            border_color: Border color - auto to use a darker shade of fill color, none for no border, or specific color
         """
         if isinstance(t_start, list):
             t_start = np.array(t_start)
@@ -147,7 +149,12 @@ class TimeseriesGraph(FigpackView):
         ), "Start times must be less than or equal to end times"
         self._series.append(
             TGIntervalSeries(
-                name=name, t_start=t_start, t_end=t_end, color=color, alpha=alpha
+                name=name,
+                t_start=t_start,
+                t_end=t_end,
+                color=color,
+                alpha=alpha,
+                border_color=border_color,
             )
         )
 
@@ -313,6 +320,7 @@ class TGIntervalSeries:
         t_end: np.ndarray,
         color: str,
         alpha: float,
+        border_color: str = "auto",  # auto, none, or specific color
     ) -> None:
         assert t_start.ndim == 1, "Start time array must be 1-dimensional"
         assert t_end.ndim == 1, "End time array must be 1-dimensional"
@@ -327,6 +335,7 @@ class TGIntervalSeries:
         self.t_end = t_end
         self.color = color
         self.alpha = alpha
+        self.border_color = border_color
 
     def write_to_zarr_group(self, group: Group) -> None:
         """
@@ -340,6 +349,7 @@ class TGIntervalSeries:
         group.attrs["series_type"] = "interval"
         group.attrs["color"] = self.color
         group.attrs["alpha"] = self.alpha
+        group.attrs["border_color"] = self.border_color
 
 
 class TGUniformSeries:

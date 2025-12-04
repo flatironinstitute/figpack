@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.3.11] - 2025-12-04
+
+- In figpack-manage, persist page number when navigating away and back to figures page
+- Implement border_color option for interval series in TimeseriesGraph view, auto, none, or specific color
+
 ## [0.3.10] - 2025-12-04
 
 - TSG: fix line color bug
