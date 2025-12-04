@@ -18,6 +18,9 @@ import requests
 from . import __version__
 from .core._view_figure import view_figure
 from .core._upload_bundle import _upload_bundle
+from .core._patch_figure import patch_figure as core_patch_figure
+from .core._revert_patch_figure import revert_patch_figure as core_revert_patch_figure
+from .core._figure_utils import get_figure_base_url, download_file
 from .extensions import ExtensionManager
 
 MAX_WORKERS_FOR_DOWNLOAD = 16
@@ -307,6 +310,525 @@ def download_and_view_archive(url: str, port: int = None) -> None:
         sys.exit(1)
 
 
+def patch_figure(figure_url: str, api_key: str, admin_override: bool = False) -> None:
+    """
+    CLI wrapper for patching a figure by updating its rendering code to the latest version
+
+    Args:
+        figure_url: The figpack URL to patch
+        api_key: API key for authentication
+        admin_override: If True, allows admins to patch figures they don't own
+    """
+    success = core_patch_figure(
+        figure_url=figure_url,
+        api_key=api_key,
+        admin_override=admin_override,
+        interactive=True,
+        verbose=True,
+    )
+
+    if not success:
+        sys.exit(1)
+
+
+def _old_patch_figure(
+    figure_url: str, api_key: str, admin_override: bool = False
+) -> None:
+    """
+    OLD IMPLEMENTATION - kept temporarily for reference
+    Patch a figure by updating its rendering code to the latest version
+
+    Args:
+        figure_url: The figpack URL to patch
+        api_key: API key for authentication
+        admin_override: If True, allows admins to patch figures they don't own
+    """
+    import os
+    import time
+    from .core.config import FIGPACK_API_BASE_URL
+
+    thisdir = pathlib.Path(__file__).parent.resolve()
+
+    print(f"Preparing to patch figure: {figure_url}")
+
+    # Get base URL
+    base_url = get_figure_base_url(figure_url)
+
+    # First, verify the figure exists and get its info
+    print("Verifying figure ownership...")
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key,
+    }
+
+    # Check if we can get the manifest (figure exists)
+    manifest_url = urljoin(base_url, "manifest.json")
+    try:
+        response = requests.get(manifest_url, timeout=10)
+        response.raise_for_status()
+        manifest = response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error: Could not access figure at {figure_url}: {e}")
+        sys.exit(1)
+
+    # Get figure owner if using admin override
+    figure_owner = None
+    if admin_override:
+        # Get figpack.json to find the owner
+        figpack_json_url = urljoin(base_url, "figpack.json")
+        try:
+            response = requests.get(figpack_json_url, timeout=10)
+            response.raise_for_status()
+            figpack_data = response.json()
+            figure_owner = figpack_data.get("ownerEmail", "unknown")
+        except:
+            # If figpack.json doesn't exist, try to infer from API
+            pass
+
+    # Show warning and get confirmation
+    print(f"\n⚠️  WARNING ⚠️")
+    if admin_override and figure_owner:
+        print(f"⚠️  ADMIN OVERRIDE: Modifying figure owned by {figure_owner}")
+    print(f"This will update the rendering code (index.html, assets/*, extension-*.js)")
+    print(f"to figpack version {__version__}")
+    print(
+        f"\nThis might break the figure if the data format has changed between versions."
+    )
+    print(
+        f"\nA backup of the current rendering files will be saved locally to allow reverting."
+    )
+
+    user_response = input("\nDo you want to proceed? (y/N): ").strip().lower()
+    if user_response != "y":
+        print("Patch cancelled.")
+        sys.exit(0)
+
+    # Create backup directory
+    backup_dir = pathlib.Path.home() / ".figpack" / "patch_backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    # Extract figure ID from URL for backup naming
+    figure_id = base_url.rstrip("/").split("/")[-1]
+    timestamp = int(time.time())
+    backup_subdir = backup_dir / f"{figure_id}_{timestamp}"
+    backup_subdir.mkdir(exist_ok=True)
+
+    print(f"\nCreating backup in: {backup_subdir}")
+
+    # Download current rendering files for backup
+    rendering_files = []
+    for file_info in manifest["files"]:
+        file_path = file_info["path"]
+        # Only backup rendering files
+        if (
+            file_path == "index.html"
+            or file_path.startswith("assets/")
+            or file_path.startswith("extension-")
+            or file_path == "extension_manifest.json"
+        ):
+            rendering_files.append(file_info)
+
+    print(f"Backing up {len(rendering_files)} rendering files...")
+
+    # Download rendering files to backup
+    failed_backups = []
+    for file_info in rendering_files:
+        file_path = file_info["path"]
+        file_url = urljoin(base_url, file_path)
+
+        try:
+            response = requests.get(file_url, timeout=30)
+            response.raise_for_status()
+
+            local_file_path = backup_subdir / file_path
+            local_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if file_path.endswith((".json", ".html", ".css", ".js")):
+                local_file_path.write_text(response.text, encoding="utf-8")
+            else:
+                local_file_path.write_bytes(response.content)
+
+        except Exception as e:
+            print(f"Warning: Failed to backup {file_path}: {e}")
+            failed_backups.append(file_path)
+
+    if failed_backups:
+        print(f"\nWarning: Failed to backup {len(failed_backups)} files")
+        user_response = input("Continue with patch anyway? (y/N): ").strip().lower()
+        if user_response != "y":
+            print("Patch cancelled.")
+            sys.exit(0)
+    else:
+        print("Backup completed successfully")
+
+    # Save backup info file
+    backup_info = {
+        "figure_url": figure_url,
+        "timestamp": timestamp,
+        "original_version": "unknown",
+        "patched_version": __version__,
+        "backed_up_files": [
+            f["path"] for f in rendering_files if f["path"] not in failed_backups
+        ],
+    }
+
+    backup_info_path = backup_subdir / "backup_info.json"
+    backup_info_path.write_text(json.dumps(backup_info, indent=2))
+
+    # Now prepare the new rendering files from the current installation
+    print(f"\nPreparing patch files from figpack version {__version__}...")
+
+    html_dir = thisdir / "figpack-figure-dist"
+    if not html_dir.exists():
+        print(f"Error: figpack-figure-dist directory not found at {html_dir}")
+        sys.exit(1)
+
+    # Create temporary directory for patch files
+    with tempfile.TemporaryDirectory(prefix="figpack_patch_") as tmpdir:
+        tmpdir_path = pathlib.Path(tmpdir)
+
+        # Copy all files from figpack-figure-dist
+        files_to_upload = []
+
+        for item in html_dir.iterdir():
+            if item.is_file():
+                target = tmpdir_path / item.name
+                target.write_bytes(item.read_bytes())
+                files_to_upload.append((str(item.name), target))
+            elif item.is_dir() and item.name == "assets":
+                target_dir = tmpdir_path / "assets"
+                target_dir.mkdir(exist_ok=True)
+                for subitem in item.iterdir():
+                    if subitem.is_file():
+                        target = target_dir / subitem.name
+                        target.write_bytes(subitem.read_bytes())
+                        files_to_upload.append((f"assets/{subitem.name}", target))
+
+        print(f"Uploading {len(files_to_upload)} rendering files...")
+
+        # Upload the new rendering files
+        try:
+            uploaded_count = 0
+            batch_size = 20
+
+            for i in range(0, len(files_to_upload), batch_size):
+                batch = files_to_upload[i : i + batch_size]
+
+                # Prepare batch request
+                files_data = []
+                for relative_path, file_path in batch:
+                    file_size = file_path.stat().st_size
+                    files_data.append(
+                        {"relativePath": relative_path, "size": file_size}
+                    )
+
+                payload = {
+                    "figureUrl": figure_url,
+                    "files": files_data,
+                }
+
+                # Add admin override flag if specified
+                if admin_override:
+                    payload["adminOverride"] = True
+
+                # Get signed URLs
+                response = requests.post(
+                    f"{FIGPACK_API_BASE_URL}/upload",
+                    json=payload,
+                    headers=headers,
+                    timeout=30,
+                )
+
+                if not response.ok:
+                    error_msg = (
+                        response.json().get("message", "Unknown error")
+                        if response.headers.get("content-type", "").startswith(
+                            "application/json"
+                        )
+                        else f"HTTP {response.status_code}"
+                    )
+                    print(f"Error: Failed to get signed URLs: {error_msg}")
+                    if not admin_override:
+                        print(
+                            "If you are an admin user, consider using the --admin-override flag to patch figures you don't own."
+                        )
+                    sys.exit(1)
+
+                response_data = response.json()
+                signed_urls_data = response_data.get("signedUrls", [])
+
+                # Upload files with signed URLs
+                for relative_path, file_path in batch:
+                    # Find the signed URL for this file
+                    signed_url = None
+                    for url_info in signed_urls_data:
+                        if url_info["relativePath"] == relative_path:
+                            signed_url = url_info["signedUrl"]
+                            break
+
+                    if not signed_url:
+                        print(f"Error: No signed URL for {relative_path}")
+                        sys.exit(1)
+
+                    # Determine content type
+                    if relative_path.endswith(".html"):
+                        content_type = "text/html"
+                    elif relative_path.endswith(".js"):
+                        content_type = "application/javascript"
+                    elif relative_path.endswith(".css"):
+                        content_type = "text/css"
+                    elif relative_path.endswith(".json"):
+                        content_type = "application/json"
+                    else:
+                        content_type = "application/octet-stream"
+
+                    # Upload file
+                    with open(file_path, "rb") as f:
+                        upload_response = requests.put(
+                            signed_url,
+                            data=f,
+                            headers={"Content-Type": content_type},
+                            timeout=60,
+                        )
+
+                    if not upload_response.ok:
+                        print(
+                            f"Error: Failed to upload {relative_path}: HTTP {upload_response.status_code}"
+                        )
+                        sys.exit(1)
+
+                    uploaded_count += 1
+                    print(
+                        f"Uploaded {uploaded_count}/{len(files_to_upload)}: {relative_path}"
+                    )
+
+            print(f"\n✓ Patch completed successfully!")
+            print(
+                f"  Updated {len(files_to_upload)} rendering files to version {__version__}"
+            )
+            print(f"  Backup saved to: {backup_subdir}")
+            print(f"\nTo revert this patch, run:")
+            print(f"  figpack revert-patch-figure {figure_url}")
+
+        except Exception as e:
+            print(f"\nError during upload: {e}")
+            print(f"\nBackup is still available at: {backup_subdir}")
+            print(f"You can manually revert if needed")
+            sys.exit(1)
+
+
+def revert_figure(figure_url: str, api_key: str, admin_override: bool = False) -> None:
+    """
+    CLI wrapper for reverting a patched figure to its previous rendering code
+
+    Args:
+        figure_url: The figpack URL to revert
+        api_key: API key for authentication
+        admin_override: If True, allows admins to revert figures they don't own
+    """
+    success = core_revert_patch_figure(
+        figure_url=figure_url,
+        api_key=api_key,
+        admin_override=admin_override,
+        interactive=True,
+        verbose=True,
+    )
+
+    if not success:
+        sys.exit(1)
+
+
+def _old_revert_figure(
+    figure_url: str, api_key: str, admin_override: bool = False
+) -> None:
+    """
+    OLD IMPLEMENTATION - kept temporarily for reference
+    Revert a patched figure to its previous rendering code
+
+    Args:
+        figure_url: The figpack URL to revert
+        api_key: API key for authentication
+        admin_override: If True, allows admins to revert figures they don't own
+    """
+    from .core.config import FIGPACK_API_BASE_URL
+
+    print(f"Preparing to revert figure: {figure_url}")
+
+    # Get base URL and extract figure ID
+    base_url = get_figure_base_url(figure_url)
+    figure_id = base_url.rstrip("/").split("/")[-1]
+
+    # Find the most recent backup
+    backup_dir = pathlib.Path.home() / ".figpack" / "patch_backups"
+
+    if not backup_dir.exists():
+        print("Error: No backup directory found")
+        print(f"Expected location: {backup_dir}")
+        sys.exit(1)
+
+    # Find all backups for this figure
+    matching_backups = sorted(
+        [
+            d
+            for d in backup_dir.iterdir()
+            if d.is_dir() and d.name.startswith(f"{figure_id}_")
+        ],
+        key=lambda x: x.name.split("_")[-1],
+        reverse=True,
+    )
+
+    if not matching_backups:
+        print(f"Error: No backup found for figure {figure_id}")
+        print(f"Backup directory: {backup_dir}")
+        sys.exit(1)
+
+    backup_subdir = matching_backups[0]
+    print(f"Found backup: {backup_subdir}")
+
+    # Load backup info
+    backup_info_path = backup_subdir / "backup_info.json"
+    if not backup_info_path.exists():
+        print("Warning: backup_info.json not found, proceeding anyway...")
+        backed_up_files = []
+        for item in backup_subdir.rglob("*"):
+            if item.is_file() and item.name != "backup_info.json":
+                rel_path = item.relative_to(backup_subdir)
+                backed_up_files.append(str(rel_path))
+    else:
+        with open(backup_info_path) as f:
+            backup_info = json.load(f)
+            backed_up_files = backup_info.get("backed_up_files", [])
+
+    if not backed_up_files:
+        print("Error: No files found in backup")
+        sys.exit(1)
+
+    print(f"Backup contains {len(backed_up_files)} files")
+    print(f"\nThis will restore the rendering code to its previous state.")
+
+    user_response = input("Do you want to proceed? (y/N): ").strip().lower()
+    if user_response != "y":
+        print("Revert cancelled.")
+        sys.exit(0)
+
+    # Prepare files for upload
+    files_to_upload = []
+    for file_path in backed_up_files:
+        local_file = backup_subdir / file_path
+        if local_file.exists():
+            files_to_upload.append((file_path, local_file))
+        else:
+            print(f"Warning: Backup file not found: {file_path}")
+
+    if not files_to_upload:
+        print("Error: No files to upload from backup")
+        sys.exit(1)
+
+    print(f"\nUploading {len(files_to_upload)} files from backup...")
+
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key,
+    }
+
+    try:
+        uploaded_count = 0
+        batch_size = 20
+
+        for i in range(0, len(files_to_upload), batch_size):
+            batch = files_to_upload[i : i + batch_size]
+
+            # Prepare batch request
+            files_data = []
+            for relative_path, file_path in batch:
+                file_size = file_path.stat().st_size
+                files_data.append({"relativePath": relative_path, "size": file_size})
+
+            payload = {
+                "figureUrl": figure_url,
+                "files": files_data,
+            }
+
+            # Add admin override flag if specified
+            if admin_override:
+                payload["adminOverride"] = True
+
+            # Get signed URLs
+            response = requests.post(
+                f"{FIGPACK_API_BASE_URL}/upload",
+                json=payload,
+                headers=headers,
+                timeout=30,
+            )
+
+            if not response.ok:
+                error_msg = (
+                    response.json().get("message", "Unknown error")
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else f"HTTP {response.status_code}"
+                )
+                print(f"Error: Failed to get signed URLs: {error_msg}")
+                sys.exit(1)
+
+            response_data = response.json()
+            signed_urls_data = response_data.get("signedUrls", [])
+
+            # Upload files with signed URLs
+            for relative_path, file_path in batch:
+                # Find the signed URL for this file
+                signed_url = None
+                for url_info in signed_urls_data:
+                    if url_info["relativePath"] == relative_path:
+                        signed_url = url_info["signedUrl"]
+                        break
+
+                if not signed_url:
+                    print(f"Error: No signed URL for {relative_path}")
+                    sys.exit(1)
+
+                # Determine content type
+                if relative_path.endswith(".html"):
+                    content_type = "text/html"
+                elif relative_path.endswith(".js"):
+                    content_type = "application/javascript"
+                elif relative_path.endswith(".css"):
+                    content_type = "text/css"
+                elif relative_path.endswith(".json"):
+                    content_type = "application/json"
+                else:
+                    content_type = "application/octet-stream"
+
+                # Upload file
+                with open(file_path, "rb") as f:
+                    upload_response = requests.put(
+                        signed_url,
+                        data=f,
+                        headers={"Content-Type": content_type},
+                        timeout=60,
+                    )
+
+                if not upload_response.ok:
+                    print(
+                        f"Error: Failed to upload {relative_path}: HTTP {upload_response.status_code}"
+                    )
+                    sys.exit(1)
+
+                uploaded_count += 1
+                print(
+                    f"Uploaded {uploaded_count}/{len(files_to_upload)}: {relative_path}"
+                )
+
+        print(f"\n✓ Revert completed successfully!")
+        print(f"  Restored {len(files_to_upload)} rendering files from backup")
+        print(f"  Backup remains at: {backup_subdir}")
+
+    except Exception as e:
+        print(f"\nError during revert: {e}")
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
@@ -331,6 +853,31 @@ def main():
     view_parser.add_argument("archive", help="Path or URL to the tar.gz archive file")
     view_parser.add_argument(
         "--port", type=int, help="Port number to serve on (default: auto-select)"
+    )
+
+    # Patch figure command
+    patch_figure_parser = subparsers.add_parser(
+        "patch-figure", help="Update a figure's rendering code to the latest version"
+    )
+    patch_figure_parser.add_argument("figure_url", help="The figpack URL to patch")
+    patch_figure_parser.add_argument(
+        "--admin-override",
+        action="store_true",
+        help="Allow admin users to patch figures they don't own",
+    )
+
+    # Revert command
+    revert_patch_figure_parser = subparsers.add_parser(
+        "revert-patch-figure",
+        help="Revert a patched figure to its previous rendering code",
+    )
+    revert_patch_figure_parser.add_argument(
+        "figure_url", help="The figpack URL to revert"
+    )
+    revert_patch_figure_parser.add_argument(
+        "--admin-override",
+        action="store_true",
+        help="Allow admin users to revert figures they don't own",
     )
 
     # Extensions command
@@ -380,6 +927,28 @@ def main():
             download_and_view_archive(args.archive, port=args.port)
         else:
             view_figure(args.archive, port=args.port)
+    elif args.command == "patch-figure":
+        # Get API key from environment
+        import os
+
+        api_key = os.getenv("FIGPACK_API_KEY")
+        if not api_key:
+            print(
+                "Error: FIGPACK_API_KEY environment variable is required for patch-figure command"
+            )
+            sys.exit(1)
+        patch_figure(args.figure_url, api_key, admin_override=args.admin_override)
+    elif args.command == "revert-patch-figure":
+        # Get API key from environment
+        import os
+
+        api_key = os.getenv("FIGPACK_API_KEY")
+        if not api_key:
+            print(
+                "Error: FIGPACK_API_KEY environment variable is required for revert-patch-figure command"
+            )
+            sys.exit(1)
+        revert_figure(args.figure_url, api_key, admin_override=args.admin_override)
     elif args.command == "extensions":
         handle_extensions_command(args)
     else:

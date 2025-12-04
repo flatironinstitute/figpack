@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.3.10] - 2025-12-04
+
+- TSG: fix line color bug
+- Implement patch-figure and revert-patch-figure commands
+
 ## [0.3.9] - 2025-12-02
 
 - Fix export SVG for Spectrogram view

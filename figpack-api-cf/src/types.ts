@@ -116,6 +116,7 @@ export interface BatchUploadRequest {
 	figureUrl: string;
 	files: FileToUpload[];
 	apiKey?: string; // version 0.3.0 compatibility
+	adminOverride?: boolean; // Allow admins to patch figures they don't own
 }
 
 export interface SignedUrlInfo {

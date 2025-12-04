@@ -81,7 +81,7 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 			return json({ success: false, message: 'Invalid JSON in request body' }, 400);
 		}
 
-		const { figureUrl, files, apiKey: apiKeyFromBody } = body;
+		const { figureUrl, files, apiKey: apiKeyFromBody, adminOverride } = body;
 
 		// support apiKey from header or body to be compatible with previous clients (v 0.3.0)
 		const apiKey = request.headers.get('x-api-key') || apiKeyFromBody;
@@ -172,16 +172,33 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 				);
 			}
 			userEmail = authResult.user.email;
+			const isAdmin = authResult.isAdmin;
 
 			// Verify figure ownership for authenticated users
 			if (figureOwnerEmail !== userEmail) {
-				return json(
-					{
-						success: false,
-						message: 'Access denied. You are not the owner of this figure.',
-					},
-					403,
-				);
+				// If admin override is requested, verify admin status
+				if (adminOverride) {
+					if (!isAdmin) {
+						return json(
+							{
+								success: false,
+								message: 'Admin privileges required for override. You are not an administrator.',
+							},
+							403,
+						);
+					}
+					// Admin override granted - log the action
+					console.log(`Admin override: ${userEmail} is modifying figure owned by ${figureOwnerEmail} at ${figureUrl}`);
+				} else {
+					// No admin override - deny access
+					return json(
+						{
+							success: false,
+							message: 'Access denied. You are not the owner of this figure.',
+						},
+						403,
+					);
+				}
 			}
 		} else {
 			// For ephemeral figures without API key, verify it's anonymous

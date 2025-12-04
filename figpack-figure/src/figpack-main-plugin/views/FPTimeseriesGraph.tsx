@@ -407,8 +407,6 @@ const paintInterval = (
     // Reset alpha for next iteration
     context.globalAlpha = series.alpha;
   }
-
-  context.globalAlpha = 1; // Reset alpha to default
 };
 
 const paintUniformWithData = (
@@ -1251,6 +1249,10 @@ const createDraw = ({
 
     // Render all series using loaded data
     for (const { series: s, data } of loadedSeriesData) {
+      const prevStrokeStyle = context.strokeStyle;
+      const prevFillStyle = context.fillStyle;
+      const prevLineWidth = context.lineWidth;
+      const prevGlobalAlpha = context.globalAlpha;
       if (s.seriesType === "line") {
         paintLine(context, s, {
           visibleStartTimeSec,
@@ -1278,6 +1280,11 @@ const createDraw = ({
           valueToPixel,
         });
       }
+      // Restore styles
+      context.strokeStyle = prevStrokeStyle;
+      context.fillStyle = prevFillStyle;
+      context.lineWidth = prevLineWidth;
+      context.globalAlpha = prevGlobalAlpha;
     }
 
     // Restore canvas state (removes clipping)
