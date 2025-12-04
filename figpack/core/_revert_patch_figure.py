@@ -3,6 +3,7 @@ Core functionality for reverting patched figpack figures
 """
 
 import json
+import os
 import pathlib
 from urllib.parse import urljoin
 
@@ -14,7 +15,6 @@ from ._figure_utils import get_figure_base_url
 
 def revert_patch_figure(
     figure_url: str,
-    api_key: str,
     admin_override: bool = False,
     interactive: bool = True,
     verbose: bool = True,
@@ -24,7 +24,6 @@ def revert_patch_figure(
 
     Args:
         figure_url: The figpack URL to revert
-        api_key: API key for authentication
         admin_override: If True, allows admins to revert figures they don't own
         interactive: If True, prompts for user confirmation before proceeding
         verbose: If True, prints status messages
@@ -34,6 +33,12 @@ def revert_patch_figure(
     """
     if verbose:
         print(f"Preparing to revert figure: {figure_url}")
+
+    api_key = os.getenv("FIGPACK_API_KEY", "")
+    if not api_key:
+        if verbose:
+            print("Error: FIGPACK_API_KEY environment variable not set.")
+        return False
 
     # Get base URL and extract figure ID
     base_url = get_figure_base_url(figure_url)

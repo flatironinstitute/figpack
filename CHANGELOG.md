@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix python calls to patch_figure and revert_patch_figure to get api key from environment variable FIGPACK_API_KEY
+
 ## [0.3.11] - 2025-12-04
 
 - In figpack-manage, persist page number when navigating away and back to figures page

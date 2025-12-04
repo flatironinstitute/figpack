@@ -7,9 +7,9 @@ Core functionality for patching figpack figures
 """
 
 import json
+import os
 import pathlib
 import time
-from typing import Optional
 from urllib.parse import urljoin
 
 import requests
@@ -21,7 +21,7 @@ from ._figure_utils import get_figure_base_url
 
 def patch_figure(
     figure_url: str,
-    api_key: str,
+    *,
     admin_override: bool = False,
     interactive: bool = True,
     verbose: bool = True,
@@ -31,7 +31,6 @@ def patch_figure(
 
     Args:
         figure_url: The figpack URL to patch
-        api_key: API key for authentication
         admin_override: If True, allows admins to patch figures they don't own
         interactive: If True, prompts for user confirmation before proceeding
         verbose: If True, prints status messages
@@ -40,6 +39,12 @@ def patch_figure(
         bool: True if successful, False otherwise
     """
     thisdir = pathlib.Path(__file__).parent.parent.resolve()
+
+    api_key = os.getenv("FIGPACK_API_KEY", "")
+    if not api_key:
+        if verbose:
+            print("Error: FIGPACK_API_KEY environment variable not set.")
+        return False
 
     if verbose:
         print(f"Preparing to patch figure: {figure_url}")
