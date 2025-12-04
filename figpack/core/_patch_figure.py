@@ -314,6 +314,91 @@ def patch_figure(
                         f"Uploaded {uploaded_count}/{len(files_to_upload)}: {relative_path}"
                     )
 
+        # Update and upload manifest.json
+        if verbose:
+            print(f"\nUpdating manifest.json...")
+
+        # Create set of uploaded file paths for quick lookup
+        uploaded_paths = {rel_path for rel_path, _ in files_to_upload}
+
+        # Update manifest: replace/add uploaded files, keep all others
+        manifest["patched_timestamp"] = time.time()
+        updated_files = []
+
+        for file_info in manifest.get("files", []):
+            if file_info["path"] not in uploaded_paths:
+                # Keep existing file entry as-is
+                updated_files.append(file_info)
+
+        # Add all uploaded files (new sizes)
+        for rel_path, file_path in files_to_upload:
+            updated_files.append({"path": rel_path, "size": file_path.stat().st_size})
+
+        manifest["files"] = updated_files
+        manifest["total_files"] = len(updated_files)
+        manifest["total_size"] = sum(f.get("size", 0) for f in updated_files)
+
+        # Upload manifest.json
+        import tempfile
+
+        manifest_content = json.dumps(manifest, indent=2)
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as temp_file:
+            temp_file.write(manifest_content)
+            temp_file_path = pathlib.Path(temp_file.name)
+
+        try:
+            payload = {
+                "figureUrl": figure_url,
+                "files": [
+                    {
+                        "relativePath": "manifest.json",
+                        "size": len(manifest_content.encode("utf-8")),
+                    }
+                ],
+            }
+            if admin_override:
+                payload["adminOverride"] = True
+
+            response = requests.post(
+                f"{FIGPACK_API_BASE_URL}/upload",
+                json=payload,
+                headers=headers,
+                timeout=30,
+            )
+
+            if not response.ok:
+                if verbose:
+                    print(f"Error: Failed to get signed URL for manifest.json")
+                return False
+
+            signed_url = response.json().get("signedUrls", [{}])[0].get("signedUrl")
+            if not signed_url:
+                if verbose:
+                    print("Error: No signed URL returned for manifest.json")
+                return False
+
+            with open(temp_file_path, "rb") as f:
+                upload_response = requests.put(
+                    signed_url,
+                    data=f,
+                    headers={"Content-Type": "application/json"},
+                    timeout=60,
+                )
+
+            if not upload_response.ok:
+                if verbose:
+                    print(f"Error: Failed to upload manifest.json")
+                return False
+
+            if verbose:
+                print("✓ Uploaded manifest.json")
+
+        finally:
+            temp_file_path.unlink(missing_ok=True)
+
         if verbose:
             print(f"\n✓ Patch completed successfully!")
             print(
