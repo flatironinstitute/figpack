@@ -25,7 +25,7 @@ import { FPMultiChannelTimeseries } from "./views/FPMultiChannelTimeseries";
 import { FPSpectrogram } from "./views/FPSpectrogram";
 import { FPSplitter } from "./views/FPSplitter";
 import { FPTabLayout } from "./views/FPTabLayout";
-import { FPTimeseriesGraph } from "./views/FPTimeseriesGraph";
+import { FPTimeseriesGraph } from "./views/TimeseriesGraph/FPTimeseriesGraph";
 import { createRoot } from "react-dom/client";
 import { renderFPView } from "@components/FPView";
 import { DrawForExportFunction } from "src/figpack-interface";

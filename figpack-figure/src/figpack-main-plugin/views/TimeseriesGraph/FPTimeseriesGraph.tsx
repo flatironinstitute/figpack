@@ -3,11 +3,11 @@ import {
   DatasetDataType,
   FPViewContexts,
   ZarrGroup,
-} from "../figpack-interface";
+} from "../../figpack-interface";
 import { useEffect, useMemo, useState } from "react";
-import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
-import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
-import { ProvideTimeseriesSelectionContext } from "./FPMultiChannelTimeseries";
+import TimeScrollView3 from "../../shared/component-time-scroll-view-3/TimeScrollView3";
+import { useTimeseriesSelection } from "../../shared/context-timeseries-selection/TimeseriesSelectionContext";
+import { ProvideTimeseriesSelectionContext } from "../FPMultiChannelTimeseries";
 import { DrawForExportFunction } from "src/figpack-interface";
 
 export const FPTimeseriesGraph: React.FC<{
