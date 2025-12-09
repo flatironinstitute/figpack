@@ -42,6 +42,8 @@ type MouseData = {
   moved: boolean;
   selectionStartX: number | null;
   selectionEndX: number | null;
+  selectionStartY: number | null;
+  selectionEndY: number | null;
 };
 
 type UseTimeScrollMouseWithModesParams = {
@@ -54,6 +56,7 @@ type UseTimeScrollMouseWithModesParams = {
   onMouseOut?: (e: React.MouseEvent) => void;
   onCanvasClick?: (x: number, y: number) => void;
   interactionMode: InteractionMode;
+  onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
 };
 
 const useTimeScrollMouseWithModes = (
@@ -69,6 +72,7 @@ const useTimeScrollMouseWithModes = (
     onMouseOut,
     onCanvasClick,
     interactionMode,
+    onZoomY,
   } = params;
 
   const { panTimeseriesSelectionVisibleStartTimeSec, setVisibleTimeRange } =
@@ -79,6 +83,8 @@ const useTimeScrollMouseWithModes = (
   const [selectionRect, setSelectionRect] = useState<{
     startX: number;
     endX: number;
+    startY: number;
+    endY: number;
   } | null>(null);
 
   const mouseData = useRef<MouseData>({
@@ -89,21 +95,29 @@ const useTimeScrollMouseWithModes = (
     moved: false,
     selectionStartX: null,
     selectionEndX: null,
+    selectionStartY: null,
+    selectionEndY: null,
   });
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       setIsViewClicked(true);
       if (!e.shiftKey && !e.ctrlKey && !e.altKey) {
-        const { x } = getTransformAwareMousePosition(
+        const { x, y } = getTransformAwareMousePosition(
           e,
           e.currentTarget as HTMLElement,
         );
 
-        if (interactionMode === "select-zoom") {
+        if (
+          interactionMode === "select-zoom" ||
+          interactionMode === "select-zoom-y"
+        ) {
           mouseData.current.selectionStartX = x;
           mouseData.current.selectionEndX = x;
-          setSelectionRect({ startX: x, endX: x });
+          mouseData.current.selectionStartY = y;
+          mouseData.current.selectionEndY = y;
+
+          setSelectionRect({ startX: x, endX: x, startY: y, endY: y });
         } else {
           // Pan mode
           mouseData.current.mouseDownAchorX = x;
@@ -153,6 +167,34 @@ const useTimeScrollMouseWithModes = (
           setSelectionRect(null);
           mouseData.current.selectionStartX = null;
           mouseData.current.selectionEndX = null;
+        } else if (interactionMode === "select-zoom-y" && onZoomY) {
+          const startY = Math.min(mouseData.current.selectionStartY || 0, y);
+          const endY = Math.max(mouseData.current.selectionStartY || 0, y);
+
+          if (Math.abs(endY - startY) > 5) {
+            // Only zoom if selection is meaningful
+            // Here we would need to convert pixel Y to data Y range
+            // For simplicity, let's assume a linear mapping for now
+            const yMin = startY; // Replace with actual conversion
+            const yMax = endY; // Replace with actual conversion
+
+            if (onZoomY) {
+              console.log("Zoom Y to:", { yMin, yMax });
+              onZoomY({ yMin, yMax });
+            }
+          } else if (!mouseData.current.moved) {
+            // Single click - set current time and call canvas click callback
+            const t0 = pixelToTime(x);
+            setCurrentTime(t0);
+
+            if (onCanvasClick) {
+              onCanvasClick(x, y);
+            }
+          }
+
+          setSelectionRect(null);
+          mouseData.current.selectionStartY = null;
+          mouseData.current.selectionEndY = null;
         } else {
           // Pan mode
           mouseData.current.mouseDownAchorX = null;
@@ -177,12 +219,14 @@ const useTimeScrollMouseWithModes = (
       setCurrentTime,
       interactionMode,
       setVisibleTimeRange,
+      onCanvasClick,
+      onZoomY,
     ],
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      const { x } = getTransformAwareMousePosition(
+      const { x, y } = getTransformAwareMousePosition(
         e,
         e.currentTarget as HTMLElement,
       );
@@ -199,6 +243,21 @@ const useTimeScrollMouseWithModes = (
           setSelectionRect({
             startX: Math.min(mouseData.current.selectionStartX, x),
             endX: Math.max(mouseData.current.selectionStartX, x),
+            startY: Math.min(mouseData.current.selectionStartY || 0, y),
+            endY: Math.max(mouseData.current.selectionStartY || 0, y),
+          });
+          mouseData.current.moved = true;
+        } else if (
+          interactionMode === "select-zoom-y" &&
+          mouseData.current.selectionStartY !== null
+        ) {
+          // Update selection rectangle
+          mouseData.current.selectionEndY = y;
+          setSelectionRect({
+            startX: Math.min(mouseData.current.selectionStartX || 0, x),
+            endX: Math.max(mouseData.current.selectionStartX || 0, x),
+            startY: Math.min(mouseData.current.selectionStartY || 0, y),
+            endY: Math.max(mouseData.current.selectionStartY || 0, y),
           });
           mouseData.current.moved = true;
         } else if (
@@ -242,6 +301,8 @@ const useTimeScrollMouseWithModes = (
       setSelectionRect(null);
       mouseData.current.selectionStartX = null;
       mouseData.current.selectionEndX = null;
+      mouseData.current.selectionStartY = null;
+      mouseData.current.selectionEndY = null;
       if (onMouseOut) onMouseOut(e);
     },
     [onMouseOut],

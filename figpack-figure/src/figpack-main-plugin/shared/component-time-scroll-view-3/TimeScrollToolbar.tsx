@@ -1,7 +1,7 @@
 import { useTimeRange } from "../../shared/context-timeseries-selection";
 import { FunctionComponent, useCallback } from "react";
 
-export type InteractionMode = "pan" | "select-zoom";
+export type InteractionMode = "pan" | "select-zoom" | "select-zoom-y";
 
 export type CustomToolbarAction = {
   id: string;
@@ -23,6 +23,8 @@ type Props = {
   onZoomToFit?: () => void;
   onExport?: () => void;
   inlineCustomActions?: CustomToolbarAction[];
+  onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
+  onResetZoom?: () => void;
 };
 
 const formatTime = (timeSec: number): string => {
@@ -44,6 +46,8 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
   onZoomToFit,
   onExport,
   inlineCustomActions,
+  onZoomY,
+  onResetZoom,
 }) => {
   const { zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange();
 
@@ -120,8 +124,60 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
           }}
           title="Select zoom mode: Drag to select region and zoom in"
         >
-          🔍 Select
+          🔍 T
         </button>
+        {onZoomY && (
+          <button
+            onClick={() => handleModeChange("select-zoom-y")}
+            style={{
+              padding: "4px 8px",
+              border: "1px solid #ced4da",
+              borderRadius: "4px",
+              backgroundColor:
+                interactionMode === "select-zoom-y" ? "#007bff" : "#ffffff",
+              color:
+                interactionMode === "select-zoom-y" ? "#ffffff" : "#495057",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: "500",
+              transition: "all 0.15s ease",
+            }}
+            title="Select Y zoom mode: Drag to select Y range and zoom in"
+          >
+            🔍 Y
+          </button>
+        )}
+        {(interactionMode === "select-zoom" ||
+          interactionMode === "select-zoom-y") &&
+          onResetZoom && (
+            <button
+              onClick={onResetZoom}
+              style={{
+                padding: "4px 8px",
+                border: "1px solid #ced4da",
+                borderRadius: "4px",
+                backgroundColor: "#ffffff",
+                color: "#495057",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "500",
+                transition: "all 0.15s ease",
+              }}
+              title={
+                interactionMode === "select-zoom"
+                  ? "Reset time zoom to full range"
+                  : "Clear custom Y range"
+              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e9ecef";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#ffffff";
+              }}
+            >
+              🔄
+            </button>
+          )}
       </div>
 
       {/* Center - Navigation controls */}

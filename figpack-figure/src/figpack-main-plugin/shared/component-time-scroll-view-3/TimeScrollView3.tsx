@@ -66,6 +66,7 @@ type Props = {
     },
   ) => Promise<any>;
   setDrawForExport?: (draw: DrawForExportFunction) => void;
+  onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -88,6 +89,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   hideTimeAxisLabels = false,
   drawContentForExport,
   setDrawForExport,
+  onZoomY,
 }) => {
   const {
     visibleStartTimeSec,
@@ -139,6 +141,20 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       canvasHeight -
       margins.bottom -
       ((y - y0) / (y1 - y0)) * (canvasHeight - margins.top - margins.bottom);
+  }, [yAxisInfo, canvasHeight, margins]);
+
+  const pixelToY = useMemo(() => {
+    const y0 = yAxisInfo?.yMin || 0;
+    const y1 = yAxisInfo?.yMax || 0;
+    if (y1 <= y0) return () => 0;
+    return (py: number) => {
+      return (
+        y0 +
+        ((canvasHeight - margins.bottom - py) /
+          (canvasHeight - margins.top - margins.bottom)) *
+          (y1 - y0)
+      );
+    };
   }, [yAxisInfo, canvasHeight, margins]);
 
   const timeTicks = useTimeTicks(
@@ -223,6 +239,26 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode>("pan");
 
+  const onZoomYPixel = useCallback(
+    (yRange: { yMin: number; yMax: number } | null) => {
+      if (!onZoomY) return;
+      if (!yRange) {
+        onZoomY(null);
+        return;
+      }
+      console.log("yRange in pixels:", yRange);
+      console.log("yRange in data coords:", {
+        yMin: pixelToY(yRange.yMax),
+        yMax: pixelToY(yRange.yMin),
+      });
+      onZoomY({
+        yMin: pixelToY(yRange.yMax),
+        yMax: pixelToY(yRange.yMin),
+      });
+    },
+    [onZoomY, pixelToY],
+  );
+
   const {
     isViewClicked,
     hoverTime,
@@ -241,7 +277,10 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     onMouseOut,
     onCanvasClick,
     interactionMode,
+    onZoomY: onZoomYPixel,
   });
+
+  console.log("--- selectionRect:", selectionRect, interactionMode);
 
   useEffect(() => {
     const allowWheelZoom = requireClickToZoom === false || isViewClicked;
@@ -287,7 +326,20 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     if (startTimeSec !== undefined && endTimeSec !== undefined) {
       setVisibleTimeRange(startTimeSec, endTimeSec);
     }
-  }, [startTimeSec, endTimeSec, setVisibleTimeRange]);
+    onZoomY?.(null);
+  }, [startTimeSec, endTimeSec, setVisibleTimeRange, onZoomY]);
+
+  const handleResetZoom = useCallback(() => {
+    if (interactionMode === "select-zoom") {
+      // Reset time zoom to full range
+      if (startTimeSec !== undefined && endTimeSec !== undefined) {
+        setVisibleTimeRange(startTimeSec, endTimeSec);
+      }
+    } else if (interactionMode === "select-zoom-y") {
+      // Clear custom Y range
+      onZoomY?.(null);
+    }
+  }, [interactionMode, startTimeSec, endTimeSec, setVisibleTimeRange, onZoomY]);
 
   const selectionLayer = useMemo(() => {
     return (
@@ -295,9 +347,10 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         width={canvasWidth}
         height={plotHeight}
         selectionRect={selectionRect}
+        interactionMode={interactionMode}
       />
     );
-  }, [canvasWidth, plotHeight, selectionRect]);
+  }, [canvasWidth, plotHeight, selectionRect, interactionMode]);
 
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
     null,
@@ -447,6 +500,8 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         currentTime={currentTime}
         onZoomToFit={handleZoomToFit}
         inlineCustomActions={inlineActions}
+        onZoomY={onZoomYPixel}
+        onResetZoom={handleResetZoom}
       />
     );
   }, [
@@ -456,6 +511,8 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     currentTime,
     handleZoomToFit,
     inlineActions,
+    onZoomYPixel,
+    handleResetZoom,
   ]);
 
   const customActionsToolbar = useMemo(() => {

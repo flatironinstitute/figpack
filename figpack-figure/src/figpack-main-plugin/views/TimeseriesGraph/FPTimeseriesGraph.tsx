@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FPViewContexts, ZarrGroup } from "../../figpack-interface";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../../shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeseriesSelection } from "../../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import { ProvideTimeseriesSelectionContext } from "../FPMultiChannelTimeseries";
@@ -64,6 +64,10 @@ export const FPTimeseriesGraphChild: React.FC<{
   }, [initializeTimeseriesSelection, client]);
 
   const [yRangeMode, setYRangeMode] = useState<"global" | "window">("window");
+  const [customYRange, setCustomYRange] = useState<{
+    yMin: number;
+    yMax: number;
+  } | null>(null);
 
   const globalYRange = useMemo(() => {
     let yMin: number | undefined = undefined;
@@ -108,6 +112,7 @@ export const FPTimeseriesGraphChild: React.FC<{
         yMax: globalYRange.yMax ?? 10,
       },
       yRangeMode,
+      customYRange,
     });
   }, [
     visibleStartTimeSec,
@@ -115,6 +120,7 @@ export const FPTimeseriesGraphChild: React.FC<{
     client,
     globalYRange,
     yRangeMode,
+    customYRange,
   ]);
 
   const [yRangeUsedByDraw, setYRangeUsedByDraw] = useState<{
@@ -187,6 +193,13 @@ export const FPTimeseriesGraphChild: React.FC<{
     ];
   }, [yRangeMode]);
 
+  const handleZoomY = useCallback(
+    (yRange: { yMin: number; yMax: number } | null) => {
+      setCustomYRange(yRange);
+    },
+    [],
+  );
+
   return (
     <TimeScrollView3
       width={width}
@@ -205,6 +218,7 @@ export const FPTimeseriesGraphChild: React.FC<{
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}
       customToolbarActions={customToolbarActions}
+      onZoomY={handleZoomY}
     />
   );
 };

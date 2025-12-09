@@ -16,12 +16,14 @@ export const createDraw = ({
   client,
   globalYRange,
   yRangeMode,
+  customYRange,
 }: {
   visibleStartTimeSec: number;
   visibleEndTimeSec: number;
   client: TimeseriesGraphClient;
   globalYRange: { yMin: number; yMax: number };
   yRangeMode: "global" | "window";
+  customYRange: { yMin: number; yMax: number } | null;
 }) => {
   return async (
     context: CanvasRenderingContext2D,
@@ -142,8 +144,9 @@ export const createDraw = ({
       }
     }
 
-    let yRange =
-      yRangeMode === "global"
+    let yRange = customYRange
+      ? customYRange
+      : yRangeMode === "global"
         ? globalYRange
         : windowYRange.yMin !== undefined && windowYRange.yMax !== undefined
           ? windowYRange
