@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [0.3.12] - 2025-12-09
+
 - Fix python calls to patch_figure and revert_patch_figure to get api key from environment variable FIGPACK_API_KEY
 - Update manifest for patch-figure
+- TSG: select-zoom-y mode
 
 ## [0.3.11] - 2025-12-04
 

@@ -239,25 +239,19 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode>("pan");
 
-  const onZoomYPixel = useCallback(
-    (yRange: { yMin: number; yMax: number } | null) => {
-      if (!onZoomY) return;
+  const onZoomYPixel = useMemo(() => {
+    if (!onZoomY) return undefined;
+    return (yRange: { yMin: number; yMax: number } | null) => {
       if (!yRange) {
         onZoomY(null);
         return;
       }
-      console.log("yRange in pixels:", yRange);
-      console.log("yRange in data coords:", {
-        yMin: pixelToY(yRange.yMax),
-        yMax: pixelToY(yRange.yMin),
-      });
       onZoomY({
         yMin: pixelToY(yRange.yMax),
         yMax: pixelToY(yRange.yMin),
       });
-    },
-    [onZoomY, pixelToY],
-  );
+    };
+  }, [onZoomY, pixelToY]);
 
   const {
     isViewClicked,
@@ -279,8 +273,6 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     interactionMode,
     onZoomY: onZoomYPixel,
   });
-
-  console.log("--- selectionRect:", selectionRect, interactionMode);
 
   useEffect(() => {
     const allowWheelZoom = requireClickToZoom === false || isViewClicked;

@@ -179,7 +179,6 @@ const useTimeScrollMouseWithModes = (
             const yMax = endY; // Replace with actual conversion
 
             if (onZoomY) {
-              console.log("Zoom Y to:", { yMin, yMax });
               onZoomY({ yMin, yMax });
             }
           } else if (!mouseData.current.moved) {
