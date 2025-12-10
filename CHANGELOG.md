@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- figpack_experimental: MEAMovie view
+
 ## [0.3.12] - 2025-12-09
 
 - Fix python calls to patch_figure and revert_patch_figure to get api key from environment variable FIGPACK_API_KEY

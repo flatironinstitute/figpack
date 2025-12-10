@@ -6,6 +6,7 @@ import FPLossyVideo from "./views/LossyVideo/FPLossyVideo";
 import FPFmriBold from "./views/FmriBold/FPFmriBold";
 import FPMultiChannelIntervals from "./views/MultiChannelIntervals/FPMultiChannelIntervals";
 import FPLinearDecode from "./views/LinearDecode/FPLinearDecode";
+import FPMEAMovie from "./views/MEAMovie/FPMEAMovie";
 import {
   FPViewComponent,
   FPViewContext,
@@ -110,6 +111,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "experimental.LinearDecode",
     render: makeRenderFunction(FPLinearDecode),
+  });
+  registerFPViewComponent({
+    name: "experimental.MEAMovie",
+    render: makeRenderFunction(FPMEAMovie),
   });
 
   // Register custom Zarr decoder for 'mp4' codec

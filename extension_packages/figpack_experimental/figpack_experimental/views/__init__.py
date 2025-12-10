@@ -7,6 +7,7 @@ from .LossyVideo import LossyVideo
 from .FmriBold import FmriBold
 from .MultiChannelIntervals import MultiChannelIntervals
 from .LinearDecode import LinearDecode
+from .MEAMovie import MEAMovie
 
 __all__ = [
     "EditableNotes",
@@ -14,4 +15,5 @@ __all__ = [
     "FmriBold",
     "MultiChannelIntervals",
     "LinearDecode",
+    "MEAMovie",
 ]
