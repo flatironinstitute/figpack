@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 
 import figpack
@@ -8,11 +10,11 @@ class MEAMovie(figpack.ExtensionView):
     def __init__(
         self,
         raw_data: np.ndarray,
-        electrode_coords: list | np.ndarray,
+        electrode_coords: Union[np.ndarray, list[list[float]]],
         start_time_sec: float,
         sampling_frequency_hz: float,
-        spike_channel_indices: np.ndarray | None = None,
-        spike_frame_indices: np.ndarray | None = None,
+        spike_channel_indices: Union[np.ndarray, None] = None,
+        spike_frame_indices: Union[np.ndarray, None] = None,
     ):
         """
         Initialize an MEA Movie view
