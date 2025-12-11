@@ -194,6 +194,19 @@ const MEAMovieView: React.FC<Props> = ({ zarrGroup, width, height }) => {
     [],
   );
 
+  const handleRewindOneMs = useCallback(() => {
+    if (!client || currentTime === undefined) return;
+
+    const newTime = Math.max(currentTime - 0.001, client.startTimeSec);
+    setCurrentTime(newTime);
+
+    // If playing, update the reference time to continue from new position
+    if (isPlaying) {
+      setPlaybackStartWallClockTime(Date.now());
+      setPlaybackStartDataTime(newTime);
+    }
+  }, [client, currentTime, setCurrentTime, isPlaying]);
+
   if (loading) {
     return (
       <div
@@ -261,6 +274,7 @@ const MEAMovieView: React.FC<Props> = ({ zarrGroup, width, height }) => {
           colormap={colormap}
           width={width}
           height={canvasHeight}
+          isPlaying={isPlaying}
         />
       </div>
 
@@ -292,6 +306,23 @@ const MEAMovieView: React.FC<Props> = ({ zarrGroup, width, height }) => {
             }}
           >
             {isPlaying ? "⏸ Pause" : "▶ Play"}
+          </button>
+
+          <button
+            onClick={handleRewindOneMs}
+            style={{
+              padding: "6px 10px",
+              fontSize: "12px",
+              backgroundColor: "#666",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+            title="Rewind 1 millisecond"
+          >
+            ⏮ -1ms
           </button>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>

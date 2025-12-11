@@ -11,6 +11,8 @@ class MEAMovie(figpack.ExtensionView):
         electrode_coords: list | np.ndarray,
         start_time_sec: float,
         sampling_frequency_hz: float,
+        spike_channel_indices: np.ndarray | None = None,
+        spike_frame_indices: np.ndarray | None = None,
     ):
         """
         Initialize an MEA Movie view
@@ -20,6 +22,8 @@ class MEAMovie(figpack.ExtensionView):
             electrode_coords: Electrode coordinates with shape (num_channels, 2)
             start_time_sec: Start time in seconds
             sampling_frequency_hz: Sampling frequency in Hz
+            spike_channel_indices: Optional array of channel indices for spikes (dtype uint16)
+            spike_frame_indices: Optional array of frame indices for spikes (dtype uint32)
         """
         super().__init__(
             extension=experimental_extension, view_type="experimental.MEAMovie"
@@ -42,6 +46,47 @@ class MEAMovie(figpack.ExtensionView):
                 f"Number of electrode coordinates ({electrode_coords_array.shape[0]}) "
                 f"must match number of channels ({num_channels})"
             )
+
+        # Validate spike data if provided
+        if spike_channel_indices is not None or spike_frame_indices is not None:
+            if spike_channel_indices is None or spike_frame_indices is None:
+                raise ValueError(
+                    "Both spike_channel_indices and spike_frame_indices must be provided together"
+                )
+
+            spike_channel_indices_array = np.array(
+                spike_channel_indices, dtype=np.uint16
+            )
+            spike_frame_indices_array = np.array(spike_frame_indices, dtype=np.uint32)
+
+            if (
+                spike_channel_indices_array.ndim != 1
+                or spike_frame_indices_array.ndim != 1
+            ):
+                raise ValueError("Spike arrays must be 1-dimensional")
+
+            if len(spike_channel_indices_array) != len(spike_frame_indices_array):
+                raise ValueError(
+                    f"spike_channel_indices length ({len(spike_channel_indices_array)}) "
+                    f"must match spike_frame_indices length ({len(spike_frame_indices_array)})"
+                )
+
+            # Validate channel indices are within range
+            if len(spike_channel_indices_array) > 0:
+                if np.max(spike_channel_indices_array) >= num_channels:
+                    raise ValueError(
+                        f"spike_channel_indices contains values >= num_channels ({num_channels})"
+                    )
+                if np.max(spike_frame_indices_array) >= num_timepoints:
+                    raise ValueError(
+                        f"spike_frame_indices contains values >= num_timepoints ({num_timepoints})"
+                    )
+
+            self.spike_channel_indices = spike_channel_indices_array
+            self.spike_frame_indices = spike_frame_indices_array
+        else:
+            self.spike_channel_indices = None
+            self.spike_frame_indices = None
 
         self.raw_data = raw_data.astype(np.int16)
         self.electrode_coords = electrode_coords_array
@@ -82,3 +127,27 @@ class MEAMovie(figpack.ExtensionView):
         chunks = (num_timepoints_per_chunk, self.num_channels)
 
         group.create_dataset("raw_data", data=self.raw_data, chunks=chunks)
+
+        # Store spike data if provided
+        if (
+            self.spike_channel_indices is not None
+            and self.spike_frame_indices is not None
+        ):
+            num_spikes = len(self.spike_channel_indices)
+            group.attrs["num_spikes"] = num_spikes
+
+            # Store spike data with reasonable chunking (1000 spikes per chunk)
+            spike_chunk_size = min(1000, max(1, num_spikes))
+
+            group.create_dataset(
+                "spike_channel_indices",
+                data=self.spike_channel_indices,
+                chunks=(spike_chunk_size,),
+            )
+            group.create_dataset(
+                "spike_frame_indices",
+                data=self.spike_frame_indices,
+                chunks=(spike_chunk_size,),
+            )
+        else:
+            group.attrs["num_spikes"] = 0

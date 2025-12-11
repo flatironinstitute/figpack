@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { MEAMovieClient } from "./MEAMovieClient";
 import { valueToColor } from "./colormapUtils";
 
+// Spike persistence duration in seconds (wall-clock time during playback)
+const SPIKE_PERSISTENCE_DURATION_SEC = 0.5;
+
 type Props = {
   client: MEAMovieClient;
   currentTimeIndex: number;
@@ -9,6 +12,7 @@ type Props = {
   colormap: string;
   width: number;
   height: number;
+  isPlaying: boolean;
 };
 
 const MEAMovieCanvas: React.FC<Props> = ({
@@ -18,6 +22,7 @@ const MEAMovieCanvas: React.FC<Props> = ({
   colormap,
   width,
   height,
+  isPlaying,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [electrodeCoords, setElectrodeCoords] = useState<Float32Array | null>(
@@ -25,7 +30,12 @@ const MEAMovieCanvas: React.FC<Props> = ({
   );
   const [electrodeRadius, setElectrodeRadius] = useState<number>(5);
   const [frameData, setFrameData] = useState<Int16Array | null>(null);
+  const [spikingChannels, setSpikingChannels] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Track recent spikes for wall-clock persistence (channel -> wall clock timestamp when first seen)
+  const recentSpikesRef = useRef<Map<number, number>>(new Map());
+  const cleanupTimerRef = useRef<number | null>(null);
 
   // Load electrode coordinates once
   useEffect(() => {
@@ -36,7 +46,7 @@ const MEAMovieCanvas: React.FC<Props> = ({
 
         // Calculate electrode radius based on minimum distance
         const minDist = calculateMinElectrodeDistance(coords);
-        const radius = (minDist * 0.8) / 2; // 80% of minimum spacing
+        const radius = (minDist * 0.95) / 2; // 95% of minimum spacing
         setElectrodeRadius(radius);
       } catch (err) {
         console.error("Error loading electrode coordinates:", err);
@@ -52,13 +62,79 @@ const MEAMovieCanvas: React.FC<Props> = ({
       try {
         const data = await client.getFrameData(currentTimeIndex);
         setFrameData(data);
+
+        // Get spiking channels for current frame
+        const currentSpikes = client.getSpikingChannels(currentTimeIndex);
+
+        if (isPlaying) {
+          // Only track spikes during playback
+          // Add new spikes with current wall clock timestamp
+          const now = Date.now();
+          for (const channelIndex of currentSpikes) {
+            if (!recentSpikesRef.current.has(channelIndex)) {
+              recentSpikesRef.current.set(channelIndex, now);
+            }
+          }
+        } else {
+          // When not playing, show only current frame spikes (no persistence)
+          setSpikingChannels(currentSpikes);
+          // Clear the recent spikes map when not playing
+          recentSpikesRef.current.clear();
+        }
+
+        // Update spiking channels display if playing
+        if (isPlaying) {
+          updateSpikingChannels();
+        }
       } catch (err) {
         console.error("Error loading frame data:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
       }
     };
     loadFrame();
-  }, [client, currentTimeIndex]);
+  }, [client, currentTimeIndex, isPlaying]);
+
+  // Function to update visible spiking channels based on wall clock persistence
+  const updateSpikingChannels = () => {
+    const now = Date.now();
+    const persistenceDurationMs = SPIKE_PERSISTENCE_DURATION_SEC * 1000;
+
+    // Remove expired spikes and collect active ones
+    const expiredChannels: number[] = [];
+    const activeChannels: number[] = [];
+
+    recentSpikesRef.current.forEach((timestamp, channelIndex) => {
+      if (now - timestamp > persistenceDurationMs) {
+        expiredChannels.push(channelIndex);
+      } else {
+        activeChannels.push(channelIndex);
+      }
+    });
+
+    // Clean up expired spikes
+    for (const channelIndex of expiredChannels) {
+      recentSpikesRef.current.delete(channelIndex);
+    }
+
+    setSpikingChannels(activeChannels);
+  };
+
+  // Periodic cleanup to remove expired spikes (only during playback)
+  useEffect(() => {
+    if (isPlaying && recentSpikesRef.current.size > 0) {
+      // Update every 50ms for smooth fade-out animation
+      cleanupTimerRef.current = window.setInterval(() => {
+        updateSpikingChannels();
+      }, 50);
+    }
+
+    return () => {
+      if (cleanupTimerRef.current !== null) {
+        clearInterval(cleanupTimerRef.current);
+        cleanupTimerRef.current = null;
+      }
+    };
+  }, [isPlaying, spikingChannels.length]); // Re-setup when spike count or playback state changes
 
   // Render the canvas
   useEffect(() => {
@@ -143,9 +219,38 @@ const MEAMovieCanvas: React.FC<Props> = ({
       ctx.arc(x, y, electrodeRadius * scale, 0, 2 * Math.PI);
       ctx.fill();
     }
+
+    // Draw red borders for spiking channels with fade-out effect
+    if (spikingChannels.length > 0) {
+      const now = Date.now();
+      const persistenceDurationMs = SPIKE_PERSISTENCE_DURATION_SEC * 1000;
+      ctx.lineWidth = Math.max(3, electrodeRadius * scale * 0.3);
+
+      for (const channelIndex of spikingChannels) {
+        const spikeTimestamp = recentSpikesRef.current.get(channelIndex);
+
+        // Calculate opacity based on age (fade from 0.9 to 0 over 2 seconds)
+        let opacity = 0.9;
+        if (isPlaying && spikeTimestamp !== undefined) {
+          const age = now - spikeTimestamp;
+          const ageRatio = age / persistenceDurationMs;
+          opacity = 0.9 * (1 - ageRatio); // Linear fade from 0.9 to 0
+        }
+
+        ctx.strokeStyle = `rgba(255, 0, 0, ${opacity})`;
+
+        const x = electrodeCoords[channelIndex * 2] * scale + offsetX;
+        const y = electrodeCoords[channelIndex * 2 + 1] * scale + offsetY;
+
+        ctx.beginPath();
+        ctx.arc(x, y, electrodeRadius * scale, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+    }
   }, [
     electrodeCoords,
     frameData,
+    spikingChannels,
     electrodeRadius,
     contrast,
     colormap,

@@ -11,6 +11,10 @@ export class MEAMovieClient {
   #dataMedian: number;
   #rawDataDataset: ZarrDataset;
   #electrodeCoords: Float32Array | null = null;
+  #numSpikes: number;
+  #spikeChannelIndices: Uint16Array | null = null;
+  #spikeFrameIndices: Uint32Array | null = null;
+  #spikesByFrame: Map<number, Set<number>> | null = null;
 
   constructor(
     zarrGroup: ZarrGroup,
@@ -22,6 +26,7 @@ export class MEAMovieClient {
     dataMax: number,
     dataMedian: number,
     rawDataDataset: ZarrDataset,
+    numSpikes: number,
   ) {
     this.#zarrGroup = zarrGroup;
     this.#numTimepoints = numTimepoints;
@@ -32,6 +37,7 @@ export class MEAMovieClient {
     this.#dataMax = dataMax;
     this.#dataMedian = dataMedian;
     this.#rawDataDataset = rawDataDataset;
+    this.#numSpikes = numSpikes;
   }
 
   static async create(zarrGroup: ZarrGroup): Promise<MEAMovieClient> {
@@ -44,6 +50,7 @@ export class MEAMovieClient {
     const dataMin = attrs["data_min"] as number;
     const dataMax = attrs["data_max"] as number;
     const dataMedian = attrs["data_median"] as number;
+    const numSpikes = (attrs["num_spikes"] as number) || 0;
 
     // Get the raw data dataset
     const rawDataDataset = await zarrGroup.getDataset("raw_data");
@@ -63,7 +70,7 @@ export class MEAMovieClient {
       throw new Error("Missing required attributes in zarr group");
     }
 
-    return new MEAMovieClient(
+    const client = new MEAMovieClient(
       zarrGroup,
       numTimepoints,
       numChannels,
@@ -73,7 +80,15 @@ export class MEAMovieClient {
       dataMax,
       dataMedian,
       rawDataDataset,
+      numSpikes,
     );
+
+    // Load spike data if present
+    if (numSpikes > 0) {
+      await client.#loadSpikeData();
+    }
+
+    return client;
   }
 
   get numTimepoints(): number {
@@ -148,5 +163,56 @@ export class MEAMovieClient {
       (timeSec - this.#startTimeSec) * this.#samplingFrequencyHz,
     );
     return Math.max(0, Math.min(this.#numTimepoints - 1, index));
+  }
+
+  async #loadSpikeData(): Promise<void> {
+    // Load spike channel indices
+    const spikeChannelDataset = await this.#zarrGroup.getDataset(
+      "spike_channel_indices",
+    );
+    if (!spikeChannelDataset) {
+      throw new Error("No spike_channel_indices dataset found");
+    }
+    const channelData = await spikeChannelDataset.getData({});
+    this.#spikeChannelIndices = channelData as Uint16Array;
+
+    // Load spike frame indices
+    const spikeFrameDataset = await this.#zarrGroup.getDataset(
+      "spike_frame_indices",
+    );
+    if (!spikeFrameDataset) {
+      throw new Error("No spike_frame_indices dataset found");
+    }
+    const frameData = await spikeFrameDataset.getData({});
+    this.#spikeFrameIndices = frameData as Uint32Array;
+
+    // Build frame-to-channels map for efficient lookup
+    this.#spikesByFrame = new Map();
+    for (let i = 0; i < this.#numSpikes; i++) {
+      const frameIndex = this.#spikeFrameIndices[i];
+      const channelIndex = this.#spikeChannelIndices[i];
+
+      if (!this.#spikesByFrame.has(frameIndex)) {
+        this.#spikesByFrame.set(frameIndex, new Set());
+      }
+      this.#spikesByFrame.get(frameIndex)!.add(channelIndex);
+    }
+  }
+
+  getSpikingChannels(frameIndex: number): number[] {
+    if (!this.#spikesByFrame) {
+      return [];
+    }
+
+    const channels = this.#spikesByFrame.get(frameIndex);
+    return channels ? Array.from(channels) : [];
+  }
+
+  get hasSpikes(): boolean {
+    return this.#numSpikes > 0;
+  }
+
+  get numSpikes(): number {
+    return this.#numSpikes;
   }
 }
