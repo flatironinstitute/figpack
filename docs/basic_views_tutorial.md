@@ -458,6 +458,40 @@ view.show(title="Box Layout Example", open_in_browser=True)
 
 <iframe data-src="./tutorial_box_layout/index.html?embedded=1" width="100%" height="700" frameborder="0" loading="lazy"></iframe>
 
+## VerticalLayout
+
+Create a vertically scrolling layout with fixed-height items. Unlike Box, items maintain their specified heights and a scrollbar appears for navigation:
+
+```python
+import numpy as np
+import figpack.views as vv
+
+# Create some simple content
+intro = vv.Markdown("# Scrollable Dashboard\nScroll down to see more content!")
+
+# Create a graph
+graph = vv.TimeseriesGraph(y_label="Amplitude")
+t = np.linspace(0, 5, 200)
+y = np.sin(2 * np.pi * 2 * t)
+graph.add_line_series(name="Signal", t=t.astype(np.float32), y=y.astype(np.float32), color="blue")
+
+summary = vv.Markdown("## Summary\nThis layout is useful for long-form content that doesn't need to fit in one viewport.")
+
+# Create vertical layout with fixed heights
+view = vv.VerticalLayout(
+    title="Data Analysis",
+    items=[
+        vv.VerticalLayoutItem(intro, height=100, title="Introduction"),
+        vv.VerticalLayoutItem(graph, height=300, title="Signal Data"),
+        vv.VerticalLayoutItem(summary, height=150, title="Results")
+    ]
+)
+
+view.show(title="Vertical Layout Example", open_in_browser=True)
+```
+
+<iframe data-src="./tutorial_vertical_layout/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+
 ## TabLayout
 
 Organize views in tabs:

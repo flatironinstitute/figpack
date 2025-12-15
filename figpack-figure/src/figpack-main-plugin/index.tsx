@@ -26,6 +26,7 @@ import { FPSpectrogram } from "./views/FPSpectrogram";
 import { FPSplitter } from "./views/FPSplitter";
 import { FPTabLayout } from "./views/FPTabLayout";
 import { FPTimeseriesGraph } from "./views/TimeseriesGraph/FPTimeseriesGraph";
+import { FPVerticalLayout } from "./views/FPVerticalLayout";
 import { createRoot } from "react-dom/client";
 import { renderFPView } from "@components/FPView";
 import { DrawForExportFunction } from "src/figpack-interface";
@@ -196,6 +197,11 @@ export const registerMainPlugin = () => {
   registerFPViewComponent({
     name: "Spectrogram",
     render: makeRenderFunction(FPSpectrogram, renderFPView),
+  });
+
+  registerFPViewComponent({
+    name: "VerticalLayout",
+    render: makeRenderFunction(FPVerticalLayout, renderFPView),
   });
 
   const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (

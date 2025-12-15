@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - figpack_experimental: MEAMovie view
+- New vertical layout view - vertical scroll of multiple items with fixed specified heights
 
 ## [0.3.12] - 2025-12-09
 
