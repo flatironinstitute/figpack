@@ -2,8 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.13] - 2025-12-18
+
 - figpack_experimental: MEAMovie view
 - New vertical layout view - vertical scroll of multiple items with fixed specified heights
+- cache plotly .js download
+- Support other_extensions attribute
 
 ## [0.3.12] - 2025-12-09
 

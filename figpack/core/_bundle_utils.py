@@ -144,6 +144,11 @@ def _discover_required_extensions(view: FigpackView) -> List[str]:
             if v.extension.name not in extension_names_discovered:
                 extension_names_discovered.add(v.extension.name)
                 extensions_discovered.append(v.extension)
+            if hasattr(v, "other_extensions"):
+                for ext in v.other_extensions:
+                    if ext.name not in extension_names_discovered:
+                        extension_names_discovered.add(ext.name)
+                        extensions_discovered.append(ext)
 
         # Recursively check all attributes that might contain child views
         for attr_name in dir(v):
