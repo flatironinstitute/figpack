@@ -63,6 +63,7 @@ export const paintSpectrogramHeatmap = (
     visibleMaxValue: number;
     timeToPixel: (t: number) => number;
     frequencyToPixel: (f: number) => number;
+    frequencies: number[];
     plotWidth: number;
     plotHeight: number;
     plotLeft: number;
@@ -78,6 +79,8 @@ export const paintSpectrogramHeatmap = (
     visibleStartTimeSec,
     visibleEndTimeSec,
     visibleMaxValue,
+    frequencyToPixel,
+    frequencies,
     plotWidth,
     plotHeight,
     plotLeft,
@@ -100,9 +103,8 @@ export const paintSpectrogramHeatmap = (
   const imageData = context.createImageData(plotWidth, plotHeight);
   const pixels = imageData.data;
 
-  // Calculate pixel dimensions for each time/frequency bin
+  // Calculate pixel dimensions for each time bin
   const timePixelsPerBin = plotWidth / (endIndex - startIndex + 1);
-  const freqPixelsPerBin = plotHeight / nFrequencies;
 
   // Fill the ImageData
   for (let timeIndex = startIndex; timeIndex <= endIndex; timeIndex++) {
@@ -110,7 +112,7 @@ export const paintSpectrogramHeatmap = (
     const pixelStartX = Math.floor(relativeTimeIndex * timePixelsPerBin);
     const pixelEndX = Math.floor((relativeTimeIndex + 1) * timePixelsPerBin);
 
-    for (let freqIndex = 0; freqIndex < nFrequencies; freqIndex++) {
+    for (let freqIndex = 0; freqIndex < nFrequencies - 1; freqIndex++) {
       // Get the data value (data is stored as [time][freq])
       const dataValue = data[timeIndex * nFrequencies + freqIndex];
 
@@ -121,18 +123,25 @@ export const paintSpectrogramHeatmap = (
       // Get color for this value
       const [r, g, b] = interpolateColor(normalizedValue);
 
-      // Calculate pixel range for this frequency bin
-      // Note: frequency axis is inverted (high frequencies at top)
-      const pixelStartY = Math.floor(
-        (nFrequencies - 1 - freqIndex) * freqPixelsPerBin,
-      );
-      const pixelEndY = Math.floor(
-        (nFrequencies - freqIndex) * freqPixelsPerBin,
-      );
+      // Calculate pixel range for this frequency bin using frequencyToPixel
+      // This respects the visible Y range (zoom)
+      const freqStart = frequencies[freqIndex];
+      const freqEnd = frequencies[freqIndex + 1];
+
+      // frequencyToPixel converts to canvas coordinates, subtract plotTop to get relative position
+      const pixelStartY = Math.floor(frequencyToPixel(freqEnd) - plotTop);
+      const pixelEndY = Math.ceil(frequencyToPixel(freqStart) - plotTop);
+
+      // Skip bins that are outside the visible area
+      if (pixelEndY < 0 || pixelStartY >= plotHeight) continue;
+
+      // Clamp to visible area
+      const clampedStartY = Math.max(0, pixelStartY);
+      const clampedEndY = Math.min(plotHeight, pixelEndY);
 
       // Fill the pixels for this time-frequency bin
       for (let x = pixelStartX; x < pixelEndX && x < plotWidth; x++) {
-        for (let y = pixelStartY; y < pixelEndY && y < plotHeight; y++) {
+        for (let y = clampedStartY; y < clampedEndY; y++) {
           const pixelIndex = (y * plotWidth + x) * 4;
           pixels[pixelIndex] = r; // Red
           pixels[pixelIndex + 1] = g; // Green

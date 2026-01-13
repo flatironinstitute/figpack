@@ -74,6 +74,8 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
     [onInteractionModeChange],
   );
 
+  console.log("--- on zoom y");
+
   return (
     <div
       style={{

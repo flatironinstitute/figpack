@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Implement figpack upload command line tool to upload a figure from a local directory
+- Y Zoom on Spectrogram view
+
 ## [0.3.13] - 2025-12-18
 
 - figpack_experimental: MEAMovie view

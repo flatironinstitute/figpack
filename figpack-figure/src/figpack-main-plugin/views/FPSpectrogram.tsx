@@ -1,5 +1,5 @@
 import { FPViewContexts, ZarrGroup } from "../figpack-interface";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import {
@@ -137,6 +137,11 @@ const FPSpectrogramChild: React.FC<{
     { yMin: number; yMax: number } | undefined
   >(undefined);
 
+  const [customYRange, setCustomYRange] = useState<{
+    yMin: number;
+    yMax: number;
+  } | null>(null);
+
   useEffect(() => {
     if (!client) return;
     initializeTimeseriesSelection({
@@ -161,6 +166,11 @@ const FPSpectrogramChild: React.FC<{
     });
   }, [client]);
 
+  // Effective Y range considers custom zoom
+  const effectiveYRange = useMemo(() => {
+    return customYRange || yRange;
+  }, [customYRange, yRange]);
+
   const draw = useMemo(() => {
     if (visibleStartTimeSec === undefined) return undefined;
     if (visibleEndTimeSec === undefined) return undefined;
@@ -169,7 +179,7 @@ const FPSpectrogramChild: React.FC<{
       visibleStartTimeSec,
       visibleEndTimeSec,
       visibleData,
-      yRange,
+      yRange: effectiveYRange,
       brightness,
       client,
     });
@@ -177,7 +187,7 @@ const FPSpectrogramChild: React.FC<{
     visibleStartTimeSec,
     visibleEndTimeSec,
     visibleData,
-    yRange,
+    effectiveYRange,
     brightness,
     client,
   ]);
@@ -202,7 +212,7 @@ const FPSpectrogramChild: React.FC<{
     canvasWidth,
     canvasHeight,
     margins,
-    yRange,
+    effectiveYRange,
     brightness,
     draw,
   ]);
@@ -210,11 +220,18 @@ const FPSpectrogramChild: React.FC<{
   const yAxisInfo = useMemo(() => {
     return {
       showTicks: true,
-      yMin: yRange ? yRange.yMin : 0,
-      yMax: yRange ? yRange.yMax : 100,
+      yMin: effectiveYRange ? effectiveYRange.yMin : 0,
+      yMax: effectiveYRange ? effectiveYRange.yMax : 100,
       yLabel: "Frequency (Hz)",
     };
-  }, [yRange]);
+  }, [effectiveYRange]);
+
+  const handleZoomY = useCallback(
+    (yRange: { yMin: number; yMax: number } | null) => {
+      setCustomYRange(yRange);
+    },
+    [],
+  );
 
   return (
     <TimeScrollView3
@@ -232,6 +249,7 @@ const FPSpectrogramChild: React.FC<{
       customToolbarActions={customToolbarActions}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}
+      onZoomY={handleZoomY}
     />
   );
 };
@@ -334,6 +352,7 @@ const createDrawFunction =
         visibleMaxValue,
         timeToPixel,
         frequencyToPixel,
+        frequencies: client.frequencyBins,
         plotWidth: canvasWidth - margins.left - margins.right,
         plotHeight: canvasHeight - margins.top - margins.bottom,
         plotLeft: margins.left,

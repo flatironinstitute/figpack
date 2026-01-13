@@ -4,6 +4,7 @@ Command-line interface for figpack
 
 import argparse
 import json
+import os
 import pathlib
 import sys
 import tarfile
@@ -20,6 +21,7 @@ from .core._view_figure import view_figure
 from .core._patch_figure import patch_figure as core_patch_figure
 from .core._revert_patch_figure import revert_patch_figure as core_revert_patch_figure
 from .core._figure_utils import get_figure_base_url, download_file
+from .core._upload_bundle import _upload_bundle
 from .extensions import ExtensionManager
 
 MAX_WORKERS_FOR_DOWNLOAD = 16
@@ -348,6 +350,154 @@ def revert_figure(figure_url: str, admin_override: bool = False) -> None:
         sys.exit(1)
 
 
+def upload_figure(dir_path: str, title: str, description: str = None) -> None:
+    """
+    Upload a saved figure directory to figpack
+
+    Args:
+        dir_path: Path to the directory containing the figure bundle
+        title: Title for the figure
+        description: Optional description for the figure
+    """
+    # Validate directory path
+    dir_pathlib = pathlib.Path(dir_path)
+    if not dir_pathlib.exists():
+        print(f"Error: Directory does not exist: {dir_path}")
+        sys.exit(1)
+
+    if not dir_pathlib.is_dir():
+        print(f"Error: Path is not a directory: {dir_path}")
+        sys.exit(1)
+
+    # Check for API key
+    api_key = os.getenv("FIGPACK_API_KEY", "")
+    if not api_key:
+        print("Error: FIGPACK_API_KEY environment variable not set.")
+        print("Please set your API key with: export FIGPACK_API_KEY=your_api_key")
+        sys.exit(1)
+
+    # Validate figure bundle structure
+    print(f"Validating figure bundle in: {dir_path}")
+
+    # Check for required files (manifest.json is optional, will be created if missing)
+    required_files = {
+        "index.html": dir_pathlib / "index.html",
+        "data.zarr": dir_pathlib / "data.zarr",
+    }
+
+    missing_files = []
+    for file_name, file_path in required_files.items():
+        if not file_path.exists():
+            missing_files.append(file_name)
+
+    if missing_files:
+        print("Error: Invalid figure bundle. Missing required files:")
+        for missing_file in missing_files:
+            print(f"  - {missing_file}")
+        print("\nA valid figure bundle must contain:")
+        print("  - index.html (viewer)")
+        print("  - data.zarr/ (zarr data directory)")
+        sys.exit(1)
+
+    # Validate zarr structure
+    zarr_dir = dir_pathlib / "data.zarr"
+    if not zarr_dir.is_dir():
+        print("Error: data.zarr must be a directory")
+        sys.exit(1)
+
+    # Check for .zmetadata file (consolidated metadata)
+    zmetadata_path = zarr_dir / ".zmetadata"
+    if not zmetadata_path.exists():
+        print("Warning: .zmetadata file not found in data.zarr/")
+        print("This file is typically created when saving a figure.")
+
+    # Check if manifest.json exists, create if missing
+    manifest_path = dir_pathlib / "manifest.json"
+    manifest_temp_file = None
+
+    if not manifest_path.exists():
+        print("manifest.json not found, creating one...")
+
+        # Create manifest by scanning all files in the directory
+        import time
+
+        manifest = {
+            "timestamp": time.time(),
+            "files": [],
+            "total_size": 0,
+            "total_files": 0,
+        }
+
+        for file_path in dir_pathlib.rglob("*"):
+            if file_path.is_file():
+                rel_path = str(file_path.relative_to(dir_pathlib))
+                file_size = file_path.stat().st_size
+                manifest["files"].append({"path": rel_path, "size": file_size})
+                manifest["total_size"] += file_size
+
+        manifest["total_files"] = len(manifest["files"])
+
+        # Create temporary manifest file
+        manifest_temp_file = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, dir=str(dir_pathlib)
+        )
+        manifest_temp_file.write(json.dumps(manifest, indent=2))
+        manifest_temp_file.close()
+
+        # Move temp file to manifest.json location
+        temp_manifest_path = pathlib.Path(manifest_temp_file.name)
+        temp_manifest_path.rename(manifest_path)
+
+        print(f"Created manifest.json with {len(manifest['files'])} files")
+    else:
+        # Validate existing manifest.json
+        try:
+            with open(manifest_path) as f:
+                manifest = json.load(f)
+            if "files" not in manifest:
+                print("Error: manifest.json is missing 'files' field")
+                sys.exit(1)
+            print(f"Found {len(manifest['files'])} files in manifest")
+        except json.JSONDecodeError as e:
+            print(f"Error: Invalid manifest.json format: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error: Could not read manifest.json: {e}")
+            sys.exit(1)
+
+    # Override description in zarr attrs if provided
+    if description is not None:
+        print(f"Setting description from command line argument")
+        import zarr
+
+        try:
+            zarr_group = zarr.open_group(str(zarr_dir), mode="r+")
+            zarr_group.attrs["description"] = description
+        except Exception as e:
+            print(f"Warning: Could not update description in zarr data: {e}")
+
+    # Upload the bundle
+    print(f"\nUploading figure with title: '{title}'")
+    if description:
+        print(f"Description: {description}")
+
+    try:
+        figure_url = _upload_bundle(
+            str(dir_pathlib),
+            api_key,
+            title=title,
+            ephemeral=False,
+            use_consolidated_metadata_only=True,
+        )
+
+        print(f"\n✓ Upload completed successfully!")
+        print(f"\nFigure URL: {figure_url}")
+
+    except Exception as e:
+        print(f"\nError during upload: {e}")
+        sys.exit(1)
+
+
 def _old_revert_figure(
     figure_url: str, api_key: str, admin_override: bool = False
 ) -> None:
@@ -627,6 +777,16 @@ def main():
         "extensions", nargs="+", help="Extension package names to uninstall"
     )
 
+    # Upload command
+    upload_parser = subparsers.add_parser(
+        "upload", help="Upload a saved figure directory to figpack"
+    )
+    upload_parser.add_argument("dir_path", help="Path to the figure directory")
+    upload_parser.add_argument("--title", required=True, help="Title for the figure")
+    upload_parser.add_argument(
+        "--description", help="Description for the figure (optional)"
+    )
+
     args = parser.parse_args()
 
     if args.command == "download":
@@ -641,6 +801,8 @@ def main():
         patch_figure(args.figure_url, admin_override=args.admin_override)
     elif args.command == "revert-patch-figure":
         revert_figure(args.figure_url, admin_override=args.admin_override)
+    elif args.command == "upload":
+        upload_figure(args.dir_path, args.title, args.description)
     elif args.command == "extensions":
         handle_extensions_command(args)
     else:
