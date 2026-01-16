@@ -8,6 +8,7 @@ from .FmriBold import FmriBold
 from .MultiChannelIntervals import MultiChannelIntervals
 from .LinearDecode import LinearDecode
 from .MEAMovie import MEAMovie
+from .ClusterLens import ClusterLens
 
 __all__ = [
     "EditableNotes",
@@ -16,4 +17,5 @@ __all__ = [
     "MultiChannelIntervals",
     "LinearDecode",
     "MEAMovie",
+    "ClusterLens",
 ]

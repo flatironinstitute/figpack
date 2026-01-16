@@ -652,6 +652,45 @@ This view is particularly useful for:
 - Analyzing temporal dynamics of spatial representations
 - Any application involving time-varying position probability distributions
 
+### ClusterLens View
+
+The ClusterLens view explores high-dimensional clustered data using UMAP dimensionality reduction. The UMAP computation runs in the browser, allowing real-time parameter adjustment and interactive exploration.
+
+```python
+import numpy as np
+from figpack_experimental.views import ClusterLens
+
+np.random.seed(42)
+
+# Create synthetic high-dimensional data with clusters
+n_samples, n_dims, n_clusters = 1000, 15, 4
+data_list, labels_list = [], []
+
+for i in range(n_clusters):
+    center = np.random.randn(n_dims) * 5
+    samples_per_cluster = n_samples // n_clusters
+    cluster_data = np.random.randn(samples_per_cluster, n_dims) * 0.8 + center
+    data_list.append(cluster_data)
+    labels_list.append(np.full(samples_per_cluster, i))
+
+data = np.vstack(data_list).astype(np.float32)
+cluster_labels = np.hstack(labels_list).astype(np.int32)
+indices = np.random.permutation(len(data))
+data, cluster_labels = data[indices], cluster_labels[indices]
+
+# Create and show ClusterLens view
+view = ClusterLens(data=data, cluster_labels=cluster_labels)
+view.show(title="ClusterLens Example", open_in_browser=True)
+```
+
+<iframe data-src="./tutorial_cluster_lens_example/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+
+Interactive features:
+- **Pan/Zoom**: Drag to pan, scroll to zoom
+- **Selection tools**: Rectangle (▢) and Lasso (⊚) selection with modifier keys (Shift: add, Alt: remove)
+- **Create Plot**: Generate new windows from selected points for deeper exploration
+- **UMAP parameters**: Adjust `n_neighbors`, `min_dist`, and `spread` per plot
+
 ## MountainLayout
 
 The MountainLayout provides a workspace-style interface with a left panel for view buttons and controls, and a right panel with dual tab workspaces (north and south). This layout is ideal for applications that need to manage multiple views in a workspace environment.

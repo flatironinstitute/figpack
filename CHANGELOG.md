@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Added ClusterLens
+
 ## [0.3.14] - 2025-01-12
 
 - Implement figpack upload command line tool to upload a figure from a local directory
