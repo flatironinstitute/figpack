@@ -458,7 +458,7 @@ const ScatterPlot: FunctionComponent<ScatterPlotProps> = ({
   };
 
   const handleWheel = (e: React.WheelEvent) => {
-    // e.preventDefault();
+    e.preventDefault();
 
     // Get mouse position in canvas coordinates
     const coords = getCanvasCoords(e);
