@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 
 import figpack
@@ -8,7 +10,7 @@ class ClusterLens(figpack.ExtensionView):
     def __init__(
         self,
         data: np.ndarray,
-        cluster_labels: np.ndarray | None = None,
+        cluster_labels: Union[np.ndarray, None] = None,
     ):
         """
         Initialize a ClusterLens view for UMAP-based dimensionality reduction
