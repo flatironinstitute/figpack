@@ -683,7 +683,7 @@ view = ClusterLens(data=data, cluster_labels=cluster_labels)
 view.show(title="ClusterLens Example", open_in_browser=True)
 ```
 
-<iframe data-src="./tutorial_cluster_lens_example/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+<iframe data-src="./tutorial_cluster_lens_example/index.html?embedded=1" width="100%" height="900" frameborder="0" loading="lazy"></iframe>
 
 Interactive features:
 - **Pan/Zoom**: Drag to pan, scroll to zoom
