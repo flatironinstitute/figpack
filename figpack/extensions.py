@@ -11,7 +11,6 @@ from urllib.parse import urljoin
 
 import requests
 
-
 # Default wheel repository URL
 DEFAULT_WHEEL_REPO_URL = "https://flatironinstitute.github.io/figpack/wheels/"
 

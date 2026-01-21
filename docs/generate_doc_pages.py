@@ -11,7 +11,6 @@ import re
 from pathlib import Path
 from typing import List, Dict, Any
 
-
 # Base URL for the documentation
 BASE_URL = "https://flatironinstitute.github.io/figpack/"
 
