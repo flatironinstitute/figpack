@@ -1,4 +1,5 @@
 figpack_experimental/*.js
+figpack_experimental/assets
 
 # Node.js
 node_modules/

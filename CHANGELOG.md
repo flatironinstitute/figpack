@@ -2,9 +2,12 @@
 
 ## [Unreleased]
 
-- Added ClusterLens
+## [0.3.15] - 2026-01-21
 
-## [0.3.14] - 2025-01-12
+- Added ClusterLens
+- Support javascript assets for extensions (for workers)
+
+## [0.3.14] - 2026-01-12
 
 - Implement figpack upload command line tool to upload a figure from a local directory
 - Y Zoom on Spectrogram view

@@ -1,7 +1,7 @@
-import { FunctionComponent, useEffect, useState } from "react";
-import { UMAP } from "umap-js";
+import { FunctionComponent, useEffect, useState, useRef } from "react";
 import { InteractionMode } from "./InteractionToolbar";
 import ScatterPlot from "./ScatterPlot";
+import type { UMAPWorkerInput, UMAPWorkerMessage } from "./umapWorker";
 
 type PlotWindowProps = {
   title: string;
@@ -31,92 +31,76 @@ const PlotWindow: FunctionComponent<PlotWindowProps> = ({
   const [embedding, setEmbedding] = useState<number[][] | null>(null);
   const [computing, setComputing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [totalEpochs, setTotalEpochs] = useState(0);
 
   // UMAP parameters (independent for each plot)
   const [nNeighbors, setNNeighbors] = useState(15);
   const [minDist, setMinDist] = useState(0.1);
   const [spread, setSpread] = useState(1.0);
-  const updateInterval = 500;
 
   // Auto-compute on mount or when data/indices change
   const [computeRefreshCode, setComputeRefreshCode] = useState(0);
+  const workerRef = useRef<Worker | null>(null);
+
   useEffect(() => {
-    const canceled = {
-      current: false,
-    };
+    if (!data || pointIndices.length === 0) return;
 
-    const computeUMAP = async (canceled: { current: boolean }) => {
-      if (!data || pointIndices.length === 0) return;
+    console.log("Starting UMAP computation in Web Worker...");
 
-      console.log("Starting UMAP computation...");
+    // Create a new worker
+    const worker = new Worker(new URL("./umapWorker.ts", import.meta.url), {
+      type: "module",
+    });
+    workerRef.current = worker;
 
-      try {
-        setComputing(true);
-        setProgress(0);
+    setComputing(true);
+    setProgress(0);
+    setTotalEpochs(0);
 
-        // allow a brief moment for UI to update
-        await new Promise((resolve) => setTimeout(resolve, 100));
+    // Set up message handler
+    worker.onmessage = (e: MessageEvent<UMAPWorkerMessage>) => {
+      const message = e.data;
 
-        if (canceled.current) return;
-
-        // Extract the subset of data
-        const subsetData = pointIndices.map((idx) => data[idx]);
-
-        const umap = new UMAP({
-          nComponents: 2,
-          nNeighbors: Math.min(nNeighbors, subsetData.length - 1),
-          minDist,
-          spread,
-        });
-
-        // Initialize the fitting process
-        const nEpochs = umap.initializeFit(subsetData);
-
-        let lastUpdateTime = Date.now();
-
-        // Step through epochs
-        for (let i = 0; i < nEpochs; i++) {
-          umap.step();
-
-          const currentTime = Date.now();
-
-          // Update progress every epoch
-          setProgress(i + 1);
-
-          // Update embedding display at specified interval
-          if (currentTime - lastUpdateTime >= updateInterval) {
-            // make a copy
-            const currentEmbedding = umap
-              .getEmbedding()
-              .map((pt) => pt.slice());
-            if (canceled.current) return;
-            console.log(`Setting embedding at epoch ${i + 1}`);
-            setEmbedding(currentEmbedding);
-            lastUpdateTime = currentTime;
-
-            // Allow UI to update by yielding to the event loop
-            await new Promise((resolve) => setTimeout(resolve, 0));
-          }
-        }
-
-        // Get final embedding
-        const finalEmbedding = umap.getEmbedding().map((pt) => pt.slice());
-        if (canceled.current) return;
-        console.log("Setting final embedding");
-        setEmbedding(finalEmbedding);
-        console.log("UMAP computation completed.");
+      if (message.type === "progress") {
+        setProgress(message.epoch);
+        setTotalEpochs(message.totalEpochs);
+        setEmbedding(message.embedding);
+        console.log(
+          `UMAP progress: epoch ${message.epoch}/${message.totalEpochs}`,
+        );
+      } else if (message.type === "complete") {
+        setEmbedding(message.embedding);
         setComputing(false);
-      } catch (err) {
-        console.error("UMAP computation failed:", err);
+        console.log("UMAP computation completed");
+      } else if (message.type === "error") {
+        console.error("UMAP computation failed:", message.error);
         setComputing(false);
       }
     };
 
-    if (data && pointIndices.length > 0) {
-      computeUMAP(canceled);
-    }
+    worker.onerror = (error) => {
+      console.error("Worker error:", error);
+      setComputing(false);
+    };
+
+    // Extract the subset of data and send to worker
+    const subsetData = pointIndices.map((idx) => data[idx]);
+
+    const workerInput: UMAPWorkerInput = {
+      data: subsetData,
+      nNeighbors,
+      minDist,
+      spread,
+    };
+
+    worker.postMessage(workerInput);
+
+    // Cleanup on unmount or when dependencies change
     return () => {
-      canceled.current = true;
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
     };
   }, [data, pointIndices, nNeighbors, minDist, spread, computeRefreshCode]);
 
@@ -255,7 +239,11 @@ const PlotWindow: FunctionComponent<PlotWindowProps> = ({
               fontSize: "11px",
             }}
           >
-            {computing ? `Computing... (${progress})` : "Recompute"}
+            {computing
+              ? totalEpochs > 0
+                ? `Computing... (${progress}/${totalEpochs})`
+                : "Computing..."
+              : "Recompute"}
           </button>
         </div>
       </div>
@@ -278,7 +266,10 @@ const PlotWindow: FunctionComponent<PlotWindowProps> = ({
               fontSize: "12px",
             }}
           >
-            Computing UMAP... (epoch {progress})
+            Computing UMAP...{" "}
+            {totalEpochs > 0
+              ? `(epoch ${progress}/${totalEpochs})`
+              : "(initializing...)"}
           </div>
         )}
         {embedding && (

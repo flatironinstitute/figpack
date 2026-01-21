@@ -85,6 +85,42 @@ const ScatterPlot: FunctionComponent<ScatterPlotProps> = ({
     return new TransformManager(bounds, width, height, 30);
   }, [points, width, height]);
 
+  // Handle wheel events with non-passive listener
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleWheelEvent = (e: WheelEvent) => {
+      e.preventDefault();
+
+      // Get mouse position in canvas coordinates
+      const rect = canvas.getBoundingClientRect();
+      const coords = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+
+      // Calculate zoom delta
+      const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
+
+      // Use transform manager to calculate new transform
+      const newTransform = transformManager.zoomAroundPoint(
+        coords.x,
+        coords.y,
+        transform,
+        zoomDelta,
+      );
+
+      setTransform(newTransform);
+    };
+
+    canvas.addEventListener("wheel", handleWheelEvent, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("wheel", handleWheelEvent);
+    };
+  }, [transform, transformManager]);
+
   // Draw the scatter plot
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -457,26 +493,6 @@ const ScatterPlot: FunctionComponent<ScatterPlotProps> = ({
     setIsDragging(false);
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-
-    // Get mouse position in canvas coordinates
-    const coords = getCanvasCoords(e);
-
-    // Calculate zoom delta
-    const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-
-    // Use transform manager to calculate new transform
-    const newTransform = transformManager.zoomAroundPoint(
-      coords.x,
-      coords.y,
-      transform,
-      zoomDelta,
-    );
-
-    setTransform(newTransform);
-  };
-
   const getCursor = () => {
     if (mode === "pan") {
       return isDragging ? "grabbing" : "grab";
@@ -511,7 +527,6 @@ const ScatterPlot: FunctionComponent<ScatterPlotProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
       />
       <div
         style={{

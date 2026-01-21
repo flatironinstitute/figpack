@@ -11,6 +11,7 @@ export default defineConfig(({ command }) => {
   
   return {
     plugins: [react(), cssInjectedByJsPlugin()],
+    base: "./", // important for properly resolving worker .js asset
     root: __dirname,
     publicDir: 'figpack_experimental', // Serve files from the figpack_experimental directory
     server: {
@@ -37,11 +38,16 @@ export default defineConfig(({ command }) => {
       rollupOptions: {
         output: {
           // Ensure all dependencies are bundled into the single file
+          // Note: Workers are handled separately and inlined
           inlineDynamicImports: true,
         }
       },
       target: 'es2018', // Good browser compatibility
       minify: !isServe // Don't minify in dev mode for better debugging
+    },
+    worker: {
+      format: 'es',
+      plugins: () => [react()]
     },
     define: {
       // Ensure process.env is defined for any dependencies that might need it

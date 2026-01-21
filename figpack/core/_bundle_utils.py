@@ -232,6 +232,13 @@ def _write_extension_files(extensions, tmpdir: str) -> None:
 
             additional_path.write_text(additional_js_content, encoding="utf-8")
 
+        # Write additional JavaScript assets
+        additional_asset_filenames = extension.additional_javascript_assets.keys()
+        for fname in additional_asset_filenames:
+            asset_content = extension.additional_javascript_assets[fname]
+            asset_path = tmpdir_path / "assets" / fname
+            asset_path.write_text(asset_content, encoding="utf-8")
+
 
 def _write_extension_manifest(extensions, tmpdir: str) -> None:
     """

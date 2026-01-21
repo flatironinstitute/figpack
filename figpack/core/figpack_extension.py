@@ -2,7 +2,7 @@
 Extension system for figpack - allows runtime loading of custom view components
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 
 class FigpackExtension:
@@ -16,6 +16,7 @@ class FigpackExtension:
         name: str,
         javascript_code: str,
         additional_files: Optional[Dict[str, str]] = None,
+        additional_javascript_assets: Optional[Dict[str, str]] = None,
         version: str = "1.0.0",
     ) -> None:
         """
@@ -26,11 +27,13 @@ class FigpackExtension:
             javascript_code: JavaScript code that implements the extension
             additional_files: Optional dictionary of additional JavaScript files
                             {filename: content} that the extension can load
+            additional_javascript_assets
             version: Version string for compatibility tracking
         """
         self.name = name
         self.javascript_code = javascript_code
         self.additional_files = additional_files or {}
+        self.additional_javascript_assets = additional_javascript_assets or {}
         self.version = version
 
         # Validate extension name
