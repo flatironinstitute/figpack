@@ -14,12 +14,12 @@ Usage:
     export AWS_ACCESS_KEY_ID=your_access_key
     export AWS_SECRET_ACCESS_KEY=your_secret_key
     export S3_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
-    
+
     python maintenance/find_deleted_figures.py
-    
+
     # Or with custom bucket:
     python maintenance/find_deleted_figures.py --bucket my-bucket
-    
+
     # Dry run (simulate without deleting):
     python maintenance/find_deleted_figures.py --dry-run
 """
