@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_experimental",
-    version="0.1.11",
+    version="0.1.12",
     description="Extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
@@ -26,7 +26,7 @@ setup(
     url="https://github.com/flatironinstitute/figpack",
     packages=find_packages(),
     package_data={
-        "figpack_experimental": ["*.js"],
+        "figpack_experimental": ["*.js", "assets/*.js"],
     },
     include_package_data=True,
     install_requires=["figpack>=0.2.17", "imageio", "imageio-ffmpeg"],

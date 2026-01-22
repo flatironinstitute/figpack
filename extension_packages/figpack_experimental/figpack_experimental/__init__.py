@@ -2,4 +2,4 @@
 figpack_experimental - Miscellaneous experimental visualizations
 """
 
-__version__ = "0.1.11"
+__version__ = "0.1.12"
