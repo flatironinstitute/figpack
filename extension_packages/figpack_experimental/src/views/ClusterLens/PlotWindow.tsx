@@ -17,7 +17,7 @@ type PlotWindowProps = {
 };
 
 const PlotWindow: FunctionComponent<PlotWindowProps> = ({
-  title,
+  // title,
   data,
   clusterLabels,
   pointIndices,
@@ -26,7 +26,7 @@ const PlotWindow: FunctionComponent<PlotWindowProps> = ({
   mode,
   selectedIndices,
   onSelectionChange,
-  onClose,
+  // onClose,
 }) => {
   const [embedding, setEmbedding] = useState<number[][] | null>(null);
   const [computing, setComputing] = useState(false);
@@ -105,8 +105,7 @@ const PlotWindow: FunctionComponent<PlotWindowProps> = ({
   }, [data, pointIndices, nNeighbors, minDist, spread, computeRefreshCode]);
 
   const controlsHeight = 80;
-  const headerHeight = 30;
-  const plotHeight = height - controlsHeight - headerHeight;
+  const plotHeight = height - controlsHeight;
 
   if (!data) {
     return (
@@ -140,39 +139,6 @@ const PlotWindow: FunctionComponent<PlotWindowProps> = ({
         overflow: "hidden",
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          height: headerHeight,
-          padding: "5px 10px",
-          backgroundColor: "#f0f0f0",
-          borderBottom: "1px solid #ccc",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontSize: "12px",
-          fontWeight: "bold",
-        }}
-      >
-        <span>{title}</span>
-        {onClose && (
-          <button
-            onClick={onClose}
-            style={{
-              padding: "2px 8px",
-              cursor: "pointer",
-              backgroundColor: "#fee",
-              color: "#c00",
-              border: "1px solid #fcc",
-              borderRadius: "3px",
-              fontSize: "11px",
-            }}
-          >
-            ✕ Close
-          </button>
-        )}
-      </div>
-
       {/* Controls */}
       <div
         style={{

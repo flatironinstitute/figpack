@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Update ClusterLens figure
+
 ## [0.3.16] - 2026-01-22
 
 - Updated visibility logic to ensure figures display when embedded in iframes

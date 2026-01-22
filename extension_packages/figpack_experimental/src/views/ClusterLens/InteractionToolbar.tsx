@@ -32,15 +32,16 @@ const InteractionToolbar: FunctionComponent<InteractionToolbarProps> = ({
     <div
       style={{
         display: "flex",
-        alignItems: "center",
+        flexDirection: "column",
         gap: "8px",
-        padding: "5px",
-        borderBottom: "1px solid #ccc",
+        padding: "8px",
+        borderRight: "1px solid #ccc",
         backgroundColor: "#fafafa",
+        width: "120px",
       }}
     >
       <span
-        style={{ fontSize: "12px", fontWeight: "bold", marginRight: "8px" }}
+        style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px" }}
       >
         Tool:
       </span>
@@ -67,10 +68,10 @@ const InteractionToolbar: FunctionComponent<InteractionToolbarProps> = ({
       </button>
       <div
         style={{
-          width: "1px",
-          height: "24px",
+          width: "100%",
+          height: "1px",
           backgroundColor: "#ccc",
-          margin: "0 8px",
+          margin: "8px 0",
         }}
       />
       <span style={{ fontSize: "12px", color: "#666" }}>

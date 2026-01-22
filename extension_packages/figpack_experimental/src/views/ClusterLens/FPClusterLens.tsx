@@ -24,12 +24,12 @@ const FPClusterLens: FunctionComponent<FPClusterLensProps> = ({
   const [clusterLabels, setClusterLabels] = useState<number[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [nPoints, setNPoints] = useState<number>(0);
-  const [nDims, setNDims] = useState<number>(0);
+  // const [nPoints, setNPoints] = useState<number>(0);
+  // const [nDims, setNDims] = useState<number>(0);
 
   // Global interaction state (shared across all plots)
   const [interactionMode, setInteractionMode] =
-    useState<InteractionMode>("pan");
+    useState<InteractionMode>("rectangleSelect");
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(
     new Set(),
   );
@@ -37,6 +37,7 @@ const FPClusterLens: FunctionComponent<FPClusterLensProps> = ({
   // Plot windows configuration
   const [plots, setPlots] = useState<PlotConfig[]>([]);
   const [nextPlotId, setNextPlotId] = useState(1);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
 
   // Load data from zarr
   useEffect(() => {
@@ -49,8 +50,8 @@ const FPClusterLens: FunctionComponent<FPClusterLensProps> = ({
         const attrs = zarrGroup.attrs;
         const nPts = attrs.n_points as number;
         const nDim = attrs.n_dims as number;
-        setNPoints(nPts);
-        setNDims(nDim);
+        // setNPoints(nPts);
+        // setNDims(nDim);
 
         // Load the data
         const dataArray = await zarrGroup.getDatasetData("data", {});
@@ -94,7 +95,7 @@ const FPClusterLens: FunctionComponent<FPClusterLensProps> = ({
         setPlots([
           {
             id: "main",
-            title: "All Points",
+            title: "All",
             pointIndices: allIndices,
           },
         ]);
@@ -114,17 +115,30 @@ const FPClusterLens: FunctionComponent<FPClusterLensProps> = ({
 
     const newPlot: PlotConfig = {
       id: `plot-${nextPlotId}`,
-      title: `Selection ${nextPlotId} (${selectedIndices.size} points)`,
+      title: `S${nextPlotId} (${selectedIndices.size})`,
       pointIndices: Array.from(selectedIndices),
     };
 
     setPlots((prev) => [...prev, newPlot]);
     setNextPlotId((prev) => prev + 1);
+    // Switch to the newly created tab
+    setActiveTabIndex(plots.length);
   };
 
   const handleClosePlot = (plotId: string) => {
     // Don't allow closing the main plot
     if (plotId === "main") return;
+
+    const indexToClose = plots.findIndex((p) => p.id === plotId);
+    if (indexToClose === -1) return;
+
+    // If closing the active tab, switch to the previous tab
+    if (indexToClose === activeTabIndex) {
+      setActiveTabIndex(Math.max(0, indexToClose - 1));
+    } else if (indexToClose < activeTabIndex) {
+      // If closing a tab before the active one, adjust the active index
+      setActiveTabIndex(activeTabIndex - 1);
+    }
 
     setPlots((prev) => prev.filter((p) => p.id !== plotId));
   };
@@ -162,74 +176,135 @@ const FPClusterLens: FunctionComponent<FPClusterLensProps> = ({
     );
   }
 
-  const infoHeight = 30;
+  const tabBarHeight = 40;
+  const toolbarWidth = 120; // Width of InteractionToolbar on the left
 
-  // Fixed plot dimensions
-  const plotWidth = 600;
-  const plotHeight = 600;
+  // Calculate dimensions for the active plot
+  const availableHeight = height - tabBarHeight;
+  const availableWidth = width - toolbarWidth;
+  const plotWidth = availableWidth;
+  const plotHeight = availableHeight;
+
+  const activePlot = plots[activeTabIndex];
 
   return (
     <div style={{ width, height, display: "flex", flexDirection: "column" }}>
-      {/* Interaction Toolbar */}
-      <InteractionToolbar
-        mode={interactionMode}
-        onModeChange={setInteractionMode}
-        selectedCount={selectedIndices.size}
-        onClearSelection={() => setSelectedIndices(new Set())}
-        onCreatePlotFromSelection={handleCreatePlotFromSelection}
-      />
+      {/* Main content area with toolbar on left */}
+      <div style={{ display: "flex", flex: 1 }}>
+        {/* Interaction Toolbar on the left */}
+        <InteractionToolbar
+          mode={interactionMode}
+          onModeChange={setInteractionMode}
+          selectedCount={selectedIndices.size}
+          onClearSelection={() => setSelectedIndices(new Set())}
+          onCreatePlotFromSelection={handleCreatePlotFromSelection}
+        />
 
-      {/* Info bar */}
-      <div
-        style={{
-          height: infoHeight,
-          padding: "5px 10px",
-          borderBottom: "1px solid #ccc",
-          display: "flex",
-          alignItems: "center",
-          fontSize: "12px",
-          fontWeight: "bold",
-          backgroundColor: "#fafafa",
-        }}
-      >
-        ClusterLens: {nPoints} points, {nDims} dimensions | {plots.length} plot
-        {plots.length !== 1 ? "s" : ""}
-      </div>
+        {/* Right side: Tab bar and plot */}
+        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+          {/* Tab Bar */}
+          <div
+            style={{
+              height: tabBarHeight,
+              display: "flex",
+              borderBottom: "2px solid #ccc",
+              backgroundColor: "#f5f5f5",
+              overflowX: "auto",
+            }}
+          >
+            {plots.map((plot, index) => (
+              <div
+                key={plot.id}
+                onClick={() => setActiveTabIndex(index)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "0 12px",
+                  minWidth: "150px",
+                  cursor: "pointer",
+                  backgroundColor:
+                    index === activeTabIndex ? "#fff" : "transparent",
+                  borderRight: "1px solid #ddd",
+                  borderBottom:
+                    index === activeTabIndex ? "2px solid #fff" : "none",
+                  marginBottom: index === activeTabIndex ? "-2px" : "0",
+                  fontWeight: index === activeTabIndex ? "bold" : "normal",
+                  fontSize: "12px",
+                  userSelect: "none",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (index !== activeTabIndex) {
+                    e.currentTarget.style.backgroundColor = "#e8e8e8";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (index !== activeTabIndex) {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }
+                }}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {plot.title}
+                </span>
+                {index !== 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClosePlot(plot.id);
+                    }}
+                    style={{
+                      marginLeft: "8px",
+                      padding: "2px 6px",
+                      cursor: "pointer",
+                      backgroundColor: "transparent",
+                      color: "#666",
+                      border: "none",
+                      borderRadius: "3px",
+                      fontSize: "14px",
+                      lineHeight: "1",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#fee";
+                      e.currentTarget.style.color = "#c00";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "#666";
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
 
-      {/* Grid of plot windows */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          padding: "10px",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(auto-fill, ${plotWidth}px)`,
-            gap: "20px",
-            justifyContent: "start",
-          }}
-        >
-          {plots.map((plot) => (
-            <PlotWindow
-              key={plot.id}
-              title={plot.title}
-              data={data!}
-              clusterLabels={clusterLabels}
-              pointIndices={plot.pointIndices}
-              width={plotWidth}
-              height={plotHeight}
-              mode={interactionMode}
-              selectedIndices={selectedIndices}
-              onSelectionChange={setSelectedIndices}
-              onClose={
-                plot.id !== "main" ? () => handleClosePlot(plot.id) : undefined
-              }
-            />
-          ))}
+          {/* Active plot view */}
+          <div style={{ flex: 1, overflow: "hidden" }}>
+            {activePlot && (
+              <PlotWindow
+                key={activePlot.id}
+                title={activePlot.title}
+                data={data!}
+                clusterLabels={clusterLabels}
+                pointIndices={activePlot.pointIndices}
+                width={plotWidth}
+                height={plotHeight}
+                mode={interactionMode}
+                selectedIndices={selectedIndices}
+                onSelectionChange={setSelectedIndices}
+                onClose={undefined} // Close button is in the tab bar now
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
