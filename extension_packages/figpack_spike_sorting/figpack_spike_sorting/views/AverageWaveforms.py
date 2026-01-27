@@ -2,7 +2,7 @@
 AverageWaveforms view for figpack - displays multiple average waveforms
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 
 import numpy as np
 import figpack
@@ -54,7 +54,12 @@ class AverageWaveforms(figpack.ExtensionView):
     A view that displays multiple average waveforms for spike sorting analysis
     """
 
-    def __init__(self, *, average_waveforms: List[AverageWaveformItem]):
+    def __init__(
+        self,
+        *,
+        average_waveforms: List[AverageWaveformItem],
+        channel_locations: Union[None, Dict[str, Any]] = None,
+    ):
         """
         Initialize an AverageWaveforms view
 
@@ -66,6 +71,7 @@ class AverageWaveforms(figpack.ExtensionView):
             view_type="spike_sorting.AverageWaveforms",
         )
         self.average_waveforms = average_waveforms
+        self.channel_locations = channel_locations
 
     @staticmethod
     def from_sorting_analyzer(sorting_analyzer):
@@ -112,6 +118,12 @@ class AverageWaveforms(figpack.ExtensionView):
         # Store the number of average waveforms
         group.attrs["num_average_waveforms"] = len(self.average_waveforms)
 
+        if self.channel_locations is not None:
+            channel_locations_dict = {}
+            for ch_id, loc in self.channel_locations.items():
+                channel_locations_dict[str(ch_id)] = [float(a) for a in loc]
+            group.attrs["channel_locations"] = channel_locations_dict
+
         # Store metadata for each average waveform
         average_waveform_metadata = []
         for i, waveform in enumerate(self.average_waveforms):
@@ -136,12 +148,15 @@ class AverageWaveforms(figpack.ExtensionView):
                     data=waveform.waveform_std_dev,
                 )
             if waveform.waveform_percentiles is not None:
-                for j, p in enumerate(waveform.waveform_percentiles):
-                    group.create_dataset(
-                        f"{waveform_name}/waveform_percentile_{j}",
-                        data=p,
-                        dtype=p.dtype,
-                    )
+                # concat along first axis
+                waveform_percentiles_concat = np.stack(
+                    waveform.waveform_percentiles, axis=0
+                )
+                group.create_dataset(
+                    f"{waveform_name}/waveform_percentiles",
+                    data=waveform_percentiles_concat,
+                    dtype=waveform_percentiles_concat.dtype,
+                )
 
         # Store the average waveform metadata
         group.attrs["average_waveforms"] = average_waveform_metadata
