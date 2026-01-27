@@ -20,7 +20,7 @@ interface LayerData {
   height: number;
   tileSize: number;
   numZoomLevels: number;
-  tiles: { [key: string]: Uint8Array };
+  tilesGroup: ZarrGroup; // Store reference for lazy loading
 }
 
 const FPTiledImage: FunctionComponent<Props> = ({
@@ -33,7 +33,7 @@ const FPTiledImage: FunctionComponent<Props> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedLayerIndex, setSelectedLayerIndex] = useState(0);
 
-  // Load layer data
+  // Load layer metadata (not the tiles themselves)
   useEffect(() => {
     const loadLayers = async () => {
       try {
@@ -55,22 +55,10 @@ const FPTiledImage: FunctionComponent<Props> = ({
           const imageHeight = layerAttrs.height as number;
           const numZoomLevels = layerAttrs.num_zoom_levels as number;
 
-          // Load all tiles for this layer
+          // Get reference to tiles group (but don't load tiles yet - lazy loading)
           const tilesGroup = await layerGroup.getGroup("tiles");
           if (!tilesGroup) {
             throw new Error(`Tiles group not found for layer ${i}`);
-          }
-          const tileSubdatasets = tilesGroup.datasets;
-          const tiles: { [key: string]: Uint8Array } = {};
-
-          for (const subdataset of tileSubdatasets) {
-            const tileData = await tilesGroup.getDatasetData(
-              subdataset.name,
-              {},
-            );
-            if (tileData) {
-              tiles[subdataset.name] = tileData as Uint8Array;
-            }
           }
 
           loadedLayers.push({
@@ -79,7 +67,7 @@ const FPTiledImage: FunctionComponent<Props> = ({
             height: imageHeight,
             tileSize,
             numZoomLevels,
-            tiles,
+            tilesGroup, // Store reference for lazy loading
           });
         }
 
@@ -120,7 +108,7 @@ const FPTiledImage: FunctionComponent<Props> = ({
     };
   }, [layers]);
 
-  // Create deck.gl layers
+  // Create deck.gl layers with lazy tile loading
   const deckGLLayers = useMemo(() => {
     return layers.map((layer, layerIdx) => {
       const {
@@ -128,7 +116,7 @@ const FPTiledImage: FunctionComponent<Props> = ({
         width: imageWidth,
         height: imageHeight,
         numZoomLevels,
-        tiles,
+        tilesGroup,
       } = layer;
 
       return new TileLayer({
@@ -148,8 +136,9 @@ const FPTiledImage: FunctionComponent<Props> = ({
         }) => {
           const { x, y, z } = index;
           const key = `${numZoomLevels + z}_${x}_${y}`;
-          const jpegBytes = tiles[key];
 
+          // Lazy load the tile on demand
+          const jpegBytes = await tilesGroup.getDatasetData(key, {});
           if (!jpegBytes) {
             throw new Error(`Unable to find tile: ${key}`);
           }
