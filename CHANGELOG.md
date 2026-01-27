@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Update ClusterLens figure
+- Add TiledImage view
 
 ## [0.3.16] - 2026-01-22
 

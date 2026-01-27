@@ -27,6 +27,7 @@ import { FPUnitLocations } from "./views/FPUnitLocations";
 import { FPUnitMetricsGraph } from "./views/FPUnitMetricsGraph";
 import { FPSortingCuration } from "./views/FPSortingCuration";
 import { sortingCurationReducer } from "./views/context-sorting-curation";
+import FPTiledImage from "./views/FPTiledImage";
 
 // Declare global types for figpack extension system
 export {};
@@ -283,6 +284,7 @@ const registerExtension = () => {
     { name: "spike_sorting.UnitMetricsGraph", component: FPUnitMetricsGraph },
     { name: "spike_sorting.UnitsTable", component: FPUnitsTable },
     { name: "spike_sorting.SortingCuration", component: FPSortingCuration },
+    { name: "spike_sorting.TiledImage", component: FPTiledImage },
   ];
 
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)

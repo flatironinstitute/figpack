@@ -20,6 +20,7 @@ from .UnitMetricsGraph import (
     UnitMetricsGraphUnit,
 )
 from .SortingCuration import SortingCuration
+from .TiledImage import TiledImage, TiledImageLayer
 
 __all__ = [
     "Autocorrelograms",
@@ -42,4 +43,6 @@ __all__ = [
     "UnitMetricsGraphMetric",
     "UnitMetricsGraphUnit",
     "SortingCuration",
+    "TiledImage",
+    "TiledImageLayer",
 ]
