@@ -385,6 +385,8 @@ This visualization allows you to:
 - Select units to highlight their similarity relationships
 - Use the "Select Similar" button to quickly select the most similar units to the current selection
 
+<iframe data-src="./spike_sorting_tutorial_unit_similarity_matrix/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
+
 ## Spike Locations
 
 The Spike Locations view displays the spatial distribution of individual spike events in 2D space, useful for visualizing spike localization from multi-electrode arrays:
@@ -477,6 +479,8 @@ This visualization allows you to:
 - See channel locations overlaid on the spike scatter plot
 - Select and highlight specific units
 - Use the "Only show selected" option to focus on particular units
+
+<iframe data-src="./spike_sorting_tutorial_spike_locations/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Simple Combined Layout
 
