@@ -77,7 +77,8 @@ const getEventPoint = (e: React.MouseEvent) => {
   return point;
 };
 
-const useSelectedElectrodes = () => {
+// eslint-disable-next-line react-refresh/only-export-components
+export const useSelectedElectrodes = () => {
   // todo: make a selected electrodes context
   return {
     selectedElectrodeIds: [],

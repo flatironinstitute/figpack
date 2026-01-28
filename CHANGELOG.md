@@ -4,6 +4,7 @@
 
 - Update ClusterLens figure
 - Add TiledImage view
+- Add SpikeLocations and UnitSimilarityMatrix views
 
 ## [0.3.16] - 2026-01-22
 

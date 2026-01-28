@@ -23,9 +23,11 @@ import { FPAverageWaveforms } from "./views/FPAverageWaveforms";
 import { FPCrossCorrelograms } from "./views/FPCrossCorrelograms";
 import { FPRasterPlot } from "./views/FPRasterPlot";
 import { FPSpikeAmplitudes } from "./views/FPSpikeAmplitudes";
+import { FPSpikeLocations } from "./views/FPSpikeLocations";
 import { FPUnitLocations } from "./views/FPUnitLocations";
 import { FPUnitMetricsGraph } from "./views/FPUnitMetricsGraph";
 import { FPSortingCuration } from "./views/FPSortingCuration";
+import { FPUnitSimilarityMatrix } from "./views/FPUnitSimilarityMatrix";
 import { sortingCurationReducer } from "./views/context-sorting-curation";
 import FPTiledImage from "./views/FPTiledImage";
 
@@ -280,11 +282,16 @@ const registerExtension = () => {
     { name: "spike_sorting.CrossCorrelograms", component: FPCrossCorrelograms },
     { name: "spike_sorting.RasterPlot", component: FPRasterPlot },
     { name: "spike_sorting.SpikeAmplitudes", component: FPSpikeAmplitudes },
+    { name: "spike_sorting.SpikeLocations", component: FPSpikeLocations },
     { name: "spike_sorting.UnitLocations", component: FPUnitLocations },
     { name: "spike_sorting.UnitMetricsGraph", component: FPUnitMetricsGraph },
     { name: "spike_sorting.UnitsTable", component: FPUnitsTable },
     { name: "spike_sorting.SortingCuration", component: FPSortingCuration },
     { name: "spike_sorting.TiledImage", component: FPTiledImage },
+    {
+      name: "spike_sorting.UnitSimilarityMatrix",
+      component: FPUnitSimilarityMatrix,
+    },
   ];
 
   const registerFPViewComponent: (v: FPViewComponent) => void = (window as any)

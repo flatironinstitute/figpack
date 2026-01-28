@@ -8,11 +8,13 @@ from .UnitsTableRow import UnitsTableRow
 from .UnitsTableColumn import UnitsTableColumn
 from .UnitsTable import UnitsTable
 from .UnitSimilarityScore import UnitSimilarityScore
+from .UnitSimilarityMatrix import UnitSimilarityMatrix
 from .AverageWaveforms import AverageWaveforms, AverageWaveformItem
 from .CrossCorrelograms import CrossCorrelograms, CrossCorrelogramItem
 from .RasterPlot import RasterPlot
 from .RasterPlotItem import RasterPlotItem
 from .SpikeAmplitudes import SpikeAmplitudes, SpikeAmplitudesItem
+from .SpikeLocations import SpikeLocations, SpikeLocationsItem
 from .UnitLocations import UnitLocations, UnitLocationsItem
 from .UnitMetricsGraph import (
     UnitMetricsGraph,
@@ -29,6 +31,7 @@ __all__ = [
     "UnitsTableColumn",
     "UnitsTable",
     "UnitSimilarityScore",
+    "UnitSimilarityMatrix",
     "AverageWaveforms",
     "AverageWaveformItem",
     "CrossCorrelograms",
@@ -37,6 +40,8 @@ __all__ = [
     "RasterPlotItem",
     "SpikeAmplitudes",
     "SpikeAmplitudesItem",
+    "SpikeLocations",
+    "SpikeLocationsItem",
     "UnitLocations",
     "UnitLocationsItem",
     "UnitMetricsGraph",
