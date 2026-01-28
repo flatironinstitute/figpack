@@ -359,11 +359,12 @@ unit_ids = list(sorting.get_unit_ids())
 # Create similarity scores between all pairs of units
 # In practice, these would be computed from actual waveform comparisons
 similarity_scores: List[ssv.UnitSimilarityScore] = []
-for u1 in unit_ids:
-    for u2 in unit_ids:
+for i, u1 in enumerate(unit_ids):
+    for j, u2 in enumerate(unit_ids):
         # Example: fake similarity score for demonstration
         # In real use, compute from waveform correlations, template matching, etc.
-        similarity = 1 - abs(u1 - u2) / (u1 + u2 + 1)
+        # Using indices to create a numeric similarity metric
+        similarity = 1 - abs(i - j) / (i + j + 1)
         similarity_scores.append(
             ssv.UnitSimilarityScore(unit_id1=u1, unit_id2=u2, similarity=similarity)
         )
