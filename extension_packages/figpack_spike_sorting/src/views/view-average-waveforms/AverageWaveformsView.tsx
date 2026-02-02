@@ -436,24 +436,36 @@ const combinePlotsForOverlappingView = (plots: PGPlot[]): PGPlot[] => {
 };
 
 const subtractChannelMeans = (waveform: number[][]): number[][] => {
-  return waveform.map((W) => {
+  const ret = waveform.map((W) => {
     const mean0 = computeMean(W);
     return W.map((a) => a - mean0);
   });
+  return ret;
 };
 
 const subtractChannelMeansFromPercentiles = (
   waveformPercentiles: number[][][],
   waveform: number[][],
 ): number[][][] => {
-  const ret: number[][][] = [];
+  // waveform : num_channels x num_timepoints
+  // waveformPercentiles: num_percentiles x num_channels x num_timepoints
+  const numChannels = waveform[0].length;
+  const waveformMeans: number[] = []; // num_channels
+  for (let ch = 0; ch < numChannels; ch++) {
+    const chWaveform: number[] = waveform.map((timepoint) => timepoint[ch]);
+    waveformMeans.push(computeMean(chWaveform));
+  }
+  const ret: number[][][] = []; // num_percentiles x num_timepoints x num_channels
   for (let i = 0; i < waveformPercentiles.length; i++) {
-    ret.push(
-      waveformPercentiles[i].map((W, jj) => {
-        const mean0 = computeMean(waveform[jj]);
-        return W.map((a) => a - mean0);
-      }),
-    );
+    const percentileAry: number[][] = []; // num_timepoints x num_channels
+    for (let t = 0; t < waveformPercentiles[i].length; t++) {
+      const timepointAry: number[] = []; // num_channels
+      for (let ch = 0; ch < numChannels; ch++) {
+        timepointAry.push(waveformPercentiles[i][t][ch] - waveformMeans[ch]);
+      }
+      percentileAry.push(timepointAry);
+    }
+    ret.push(percentileAry);
   }
   return ret;
 };

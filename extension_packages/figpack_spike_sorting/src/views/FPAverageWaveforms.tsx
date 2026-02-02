@@ -174,10 +174,10 @@ const to2dArray = (data: Float32Array, shape: number[]): number[][] => {
       `data.length does not match shape. Expected ${nRows * nCols}, got ${data.length}`,
     );
   const result = [];
-  for (let i = 0; i < nCols; i++) {
+  for (let i = 0; i < nRows; i++) {
     const row = [];
-    for (let j = 0; j < nRows; j++) {
-      row.push(data[j * nCols + i]);
+    for (let j = 0; j < nCols; j++) {
+      row.push(data[i * nCols + j]);
     }
     result.push(row);
   }

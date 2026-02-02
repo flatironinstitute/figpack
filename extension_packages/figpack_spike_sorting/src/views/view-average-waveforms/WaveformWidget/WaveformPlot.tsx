@@ -97,30 +97,33 @@ const computePaths = (
       if (jj >= 0) {
         let ww: number[] | undefined;
         const wsd = W.waveformStdDev;
-        const wp = W.waveformPercentiles; // TODO: use these to draw a shaded area
+        const wp = W.waveformPercentiles;
         if (mode === "normal") {
-          ww = W.waveform[jj];
+          ww = W.waveform.map((timepoint) => timepoint[jj]);
         } else if (mode === "lower") {
           ww = wsd
-            ? W.waveform[jj].map((_v, i) => W.waveform[jj][i] - wsd[jj][i])
+            ? W.waveform.map((timepoint, i) => timepoint[jj] - wsd[i][jj])
             : undefined;
         } else if (mode === "upper") {
           ww = wsd
-            ? W.waveform[jj].map((_v, i) => W.waveform[jj][i] + wsd[jj][i])
+            ? W.waveform.map((timepoint, i) => timepoint[jj] + wsd[i][jj])
             : undefined;
         } else if (mode === "percentile1") {
-          ww = wp ? W.waveform[jj].map((_v, i) => wp[0][jj][i]) : undefined;
+          console.log("--- computing ww for percentile1", W.waveform, wp);
+          ww = wp ? W.waveform.map((_timepoint, i) => wp[0][i][jj]) : undefined;
         } else if (mode === "percentile2") {
-          ww = wp ? W.waveform[jj].map((_v, i) => wp[1][jj][i]) : undefined;
+          console.log("--- computing ww for percentile2");
+          ww = wp ? W.waveform.map((_timepoint, i) => wp[1][i][jj]) : undefined;
         } else if (mode === "percentile3") {
+          console.log("--- computing ww for percentile3");
           ww =
             wp && 2 < wp.length
-              ? W.waveform[jj].map((_v, i) => wp[2][jj][i])
+              ? W.waveform.map((_timepoint, i) => wp[2][i][jj])
               : undefined;
         } else if (mode === "percentile4") {
           ww =
             wp && 3 < wp.length
-              ? W.waveform[jj].map((_v, i) => wp[3][jj][i])
+              ? W.waveform.map((_timepoint, i) => wp[3][i][jj])
               : undefined;
         }
         if (ww) {
@@ -346,14 +349,9 @@ const WaveformPlot = (props: WaveformProps) => {
     affineTransform,
     useUnitColors,
   } = props;
-
   const canvas = useMemo(() => {
     const pointsPerWaveform =
-      waveforms.length > 0
-        ? waveforms[0].waveform.length > 0
-          ? waveforms[0].waveform[0].length
-          : 0
-        : 0; // assumed constant across all
+      waveforms.length > 0 ? waveforms[0].waveform.length : 0; // assumed constant across all
     const timeScale = oneElectrodeWidth / pointsPerWaveform; // converts the frame numbers (1..130 or w/e) to pixel width of electrode
     const offsetToCenter = -oneElectrodeWidth * (0.5 + 1 / pointsPerWaveform); // adjusts the waveforms to start at the left of the electrode, not its center
     const finalYScale = (yScale * oneElectrodeHeight) / 2; // scales waveform amplitudes to the pixel height of a single electrode
@@ -412,10 +410,14 @@ const WaveformPlot = (props: WaveformProps) => {
       "percentile4",
       horizontalStretchFactor,
     );
-    if (pathsPercentile1.length === 0) pathsPercentile1 = undefined;
-    if (pathsPercentile2.length === 0) pathsPercentile2 = undefined;
-    if (pathsPercentile3.length === 0) pathsPercentile3 = undefined;
-    if (pathsPercentile4.length === 0) pathsPercentile4 = undefined;
+    if (pathsPercentile1 && pathsPercentile1.length === 0)
+      pathsPercentile1 = undefined;
+    if (pathsPercentile2 && pathsPercentile2.length === 0)
+      pathsPercentile2 = undefined;
+    if (pathsPercentile3 && pathsPercentile3.length === 0)
+      pathsPercentile3 = undefined;
+    if (pathsPercentile4 && pathsPercentile4.length === 0)
+      pathsPercentile4 = undefined;
     // const pathsLower = waveformLowerPoints ? computePaths(transform, waveformLowerPoints, electrodes, horizontalStretchFactor) : undefined
     // const pathsUpper = waveformUpperPoints ? computePaths(transform, waveformUpperPoints, electrodes, horizontalStretchFactor) : undefined
     const xMargin =

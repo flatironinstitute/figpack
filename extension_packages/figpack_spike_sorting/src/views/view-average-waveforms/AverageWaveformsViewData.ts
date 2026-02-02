@@ -13,9 +13,9 @@ import {
 type AverageWaveformData = {
   unitId: number | string;
   channelIds: (number | string)[];
-  waveform: number[][];
-  waveformStdDev?: number[][];
-  waveformPercentiles?: number[][][];
+  waveform: number[][]; // num_channels x num_timepoints
+  waveformStdDev?: number[][]; // num_channels x num_timepoints
+  waveformPercentiles?: number[][][]; // num_percentiles x num_channels x num_timepoints
 };
 
 export const isAverageWaveformData = (x: any): x is AverageWaveformData => {
