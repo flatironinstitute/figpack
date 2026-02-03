@@ -436,10 +436,19 @@ const combinePlotsForOverlappingView = (plots: PGPlot[]): PGPlot[] => {
 };
 
 const subtractChannelMeans = (waveform: number[][]): number[][] => {
-  const ret = waveform.map((W) => {
-    const mean0 = computeMean(W);
-    return W.map((a) => a - mean0);
-  });
+  const channelMeans: number[] = []; // num_channels
+  for (let ch = 0; ch < waveform[0].length; ch++) {
+    const chWaveform: number[] = waveform.map((timepoint) => timepoint[ch]);
+    channelMeans.push(computeMean(chWaveform));
+  }
+  const ret: number[][] = []; // num_timepoints x num_channels
+  for (let t = 0; t < waveform.length; t++) {
+    const timepointAry: number[] = []; // num_channels
+    for (let ch = 0; ch < waveform[0].length; ch++) {
+      timepointAry.push(waveform[t][ch] - channelMeans[ch]);
+    }
+    ret.push(timepointAry);
+  }
   return ret;
 };
 

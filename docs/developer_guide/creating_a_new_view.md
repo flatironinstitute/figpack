@@ -244,6 +244,12 @@ For faster development:
    ?ext_dev=figpack-experimental:http://localhost:5174/figpack_experimental.js
    ```
 
+   or
+
+   ```
+   ?ext_dev=figpack-spike-sorting:http://localhost:5174/figpack_spike_sorting.js
+   ```
+
 3. Use browser dev tools and console.log() for debugging
 
 ## Contributing Your View

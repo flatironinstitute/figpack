@@ -109,13 +109,10 @@ const computePaths = (
             ? W.waveform.map((timepoint, i) => timepoint[jj] + wsd[i][jj])
             : undefined;
         } else if (mode === "percentile1") {
-          console.log("--- computing ww for percentile1", W.waveform, wp);
           ww = wp ? W.waveform.map((_timepoint, i) => wp[0][i][jj]) : undefined;
         } else if (mode === "percentile2") {
-          console.log("--- computing ww for percentile2");
           ww = wp ? W.waveform.map((_timepoint, i) => wp[1][i][jj]) : undefined;
         } else if (mode === "percentile3") {
-          console.log("--- computing ww for percentile3");
           ww =
             wp && 2 < wp.length
               ? W.waveform.map((_timepoint, i) => wp[2][i][jj])
