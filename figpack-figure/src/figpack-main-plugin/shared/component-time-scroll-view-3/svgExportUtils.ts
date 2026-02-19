@@ -67,10 +67,12 @@ class SVGContextImpl implements SVGContext {
     textBaseline: CanvasTextBaseline;
     lineDash: number[];
     transform: { translateX: number; translateY: number; rotation: number };
-    clipPath: string | null;
+    activeClipPathId: string | null;
   }> = [];
   private lineDash: number[] = [];
-  private clipPath: string | null = null;
+  private activeClipPathId: string | null = null;
+  private clipPathDefs: Map<string, string> = new Map();
+  private nextClipPathId = 0;
   private transform = { translateX: 0, translateY: 0, rotation: 0 };
 
   public strokeStyle: string | CanvasGradient | CanvasPattern = "black";
@@ -100,7 +102,9 @@ class SVGContextImpl implements SVGContext {
   }
 
   private getClipPathAttr(): string {
-    return this.clipPath ? ` clip-path="url(#clipPath)"` : "";
+    return this.activeClipPathId
+      ? ` clip-path="url(#${this.activeClipPathId})"`
+      : "";
   }
 
   private getTransformAttr(): string {
@@ -214,7 +218,7 @@ class SVGContextImpl implements SVGContext {
 
   fillText(text: string, x: number, y: number): void {
     // Parse font for SVG attributes
-    const fontSize = this.font.match(/(\d+)px/)?.[1] || "10";
+    const fontSizeNum = parseFloat(this.font.match(/(\d+)px/)?.[1] || "10");
     const fontFamily = this.font.includes("Arial")
       ? "Arial"
       : this.font.includes("monospace")
@@ -229,14 +233,21 @@ class SVGContextImpl implements SVGContext {
     else if (this.textAlign === "right" || this.textAlign === "end")
       textAnchor = "end";
 
-    // Handle text baseline
-    let dominantBaseline = "alphabetic";
-    if (this.textBaseline === "top") dominantBaseline = "hanging";
-    else if (this.textBaseline === "middle") dominantBaseline = "central";
-    else if (this.textBaseline === "bottom") dominantBaseline = "alphabetic";
+    // Adjust y coordinate to simulate text baseline instead of using
+    // dominant-baseline, which Adobe Illustrator does not support well.
+    // SVG default baseline is "alphabetic" (baseline at y).
+    let adjustedY = y;
+    if (this.textBaseline === "top") {
+      // "top" means the top of the text em-box is at y, so shift down
+      adjustedY = y + fontSizeNum * 0.8;
+    } else if (this.textBaseline === "middle") {
+      // "middle" means the vertical center of the text is at y
+      adjustedY = y + fontSizeNum * 0.35;
+    }
+    // "alphabetic" and "bottom" use default SVG positioning (no adjustment)
 
     this.svgElements.push(
-      `<text x="${x}" y="${y}" fill="${this.colorToString(this.fillStyle)}" font-size="${fontSize}" font-family="${fontFamily}" text-anchor="${textAnchor}" dominant-baseline="${dominantBaseline}"${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()}>${text}</text>`,
+      `<text x="${x}" y="${adjustedY}" fill="${this.colorToString(this.fillStyle)}" font-size="${fontSizeNum}" font-family="${fontFamily}" text-anchor="${textAnchor}"${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()}>${text}</text>`,
     );
   }
 
@@ -266,7 +277,7 @@ class SVGContextImpl implements SVGContext {
       textBaseline: this.textBaseline,
       lineDash: [...this.lineDash],
       transform: { ...this.transform },
-      clipPath: this.clipPath,
+      activeClipPathId: this.activeClipPathId,
     });
   }
 
@@ -282,15 +293,19 @@ class SVGContextImpl implements SVGContext {
       this.textBaseline = state.textBaseline;
       this.lineDash = state.lineDash;
       this.transform = state.transform;
-      this.clipPath = state.clipPath;
+      this.activeClipPathId = state.activeClipPathId;
     }
   }
 
   clip(): void {
-    // For simplicity, we'll implement a basic rectangular clip
     if (this.currentPath.length > 0) {
       const pathData = this.currentPath.join(" ");
-      this.clipPath = `<defs><clipPath id="clipPath"><path d="${pathData}" /></clipPath></defs>`;
+      const id = `clipPath${this.nextClipPathId++}`;
+      this.clipPathDefs.set(
+        id,
+        `<clipPath id="${id}"><path d="${pathData}" /></clipPath>`,
+      );
+      this.activeClipPathId = id;
     }
   }
 
@@ -349,7 +364,10 @@ class SVGContextImpl implements SVGContext {
   }
 
   getSVG(): string {
-    const defs = this.clipPath || "";
+    const defs =
+      this.clipPathDefs.size > 0
+        ? `<defs>${Array.from(this.clipPathDefs.values()).join("")}</defs>`
+        : "";
     const elements = this.svgElements.join("\n  ");
 
     return `<?xml version="1.0" encoding="UTF-8"?>

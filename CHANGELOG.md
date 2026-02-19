@@ -1,10 +1,11 @@
 # Change Log
 
-## [Unreleased]
+## [0.3.17]
 
 - Update ClusterLens figure
 - Add TiledImage view
 - Add SpikeLocations and UnitSimilarityMatrix views
+- Fix svg export
 
 ## [0.3.16] - 2026-01-22
 
