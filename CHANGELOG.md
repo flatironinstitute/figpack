@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- Fix svg export for raster plot view
+
 ## [0.3.17]
 
 - Update ClusterLens figure

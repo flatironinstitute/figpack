@@ -330,11 +330,25 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       };
 
       // draw axes
+      const timeToPixelForExport = (t: number) => {
+        if (
+          visibleStartTimeSec === undefined ||
+          visibleEndTimeSec === undefined ||
+          visibleEndTimeSec <= visibleStartTimeSec
+        )
+          return 0;
+        return (
+          margins.left +
+          ((t - visibleStartTimeSec) /
+            (visibleEndTimeSec - visibleStartTimeSec)) *
+            (opts.width - margins.left - margins.right)
+        );
+      };
       const timeTicks = computeTimeTicks(
         opts.width,
         visibleStartTimeSec,
         visibleEndTimeSec,
-        timeToPixel,
+        timeToPixelForExport,
       );
       const yTickSet = computeYAxisTicks({
         datamin: yAxisInfo?.yMin,

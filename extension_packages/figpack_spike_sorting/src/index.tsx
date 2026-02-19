@@ -2,6 +2,7 @@
 import React, { FunctionComponent, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  DrawForExportFunction,
   FPViewComponent,
   FPViewContext,
   FPViewContextCreator,
@@ -213,6 +214,7 @@ type ComponentWrapperProps = {
   onDataChange: (callback: (zarrGroup: ZarrGroup) => void) => void;
   contexts: { [key: string]: FPViewContext };
   component: React.ComponentType<any>;
+  setDrawForExport?: (draw: DrawForExportFunction) => void;
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -224,6 +226,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
   onDataChange,
   contexts,
   component: Component,
+  setDrawForExport,
 }) => {
   const [internalWidth, setInternalWidth] = useState(width);
   const [internalHeight, setInternalHeight] = useState(height);
@@ -245,6 +248,7 @@ const ComponentWrapper: FunctionComponent<ComponentWrapperProps> = ({
       width={internalWidth}
       height={internalHeight}
       contexts={contexts}
+      setDrawForExport={setDrawForExport}
     />
   );
 };
@@ -259,6 +263,7 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
       onResize,
       onDataChange,
       contexts,
+      setDrawForExport,
     } = a;
     const root = createRoot(container);
     root.render(
@@ -270,6 +275,7 @@ const makeRenderFunction = (Component: React.ComponentType<any>) => {
         onDataChange={onDataChange}
         contexts={contexts}
         component={Component}
+        setDrawForExport={setDrawForExport}
       />,
     );
   };

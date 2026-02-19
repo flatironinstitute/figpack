@@ -419,6 +419,158 @@ const RasterPlotView: FunctionComponent<Props> = ({
     }
   }, [drawRasterPlot, drawHeatmap, viewMode, spikeCounts]);
 
+  const drawContentForExport = useCallback(
+    async (
+      ctx: CanvasRenderingContext2D,
+      exportWidth: number,
+      exportHeight: number,
+      exportMargins: {
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+      },
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _o: { exporting?: boolean; canceled?: boolean },
+    ) => {
+      if (!dataClient.metadata) return;
+      if (visibleStartTimeSec === undefined || visibleEndTimeSec === undefined)
+        return;
+
+      const plotHeight =
+        exportHeight - exportMargins.top - exportMargins.bottom;
+      const plotWidth = exportWidth - exportMargins.left - exportMargins.right;
+      const timeRange = visibleEndTimeSec - visibleStartTimeSec;
+      const allUnitIds = dataClient.metadata.unitIds;
+
+      const unitPlacesByUnitIndex: { [key: number]: number } = {};
+      let numPlaces: number;
+      if (onlyShowSelected) {
+        for (let i = 0; i < selectedUnitIndicesList.length; i++) {
+          unitPlacesByUnitIndex[selectedUnitIndicesList[i]] = i;
+        }
+        numPlaces = selectedUnitIndicesList.length;
+      } else {
+        allUnitIds.forEach((_uid, index) => {
+          unitPlacesByUnitIndex[index] = index;
+        });
+        numPlaces = allUnitIds.length;
+      }
+      const unitHeight = plotHeight / (numPlaces || 1);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(exportMargins.left, exportMargins.top, plotWidth, plotHeight);
+      ctx.clip();
+
+      if (viewMode === "heatmap" && spikeCounts) {
+        // Draw heatmap
+        let maxCount = 1;
+        spikeCounts.counts.forEach((binCounts) => {
+          if (onlyShowSelected) {
+            selectedUnitIndicesList.forEach((unitIndex) => {
+              if (binCounts[unitIndex] > maxCount)
+                maxCount = binCounts[unitIndex];
+            });
+          } else {
+            binCounts.forEach((count) => {
+              if (count > maxCount) maxCount = count;
+            });
+          }
+        });
+        spikeCounts.counts.forEach((binCounts, binIndex) => {
+          const t1 = spikeCounts.binEdges[binIndex];
+          const t2 = spikeCounts.binEdges[binIndex + 1];
+          const x1 =
+            exportMargins.left +
+            ((t1 - visibleStartTimeSec) / timeRange) * plotWidth;
+          const x2 =
+            exportMargins.left +
+            ((t2 - visibleStartTimeSec) / timeRange) * plotWidth;
+          if (onlyShowSelected) {
+            for (let i = 0; i < selectedUnitIndicesList.length; i++) {
+              const unitIndex = selectedUnitIndicesList[i];
+              const val = binCounts[unitIndex] / maxCount;
+              const y =
+                exportMargins.top +
+                (selectedUnitIndicesList.length - 1 - i) * unitHeight;
+              ctx.fillStyle = heatmapColor(val);
+              ctx.fillRect(x1, y, x2 - x1 + 0.5, unitHeight);
+            }
+          } else {
+            binCounts.forEach((count, unitIndex) => {
+              const val = count / maxCount;
+              const y =
+                exportMargins.top +
+                (allUnitIds.length - 1 - unitIndex) * unitHeight;
+              ctx.fillStyle = heatmapColor(val);
+              ctx.fillRect(x1, y, x2 - x1 + 0.5, unitHeight);
+            });
+          }
+        });
+      } else if (rangeData) {
+        // Draw raster
+        for (let i = 0; i < rangeData.timestamps.length; i++) {
+          const time = rangeData.timestamps[i];
+          const unitPlace = unitPlacesByUnitIndex[rangeData.unitIndices[i]];
+          if (unitPlace === undefined) continue;
+          const unitId = allUnitIds[rangeData.unitIndices[i]];
+          const y =
+            exportMargins.top +
+            (numPlaces - 1 - unitPlace) * unitHeight +
+            unitHeight / 2;
+          const color = colorForUnitId(idToNum(unitId));
+          const isSelected = selectedUnitIds.has(unitId);
+
+          ctx.strokeStyle = color;
+          ctx.lineWidth = isSelected ? 2 : 1;
+          ctx.globalAlpha = isSelected ? 1 : 0.6;
+
+          const x =
+            exportMargins.left +
+            ((time - visibleStartTimeSec) / timeRange) * plotWidth;
+          ctx.beginPath();
+          ctx.moveTo(x, y - unitHeight * 0.4);
+          ctx.lineTo(x, y + unitHeight * 0.4);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+
+      // Draw unit labels if there's enough space
+      if (unitHeight >= MIN_UNIT_LABEL_HEIGHT) {
+        ctx.globalAlpha = 1;
+        const unitIdsToLabel = onlyShowSelected
+          ? selectedUnitIdsList
+          : allUnitIds;
+        unitIdsToLabel.forEach((unitId, index) => {
+          const y =
+            exportMargins.top +
+            (unitIdsToLabel.length - 1 - index) * unitHeight;
+          const centerY = y + unitHeight / 2;
+          const color = colorForUnitId(idToNum(unitId));
+          ctx.fillStyle = color;
+          ctx.font = "12px Arial";
+          ctx.textAlign = "right";
+          ctx.fillText(`Unit ${unitId}`, exportMargins.left - 5, centerY);
+        });
+      }
+    },
+    [
+      dataClient.metadata,
+      visibleStartTimeSec,
+      visibleEndTimeSec,
+      onlyShowSelected,
+      selectedUnitIndicesList,
+      selectedUnitIdsList,
+      selectedUnitIds,
+      viewMode,
+      spikeCounts,
+      rangeData,
+    ],
+  );
+
   const handleKeyDown = useCallback(() => {}, []);
 
   const pixelToUnitId = useCallback(
@@ -496,7 +648,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
       onMouseMove={handleMouseMove}
       onMouseOut={handleMouseOut}
       yAxisInfo={yAxisInfo}
-      // drawContentForExport={draw}
+      drawContentForExport={drawContentForExport}
       setDrawForExport={setDrawForExport}
     />
   );
