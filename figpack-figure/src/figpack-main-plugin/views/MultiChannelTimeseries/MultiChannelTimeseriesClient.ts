@@ -62,6 +62,7 @@ export class MultiChannelTimeseriesClient {
     visibleStartTimeSec: number,
     visibleEndTimeSec: number,
     canvasWidth: number,
+    opts?: { downsampleWidthMultiplier?: number },
   ): Promise<{
     data: Float32Array[];
     isDownsampled: boolean;
@@ -81,6 +82,7 @@ export class MultiChannelTimeseriesClient {
     const downsampleFactor = this._selectDownsampleFactor(
       visibleTimepoints,
       canvasWidth,
+      opts?.downsampleWidthMultiplier,
     );
 
     if (downsampleFactor === 1) {
@@ -99,14 +101,16 @@ export class MultiChannelTimeseriesClient {
   private _selectDownsampleFactor(
     visibleTimepoints: number,
     canvasWidth: number,
+    downsampleWidthMultiplier?: number,
   ): number {
-    // Find the largest downsample factor such that downsampled points > canvasWidth
+    // Find the largest downsample factor such that downsampled points > canvasWidth * multiplier
+    const effectiveWidth = canvasWidth * (downsampleWidthMultiplier || 1);
     const availableFactors = [1, ...this.downsampleFactors].sort(
       (a, b) => b - a,
     );
 
     for (const factor of availableFactors) {
-      if (visibleTimepoints / factor > canvasWidth) {
+      if (visibleTimepoints / factor > effectiveWidth) {
         return factor;
       }
     }

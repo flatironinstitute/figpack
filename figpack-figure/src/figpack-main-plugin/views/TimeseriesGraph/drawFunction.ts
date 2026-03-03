@@ -98,6 +98,7 @@ export const createDraw = ({
             visibleTimepoints,
             canvasWidth - margins.left - margins.right,
             s.downsampleFactors,
+            o.exporting ? 2 : undefined,
           );
 
           let uniformData;

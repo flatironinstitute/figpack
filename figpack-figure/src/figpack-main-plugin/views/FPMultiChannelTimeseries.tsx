@@ -14,6 +14,7 @@ import {
   ZarrGroup,
 } from "../figpack-interface";
 import { useMultiChannelTimeseriesClient } from "./MultiChannelTimeseries/useMultiChannelTimeseriesClient";
+import { MultiChannelTimeseriesClient } from "./MultiChannelTimeseries/MultiChannelTimeseriesClient";
 import {
   paintDownsampledChannelLine,
   paintOriginalChannelLine,
@@ -244,6 +245,7 @@ const FPMultiChannelTimeseriesChild: React.FC<{
       yRange,
       actualVerticalSpacing,
       nChannels: client.nChannels,
+      client,
     });
   }, [
     visibleStartTimeSec,
@@ -338,6 +340,7 @@ const createDrawFunction =
     yRange,
     actualVerticalSpacing,
     nChannels,
+    client,
   }: {
     visibleStartTimeSec: number;
     visibleEndTimeSec: number;
@@ -352,6 +355,7 @@ const createDrawFunction =
     yRange: { yMin: number; yMax: number };
     actualVerticalSpacing: number;
     nChannels: number;
+    client: MultiChannelTimeseriesClient;
   }) =>
   async (
     context: CanvasRenderingContext2D,
@@ -366,6 +370,18 @@ const createDrawFunction =
     }
     if (visibleEndTimeSec === undefined || visibleStartTimeSec === undefined)
       return;
+
+    // When exporting, reload data with higher resolution (2x multiplier)
+    let dataToRender = visibleData;
+    if (o.exporting) {
+      const plotWidth = canvasWidth - margins.left - margins.right;
+      dataToRender = await client.getVisibleData(
+        visibleStartTimeSec,
+        visibleEndTimeSec,
+        plotWidth,
+        { downsampleWidthMultiplier: 2 },
+      );
+    }
 
     // Set clipping region to graph area
     context.save();
@@ -398,21 +414,21 @@ const createDrawFunction =
     };
 
     // Draw each channel using appropriate rendering mode
-    if (visibleData.isDownsampled) {
+    if (dataToRender.isDownsampled) {
       // Use downsampled rendering with vertical line segments
       for (
         let channelIndex = 0;
-        channelIndex < visibleData.data.length;
+        channelIndex < dataToRender.data.length;
         channelIndex++
       ) {
-        const channelData = visibleData.data[channelIndex];
+        const channelData = dataToRender.data[channelIndex];
         const channelOffset = channelIndex * actualVerticalSpacing;
         const color = colorForUnitId(channelIndex);
 
         paintDownsampledChannelLine(context, {
-          startTimeSec: visibleData.startTimeSec,
-          samplingFrequency: visibleData.samplingFrequency,
-          length: visibleData.length,
+          startTimeSec: dataToRender.startTimeSec,
+          samplingFrequency: dataToRender.samplingFrequency,
+          length: dataToRender.length,
           minMaxData: channelData,
           channelOffset,
           color,
@@ -429,10 +445,10 @@ const createDrawFunction =
         const color = colorForUnitId(channelIndex);
 
         paintOriginalChannelLine(context, {
-          startTimeSec: visibleData.startTimeSec,
-          samplingFrequency: visibleData.samplingFrequency,
-          length: visibleData.length,
-          dataArray: visibleData.data[channelIndex],
+          startTimeSec: dataToRender.startTimeSec,
+          samplingFrequency: dataToRender.samplingFrequency,
+          length: dataToRender.length,
+          dataArray: dataToRender.data[channelIndex],
           channelOffset,
           color,
           visibleStartTimeSec,

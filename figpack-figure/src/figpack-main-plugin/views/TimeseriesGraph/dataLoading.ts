@@ -4,12 +4,14 @@ export const selectDownsampleFactor = (
   visibleTimepoints: number,
   canvasWidth: number,
   downsampleFactors: number[],
+  downsampleWidthMultiplier?: number,
 ): number => {
-  // Find the largest downsample factor such that downsampled points > canvasWidth
+  // Find the largest downsample factor such that downsampled points > canvasWidth * multiplier
+  const effectiveWidth = canvasWidth * (downsampleWidthMultiplier || 1);
   const availableFactors = [1, ...downsampleFactors].sort((a, b) => b - a);
 
   for (const factor of availableFactors) {
-    if (visibleTimepoints / factor > canvasWidth) {
+    if (visibleTimepoints / factor > effectiveWidth) {
       return factor;
     }
   }

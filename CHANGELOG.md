@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## [0.3.18] - 2026-03-03
+
 - Fix svg export for raster plot view
+- Render more points when exporting timeseries views to SVG (2x resolution)
 
 ## [0.3.17]
 
