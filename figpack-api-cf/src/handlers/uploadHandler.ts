@@ -262,7 +262,7 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 			accessKeyId: bucketRow.aws_access_key_id,
 			secretAccessKey: bucketRow.aws_secret_access_key,
 			endpoint: bucketRow.s3_endpoint,
-			region: bucketRow.region || (provider === 'cloudflare' ? 'auto' : ' us-east-1'),
+			region: bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1'),
 		};
 
 		// Validate all files and generate signed URLs

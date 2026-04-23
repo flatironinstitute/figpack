@@ -44,6 +44,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
     s3Endpoint: "",
+    region: "",
     // Flattened authorization
     isPublic: false,
     authorizedUsers: [] as string[],
@@ -65,6 +66,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         awsAccessKeyId: "",
         awsSecretAccessKey: "",
         s3Endpoint: "",
+        region: "",
         isPublic: false,
         authorizedUsers: [],
         nativeBucketName: "",
@@ -261,6 +263,23 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             error={!!formErrors.s3Endpoint}
             helperText={formErrors.s3Endpoint}
             placeholder={getEndpointPlaceholder()}
+            margin="normal"
+            disabled={loading}
+          />
+
+          <TextField
+            fullWidth
+            label="Region"
+            value={formData.region}
+            onChange={(e) => handleInputChange("region", e.target.value)}
+            error={!!formErrors.region}
+            helperText={
+              formErrors.region ||
+              (formData.provider === "aws"
+                ? "AWS region, e.g. us-west-2. Leave blank for us-east-1."
+                : "For Cloudflare R2 leave blank (defaults to 'auto').")
+            }
+            placeholder={formData.provider === "aws" ? "us-west-2" : "auto"}
             margin="normal"
             disabled={loading}
           />

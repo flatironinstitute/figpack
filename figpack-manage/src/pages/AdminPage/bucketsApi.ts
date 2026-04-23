@@ -11,6 +11,8 @@ export interface Bucket {
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
   s3Endpoint: string;
+  // AWS region (e.g. us-west-2). For Cloudflare R2 use 'auto' (or leave blank).
+  region?: string;
   // Flattened authorization (migrated from nested structure)
   isPublic: boolean;
   authorizedUsers: string[];

@@ -15,6 +15,7 @@ function parseBucket(row: any): Bucket {
 		awsAccessKeyId: row.aws_access_key_id,
 		awsSecretAccessKey: row.aws_secret_access_key,
 		s3Endpoint: row.s3_endpoint,
+		region: row.region || undefined,
 		isPublic: Boolean(row.is_public),
 		authorizedUsers: JSON.parse(row.authorized_users || '[]'),
 		nativeBucketName: row.native_bucket_name || undefined,
@@ -159,6 +160,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			awsAccessKeyId,
 			awsSecretAccessKey,
 			s3Endpoint,
+			region,
 			isPublic,
 			authorizedUsers,
 			nativeBucketName,
@@ -238,10 +240,10 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				`
         INSERT INTO buckets (
           name, provider, description, bucket_base_url,
-          aws_access_key_id, aws_secret_access_key, s3_endpoint,
+          aws_access_key_id, aws_secret_access_key, s3_endpoint, region,
           is_public, authorized_users, native_bucket_name,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
 			)
 			.bind(
@@ -252,6 +254,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				accessKeyId,
 				secretAccessKey,
 				endpoint,
+				region || null,
 				bucketIsPublic ? 1 : 0,
 				JSON.stringify(bucketAuthorizedUsers),
 				bucketNativeName,
@@ -355,6 +358,10 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 		if (bucketData.s3Endpoint !== undefined) {
 			updates.push('s3_endpoint = ?');
 			values.push(bucketData.s3Endpoint);
+		}
+		if (bucketData.region !== undefined) {
+			updates.push('region = ?');
+			values.push(bucketData.region || null);
 		}
 
 		// Nested format (old) - for backward compatibility

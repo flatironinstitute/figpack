@@ -11,6 +11,7 @@ export interface BucketListItem {
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
   s3Endpoint: string;
+  region?: string;
   isPublic: boolean;
   authorizedUsers: string[];
   nativeBucketName?: string;

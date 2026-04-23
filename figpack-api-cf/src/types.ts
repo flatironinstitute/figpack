@@ -51,6 +51,8 @@ export interface Bucket {
 	awsAccessKeyId: string;
 	awsSecretAccessKey: string;
 	s3Endpoint: string;
+	// AWS region (e.g. us-west-2). For Cloudflare R2 use 'auto'.
+	region?: string;
 	// Authorization (flattened from nested object)
 	isPublic: boolean;
 	authorizedUsers: string[]; // JSON string array in DB, parsed array in code

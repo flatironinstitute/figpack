@@ -232,6 +232,15 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
                       >
                         {bucket.s3Endpoint}
                       </Typography>
+                      {bucket.region && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: "block" }}
+                        >
+                          {bucket.region}
+                        </Typography>
+                      )}
                     </TableCell>
 
                     <TableCell align="right">

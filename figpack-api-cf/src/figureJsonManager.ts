@@ -91,7 +91,7 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 	const bucketBaseUrl = bucketRow.bucket_base_url as string;
 	const provider = bucketRow.provider as string;
 
-	const region = bucketRow.region || (provider === 'cloudflare' ? 'auto' : ' us-east-1');
+	const region = bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1');
 
 	const bucketInfo: BucketInfo = {
 		provider,
