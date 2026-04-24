@@ -273,8 +273,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Create a new Figpack account. You will need a valid access code to
-              proceed. If you don't have an access code, please contact the
-              authors to obtain one.
+              proceed. If you don't have an access code, please email the
+              authors to obtain one. Email: jmagland@flatironinstitute.org
             </Typography>
             {message && (
               <Alert severity={message.type} onClose={() => setMessage(null)}>
