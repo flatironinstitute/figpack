@@ -102,11 +102,11 @@ def _upload_single_file_with_signed_url(
                     signed_url, data=f, headers={"Content-Type": content_type}
                 )
 
-            if upload_response.ok:
+            if 200 <= upload_response.status_code < 300:
                 return relative_path
 
             last_exception = Exception(
-                f"Failed to upload {relative_path} to signed URL: HTTP {upload_response.status_code}"
+                f"Failed to upload {relative_path} to signed URL: HTTP {upload_response.status_code} - {upload_response.text[:500]}"
             )
         except Exception as e:
             last_exception = e

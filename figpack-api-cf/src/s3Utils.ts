@@ -50,13 +50,19 @@ export function createS3Client(bucketInfo: BucketInfo): S3Client {
 	// let endpoint: string | undefined;
 	// let clientRegion = region || 'us-east-1';
 
+	// For AWS S3, omit the endpoint so the SDK derives the regional host
+	// (https://s3.<region>.amazonaws.com) from `region`. A stored endpoint of
+	// https://s3.amazonaws.com routes to us-east-1 and returns 301 PermanentRedirect
+	// for buckets in other regions.
+	const useStoredEndpoint = bucketInfo.provider !== 'aws';
+
 	const client = new S3Client({
 		region: bucketInfo.region,
 		credentials: {
 			accessKeyId: bucketInfo.accessKeyId,
 			secretAccessKey: bucketInfo.secretAccessKey,
 		},
-		endpoint: bucketInfo.endpoint,
+		endpoint: useStoredEndpoint ? bucketInfo.endpoint : undefined,
 		forcePathStyle: true,
 	});
 

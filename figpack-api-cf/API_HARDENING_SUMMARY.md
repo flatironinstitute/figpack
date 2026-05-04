@@ -68,7 +68,7 @@ All limits are centralized in `src/config.ts`:
 ```typescript
 export const API_LIMITS = {
   MAX_FILES_PER_FIGURE: 100,
-  MAX_FIGURES_PER_USER: 500,
+  MAX_FIGURES_PER_USER: 1000,
   MAX_FILE_SIZE_BYTES: 1GB,
   MAX_EPHEMERAL_FIGURES_PER_WINDOW: 30,
   EPHEMERAL_RATE_WINDOW_MS: 5 minutes,

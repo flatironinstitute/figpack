@@ -6,7 +6,7 @@
 export const API_LIMITS = {
 	// Figure limits
 	MAX_FILES_PER_FIGURE: 100,
-	MAX_FIGURES_PER_USER: 500,
+	MAX_FIGURES_PER_USER: 1000,
 	MAX_FILE_SIZE_BYTES: 1024 * 1024 * 1024, // 1GB per file
 
 	// Ephemeral figure limits (global)
