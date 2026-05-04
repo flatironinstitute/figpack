@@ -86,6 +86,7 @@ def test_upload_single_file_with_signed_url(tmp_path):
 
     with mock.patch("requests.put") as mock_put:
         mock_put.return_value.ok = True
+        mock_put.return_value.status_code = 200
 
         result = _upload_single_file_with_signed_url(
             "test.txt", test_file, "signed-url", num_retries=2
@@ -107,7 +108,7 @@ def test_upload_single_file_with_retry(tmp_path):
         # First attempt fails, second succeeds
         mock_put.side_effect = [
             mock.Mock(ok=False, status_code=500),
-            mock.Mock(ok=True),
+            mock.Mock(ok=True, status_code=200),
         ]
 
         result = _upload_single_file_with_signed_url(
@@ -222,6 +223,7 @@ def test_upload_bundle(tmp_path):
 
     mock_upload_response = mock.Mock()
     mock_upload_response.ok = True
+    mock_upload_response.status_code = 200
 
     mock_finalize_response = mock.Mock()
     mock_finalize_response.ok = True
