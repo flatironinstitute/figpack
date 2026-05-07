@@ -41,7 +41,13 @@ const BucketsPage: React.FC = () => {
     try {
       const result = await getUserBuckets(apiKey);
       if (result.success) {
-        setBuckets(result.buckets || []);
+        // Show only buckets the current user owns. Public/authorized buckets the
+        // user can upload to still surface in the FiguresPage filter, but this
+        // page is for managing buckets you actually control.
+        const owned = (result.buckets || []).filter(
+          (b) => !!user?.email && b.ownerEmail === user.email,
+        );
+        setBuckets(owned);
       } else {
         setError(result.message || "Failed to load buckets");
       }
@@ -50,7 +56,7 @@ const BucketsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [apiKey]);
+  }, [apiKey, user?.email]);
 
   useEffect(() => {
     loadBuckets();
@@ -149,9 +155,7 @@ const BucketsPage: React.FC = () => {
               <Typography variant="h4">Buckets</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Buckets you own, plus public and shared buckets you can use for
-              uploads. You can manage credentials and access for your own
-              buckets.
+              Buckets you own. You can manage credentials and access for these.
             </Typography>
           </CardContent>
         </Card>
@@ -175,7 +179,6 @@ const BucketsPage: React.FC = () => {
             onDeleteBucket={handleDelete}
             currentUserEmail={user?.email}
             isAdmin={user?.isAdmin === true}
-            showOwnerColumn
             title="My Buckets"
           />
         )}
