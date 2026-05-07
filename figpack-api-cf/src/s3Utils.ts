@@ -61,6 +61,7 @@ export function createS3Client(bucketInfo: BucketInfo): S3Client {
 		credentials: {
 			accessKeyId: bucketInfo.accessKeyId,
 			secretAccessKey: bucketInfo.secretAccessKey,
+			...(bucketInfo.sessionToken ? { sessionToken: bucketInfo.sessionToken } : {}),
 		},
 		endpoint: useStoredEndpoint ? bucketInfo.endpoint : undefined,
 		forcePathStyle: true,
@@ -97,12 +98,13 @@ export type BucketInfo = {
 	nativeBucketName: string; // Actual bucket name on Cloudflare/AWS
 	accessKeyId: string;
 	secretAccessKey: string;
+	sessionToken?: string; // Optional STS session token (X-Amz-Security-Token).
 	endpoint: string;
 	region: string;
 };
 
 export const bucketInfoToString = (bucketInfo: BucketInfo): string => {
-	return `${bucketInfo.provider}:${bucketInfo.bucketName}:${bucketInfo.nativeBucketName}:${bucketInfo.accessKeyId}:${bucketInfo.secretAccessKey}:${bucketInfo.endpoint}:${bucketInfo.region}`;
+	return `${bucketInfo.provider}:${bucketInfo.bucketName}:${bucketInfo.nativeBucketName}:${bucketInfo.accessKeyId}:${bucketInfo.secretAccessKey}:${bucketInfo.sessionToken || ''}:${bucketInfo.endpoint}:${bucketInfo.region}`;
 };
 
 // Upload an object directly to S3

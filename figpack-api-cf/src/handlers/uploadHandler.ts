@@ -261,6 +261,7 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 			nativeBucketName: bucketRow.native_bucket_name || bucketName,
 			accessKeyId: bucketRow.aws_access_key_id,
 			secretAccessKey: bucketRow.aws_secret_access_key,
+			sessionToken: bucketRow.aws_session_token || undefined,
 			endpoint: bucketRow.s3_endpoint,
 			region: bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1'),
 		};

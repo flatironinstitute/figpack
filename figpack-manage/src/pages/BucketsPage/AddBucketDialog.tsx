@@ -43,6 +43,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
     // Flattened credentials
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
+    awsSessionToken: "",
     s3Endpoint: "",
     region: "",
     // Flattened authorization
@@ -65,6 +66,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         bucketBaseUrl: "",
         awsAccessKeyId: "",
         awsSecretAccessKey: "",
+        awsSessionToken: "",
         s3Endpoint: "",
         region: "",
         isPublic: false,
@@ -251,6 +253,19 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             }
             error={!!formErrors.awsSecretAccessKey}
             helperText={formErrors.awsSecretAccessKey}
+            margin="normal"
+            disabled={loading}
+          />
+
+          <TextField
+            fullWidth
+            label="Session Token (optional)"
+            type="password"
+            value={formData.awsSessionToken}
+            onChange={(e) =>
+              handleInputChange("awsSessionToken", e.target.value)
+            }
+            helperText="For STS / temporary credentials. Leave blank for long-lived IAM keys."
             margin="normal"
             disabled={loading}
           />

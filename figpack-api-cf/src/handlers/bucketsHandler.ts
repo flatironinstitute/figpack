@@ -24,6 +24,7 @@ function parseBucket(row: any): Bucket {
 		updatedAt: row.updated_at,
 		awsAccessKeyId: row.aws_access_key_id,
 		awsSecretAccessKey: row.aws_secret_access_key,
+		awsSessionToken: row.aws_session_token || undefined,
 		s3Endpoint: row.s3_endpoint,
 		region: row.region || undefined,
 		isPublic: Boolean(row.is_public),
@@ -33,11 +34,17 @@ function parseBucket(row: any): Bucket {
 	};
 }
 
-// Helper function to sanitize bucket data (remove secret key from responses)
+// Helper function to sanitize bucket data (remove secrets from responses).
+// awsSessionToken: undefined means "no session token configured"; the
+// placeholder means "set, but hidden". Clients use this to show a "Clear"
+// affordance only when one is actually set.
 function sanitizeBucket(bucket: Bucket): Bucket {
 	return {
 		...bucket,
 		awsSecretAccessKey: HIDDEN_CREDENTIAL_PLACEHOLDER,
+		awsSessionToken: bucket.awsSessionToken
+			? HIDDEN_CREDENTIAL_PLACEHOLDER
+			: undefined,
 	};
 }
 
@@ -199,6 +206,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			// New flattened format
 			awsAccessKeyId,
 			awsSecretAccessKey,
+			awsSessionToken,
 			s3Endpoint,
 			region,
 			isPublic,
@@ -219,6 +227,10 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 		// Extract credentials from either format
 		const accessKeyId = awsAccessKeyId || credentials?.AWS_ACCESS_KEY_ID;
 		const secretAccessKey = awsSecretAccessKey || credentials?.AWS_SECRET_ACCESS_KEY;
+		const sessionToken: string | undefined =
+			(typeof awsSessionToken === 'string' && awsSessionToken
+				? awsSessionToken
+				: undefined) || credentials?.AWS_SESSION_TOKEN;
 		const endpoint = s3Endpoint || credentials?.S3_ENDPOINT;
 
 		if (!accessKeyId || !secretAccessKey || !endpoint) {
@@ -290,10 +302,10 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				`
         INSERT INTO buckets (
           name, provider, description, bucket_base_url,
-          aws_access_key_id, aws_secret_access_key, s3_endpoint, region,
+          aws_access_key_id, aws_secret_access_key, aws_session_token, s3_endpoint, region,
           is_public, authorized_users, native_bucket_name, owner_email,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
 			)
 			.bind(
@@ -303,6 +315,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				bucketBaseUrl,
 				accessKeyId,
 				secretAccessKey,
+				sessionToken || null,
 				endpoint,
 				region || null,
 				bucketIsPublic ? 1 : 0,
@@ -415,6 +428,17 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 		if (isRealCredential(bucketData.awsSecretAccessKey)) {
 			updates.push('aws_secret_access_key = ?');
 			values.push(bucketData.awsSecretAccessKey);
+		}
+		// Session token convention:
+		//   undefined / '***HIDDEN***' → leave unchanged
+		//   '' (empty string) or null  → clear (set NULL)
+		//   any other string           → set to that value
+		if (
+			bucketData.awsSessionToken !== undefined &&
+			bucketData.awsSessionToken !== HIDDEN_CREDENTIAL_PLACEHOLDER
+		) {
+			updates.push('aws_session_token = ?');
+			values.push(bucketData.awsSessionToken ? bucketData.awsSessionToken : null);
 		}
 		if (isRealCredential(bucketData.s3Endpoint)) {
 			updates.push('s3_endpoint = ?');

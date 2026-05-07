@@ -12,6 +12,10 @@ export interface Bucket {
   // string "***HIDDEN***"; sending it back unchanged means "do not modify".
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
+  // Optional STS session token. The API returns "***HIDDEN***" when one is set
+  // and undefined when none is configured. To clear, send an empty string;
+  // the placeholder echoed back means "leave unchanged".
+  awsSessionToken?: string;
   s3Endpoint: string;
   // AWS region (e.g. us-west-2). For Cloudflare R2 use 'auto' (or leave blank).
   region?: string;

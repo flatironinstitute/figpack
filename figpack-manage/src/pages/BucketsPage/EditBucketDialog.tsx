@@ -47,6 +47,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
     // Flattened credentials
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
+    awsSessionToken: "",
     s3Endpoint: "",
     region: "",
     // Flattened authorization
@@ -55,6 +56,11 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
     // Native bucket name
     nativeBucketName: "",
   });
+  // Whether the underlying bucket currently has a session token set (server
+  // returns the placeholder ***HIDDEN*** in that case). Drives the "Clear
+  // session token" affordance.
+  const [hasSessionToken, setHasSessionToken] = useState<boolean>(false);
+  const [clearSessionToken, setClearSessionToken] = useState<boolean>(false);
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -69,6 +75,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         // Flattened credentials
         awsAccessKeyId: bucket.awsAccessKeyId,
         awsSecretAccessKey: "", // Don't pre-fill the secret key for security
+        awsSessionToken: "", // Likewise; server returns placeholder if set.
         s3Endpoint: bucket.s3Endpoint,
         region: bucket.region || "",
         // Flattened authorization
@@ -77,6 +84,8 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         // Native bucket name
         nativeBucketName: bucket.nativeBucketName || "",
       });
+      setHasSessionToken(!!bucket.awsSessionToken);
+      setClearSessionToken(false);
       setNewUserEmail("");
       setFormErrors({});
     }
@@ -145,6 +154,14 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       // Only update secret key if provided (for security)
       if (formData.awsSecretAccessKey.trim()) {
         updateData.awsSecretAccessKey = formData.awsSecretAccessKey;
+      }
+
+      // Session token: empty string clears it on the backend; a non-empty
+      // value sets it; omitting the field leaves it unchanged.
+      if (clearSessionToken) {
+        updateData.awsSessionToken = "";
+      } else if (formData.awsSessionToken.trim()) {
+        updateData.awsSessionToken = formData.awsSessionToken;
       }
 
       onUpdateBucket(bucket.name, updateData);
@@ -276,6 +293,39 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
             disabled={loading}
             placeholder="Leave empty to keep existing"
           />
+
+          <TextField
+            fullWidth
+            label="Session Token (optional)"
+            type="password"
+            value={formData.awsSessionToken}
+            onChange={(e) =>
+              handleInputChange("awsSessionToken", e.target.value)
+            }
+            helperText={
+              hasSessionToken
+                ? "Leave empty to keep existing session token, or check Clear below."
+                : "For STS / temporary credentials. Leave blank for long-lived IAM keys."
+            }
+            margin="normal"
+            disabled={loading || clearSessionToken}
+            placeholder={
+              hasSessionToken ? "Leave empty to keep existing" : ""
+            }
+          />
+          {hasSessionToken && (
+            <FormControlLabel
+              sx={{ mt: -1, mb: 1 }}
+              control={
+                <Switch
+                  checked={clearSessionToken}
+                  onChange={(e) => setClearSessionToken(e.target.checked)}
+                  disabled={loading}
+                />
+              }
+              label="Clear session token"
+            />
+          )}
 
           <TextField
             fullWidth

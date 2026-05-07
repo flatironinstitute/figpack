@@ -51,6 +51,9 @@ export interface Bucket {
 	// Credentials (flattened from nested object)
 	awsAccessKeyId: string;
 	awsSecretAccessKey: string;
+	// Optional STS session token. When set, forwarded to the S3 SDK so
+	// presigned URLs include X-Amz-Security-Token.
+	awsSessionToken?: string;
 	s3Endpoint: string;
 	// AWS region (e.g. us-west-2). For Cloudflare R2 use 'auto'.
 	region?: string;

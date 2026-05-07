@@ -99,6 +99,7 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 		nativeBucketName: bucketRow.native_bucket_name || bucketName,
 		accessKeyId: bucketRow.aws_access_key_id,
 		secretAccessKey: bucketRow.aws_secret_access_key,
+		sessionToken: bucketRow.aws_session_token || undefined,
 		endpoint: bucketRow.s3_endpoint,
 		region,
 	};
