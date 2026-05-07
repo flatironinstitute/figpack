@@ -1,23 +1,27 @@
 import { FIGPACK_API_BASE_URL } from "../../config";
 
 export interface Bucket {
+  id?: number;
   name: string;
   provider: "cloudflare" | "aws";
   description: string;
   bucketBaseUrl: string;
   createdAt: number;
   updatedAt: number;
-  // Flattened credentials (migrated from nested structure)
+  // Flattened credentials. The API returns awsSecretAccessKey as the placeholder
+  // string "***HIDDEN***"; sending it back unchanged means "do not modify".
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
   s3Endpoint: string;
   // AWS region (e.g. us-west-2). For Cloudflare R2 use 'auto' (or leave blank).
   region?: string;
-  // Flattened authorization (migrated from nested structure)
+  // Flattened authorization
   isPublic: boolean;
   authorizedUsers: string[];
   // Native bucket name (actual bucket name on Cloudflare/AWS, defaults to name if not specified)
   nativeBucketName?: string;
+  // Email of the user who owns this bucket. Undefined for legacy/admin-managed buckets.
+  ownerEmail?: string;
 }
 
 export interface BucketApiResponse {
@@ -27,6 +31,7 @@ export interface BucketApiResponse {
   bucket?: Bucket;
 }
 
+// Admin-only: all buckets. Users hitting this will get 401.
 export async function getBuckets(apiKey: string): Promise<BucketApiResponse> {
   try {
     const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets`, {
@@ -37,14 +42,35 @@ export async function getBuckets(apiKey: string): Promise<BucketApiResponse> {
       },
     });
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error fetching buckets:", error);
-    return {
-      success: false,
-      message: `Error fetching buckets: ${error}`,
-    };
+    return { success: false, message: `Error fetching buckets: ${error}` };
+  }
+}
+
+// Any authenticated user: returns buckets the user can see (owned, public, authorized; admins see all).
+export async function getUserBuckets(
+  apiKey: string,
+): Promise<BucketApiResponse> {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
+  }
+  try {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/buckets/list`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+    });
+    const result = await response.json();
+    if (result.success) {
+      return { success: true, buckets: result.buckets || [] };
+    }
+    return { success: false, message: result.message || "Failed to get buckets" };
+  } catch (err) {
+    return { success: false, message: `Error getting buckets: ${err}` };
   }
 }
 
@@ -59,19 +85,12 @@ export async function createBucket(
         "Content-Type": "application/json",
         "x-api-key": apiKey,
       },
-      body: JSON.stringify({
-        bucket: bucketData,
-      }),
+      body: JSON.stringify({ bucket: bucketData }),
     });
-
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error creating bucket:", error);
-    return {
-      success: false,
-      message: `Error creating bucket: ${error}`,
-    };
+    return { success: false, message: `Error creating bucket: ${error}` };
   }
 }
 
@@ -87,20 +106,12 @@ export async function updateBucket(
         "Content-Type": "application/json",
         "x-api-key": apiKey,
       },
-      body: JSON.stringify({
-        name,
-        bucket: bucketData,
-      }),
+      body: JSON.stringify({ name, bucket: bucketData }),
     });
-
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error updating bucket:", error);
-    return {
-      success: false,
-      message: `Error updating bucket: ${error}`,
-    };
+    return { success: false, message: `Error updating bucket: ${error}` };
   }
 }
 
@@ -115,18 +126,11 @@ export async function deleteBucket(
         "Content-Type": "application/json",
         "x-api-key": apiKey,
       },
-      body: JSON.stringify({
-        name,
-      }),
+      body: JSON.stringify({ name }),
     });
-
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error deleting bucket:", error);
-    return {
-      success: false,
-      message: `Error deleting bucket: ${error}`,
-    };
+    return { success: false, message: `Error deleting bucket: ${error}` };
   }
 }

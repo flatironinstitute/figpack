@@ -2,6 +2,16 @@ import { Env, Bucket, AuthResult, RateLimitResult } from '../types';
 import { json } from '../utils';
 import { authenticateAdmin, authenticateUser } from '../auth';
 
+const HIDDEN_CREDENTIAL_PLACEHOLDER = '***HIDDEN***';
+const DEFAULT_MAX_BUCKETS_PER_USER = 5;
+
+function getMaxBucketsPerUser(env: Env): number {
+	const raw = env.MAX_BUCKETS_PER_USER;
+	if (!raw) return DEFAULT_MAX_BUCKETS_PER_USER;
+	const parsed = parseInt(raw, 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_BUCKETS_PER_USER;
+}
+
 // Helper function to parse JSON fields from database
 function parseBucket(row: any): Bucket {
 	return {
@@ -19,6 +29,7 @@ function parseBucket(row: any): Bucket {
 		isPublic: Boolean(row.is_public),
 		authorizedUsers: JSON.parse(row.authorized_users || '[]'),
 		nativeBucketName: row.native_bucket_name || undefined,
+		ownerEmail: row.owner_email || undefined,
 	};
 }
 
@@ -26,8 +37,13 @@ function parseBucket(row: any): Bucket {
 function sanitizeBucket(bucket: Bucket): Bucket {
 	return {
 		...bucket,
-		awsSecretAccessKey: '***HIDDEN***',
+		awsSecretAccessKey: HIDDEN_CREDENTIAL_PLACEHOLDER,
 	};
+}
+
+// True if the value is non-empty and not the hidden placeholder we send to clients.
+function isRealCredential(value: unknown): value is string {
+	return typeof value === 'string' && value.length > 0 && value !== HIDDEN_CREDENTIAL_PLACEHOLDER;
 }
 
 export async function handleListUserBuckets(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
@@ -57,6 +73,8 @@ export async function handleListUserBuckets(request: Request, env: Env, rateLimi
 		const accessibleBuckets = allBuckets.filter((bucket: Bucket) => {
 			// Admins can see all buckets
 			if (isAdmin) return true;
+			// Owners can always see their own buckets
+			if (bucket.ownerEmail === userEmail) return true;
 			// Everyone can see public buckets
 			if (bucket.isPublic) return true;
 			// Users can see buckets they're authorized for
@@ -132,11 +150,33 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			return json({ success: false, message: 'API key is required' }, 400);
 		}
 
-		// Authenticate (admin only)
-		const authResult = await authenticateAdmin(apiKey, env);
+		// Any authenticated user can create a bucket; non-admins are subject to a per-user cap.
+		const authResult = await authenticateUser(apiKey, env);
 
-		if (!authResult.isValid || !authResult.isAdmin) {
-			return json({ success: false, message: 'Admin access required' }, 401);
+		if (!authResult.isValid || !authResult.user) {
+			return json({ success: false, message: 'Invalid API key' }, 401);
+		}
+
+		const userEmail = authResult.user.email;
+		const isAdmin = authResult.isAdmin;
+
+		// Enforce per-user bucket cap for non-admins
+		if (!isAdmin) {
+			const maxBuckets = getMaxBucketsPerUser(env);
+			const countRow = await env.figpack_db
+				.prepare('SELECT COUNT(*) as c FROM buckets WHERE owner_email = ?')
+				.bind(userEmail)
+				.first<{ c: number }>();
+			const currentCount = countRow?.c ?? 0;
+			if (currentCount >= maxBuckets) {
+				return json(
+					{
+						success: false,
+						message: `Bucket limit reached: a non-admin user may own at most ${maxBuckets} bucket${maxBuckets === 1 ? '' : 's'}.`,
+					},
+					403,
+				);
+			}
 		}
 
 		// Parse request body
@@ -186,6 +226,16 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				{
 					success: false,
 					message: 'All credential fields (awsAccessKeyId, awsSecretAccessKey, s3Endpoint) are required',
+				},
+				400,
+			);
+		}
+
+		if (secretAccessKey === HIDDEN_CREDENTIAL_PLACEHOLDER) {
+			return json(
+				{
+					success: false,
+					message: 'awsSecretAccessKey cannot be the hidden placeholder; provide the real secret when creating a bucket.',
 				},
 				400,
 			);
@@ -241,9 +291,9 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
         INSERT INTO buckets (
           name, provider, description, bucket_base_url,
           aws_access_key_id, aws_secret_access_key, s3_endpoint, region,
-          is_public, authorized_users, native_bucket_name,
+          is_public, authorized_users, native_bucket_name, owner_email,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
 			)
 			.bind(
@@ -258,6 +308,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				bucketIsPublic ? 1 : 0,
 				JSON.stringify(bucketAuthorizedUsers),
 				bucketNativeName,
+				userEmail,
 				now,
 				now,
 			)
@@ -296,12 +347,15 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 			return json({ success: false, message: 'API key is required' }, 400);
 		}
 
-		// Authenticate (admin only)
-		const authResult = await authenticateAdmin(apiKey, env);
+		// Owners can update their own buckets; admins can update any.
+		const authResult = await authenticateUser(apiKey, env);
 
-		if (!authResult.isValid || !authResult.isAdmin) {
-			return json({ success: false, message: 'Admin access required' }, 401);
+		if (!authResult.isValid || !authResult.user) {
+			return json({ success: false, message: 'Invalid API key' }, 401);
 		}
+
+		const userEmail = authResult.user.email;
+		const isAdmin = authResult.isAdmin;
 
 		// Parse request body
 		const body = (await request.json()) as any;
@@ -326,6 +380,11 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 
 		const existingBucket = parseBucket(existing);
 
+		// Authorize: admin OR owner
+		if (!isAdmin && existingBucket.ownerEmail !== userEmail) {
+			return json({ success: false, message: 'You are not authorized to update this bucket' }, 403);
+		}
+
 		// Build update fields
 		const updates: string[] = [];
 		const values: any[] = [];
@@ -345,17 +404,19 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 			values.push(bucketData.bucketBaseUrl);
 		}
 
-		// Support both nested (old) and flattened (new) formats for credentials
+		// Support both nested (old) and flattened (new) formats for credentials.
+		// The hidden placeholder ('***HIDDEN***') is what we send to clients in responses;
+		// when echoed back, it means "leave unchanged" rather than overwrite with the literal string.
 		// Flattened format (new)
-		if (bucketData.awsAccessKeyId !== undefined) {
+		if (isRealCredential(bucketData.awsAccessKeyId)) {
 			updates.push('aws_access_key_id = ?');
 			values.push(bucketData.awsAccessKeyId);
 		}
-		if (bucketData.awsSecretAccessKey !== undefined) {
+		if (isRealCredential(bucketData.awsSecretAccessKey)) {
 			updates.push('aws_secret_access_key = ?');
 			values.push(bucketData.awsSecretAccessKey);
 		}
-		if (bucketData.s3Endpoint !== undefined) {
+		if (isRealCredential(bucketData.s3Endpoint)) {
 			updates.push('s3_endpoint = ?');
 			values.push(bucketData.s3Endpoint);
 		}
@@ -366,15 +427,15 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 
 		// Nested format (old) - for backward compatibility
 		if (bucketData.credentials) {
-			if (bucketData.credentials.AWS_ACCESS_KEY_ID) {
+			if (isRealCredential(bucketData.credentials.AWS_ACCESS_KEY_ID)) {
 				updates.push('aws_access_key_id = ?');
 				values.push(bucketData.credentials.AWS_ACCESS_KEY_ID);
 			}
-			if (bucketData.credentials.AWS_SECRET_ACCESS_KEY) {
+			if (isRealCredential(bucketData.credentials.AWS_SECRET_ACCESS_KEY)) {
 				updates.push('aws_secret_access_key = ?');
 				values.push(bucketData.credentials.AWS_SECRET_ACCESS_KEY);
 			}
-			if (bucketData.credentials.S3_ENDPOINT) {
+			if (isRealCredential(bucketData.credentials.S3_ENDPOINT)) {
 				updates.push('s3_endpoint = ?');
 				values.push(bucketData.credentials.S3_ENDPOINT);
 			}
@@ -407,6 +468,12 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 		if (bucketData.nativeBucketName !== undefined) {
 			updates.push('native_bucket_name = ?');
 			values.push(bucketData.nativeBucketName || null);
+		}
+
+		// Only admins may reassign ownership.
+		if (bucketData.ownerEmail !== undefined && isAdmin) {
+			updates.push('owner_email = ?');
+			values.push(bucketData.ownerEmail || null);
 		}
 
 		// Update timestamp
@@ -455,12 +522,15 @@ export async function handleDeleteBucket(request: Request, env: Env, rateLimitRe
 			return json({ success: false, message: 'API key is required' }, 400);
 		}
 
-		// Authenticate (admin only)
-		const authResult = await authenticateAdmin(apiKey, env);
+		// Owners can delete their own buckets; admins can delete any.
+		const authResult = await authenticateUser(apiKey, env);
 
-		if (!authResult.isValid || !authResult.isAdmin) {
-			return json({ success: false, message: 'Admin access required' }, 401);
+		if (!authResult.isValid || !authResult.user) {
+			return json({ success: false, message: 'Invalid API key' }, 401);
 		}
+
+		const userEmail = authResult.user.email;
+		const isAdmin = authResult.isAdmin;
 
 		// Parse request body
 		const body = (await request.json()) as any;
@@ -471,10 +541,16 @@ export async function handleDeleteBucket(request: Request, env: Env, rateLimitRe
 		}
 
 		// Check if bucket exists
-		const existing = await env.figpack_db.prepare('SELECT id FROM buckets WHERE name = ?').bind(name).first();
+		const existing = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?').bind(name).first();
 
 		if (!existing) {
 			return json({ success: false, message: 'Bucket not found' }, 404);
+		}
+
+		const existingBucket = parseBucket(existing);
+
+		if (!isAdmin && existingBucket.ownerEmail !== userEmail) {
+			return json({ success: false, message: 'You are not authorized to delete this bucket' }, 403);
 		}
 
 		// Delete the bucket

@@ -1,6 +1,11 @@
 import React from "react";
 import { Box, Button } from "@mui/material";
-import { Person, PhotoLibrary, AdminPanelSettings } from "@mui/icons-material";
+import {
+  Person,
+  PhotoLibrary,
+  AdminPanelSettings,
+  Storage,
+} from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
@@ -60,6 +65,14 @@ const NavigationMenu: React.FC = () => {
         sx={isActive("/figures") ? activeButtonStyle : navButtonStyle}
       >
         Figures
+      </Button>
+
+      <Button
+        startIcon={<Storage />}
+        onClick={() => navigate("/buckets")}
+        sx={isActive("/buckets") ? activeButtonStyle : navButtonStyle}
+      >
+        Buckets
       </Button>
 
       {user?.isAdmin && (

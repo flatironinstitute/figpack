@@ -3,6 +3,7 @@ import HomePage from "./pages/HomePage/HomePage";
 import { Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import "./App.css";
 import AdminPage from "./pages/AdminPage/AdminPage";
+import BucketsPage from "./pages/BucketsPage/BucketsPage";
 import ManageFigurePage from "./pages/ManageFigurePage/ManageFigurePage";
 import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 import FiguresPage from "./pages/FiguresPage/FiguresPage";
@@ -65,6 +66,7 @@ function App() {
         >
           <Routes>
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/buckets" element={<BucketsPage />} />
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/figures" element={<FiguresPage />} />
             <Route path="/figure" element={<ManageFigurePage />} />

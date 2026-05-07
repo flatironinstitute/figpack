@@ -44,8 +44,8 @@ import { useAuth } from "../../hooks/useAuth";
 import { useBacklinks } from "../../hooks/useBacklinks";
 import type { FigureListItem, FigureListParams } from "./figuresApi";
 import { getFigures } from "./figuresApi";
-import type { BucketListItem } from "./bucketsApi";
-import { getUserBuckets } from "./bucketsApi";
+import type { Bucket as BucketListItem } from "../BucketsPage/bucketsApi";
+import { getUserBuckets } from "../BucketsPage/bucketsApi";
 import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 

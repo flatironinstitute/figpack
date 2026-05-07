@@ -34,6 +34,15 @@ interface BucketsSummaryProps {
   onEditBucket: (bucket: Bucket) => void;
   onDeleteBucket: (bucket: Bucket) => void;
   onAddBucket: () => void;
+  // Email of the currently signed-in user; used to gate edit/delete actions when not admin.
+  currentUserEmail?: string;
+  isAdmin?: boolean;
+  // Whether to render the Owner column. Admin views typically want it on.
+  showOwnerColumn?: boolean;
+  // Optional title override (e.g. "My Buckets" vs the admin-wide "Storage Buckets").
+  title?: string;
+  addDisabled?: boolean;
+  addDisabledReason?: string;
 }
 
 const BucketsSummary: React.FC<BucketsSummaryProps> = ({
@@ -41,7 +50,15 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
   onEditBucket,
   onDeleteBucket,
   onAddBucket,
+  currentUserEmail,
+  isAdmin = false,
+  showOwnerColumn = false,
+  title = "Storage Buckets",
+  addDisabled = false,
+  addDisabledReason,
 }) => {
+  const canManage = (bucket: Bucket): boolean =>
+    isAdmin || (!!currentUserEmail && bucket.ownerEmail === currentUserEmail);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -83,16 +100,21 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
           mb={2}
         >
           <Typography variant="h6" component="h2">
-            Storage Buckets ({buckets.length})
+            {title} ({buckets.length})
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={onAddBucket}
-            size="small"
-          >
-            Add Bucket
-          </Button>
+          <Tooltip title={addDisabled ? addDisabledReason || "" : ""}>
+            <span>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={onAddBucket}
+                size="small"
+                disabled={addDisabled}
+              >
+                Add Bucket
+              </Button>
+            </span>
+          </Tooltip>
         </Box>
 
         {buckets.length === 0 ? (
@@ -121,6 +143,7 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
                   <TableCell>Name</TableCell>
                   <TableCell>Provider</TableCell>
                   {!isMobile && <TableCell>Description</TableCell>}
+                  {showOwnerColumn && <TableCell>Owner</TableCell>}
                   <TableCell>Authorization</TableCell>
                   {!isMobile && <TableCell>Created</TableCell>}
                   <TableCell>Endpoint</TableCell>
@@ -161,6 +184,23 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
                           }}
                         >
                           {bucket.description}
+                        </Typography>
+                      </TableCell>
+                    )}
+
+                    {showOwnerColumn && (
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            maxWidth: 200,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {bucket.ownerEmail || "—"}
                         </Typography>
                       </TableCell>
                     )}
@@ -245,24 +285,32 @@ const BucketsSummary: React.FC<BucketsSummaryProps> = ({
 
                     <TableCell align="right">
                       <Box display="flex" gap={0.5} justifyContent="flex-end">
-                        <Tooltip title="Edit bucket">
-                          <IconButton
-                            size="small"
-                            onClick={() => onEditBucket(bucket)}
-                            color="primary"
-                          >
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete bucket">
-                          <IconButton
-                            size="small"
-                            onClick={() => onDeleteBucket(bucket)}
-                            color="error"
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        {canManage(bucket) ? (
+                          <>
+                            <Tooltip title="Edit bucket">
+                              <IconButton
+                                size="small"
+                                onClick={() => onEditBucket(bucket)}
+                                color="primary"
+                              >
+                                <Edit fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete bucket">
+                              <IconButton
+                                size="small"
+                                onClick={() => onDeleteBucket(bucket)}
+                                color="error"
+                              >
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            view only
+                          </Typography>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>

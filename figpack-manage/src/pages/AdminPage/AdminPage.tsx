@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import AddBucketDialog from "./AddBucketDialog";
+import AddBucketDialog from "../BucketsPage/AddBucketDialog";
 import AddUserDialog from "./AddUserDialog";
 import {
   createUser,
@@ -22,22 +22,22 @@ import {
 } from "./adminApi";
 import type { UserUsageStats } from "./adminApi";
 import AdminHeader from "./AdminHeader";
-import type { Bucket } from "./bucketsApi";
+import type { Bucket } from "../BucketsPage/bucketsApi";
 import {
   createBucket,
   deleteBucket,
   getBuckets,
   updateBucket,
-} from "./bucketsApi";
-import BucketsSummary from "./BucketsSummary";
-import EditBucketDialog from "./EditBucketDialog";
+} from "../BucketsPage/bucketsApi";
+import BucketsSummary from "../BucketsPage/BucketsSummary";
+import EditBucketDialog from "../BucketsPage/EditBucketDialog";
 import EditUserDialog from "./EditUserDialog";
 import RenewBulkResultsDialog from "./RenewBulkResultsDialog";
 import type { User } from "./UsersSummary";
 import UsersSummary from "./UsersSummary";
 
 const AdminPage: React.FC = () => {
-  const { apiKey, isLoggedIn } = useAuth();
+  const { apiKey, isLoggedIn, user } = useAuth();
   const [adminData, setAdminData] = useState<{
     users: User[];
     buckets: Bucket[];
@@ -359,6 +359,9 @@ const AdminPage: React.FC = () => {
             onEditBucket={handleEditBucket}
             onDeleteBucket={handleDeleteBucketFromSummary}
             onAddBucket={() => setAddBucketDialogOpen(true)}
+            currentUserEmail={user?.email}
+            isAdmin={user?.isAdmin === true}
+            showOwnerColumn
           />
         )}
 

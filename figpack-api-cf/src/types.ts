@@ -5,6 +5,7 @@ export interface Env {
 	BOOTSTRAP_KEY: string; // Add as a secret in Cloudflare
 	RESEND_API_KEY: string; // Add as a secret in Cloudflare for email sending
 	NEW_ACCOUNT_ACCESS_CODES: string; // Comma-separated list of valid access codes for account creation
+	MAX_BUCKETS_PER_USER?: string; // Max buckets a non-admin user can own. Defaults to 5.
 }
 
 // User interface matching original API (camelCase)
@@ -58,6 +59,8 @@ export interface Bucket {
 	authorizedUsers: string[]; // JSON string array in DB, parsed array in code
 	// Native bucket name (actual bucket name on Cloudflare/AWS, defaults to name if not specified)
 	nativeBucketName?: string;
+	// Email of the user who owns this bucket. NULL/undefined means admin/system-managed (legacy).
+	ownerEmail?: string;
 }
 
 // Figure interface
