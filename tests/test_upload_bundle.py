@@ -7,13 +7,13 @@ from figpack.core._upload_bundle import (
     _create_or_get_figure,
     _determine_content_type,
     _finalize_figure,
-    _get_batch_signed_urls,
+    _get_upload_mode,
     _upload_bundle,
     _upload_single_file_with_signed_url,
 )
 
 
-def test_get_batch_signed_urls(tmp_path):
+def test_get_upload_mode(tmp_path):
     # Create temporary test files
     file1 = tmp_path / "test1.txt"
     file2 = tmp_path / "test2.txt"
@@ -31,6 +31,7 @@ def test_get_batch_signed_urls(tmp_path):
     mock_response.ok = True
     mock_response.json.return_value = {
         "success": True,
+        "mode": "server-signed",
         "signedUrls": [
             {"relativePath": "path1.txt", "signedUrl": "signed-url-1"},
             {"relativePath": "path2.txt", "signedUrl": "signed-url-2"},
@@ -39,9 +40,10 @@ def test_get_batch_signed_urls(tmp_path):
 
     with mock.patch("requests.post") as mock_post:
         mock_post.return_value = mock_response
-        result = _get_batch_signed_urls(figure_url, files_batch, api_key)
+        result = _get_upload_mode(figure_url, files_batch, api_key)
 
-        assert result == {"path1.txt": "signed-url-1", "path2.txt": "signed-url-2"}
+        assert result["mode"] == "server-signed"
+        assert len(result["signedUrls"]) == 2
 
         # Verify proper API call
         mock_post.assert_called_once()
@@ -52,16 +54,16 @@ def test_get_batch_signed_urls(tmp_path):
         assert len(called_payload["files"]) == 2
 
 
-def test_get_batch_signed_urls_http_error():
+def test_get_upload_mode_http_error():
     with mock.patch("requests.post") as mock_post:
         mock_post.return_value.ok = False
         mock_post.return_value.status_code = 500
 
         with pytest.raises(Exception, match="Failed to get upload info for batch"):
-            _get_batch_signed_urls("test-url", [], "test-key")
+            _get_upload_mode("test-url", [], "test-key")
 
 
-def test_get_batch_signed_urls_api_error(tmp_path):
+def test_get_upload_mode_api_error(tmp_path):
     # Create test file
     test_file = tmp_path / "test.txt"
     test_file.write_text("test content")
@@ -76,7 +78,7 @@ def test_get_batch_signed_urls_api_error(tmp_path):
         with pytest.raises(
             Exception, match="Failed to get upload info for batch: API error message"
         ):
-            _get_batch_signed_urls("test-url", files_batch, "test-key")
+            _get_upload_mode("test-url", files_batch, "test-key")
 
 
 def test_upload_single_file_with_signed_url(tmp_path):
@@ -205,6 +207,7 @@ def test_upload_bundle(tmp_path):
     mock_batch_files_response.ok = True
     mock_batch_files_response.json.return_value = {
         "success": True,
+        "mode": "server-signed",
         "signedUrls": [
             {"relativePath": str(file1.name), "signedUrl": "signed-url-1"},
             {"relativePath": str(file2.name), "signedUrl": "signed-url-2"},
@@ -216,6 +219,7 @@ def test_upload_bundle(tmp_path):
     mock_batch_manifest_response.ok = True
     mock_batch_manifest_response.json.return_value = {
         "success": True,
+        "mode": "server-signed",
         "signedUrls": [
             {"relativePath": "manifest.json", "signedUrl": "signed-url-manifest"},
         ],

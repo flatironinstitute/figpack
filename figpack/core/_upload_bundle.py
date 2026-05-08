@@ -450,8 +450,7 @@ def _upload_bundle(
                 if not signed_urls_data:
                     raise Exception(f"No signed URLs returned for batch {batch_num}")
                 signed_urls_map = {
-                    item["relativePath"]: item["signedUrl"]
-                    for item in signed_urls_data
+                    item["relativePath"]: item["signedUrl"] for item in signed_urls_data
                 }
 
                 # Upload files in this batch in parallel
@@ -530,8 +529,7 @@ def _upload_bundle(
         else:
             signed_urls_data = batch_response.get("signedUrls", [])
             signed_urls_map = {
-                item["relativePath"]: item["signedUrl"]
-                for item in signed_urls_data
+                item["relativePath"]: item["signedUrl"] for item in signed_urls_data
             }
             if "manifest.json" not in signed_urls_map:
                 raise Exception("No signed URL returned for manifest.json")
