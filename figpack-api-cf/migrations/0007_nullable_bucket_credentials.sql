@@ -26,7 +26,9 @@ CREATE TABLE buckets_new (
   -- Region
   region TEXT,
   -- Owner
-  owner_email TEXT
+  owner_email TEXT,
+  -- Per-bucket override for figure expiration (seconds)
+  default_expiration_seconds INTEGER
 );
 
 INSERT INTO buckets_new
@@ -34,7 +36,8 @@ INSERT INTO buckets_new
          created_at, updated_at,
          aws_access_key_id, aws_secret_access_key, aws_session_token, s3_endpoint,
          is_public, authorized_users,
-         native_bucket_name, region, owner_email
+         native_bucket_name, region, owner_email,
+         default_expiration_seconds
   FROM buckets;
 
 DROP TABLE buckets;
