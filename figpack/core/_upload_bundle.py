@@ -15,6 +15,9 @@ from .config import FIGPACK_API_BASE_URL, FIGPACK_BUCKET
 thisdir = pathlib.Path(__file__).parent.resolve()
 
 
+MAX_WORKERS_FOR_UPLOAD = 16
+
+
 def _get_upload_info(figure_url: str, files_batch: list, api_key: str) -> dict:
     """
     Get upload info for a batch of files from the API.
@@ -61,35 +64,28 @@ def _get_upload_info(figure_url: str, files_batch: list, api_key: str) -> dict:
     return response_data
 
 
-def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> dict:
+def _get_upload_mode(figure_url: str, files_batch: list, api_key: str) -> dict:
     """
-    Get signed URLs for a batch of files. Handles both server-signed and
-    client-signed modes transparently.
+    Get upload info and determine upload mode for a batch.
+
+    Returns the raw response_data dict from the API.
+    """
+    return _get_upload_info(figure_url, files_batch, api_key)
+
+
+def _upload_batch_client_signed(
+    response_data: dict, files_batch: list, max_workers: int = MAX_WORKERS_FOR_UPLOAD
+) -> int:
+    """
+    Upload a batch of files directly using boto3 (client-signed mode).
+
+    Args:
+        response_data: The response from _get_upload_info containing bucket info and keys
+        files_batch: List of tuples (relative_path, file_path)
+        max_workers: Number of concurrent upload threads
 
     Returns:
-        dict: Mapping of relative_path to signed_url
-    """
-    response_data = _get_upload_info(figure_url, files_batch, api_key)
-    mode = response_data.get("mode", "server-signed")
-
-    if mode == "client-signed":
-        return _generate_client_signed_urls(response_data)
-
-    # Server-signed mode (original flow)
-    signed_urls_data = response_data.get("signedUrls", [])
-    if not signed_urls_data:
-        raise Exception("No signed URLs returned for batch")
-
-    signed_urls_map = {}
-    for item in signed_urls_data:
-        signed_urls_map[item["relativePath"]] = item["signedUrl"]
-
-    return signed_urls_map
-
-
-def _generate_client_signed_urls(response_data: dict) -> dict:
-    """
-    Generate presigned upload URLs locally using boto3 for client-signed mode.
+        int: Number of files uploaded
     """
     try:
         import boto3
@@ -103,24 +99,41 @@ def _generate_client_signed_urls(response_data: dict) -> dict:
     native_bucket_name = bucket_info["nativeBucketName"]
     region = bucket_info.get("region", "us-east-1")
 
-    files = response_data.get("files", [])
-    if not files:
+    files_info = response_data.get("files", [])
+    if not files_info:
         raise Exception("No files returned for client-signed batch")
+
+    # Build key lookup from API response
+    key_map = {f["relativePath"]: f["key"] for f in files_info}
 
     s3_client = boto3.client("s3", region_name=region)
 
-    signed_urls_map = {}
-    for file_info in files:
-        relative_path = file_info["relativePath"]
-        key = file_info["key"]
-        signed_url = s3_client.generate_presigned_url(
-            "put_object",
-            Params={"Bucket": native_bucket_name, "Key": key},
-            ExpiresIn=3600,
-        )
-        signed_urls_map[relative_path] = signed_url
+    def _upload_one(rel_path: str, file_path: pathlib.Path) -> str:
+        key = key_map.get(rel_path)
+        if not key:
+            raise Exception(f"No S3 key returned for {rel_path}")
+        content_type = _determine_content_type(rel_path)
+        with open(file_path, "rb") as f:
+            s3_client.put_object(
+                Bucket=native_bucket_name,
+                Key=key,
+                Body=f,
+                ContentType=content_type,
+            )
+        return rel_path
 
-    return signed_urls_map
+    uploaded = 0
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_file = {}
+        for rel_path, file_path in files_batch:
+            future = executor.submit(_upload_one, rel_path, file_path)
+            future_to_file[future] = rel_path
+
+        for future in as_completed(future_to_file):
+            future.result()  # raises on error
+            uploaded += 1
+
+    return uploaded
 
 
 def _upload_single_file_with_signed_url(
@@ -173,9 +186,6 @@ def _upload_single_file_with_signed_url(
 
     assert last_exception is not None
     raise last_exception
-
-
-MAX_WORKERS_FOR_UPLOAD = 16
 
 
 def _create_or_get_figure(
@@ -396,6 +406,13 @@ def _upload_bundle(
         uploaded_count = 0
         count_lock = threading.Lock()
 
+        # Determine upload mode from the first batch
+        first_batch = files_to_upload[:20]
+        response_data = _get_upload_mode(
+            figure_url, first_batch, api_key if api_key else ""
+        )
+        upload_mode = response_data.get("mode", "server-signed")
+
         # Process files in batches of 20
         batch_size = 20
         for i in range(0, total_files_to_upload, batch_size):
@@ -407,47 +424,67 @@ def _upload_bundle(
                 f"Processing batch {batch_num}/{total_batches} ({len(batch)} files)..."
             )
 
-            # Get signed URLs for this batch
-            try:
-                signed_urls_map = _get_batch_signed_urls(
+            # For the first batch, reuse the response_data we already fetched
+            if i == 0:
+                batch_response = response_data
+            else:
+                batch_response = _get_upload_mode(
                     figure_url, batch, api_key if api_key else ""
                 )
-            except Exception as e:
-                print(f"Failed to get signed URLs for batch {batch_num}: {e}")
-                raise
 
-            # Upload files in this batch in parallel
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS_FOR_UPLOAD) as executor:
-                # Submit upload tasks for this batch
-                future_to_file = {}
-                for rel_path, file_path in batch:
-                    if rel_path in signed_urls_map:
-                        future = executor.submit(
-                            _upload_single_file_with_signed_url,
-                            rel_path,
-                            file_path,
-                            signed_urls_map[rel_path],
+            if upload_mode == "client-signed":
+                # Direct boto3 upload
+                try:
+                    count = _upload_batch_client_signed(batch_response, batch)
+                    with count_lock:
+                        uploaded_count += count
+                        print(
+                            f"Uploaded {uploaded_count}/{total_files_to_upload} files"
                         )
-                        future_to_file[future] = rel_path
-                    else:
-                        print(f"Warning: No signed URL found for {rel_path}")
+                except Exception as e:
+                    print(f"Failed to upload batch {batch_num}: {e}")
+                    raise
+            else:
+                # Server-signed mode: use presigned URLs
+                signed_urls_data = batch_response.get("signedUrls", [])
+                if not signed_urls_data:
+                    raise Exception(f"No signed URLs returned for batch {batch_num}")
+                signed_urls_map = {
+                    item["relativePath"]: item["signedUrl"] for item in signed_urls_data
+                }
 
-                # Process completed uploads for this batch
-                for future in as_completed(future_to_file):
-                    relative_path = future_to_file[future]
-                    try:
-                        future.result()  # This will raise any exception that occurred during upload
-
-                        # Thread-safe progress update
-                        with count_lock:
-                            uploaded_count += 1
-                            print(
-                                f"Uploaded {uploaded_count}/{total_files_to_upload}: {relative_path}"
+                # Upload files in this batch in parallel
+                with ThreadPoolExecutor(max_workers=MAX_WORKERS_FOR_UPLOAD) as executor:
+                    # Submit upload tasks for this batch
+                    future_to_file = {}
+                    for rel_path, file_path in batch:
+                        if rel_path in signed_urls_map:
+                            future = executor.submit(
+                                _upload_single_file_with_signed_url,
+                                rel_path,
+                                file_path,
+                                signed_urls_map[rel_path],
                             )
+                            future_to_file[future] = rel_path
+                        else:
+                            print(f"Warning: No signed URL found for {rel_path}")
 
-                    except Exception as e:
-                        print(f"Failed to upload {relative_path}: {e}")
-                        raise  # Re-raise the exception to stop the upload process
+                    # Process completed uploads for this batch
+                    for future in as_completed(future_to_file):
+                        relative_path = future_to_file[future]
+                        try:
+                            future.result()
+
+                            # Thread-safe progress update
+                            with count_lock:
+                                uploaded_count += 1
+                                print(
+                                    f"Uploaded {uploaded_count}/{total_files_to_upload}: {relative_path}"
+                                )
+
+                        except Exception as e:
+                            print(f"Failed to upload {relative_path}: {e}")
+                            raise
 
     # Create manifest for finalization
     print("Creating manifest...")
@@ -482,20 +519,27 @@ def _upload_bundle(
     try:
         # Use batch API for manifest
         manifest_batch = [("manifest.json", temp_file_path)]
-        signed_urls_map = _get_batch_signed_urls(
+        batch_response = _get_upload_mode(
             figure_url, manifest_batch, api_key if api_key else ""
         )
+        mode = batch_response.get("mode", "server-signed")
 
-        if "manifest.json" not in signed_urls_map:
-            raise Exception("No signed URL returned for manifest.json")
+        if mode == "client-signed":
+            _upload_batch_client_signed(batch_response, manifest_batch)
+        else:
+            signed_urls_data = batch_response.get("signedUrls", [])
+            signed_urls_map = {
+                item["relativePath"]: item["signedUrl"] for item in signed_urls_data
+            }
+            if "manifest.json" not in signed_urls_map:
+                raise Exception("No signed URL returned for manifest.json")
 
-        # Upload manifest using the same retry function
-        _upload_single_file_with_signed_url(
-            "manifest.json",
-            temp_file_path,
-            signed_urls_map["manifest.json"],
-            num_retries=4,
-        )
+            _upload_single_file_with_signed_url(
+                "manifest.json",
+                temp_file_path,
+                signed_urls_map["manifest.json"],
+                num_retries=4,
+            )
     finally:
         # Clean up temporary file
         temp_file_path.unlink(missing_ok=True)
