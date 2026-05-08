@@ -8,11 +8,11 @@ export interface Bucket {
   bucketBaseUrl: string;
   createdAt: number;
   updatedAt: number;
-  // Credential mode: "long-term" stores secrets in the DB; "user-credentials"
+  // Credential mode: "server" stores secrets in the DB; "client"
   // means the uploading client resolves credentials on the fly (e.g. boto3 SSO).
   // Derived from whether awsAccessKeyId is set; not stored in DB itself.
-  credentialMode?: "long-term" | "user-credentials";
-  // Flattened credentials. Optional when credentialMode is "user-credentials".
+  credentialMode?: "server" | "client";
+  // Flattened credentials. Optional when credentialMode is "client".
   // The API returns awsSecretAccessKey as the placeholder
   // string "***HIDDEN***"; sending it back unchanged means "do not modify".
   awsAccessKeyId?: string;
