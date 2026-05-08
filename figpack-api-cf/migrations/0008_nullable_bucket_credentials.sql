@@ -27,7 +27,7 @@ CREATE TABLE buckets_new (
   region TEXT,
   -- Owner
   owner_email TEXT,
-  -- Per-bucket override for figure expiration (seconds)
+  -- Per-bucket override for default figure expiration (seconds)
   default_expiration_seconds INTEGER
 );
 
