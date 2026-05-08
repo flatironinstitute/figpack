@@ -48,7 +48,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
     description: "",
     bucketBaseUrl: "",
     // Credential mode
-    credentialMode: "long-term" as "long-term" | "user-credentials",
+    credentialMode: "server" as "server" | "client",
     // Flattened credentials
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
@@ -75,7 +75,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         provider: "cloudflare",
         description: "",
         bucketBaseUrl: "",
-        credentialMode: "long-term",
+        credentialMode: "server",
         awsAccessKeyId: "",
         awsSecretAccessKey: "",
         awsSessionToken: "",
@@ -119,15 +119,15 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
       }
     }
 
-    if (!formData.awsAccessKeyId.trim() && formData.credentialMode === "long-term") {
+    if (!formData.awsAccessKeyId.trim() && formData.credentialMode === "server") {
       errors.awsAccessKeyId = "Access Key ID is required";
     }
 
-    if (!formData.awsSecretAccessKey.trim() && formData.credentialMode === "long-term") {
+    if (!formData.awsSecretAccessKey.trim() && formData.credentialMode === "server") {
       errors.awsSecretAccessKey = "Secret Access Key is required";
     }
 
-    if (!formData.s3Endpoint.trim() && formData.credentialMode === "long-term") {
+    if (!formData.s3Endpoint.trim() && formData.credentialMode === "server") {
       errors.s3Endpoint = "S3 Endpoint is required";
     } else if (formData.s3Endpoint.trim()) {
       try {
@@ -257,26 +257,26 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
               }
             >
               <FormControlLabel
-                value="long-term"
+                value="server"
                 control={<Radio />}
-                label="Long-term Credentials"
+                label="Server"
                 disabled={loading}
               />
               <FormControlLabel
-                value="user-credentials"
+                value="client"
                 control={<Radio />}
-                label="User Credentials"
+                label="Client"
                 disabled={loading}
               />
             </RadioGroup>
             <Typography variant="body2" color="text.secondary" sx={{ mt: -0.5 }}>
-              {formData.credentialMode === "long-term"
+              {formData.credentialMode === "server"
                 ? "Store access keys in the server. The server generates presigned upload URLs."
                 : "No secrets stored. The uploading client (e.g. Python/boto3) resolves credentials on the fly via AWS SSO, environment variables, or instance profile."}
             </Typography>
           </FormControl>
 
-          {formData.credentialMode === "long-term" && (
+          {formData.credentialMode === "server" && (
             <>
               <TextField
                 fullWidth

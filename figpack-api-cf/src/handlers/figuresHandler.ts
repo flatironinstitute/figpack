@@ -727,12 +727,10 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 			.bind('completed', now, now, now, figureUrl)
 			.run();
 
-		// Fetch updated figure
-		// (updatedRow is not used directly — finalRow is fetched after updateFigureJson to include figpack_json)
-
 		// Update figpack.json in S3
+		let figpackJsonContent: any = null;
 		try {
-			await updateFigureJson(figureUrl, env);
+			figpackJsonContent = await updateFigureJson(figureUrl, env);
 		} catch (error) {
 			console.error('Error updating figpack.json:', error);
 			// Don't fail the request if figpack.json update fails
@@ -743,7 +741,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 		const bucketRow = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?;').bind(bucketName).first();
 		const hasServerCredentials = !!(bucketRow && bucketRow.aws_access_key_id && bucketRow.aws_secret_access_key);
 
-		// Re-fetch figure to get the figpack_json that was just saved
+		// Re-fetch figure to get the updated status
 		const finalRow = await env.figpack_db.prepare('SELECT * FROM figures WHERE figure_url = ?').bind(figureUrl).first();
 
 		const responseBody: any = {
@@ -754,8 +752,8 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 
 		// For client-managed credential buckets, include the figpack.json content
 		// and bucket info so the Python client can upload it to S3
-		if (!hasServerCredentials && finalRow) {
-			responseBody.figpackJson = finalRow.figpack_json ? JSON.parse(finalRow.figpack_json as string) : null;
+		if (!hasServerCredentials && figpackJsonContent) {
+			responseBody.figpackJson = figpackJsonContent;
 			if (bucketRow) {
 				responseBody.bucket = {
 					nativeBucketName: (bucketRow.native_bucket_name as string) || bucketName,

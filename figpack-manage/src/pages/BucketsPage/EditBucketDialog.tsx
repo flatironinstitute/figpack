@@ -53,7 +53,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
     description: "",
     bucketBaseUrl: "",
     // Credential mode
-    credentialMode: "long-term" as "long-term" | "user-credentials",
+    credentialMode: "server" as "server" | "client",
     // Flattened credentials
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
@@ -86,7 +86,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         provider: bucket.provider,
         description: bucket.description,
         bucketBaseUrl: bucket.bucketBaseUrl,
-        credentialMode: hasCredentials ? "long-term" : "user-credentials",
+        credentialMode: hasCredentials ? "server" : "client",
         // Flattened credentials
         awsAccessKeyId: bucket.awsAccessKeyId || "",
         awsSecretAccessKey: "", // Don't pre-fill the secret key for security
@@ -131,11 +131,11 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       }
     }
 
-    if (!formData.awsAccessKeyId.trim() && formData.credentialMode === "long-term") {
+    if (!formData.awsAccessKeyId.trim() && formData.credentialMode === "server") {
       errors.awsAccessKeyId = "Access Key ID is required";
     }
 
-    if (!formData.s3Endpoint.trim() && formData.credentialMode === "long-term") {
+    if (!formData.s3Endpoint.trim() && formData.credentialMode === "server") {
       errors.s3Endpoint = "S3 Endpoint is required";
     } else if (formData.s3Endpoint.trim()) {
       try {
@@ -165,7 +165,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         nativeBucketName: formData.nativeBucketName || undefined,
       };
 
-      if (formData.credentialMode === "long-term") {
+      if (formData.credentialMode === "server") {
         updateData.awsAccessKeyId = formData.awsAccessKeyId;
         updateData.s3Endpoint = formData.s3Endpoint;
 
@@ -182,7 +182,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
           updateData.awsSessionToken = formData.awsSessionToken;
         }
       } else {
-        // User-credentials mode: clear stored credentials
+        // Client mode: clear stored credentials
         updateData.awsAccessKeyId = "";
         updateData.awsSecretAccessKey = "";
         updateData.awsSessionToken = "";
@@ -302,26 +302,26 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
               }
             >
               <FormControlLabel
-                value="long-term"
+                value="server"
                 control={<Radio />}
-                label="Long-term Credentials"
+                label="Server"
                 disabled={loading}
               />
               <FormControlLabel
-                value="user-credentials"
+                value="client"
                 control={<Radio />}
-                label="User Credentials"
+                label="Client"
                 disabled={loading}
               />
             </RadioGroup>
             <Typography variant="body2" color="text.secondary" sx={{ mt: -0.5 }}>
-              {formData.credentialMode === "long-term"
+              {formData.credentialMode === "server"
                 ? "Store access keys in the server. The server generates presigned upload URLs."
                 : "No secrets stored. The uploading client (e.g. Python/boto3) resolves credentials on the fly via AWS SSO, environment variables, or instance profile."}
             </Typography>
           </FormControl>
 
-          {formData.credentialMode === "long-term" && (
+          {formData.credentialMode === "server" && (
             <>
               <TextField
                 fullWidth
