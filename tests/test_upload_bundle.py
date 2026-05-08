@@ -57,7 +57,7 @@ def test_get_batch_signed_urls_http_error():
         mock_post.return_value.ok = False
         mock_post.return_value.status_code = 500
 
-        with pytest.raises(Exception, match="Failed to get signed URLs for batch"):
+        with pytest.raises(Exception, match="Failed to get upload info for batch"):
             _get_batch_signed_urls("test-url", [], "test-key")
 
 
@@ -74,7 +74,7 @@ def test_get_batch_signed_urls_api_error(tmp_path):
     with mock.patch("requests.post") as mock_post:
         mock_post.return_value = mock_response
         with pytest.raises(
-            Exception, match="Failed to get signed URLs for batch: API error message"
+            Exception, match="Failed to get upload info for batch: API error message"
         ):
             _get_batch_signed_urls("test-url", files_batch, "test-key")
 
