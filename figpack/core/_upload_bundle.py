@@ -15,17 +15,14 @@ from .config import FIGPACK_API_BASE_URL, FIGPACK_BUCKET
 thisdir = pathlib.Path(__file__).parent.resolve()
 
 
-def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> dict:
+def _get_upload_info(figure_url: str, files_batch: list, api_key: str) -> dict:
     """
-    Get signed URLs for a batch of files
+    Get upload info for a batch of files from the API.
 
-    Args:
-        figure_url: The figure URL
-        files_batch: List of tuples (relative_path, file_path)
-        api_key: API key for authentication
-
-    Returns:
-        dict: Mapping of relative_path to signed_url
+    Returns a dict with:
+      - "mode": "server-signed" or "client-signed"
+      - For server-signed: "signedUrls" mapping relative_path -> signed_url
+      - For client-signed: "bucket" info and "files" mapping relative_path -> S3 key
     """
     # Prepare batch request
     files_data = []
@@ -51,24 +48,77 @@ def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> 
         try:
             error_data = response.json()
             error_msg = error_data.get("message", "Unknown error")
-        except:
+        except Exception:
             error_msg = f"HTTP {response.status_code}"
-        raise Exception(f"Failed to get signed URLs for batch: {error_msg}")
+        raise Exception(f"Failed to get upload info for batch: {error_msg}")
 
     response_data = response.json()
     if not response_data.get("success"):
         raise Exception(
-            f"Failed to get signed URLs for batch: {response_data.get('message', 'Unknown error')}"
+            f"Failed to get upload info for batch: {response_data.get('message', 'Unknown error')}"
         )
 
+    return response_data
+
+
+def _get_batch_signed_urls(figure_url: str, files_batch: list, api_key: str) -> dict:
+    """
+    Get signed URLs for a batch of files. Handles both server-signed and
+    client-signed modes transparently.
+
+    Returns:
+        dict: Mapping of relative_path to signed_url
+    """
+    response_data = _get_upload_info(figure_url, files_batch, api_key)
+    mode = response_data.get("mode", "server-signed")
+
+    if mode == "client-signed":
+        return _generate_client_signed_urls(response_data)
+
+    # Server-signed mode (original flow)
     signed_urls_data = response_data.get("signedUrls", [])
     if not signed_urls_data:
         raise Exception("No signed URLs returned for batch")
 
-    # Convert to mapping
     signed_urls_map = {}
     for item in signed_urls_data:
         signed_urls_map[item["relativePath"]] = item["signedUrl"]
+
+    return signed_urls_map
+
+
+def _generate_client_signed_urls(response_data: dict) -> dict:
+    """
+    Generate presigned upload URLs locally using boto3 for client-signed mode.
+    """
+    try:
+        import boto3
+    except ImportError:
+        raise ImportError(
+            "boto3 is required for uploading to buckets with client-managed credentials. "
+            "Install it with: pip install boto3"
+        )
+
+    bucket_info = response_data.get("bucket", {})
+    native_bucket_name = bucket_info["nativeBucketName"]
+    region = bucket_info.get("region", "us-east-1")
+
+    files = response_data.get("files", [])
+    if not files:
+        raise Exception("No files returned for client-signed batch")
+
+    s3_client = boto3.client("s3", region_name=region)
+
+    signed_urls_map = {}
+    for file_info in files:
+        relative_path = file_info["relativePath"]
+        key = file_info["key"]
+        signed_url = s3_client.generate_presigned_url(
+            "put_object",
+            Params={"Bucket": native_bucket_name, "Key": key},
+            ExpiresIn=3600,
+        )
+        signed_urls_map[relative_path] = signed_url
 
     return signed_urls_map
 
@@ -197,7 +247,10 @@ def _create_or_get_figure(
 
 def _finalize_figure(figure_url: str, api_key: str) -> dict:
     """
-    Finalize a figure upload
+    Finalize a figure upload.
+
+    If the bucket uses client-managed credentials, this will also upload
+    figpack.json to S3 using boto3.
 
     Returns:
         dict: Figure information from the API
@@ -219,7 +272,7 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
         try:
             error_data = response.json()
             error_msg = error_data.get("message", "Unknown error")
-        except:
+        except Exception:
             error_msg = f"HTTP {response.status_code}"
         raise Exception(f"Failed to finalize figure {figure_url}: {error_msg}")
 
@@ -229,7 +282,51 @@ def _finalize_figure(figure_url: str, api_key: str) -> dict:
             f"Failed to finalize figure {figure_url}: {response_data.get('message', 'Unknown error')}"
         )
 
+    # If the server returned figpackJson, upload it client-side
+    figpack_json = response_data.get("figpackJson")
+    bucket_info = response_data.get("bucket")
+    if figpack_json and bucket_info:
+        _upload_figpack_json_client_side(figure_url, figpack_json, bucket_info)
+
     return response_data
+
+
+def _upload_figpack_json_client_side(
+    figure_url: str, figpack_json: dict, bucket_info: dict
+) -> None:
+    """
+    Upload figpack.json to S3 using boto3 (for client-managed credential buckets).
+    """
+    try:
+        import boto3
+    except ImportError:
+        raise ImportError(
+            "boto3 is required for uploading to buckets with client-managed credentials. "
+            "Install it with: pip install boto3"
+        )
+
+    native_bucket_name = bucket_info["nativeBucketName"]
+    region = bucket_info.get("region", "us-east-1")
+    bucket_base_url = bucket_info["bucketBaseUrl"]
+
+    # Derive the S3 key for figpack.json
+    prefix = f"{bucket_base_url}/"
+    figure_url_clean = figure_url
+    if figure_url_clean.endswith("/index.html"):
+        figure_url_clean = figure_url_clean[: -len("/index.html")]
+    if not figure_url_clean.startswith(prefix):
+        raise Exception(
+            f"Figure URL {figure_url_clean} does not start with bucket base URL {prefix}"
+        )
+    key = figure_url_clean[len(prefix) :] + "/figpack.json"
+
+    s3_client = boto3.client("s3", region_name=region)
+    s3_client.put_object(
+        Bucket=native_bucket_name,
+        Key=key,
+        Body=json.dumps(figpack_json, indent=2),
+        ContentType="application/json",
+    )
 
 
 def _upload_bundle(

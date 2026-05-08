@@ -16,6 +16,8 @@ import {
   FormControlLabel,
   Switch,
   Chip,
+  RadioGroup,
+  Radio,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import type { Bucket } from "./bucketsApi";
@@ -50,6 +52,8 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
     provider: "cloudflare" as "cloudflare" | "aws",
     description: "",
     bucketBaseUrl: "",
+    // Credential mode
+    credentialMode: "server" as "server" | "client",
     // Flattened credentials
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
@@ -76,15 +80,18 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
   // Update form data when bucket changes
   useEffect(() => {
     if (bucket) {
+      // Determine credential mode from whether the bucket has stored credentials
+      const hasCredentials = !!bucket.awsAccessKeyId;
       setFormData({
         provider: bucket.provider,
         description: bucket.description,
         bucketBaseUrl: bucket.bucketBaseUrl,
+        credentialMode: hasCredentials ? "server" : "client",
         // Flattened credentials
-        awsAccessKeyId: bucket.awsAccessKeyId,
+        awsAccessKeyId: bucket.awsAccessKeyId || "",
         awsSecretAccessKey: "", // Don't pre-fill the secret key for security
         awsSessionToken: "", // Likewise; server returns placeholder if set.
-        s3Endpoint: bucket.s3Endpoint,
+        s3Endpoint: bucket.s3Endpoint || "",
         region: bucket.region || "",
         // Flattened authorization
         isPublic: bucket.isPublic,
@@ -124,13 +131,13 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       }
     }
 
-    if (!formData.awsAccessKeyId.trim()) {
+    if (!formData.awsAccessKeyId.trim() && formData.credentialMode === "server") {
       errors.awsAccessKeyId = "Access Key ID is required";
     }
 
-    if (!formData.s3Endpoint.trim()) {
+    if (!formData.s3Endpoint.trim() && formData.credentialMode === "server") {
       errors.s3Endpoint = "S3 Endpoint is required";
-    } else {
+    } else if (formData.s3Endpoint.trim()) {
       try {
         new URL(formData.s3Endpoint);
       } catch {
@@ -154,23 +161,32 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         bucketBaseUrl: formData.bucketBaseUrl,
         isPublic: formData.isPublic,
         authorizedUsers: formData.authorizedUsers,
-        awsAccessKeyId: formData.awsAccessKeyId,
-        s3Endpoint: formData.s3Endpoint,
         region: formData.region || undefined,
         nativeBucketName: formData.nativeBucketName || undefined,
       };
 
-      // Only update secret key if provided (for security)
-      if (formData.awsSecretAccessKey.trim()) {
-        updateData.awsSecretAccessKey = formData.awsSecretAccessKey;
-      }
+      if (formData.credentialMode === "server") {
+        updateData.awsAccessKeyId = formData.awsAccessKeyId;
+        updateData.s3Endpoint = formData.s3Endpoint;
 
-      // Session token: empty string clears it on the backend; a non-empty
-      // value sets it; omitting the field leaves it unchanged.
-      if (clearSessionToken) {
+        // Only update secret key if provided (for security)
+        if (formData.awsSecretAccessKey.trim()) {
+          updateData.awsSecretAccessKey = formData.awsSecretAccessKey;
+        }
+
+        // Session token: empty string clears it on the backend; a non-empty
+        // value sets it; omitting the field leaves it unchanged.
+        if (clearSessionToken) {
+          updateData.awsSessionToken = "";
+        } else if (formData.awsSessionToken.trim()) {
+          updateData.awsSessionToken = formData.awsSessionToken;
+        }
+      } else {
+        // Client mode: clear stored credentials
+        updateData.awsAccessKeyId = "";
+        updateData.awsSecretAccessKey = "";
         updateData.awsSessionToken = "";
-      } else if (formData.awsSessionToken.trim()) {
-        updateData.awsSessionToken = formData.awsSessionToken;
+        updateData.s3Endpoint = "";
       }
 
       // Always send the expiration override on edit; null = revert to system default.
@@ -277,81 +293,113 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
             Credentials
           </Typography>
 
-          <TextField
-            fullWidth
-            label="Access Key ID"
-            value={formData.awsAccessKeyId}
-            onChange={(e) =>
-              handleInputChange("awsAccessKeyId", e.target.value)
-            }
-            error={!!formErrors.awsAccessKeyId}
-            helperText={formErrors.awsAccessKeyId}
-            margin="normal"
-            disabled={loading}
-          />
-
-          <TextField
-            fullWidth
-            label="Secret Access Key"
-            type="password"
-            value={formData.awsSecretAccessKey}
-            onChange={(e) =>
-              handleInputChange("awsSecretAccessKey", e.target.value)
-            }
-            error={!!formErrors.awsSecretAccessKey}
-            helperText={
-              formErrors.awsSecretAccessKey ||
-              "Leave empty to keep existing secret key"
-            }
-            margin="normal"
-            disabled={loading}
-            placeholder="Leave empty to keep existing"
-          />
-
-          <TextField
-            fullWidth
-            label="Session Token (optional)"
-            type="password"
-            value={formData.awsSessionToken}
-            onChange={(e) =>
-              handleInputChange("awsSessionToken", e.target.value)
-            }
-            helperText={
-              hasSessionToken
-                ? "Leave empty to keep existing session token, or check Clear below."
-                : "For STS / temporary credentials. Leave blank for long-lived IAM keys."
-            }
-            margin="normal"
-            disabled={loading || clearSessionToken}
-            placeholder={
-              hasSessionToken ? "Leave empty to keep existing" : ""
-            }
-          />
-          {hasSessionToken && (
-            <FormControlLabel
-              sx={{ mt: -1, mb: 1 }}
-              control={
-                <Switch
-                  checked={clearSessionToken}
-                  onChange={(e) => setClearSessionToken(e.target.checked)}
-                  disabled={loading}
-                />
+          <FormControl component="fieldset" sx={{ mb: 2 }}>
+            <RadioGroup
+              row
+              value={formData.credentialMode}
+              onChange={(e) =>
+                handleInputChange("credentialMode", e.target.value)
               }
-              label="Clear session token"
-            />
-          )}
+            >
+              <FormControlLabel
+                value="server"
+                control={<Radio />}
+                label="Server"
+                disabled={loading}
+              />
+              <FormControlLabel
+                value="client"
+                control={<Radio />}
+                label="Client"
+                disabled={loading}
+              />
+            </RadioGroup>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: -0.5 }}>
+              {formData.credentialMode === "server"
+                ? "Store access keys in the server. The server generates presigned upload URLs."
+                : "No secrets stored. The uploading client (e.g. Python/boto3) resolves credentials on the fly via AWS SSO, environment variables, or instance profile."}
+            </Typography>
+          </FormControl>
 
-          <TextField
-            fullWidth
-            label="S3 Endpoint"
-            value={formData.s3Endpoint}
-            onChange={(e) => handleInputChange("s3Endpoint", e.target.value)}
-            error={!!formErrors.s3Endpoint}
-            helperText={formErrors.s3Endpoint}
-            placeholder={getEndpointPlaceholder()}
-            margin="normal"
-            disabled={loading}
-          />
+          {formData.credentialMode === "server" && (
+            <>
+              <TextField
+                fullWidth
+                label="Access Key ID"
+                value={formData.awsAccessKeyId}
+                onChange={(e) =>
+                  handleInputChange("awsAccessKeyId", e.target.value)
+                }
+                error={!!formErrors.awsAccessKeyId}
+                helperText={formErrors.awsAccessKeyId}
+                margin="normal"
+                disabled={loading}
+              />
+
+              <TextField
+                fullWidth
+                label="Secret Access Key"
+                type="password"
+                value={formData.awsSecretAccessKey}
+                onChange={(e) =>
+                  handleInputChange("awsSecretAccessKey", e.target.value)
+                }
+                error={!!formErrors.awsSecretAccessKey}
+                helperText={
+                  formErrors.awsSecretAccessKey ||
+                  "Leave empty to keep existing secret key"
+                }
+                margin="normal"
+                disabled={loading}
+                placeholder="Leave empty to keep existing"
+              />
+
+              <TextField
+                fullWidth
+                label="Session Token (optional)"
+                type="password"
+                value={formData.awsSessionToken}
+                onChange={(e) =>
+                  handleInputChange("awsSessionToken", e.target.value)
+                }
+                helperText={
+                  hasSessionToken
+                    ? "Leave empty to keep existing session token, or check Clear below."
+                    : "For STS / temporary credentials. Leave blank for long-lived IAM keys."
+                }
+                margin="normal"
+                disabled={loading || clearSessionToken}
+                placeholder={
+                  hasSessionToken ? "Leave empty to keep existing" : ""
+                }
+              />
+              {hasSessionToken && (
+                <FormControlLabel
+                  sx={{ mt: -1, mb: 1 }}
+                  control={
+                    <Switch
+                      checked={clearSessionToken}
+                      onChange={(e) => setClearSessionToken(e.target.checked)}
+                      disabled={loading}
+                    />
+                  }
+                  label="Clear session token"
+                />
+              )}
+
+              <TextField
+                fullWidth
+                label="S3 Endpoint"
+                value={formData.s3Endpoint}
+                onChange={(e) => handleInputChange("s3Endpoint", e.target.value)}
+                error={!!formErrors.s3Endpoint}
+                helperText={formErrors.s3Endpoint}
+                placeholder={getEndpointPlaceholder()}
+                margin="normal"
+                disabled={loading}
+              />
+            </>
+          )}
 
           <TextField
             fullWidth

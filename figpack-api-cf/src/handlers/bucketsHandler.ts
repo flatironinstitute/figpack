@@ -240,20 +240,25 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			);
 		}
 
-		// Extract credentials from either format
-		const accessKeyId = awsAccessKeyId || credentials?.AWS_ACCESS_KEY_ID;
-		const secretAccessKey = awsSecretAccessKey || credentials?.AWS_SECRET_ACCESS_KEY;
+		// Extract credentials from either format.
+		// Credentials are optional: when omitted, the client is responsible for
+		// resolving them (e.g. via boto3 SSO/STS) and uploading directly to S3.
+		const accessKeyId = awsAccessKeyId || credentials?.AWS_ACCESS_KEY_ID || null;
+		const secretAccessKey = awsSecretAccessKey || credentials?.AWS_SECRET_ACCESS_KEY || null;
 		const sessionToken: string | undefined =
 			(typeof awsSessionToken === 'string' && awsSessionToken
 				? awsSessionToken
 				: undefined) || credentials?.AWS_SESSION_TOKEN;
-		const endpoint = s3Endpoint || credentials?.S3_ENDPOINT;
+		const endpoint = s3Endpoint || credentials?.S3_ENDPOINT || null;
 
-		if (!accessKeyId || !secretAccessKey || !endpoint) {
+		// If any credential is provided, all must be provided
+		const hasAnyCredential = accessKeyId || secretAccessKey || endpoint;
+		const hasAllCredentials = accessKeyId && secretAccessKey && endpoint;
+		if (hasAnyCredential && !hasAllCredentials) {
 			return json(
 				{
 					success: false,
-					message: 'All credential fields (awsAccessKeyId, awsSecretAccessKey, s3Endpoint) are required',
+					message: 'Either provide all credential fields (awsAccessKeyId, awsSecretAccessKey, s3Endpoint) or none (for client-managed credentials)',
 				},
 				400,
 			);

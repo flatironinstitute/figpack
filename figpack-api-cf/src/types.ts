@@ -48,13 +48,15 @@ export interface Bucket {
 	bucketBaseUrl: string;
 	createdAt: number;
 	updatedAt: number;
-	// Credentials (flattened from nested object)
-	awsAccessKeyId: string;
-	awsSecretAccessKey: string;
+	// Credentials (flattened from nested object).
+	// Nullable: when empty, the client is responsible for resolving credentials
+	// (e.g. via boto3 SSO/STS) and uploading directly to S3.
+	awsAccessKeyId?: string;
+	awsSecretAccessKey?: string;
 	// Optional STS session token. When set, forwarded to the S3 SDK so
 	// presigned URLs include X-Amz-Security-Token.
 	awsSessionToken?: string;
-	s3Endpoint: string;
+	s3Endpoint?: string;
 	// AWS region (e.g. us-west-2). For Cloudflare R2 use 'auto'.
 	region?: string;
 	// Authorization (flattened from nested object)
@@ -135,10 +137,24 @@ export interface SignedUrlInfo {
 	signedUrl: string;
 }
 
+export interface ClientSignedFileInfo {
+	relativePath: string;
+	key: string; // The S3 object key the client should upload to
+}
+
 export interface BatchUploadResponse {
 	success: boolean;
 	message: string;
+	// Server-signed mode: Worker generated presigned URLs
+	mode?: 'server-signed' | 'client-signed';
 	signedUrls?: SignedUrlInfo[];
+	// Client-signed mode: bucket info + keys for client to sign/upload
+	bucket?: {
+		nativeBucketName: string;
+		region: string;
+		provider: string;
+	};
+	files?: ClientSignedFileInfo[];
 }
 
 // Usage stats interfaces

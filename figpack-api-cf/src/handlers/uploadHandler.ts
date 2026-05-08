@@ -1,7 +1,7 @@
 import { authenticateUser } from '../auth';
 import { API_LIMITS } from '../config';
 import { BucketInfo, getSignedUploadUrl } from '../s3Utils';
-import { BatchUploadRequest, Env, RateLimitResult, SignedUrlInfo } from '../types';
+import { BatchUploadRequest, ClientSignedFileInfo, Env, RateLimitResult, SignedUrlInfo } from '../types';
 import { json } from '../utils';
 
 // File path validation functions
@@ -266,8 +266,12 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 			region: bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1'),
 		};
 
-		// Validate all files and generate signed URLs
+		// Determine whether the server can sign URLs or the client must handle it
+		const hasServerCredentials = !!(bucketInfo.accessKeyId && bucketInfo.secretAccessKey);
+
+		// Validate all files and compute keys
 		const signedUrls: SignedUrlInfo[] = [];
+		const clientSignedFiles: ClientSignedFileInfo[] = [];
 
 		for (const file of files) {
 			const { relativePath, size } = file;
@@ -326,23 +330,31 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 			// Extract the file key from the destination URL
 			const fileKey = destinationUrl.slice(`${bucketBaseUrl}/`.length);
 
-			// Generate signed URL
-			try {
-				const signedUrl = await getSignedUploadUrl(bucketInfo, fileKey);
+			if (hasServerCredentials) {
+				// Server-signed mode: generate presigned URL
+				try {
+					const signedUrl = await getSignedUploadUrl(bucketInfo, fileKey);
 
-				signedUrls.push({
+					signedUrls.push({
+						relativePath,
+						signedUrl,
+					});
+				} catch (err) {
+					console.error(`Error generating signed URL for ${relativePath}:`, err);
+					return json(
+						{
+							success: false,
+							message: `Error generating signed URL for ${relativePath}: ${err instanceof Error ? err.message : 'Unknown error'}`,
+						},
+						500,
+					);
+				}
+			} else {
+				// Client-signed mode: return the key for the client to sign/upload
+				clientSignedFiles.push({
 					relativePath,
-					signedUrl,
+					key: fileKey,
 				});
-			} catch (err) {
-				console.error(`Error generating signed URL for ${relativePath}:`, err);
-				return json(
-					{
-						success: false,
-						message: `Error generating signed URL for ${relativePath}: ${err instanceof Error ? err.message : 'Unknown error'}`,
-					},
-					500,
-				);
 			}
 		}
 
@@ -353,19 +365,42 @@ export async function handleUpload(request: Request, env: Env, rateLimitResult: 
 			.bind(now, now, figureUrl)
 			.run();
 
-		return json(
-			{
-				success: true,
-				message: `Generated ${signedUrls.length} signed URLs successfully`,
-				signedUrls,
-			},
-			200,
-			{
-				'X-RateLimit-Limit': '30',
-				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			},
-		);
+		const rateLimitHeaders = {
+			'X-RateLimit-Limit': '30',
+			'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+			'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+		};
+
+		if (hasServerCredentials) {
+			return json(
+				{
+					success: true,
+					mode: 'server-signed',
+					message: `Generated ${signedUrls.length} signed URLs successfully`,
+					signedUrls,
+				},
+				200,
+				rateLimitHeaders,
+			);
+		} else {
+			const nativeBucketName = (bucketRow.native_bucket_name as string) || bucketName;
+			const region = (bucketRow.region as string) || (provider === 'cloudflare' ? 'auto' : 'us-east-1');
+			return json(
+				{
+					success: true,
+					mode: 'client-signed',
+					message: `Prepared ${clientSignedFiles.length} file keys for client-side upload`,
+					bucket: {
+						nativeBucketName,
+						region,
+						provider,
+					},
+					files: clientSignedFiles,
+				},
+				200,
+				rateLimitHeaders,
+			);
+		}
 	} catch (error) {
 		console.error('Upload API error:', error);
 

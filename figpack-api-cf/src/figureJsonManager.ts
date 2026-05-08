@@ -33,7 +33,7 @@ function rowToFigure(row: any): Figure {
 	};
 }
 
-export async function updateFigureJson(figureUrl: string, env: Env, additionalFields?: { [key: string]: any }): Promise<void> {
+export async function updateFigureJson(figureUrl: string, env: Env, additionalFields?: { [key: string]: any }): Promise<any> {
 	// Get the figure from the database
 	const figureRow = await env.figpack_db.prepare('SELECT * FROM figures WHERE figure_url = ?;').bind(figureUrl).first();
 
@@ -91,35 +91,42 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 	const bucketBaseUrl = bucketRow.bucket_base_url as string;
 	const provider = bucketRow.provider as string;
 
-	const region = bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1');
+	const hasServerCredentials = !!(bucketRow.aws_access_key_id && bucketRow.aws_secret_access_key);
 
-	const bucketInfo: BucketInfo = {
-		provider,
-		bucketName,
-		nativeBucketName: bucketRow.native_bucket_name || bucketName,
-		accessKeyId: bucketRow.aws_access_key_id,
-		secretAccessKey: bucketRow.aws_secret_access_key,
-		sessionToken: bucketRow.aws_session_token || undefined,
-		endpoint: bucketRow.s3_endpoint,
-		region,
-	};
+	if (hasServerCredentials) {
+		const region = bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1');
 
-	try {
-		const prefix = `${bucketBaseUrl}/`;
-		if (!figure.figureUrl.startsWith(prefix)) {
-			throw new Error(`Figure URL must start with ${prefix}`);
+		const bucketInfo: BucketInfo = {
+			provider,
+			bucketName,
+			nativeBucketName: bucketRow.native_bucket_name || bucketName,
+			accessKeyId: bucketRow.aws_access_key_id,
+			secretAccessKey: bucketRow.aws_secret_access_key,
+			sessionToken: bucketRow.aws_session_token || undefined,
+			endpoint: bucketRow.s3_endpoint,
+			region,
+		};
+
+		try {
+			const prefix = `${bucketBaseUrl}/`;
+			if (!figure.figureUrl.startsWith(prefix)) {
+				throw new Error(`Figure URL must start with ${prefix}`);
+			}
+
+			const figureUrlWithoutIndexHtml = figure.figureUrl.endsWith('/index.html')
+				? figure.figureUrl.slice(0, -'/index.html'.length)
+				: figure.figureUrl;
+
+			const key = figureUrlWithoutIndexHtml.slice(prefix.length) + '/figpack.json';
+
+			// Store the JSON file in the figure's directory
+			await putObject(bucketInfo, key, JSON.stringify(jsonContent, null, 2), 'application/json');
+		} catch (error) {
+			console.error('Error updating figpack.json:', error);
+			throw error;
 		}
-
-		const figureUrlWithoutIndexHtml = figure.figureUrl.endsWith('/index.html')
-			? figure.figureUrl.slice(0, -'/index.html'.length)
-			: figure.figureUrl;
-
-		const key = figureUrlWithoutIndexHtml.slice(prefix.length) + '/figpack.json';
-
-		// Store the JSON file in the figure's directory
-		await putObject(bucketInfo, key, JSON.stringify(jsonContent, null, 2), 'application/json');
-	} catch (error) {
-		console.error('Error updating figpack.json:', error);
-		throw error;
 	}
+	// For client-managed credential buckets, the JSON is returned to the caller
+	// so the Python client can upload it to S3 itself.
+	return jsonContent;
 }

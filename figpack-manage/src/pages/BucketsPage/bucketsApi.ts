@@ -8,15 +8,20 @@ export interface Bucket {
   bucketBaseUrl: string;
   createdAt: number;
   updatedAt: number;
-  // Flattened credentials. The API returns awsSecretAccessKey as the placeholder
+  // Credential mode: "long-term" stores secrets in the DB; "user-credentials"
+  // means the uploading client resolves credentials on the fly (e.g. boto3 SSO).
+  // Derived from whether awsAccessKeyId is set; not stored in DB itself.
+  credentialMode?: "long-term" | "user-credentials";
+  // Flattened credentials. Optional when credentialMode is "user-credentials".
+  // The API returns awsSecretAccessKey as the placeholder
   // string "***HIDDEN***"; sending it back unchanged means "do not modify".
-  awsAccessKeyId: string;
-  awsSecretAccessKey: string;
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
   // Optional STS session token. The API returns "***HIDDEN***" when one is set
   // and undefined when none is configured. To clear, send an empty string;
   // the placeholder echoed back means "leave unchanged".
   awsSessionToken?: string;
-  s3Endpoint: string;
+  s3Endpoint?: string;
   // AWS region (e.g. us-west-2). For Cloudflare R2 use 'auto' (or leave blank).
   region?: string;
   // Flattened authorization
