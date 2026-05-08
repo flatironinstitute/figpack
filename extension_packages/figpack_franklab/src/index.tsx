@@ -8,6 +8,7 @@ import {
   RenderParams,
   ZarrGroup,
 } from "./figpack-interface";
+import { FPDecodedPositionAnimation } from "./DecodedPositionAnimation/FPDecodedPositionAnimation";
 import { FPTrackAnimation } from "./TrackAnimation/FPTrackAnimation";
 
 // Declare global types for figpack extension system
@@ -165,6 +166,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "franklab.TrackAnimation",
     render: makeRenderFunction(FPTrackAnimation),
+  });
+  registerFPViewComponent({
+    name: "franklab.DecodedPositionAnimation",
+    render: makeRenderFunction(FPDecodedPositionAnimation),
   });
 
   // const registerFPViewContextCreator: (c: FPViewContextCreator) => void = (window as any).figpack_p1.registerFPViewContextCreator;

@@ -21,6 +21,12 @@ import {
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import type { Bucket } from "./bucketsApi";
+import {
+  EXPIRATION_OPTIONS,
+  expirationOptionToSeconds,
+  secondsToExpirationOption,
+  type ExpirationOptionValue,
+} from "./bucketExpirationOptions";
 
 interface EditBucketDialogProps {
   open: boolean;
@@ -65,6 +71,8 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
   // session token" affordance.
   const [hasSessionToken, setHasSessionToken] = useState<boolean>(false);
   const [clearSessionToken, setClearSessionToken] = useState<boolean>(false);
+  const [expirationOption, setExpirationOption] =
+    useState<ExpirationOptionValue>("default");
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -93,6 +101,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       });
       setHasSessionToken(!!bucket.awsSessionToken);
       setClearSessionToken(false);
+      setExpirationOption(secondsToExpirationOption(bucket.defaultExpirationSeconds));
       setNewUserEmail("");
       setFormErrors({});
     }
@@ -179,6 +188,11 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
         updateData.awsSessionToken = "";
         updateData.s3Endpoint = "";
       }
+
+      // Always send the expiration override on edit; null = revert to system default.
+      updateData.defaultExpirationSeconds = expirationOptionToSeconds(
+        expirationOption,
+      );
 
       onUpdateBucket(bucket.name, updateData);
     } else {
@@ -419,6 +433,24 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
             margin="normal"
             disabled={loading}
           />
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Default figure expiration</InputLabel>
+            <Select
+              value={expirationOption}
+              onChange={(e) =>
+                setExpirationOption(e.target.value as ExpirationOptionValue)
+              }
+              label="Default figure expiration"
+              disabled={loading}
+            >
+              {EXPIRATION_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
             Authorization

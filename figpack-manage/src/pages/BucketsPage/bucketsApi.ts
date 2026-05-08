@@ -31,6 +31,9 @@ export interface Bucket {
   nativeBucketName?: string;
   // Email of the user who owns this bucket. Undefined for legacy/admin-managed buckets.
   ownerEmail?: string;
+  // Per-bucket override for figure expiration (seconds). undefined = use system default
+  // (24h), 0 = never expire, positive integer = seconds.
+  defaultExpirationSeconds?: number | null;
 }
 
 export interface BucketApiResponse {

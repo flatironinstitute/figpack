@@ -66,6 +66,9 @@ export interface Bucket {
 	nativeBucketName?: string;
 	// Email of the user who owns this bucket. NULL/undefined means admin/system-managed (legacy).
 	ownerEmail?: string;
+	// Per-bucket override for figure expiration (seconds). undefined = system default,
+	// 0 = never expire, positive integer = seconds from creation.
+	defaultExpirationSeconds?: number;
 }
 
 // Figure interface

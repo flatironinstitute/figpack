@@ -31,6 +31,10 @@ function parseBucket(row: any): Bucket {
 		authorizedUsers: JSON.parse(row.authorized_users || '[]'),
 		nativeBucketName: row.native_bucket_name || undefined,
 		ownerEmail: row.owner_email || undefined,
+		defaultExpirationSeconds:
+			row.default_expiration_seconds === null || row.default_expiration_seconds === undefined
+				? undefined
+				: Number(row.default_expiration_seconds),
 	};
 }
 
@@ -51,6 +55,17 @@ function sanitizeBucket(bucket: Bucket): Bucket {
 // True if the value is non-empty and not the hidden placeholder we send to clients.
 function isRealCredential(value: unknown): value is string {
 	return typeof value === 'string' && value.length > 0 && value !== HIDDEN_CREDENTIAL_PLACEHOLDER;
+}
+
+// Normalize the user-supplied defaultExpirationSeconds. Returns:
+//   null      → caller intends "no override" / "use system default"
+//   number    → integer seconds, may be 0 (never expires)
+//   'invalid' → reject the request
+function normalizeExpirationSeconds(value: unknown): number | null | 'invalid' {
+	if (value === undefined || value === null || value === '') return null;
+	const n = typeof value === 'number' ? value : Number(value);
+	if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) return 'invalid';
+	return n;
 }
 
 export async function handleListUserBuckets(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
@@ -212,6 +227,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			isPublic,
 			authorizedUsers,
 			nativeBucketName,
+			defaultExpirationSeconds,
 		} = bucketData;
 
 		if (!name || !provider || !description || !bucketBaseUrl) {
@@ -283,6 +299,19 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			);
 		}
 
+		// Validate defaultExpirationSeconds. undefined/null = use system default;
+		// 0 = never expires; positive integer = seconds.
+		const expirationOverride = normalizeExpirationSeconds(defaultExpirationSeconds);
+		if (expirationOverride === 'invalid') {
+			return json(
+				{
+					success: false,
+					message: 'defaultExpirationSeconds must be null/undefined or a non-negative integer (seconds)',
+				},
+				400,
+			);
+		}
+
 		// Check if bucket already exists
 		const existing = await env.figpack_db.prepare('SELECT id FROM buckets WHERE name = ?').bind(name).first();
 
@@ -309,8 +338,9 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
           name, provider, description, bucket_base_url,
           aws_access_key_id, aws_secret_access_key, aws_session_token, s3_endpoint, region,
           is_public, authorized_users, native_bucket_name, owner_email,
+          default_expiration_seconds,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
 			)
 			.bind(
@@ -327,6 +357,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				JSON.stringify(bucketAuthorizedUsers),
 				bucketNativeName,
 				userEmail,
+				expirationOverride,
 				now,
 				now,
 			)
@@ -503,6 +534,22 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 		if (bucketData.ownerEmail !== undefined && isAdmin) {
 			updates.push('owner_email = ?');
 			values.push(bucketData.ownerEmail || null);
+		}
+
+		// defaultExpirationSeconds: undefined = no change; null/'' = revert to system default.
+		if (bucketData.defaultExpirationSeconds !== undefined) {
+			const normalized = normalizeExpirationSeconds(bucketData.defaultExpirationSeconds);
+			if (normalized === 'invalid') {
+				return json(
+					{
+						success: false,
+						message: 'defaultExpirationSeconds must be null or a non-negative integer (seconds)',
+					},
+					400,
+				);
+			}
+			updates.push('default_expiration_seconds = ?');
+			values.push(normalized);
 		}
 
 		// Update timestamp

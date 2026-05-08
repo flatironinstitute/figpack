@@ -21,6 +21,11 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import type { Bucket } from "./bucketsApi";
+import {
+  EXPIRATION_OPTIONS,
+  expirationOptionToSeconds,
+  type ExpirationOptionValue,
+} from "./bucketExpirationOptions";
 
 interface AddBucketDialogProps {
   open: boolean;
@@ -58,6 +63,8 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
   });
 
   const [newUserEmail, setNewUserEmail] = useState("");
+  const [expirationOption, setExpirationOption] =
+    useState<ExpirationOptionValue>("default");
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -79,6 +86,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         nativeBucketName: "",
       });
       setNewUserEmail("");
+      setExpirationOption("default");
       setFormErrors({});
       onClose();
     }
@@ -135,7 +143,12 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
 
   const handleSubmit = () => {
     if (validateForm()) {
-      onAddBucket(formData);
+      const seconds = expirationOptionToSeconds(expirationOption);
+      onAddBucket({
+        ...formData,
+        // null when "system default" so the API stores NULL.
+        defaultExpirationSeconds: seconds,
+      });
     }
   };
 
@@ -351,6 +364,24 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             margin="normal"
             disabled={loading}
           />
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Default figure expiration</InputLabel>
+            <Select
+              value={expirationOption}
+              onChange={(e) =>
+                setExpirationOption(e.target.value as ExpirationOptionValue)
+              }
+              label="Default figure expiration"
+              disabled={loading}
+            >
+              {EXPIRATION_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
             Authorization
