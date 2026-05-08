@@ -712,7 +712,7 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 			.run();
 
 		// Fetch updated figure
-		const updatedRow = await env.figpack_db.prepare('SELECT * FROM figures WHERE figure_url = ?').bind(figureUrl).first();
+		// (updatedRow is not used directly — finalRow is fetched after updateFigureJson to include figpack_json)
 
 		// Update figpack.json in S3
 		try {
@@ -722,12 +722,36 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 			// Don't fail the request if figpack.json update fails
 		}
 
+		// Check if this bucket uses client-managed credentials
+		const bucketName = (figureRow.bucket as string) || 'figpack-figures';
+		const bucketRow = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?;').bind(bucketName).first();
+		const hasServerCredentials = !!(bucketRow && bucketRow.aws_access_key_id && bucketRow.aws_secret_access_key);
+
+		// Re-fetch figure to get the figpack_json that was just saved
+		const finalRow = await env.figpack_db.prepare('SELECT * FROM figures WHERE figure_url = ?').bind(figureUrl).first();
+
+		const responseBody: any = {
+			success: true,
+			message: 'Figure finalized successfully',
+			figure: parseFigure(finalRow),
+		};
+
+		// For client-managed credential buckets, include the figpack.json content
+		// and bucket info so the Python client can upload it to S3
+		if (!hasServerCredentials && finalRow) {
+			responseBody.figpackJson = finalRow.figpack_json ? JSON.parse(finalRow.figpack_json as string) : null;
+			if (bucketRow) {
+				responseBody.bucket = {
+					nativeBucketName: (bucketRow.native_bucket_name as string) || bucketName,
+					region: (bucketRow.region as string) || 'us-east-1',
+					provider: bucketRow.provider as string,
+					bucketBaseUrl: bucketRow.bucket_base_url as string,
+				};
+			}
+		}
+
 		return json(
-			{
-				success: true,
-				message: 'Figure finalized successfully',
-				figure: parseFigure(updatedRow),
-			},
+			responseBody,
 			200,
 			{
 				'X-RateLimit-Limit': '30',

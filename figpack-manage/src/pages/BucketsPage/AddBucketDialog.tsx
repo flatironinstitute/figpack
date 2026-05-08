@@ -16,6 +16,8 @@ import {
   FormControlLabel,
   Switch,
   Chip,
+  RadioGroup,
+  Radio,
 } from "@mui/material";
 import React, { useState } from "react";
 import type { Bucket } from "./bucketsApi";
@@ -40,6 +42,8 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
     provider: "cloudflare" as "cloudflare" | "aws",
     description: "",
     bucketBaseUrl: "",
+    // Credential mode
+    credentialMode: "long-term" as "long-term" | "user-credentials",
     // Flattened credentials
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
@@ -64,6 +68,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         provider: "cloudflare",
         description: "",
         bucketBaseUrl: "",
+        credentialMode: "long-term",
         awsAccessKeyId: "",
         awsSecretAccessKey: "",
         awsSessionToken: "",
@@ -106,17 +111,17 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
       }
     }
 
-    if (!formData.awsAccessKeyId.trim()) {
+    if (!formData.awsAccessKeyId.trim() && formData.credentialMode === "long-term") {
       errors.awsAccessKeyId = "Access Key ID is required";
     }
 
-    if (!formData.awsSecretAccessKey.trim()) {
+    if (!formData.awsSecretAccessKey.trim() && formData.credentialMode === "long-term") {
       errors.awsSecretAccessKey = "Secret Access Key is required";
     }
 
-    if (!formData.s3Endpoint.trim()) {
+    if (!formData.s3Endpoint.trim() && formData.credentialMode === "long-term") {
       errors.s3Endpoint = "S3 Endpoint is required";
-    } else {
+    } else if (formData.s3Endpoint.trim()) {
       try {
         new URL(formData.s3Endpoint);
       } catch {
@@ -230,57 +235,89 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
             Credentials
           </Typography>
 
-          <TextField
-            fullWidth
-            label="Access Key ID"
-            value={formData.awsAccessKeyId}
-            onChange={(e) =>
-              handleInputChange("awsAccessKeyId", e.target.value)
-            }
-            error={!!formErrors.awsAccessKeyId}
-            helperText={formErrors.awsAccessKeyId}
-            margin="normal"
-            disabled={loading}
-          />
+          <FormControl component="fieldset" sx={{ mb: 2 }}>
+            <RadioGroup
+              row
+              value={formData.credentialMode}
+              onChange={(e) =>
+                handleInputChange("credentialMode", e.target.value)
+              }
+            >
+              <FormControlLabel
+                value="long-term"
+                control={<Radio />}
+                label="Long-term Credentials"
+                disabled={loading}
+              />
+              <FormControlLabel
+                value="user-credentials"
+                control={<Radio />}
+                label="User Credentials"
+                disabled={loading}
+              />
+            </RadioGroup>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: -0.5 }}>
+              {formData.credentialMode === "long-term"
+                ? "Store access keys in the server. The server generates presigned upload URLs."
+                : "No secrets stored. The uploading client (e.g. Python/boto3) resolves credentials on the fly via AWS SSO, environment variables, or instance profile."}
+            </Typography>
+          </FormControl>
 
-          <TextField
-            fullWidth
-            label="Secret Access Key"
-            type="password"
-            value={formData.awsSecretAccessKey}
-            onChange={(e) =>
-              handleInputChange("awsSecretAccessKey", e.target.value)
-            }
-            error={!!formErrors.awsSecretAccessKey}
-            helperText={formErrors.awsSecretAccessKey}
-            margin="normal"
-            disabled={loading}
-          />
+          {formData.credentialMode === "long-term" && (
+            <>
+              <TextField
+                fullWidth
+                label="Access Key ID"
+                value={formData.awsAccessKeyId}
+                onChange={(e) =>
+                  handleInputChange("awsAccessKeyId", e.target.value)
+                }
+                error={!!formErrors.awsAccessKeyId}
+                helperText={formErrors.awsAccessKeyId}
+                margin="normal"
+                disabled={loading}
+              />
 
-          <TextField
-            fullWidth
-            label="Session Token (optional)"
-            type="password"
-            value={formData.awsSessionToken}
-            onChange={(e) =>
-              handleInputChange("awsSessionToken", e.target.value)
-            }
-            helperText="For STS / temporary credentials. Leave blank for long-lived IAM keys."
-            margin="normal"
-            disabled={loading}
-          />
+              <TextField
+                fullWidth
+                label="Secret Access Key"
+                type="password"
+                value={formData.awsSecretAccessKey}
+                onChange={(e) =>
+                  handleInputChange("awsSecretAccessKey", e.target.value)
+                }
+                error={!!formErrors.awsSecretAccessKey}
+                helperText={formErrors.awsSecretAccessKey}
+                margin="normal"
+                disabled={loading}
+              />
 
-          <TextField
-            fullWidth
-            label="S3 Endpoint"
-            value={formData.s3Endpoint}
-            onChange={(e) => handleInputChange("s3Endpoint", e.target.value)}
-            error={!!formErrors.s3Endpoint}
-            helperText={formErrors.s3Endpoint}
-            placeholder={getEndpointPlaceholder()}
-            margin="normal"
-            disabled={loading}
-          />
+              <TextField
+                fullWidth
+                label="Session Token (optional)"
+                type="password"
+                value={formData.awsSessionToken}
+                onChange={(e) =>
+                  handleInputChange("awsSessionToken", e.target.value)
+                }
+                helperText="For STS / temporary credentials. Leave blank for long-lived IAM keys."
+                margin="normal"
+                disabled={loading}
+              />
+
+              <TextField
+                fullWidth
+                label="S3 Endpoint"
+                value={formData.s3Endpoint}
+                onChange={(e) => handleInputChange("s3Endpoint", e.target.value)}
+                error={!!formErrors.s3Endpoint}
+                helperText={formErrors.s3Endpoint}
+                placeholder={getEndpointPlaceholder()}
+                margin="normal"
+                disabled={loading}
+              />
+            </>
+          )}
 
           <TextField
             fullWidth
