@@ -248,27 +248,28 @@ const FPTiledImage: FunctionComponent<Props> = ({
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
         >
-          <div style={{ marginBottom: "5px", fontWeight: "bold" }}>Layers:</div>
-          {layers.map((layer, idx) => (
-            <div key={idx} style={{ marginBottom: "3px" }}>
-              <label
-                style={{
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <input
-                  type="radio"
-                  name="layer"
-                  checked={selectedLayerIndex === idx}
-                  onChange={() => setSelectedLayerIndex(idx)}
-                  style={{ marginRight: "5px" }}
-                />
-                {layer.label}
-              </label>
-            </div>
-          ))}
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <span style={{ marginRight: "5px", fontWeight: "bold" }}>
+              Layer:
+            </span>
+            <select
+              value={selectedLayerIndex}
+              onChange={(e) => setSelectedLayerIndex(Number(e.target.value))}
+              style={{ cursor: "pointer" }}
+            >
+              {layers.map((layer, idx) => (
+                <option key={idx} value={idx}>
+                  {layer.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       )}
       <DeckGL
