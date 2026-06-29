@@ -35,6 +35,13 @@ type Props = {
 const draw = (context: CanvasRenderingContext2D, data: Props) => {
   context.clearRect(0, 0, data.width, data.height);
 
+  data.barBoxes.forEach((b) => {
+    context.fillStyle = b.color;
+    context.fillRect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
+  });
+
+  // Draw the selected-unit vertical lines after the bars so they appear in
+  // front of (on top of) the bars rather than being hidden behind them.
   for (const vline of data.pixelVerticalLines || []) {
     context.strokeStyle = vline.color;
     context.beginPath();
@@ -42,11 +49,6 @@ const draw = (context: CanvasRenderingContext2D, data: Props) => {
     context.lineTo(vline.x, data.height - data.margins.bottom);
     context.stroke();
   }
-
-  data.barBoxes.forEach((b) => {
-    context.fillStyle = b.color;
-    context.fillRect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
-  });
 
   if (data.xLabel) {
     context.textBaseline = "bottom";
