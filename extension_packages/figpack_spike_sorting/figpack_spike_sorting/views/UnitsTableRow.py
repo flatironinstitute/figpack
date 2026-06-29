@@ -31,6 +31,12 @@ class UnitsTableRow:
         Convert the row to a dictionary representation
         """
         return {
-            "unitId": self.unit_id,
+            # Serialize the unit id as a string to stay consistent with how all
+            # other spike-sorting views serialize unit ids (they use
+            # str(unit_id)). The units table is the source of the shared unit
+            # selection, so a mismatched id type here means selected units never
+            # match the string-keyed data in the other views (cross-correlograms,
+            # spike amplitudes, etc.) and those views appear empty.
+            "unitId": str(self.unit_id),
             "values": self.values,
         }

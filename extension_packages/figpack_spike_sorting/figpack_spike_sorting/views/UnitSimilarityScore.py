@@ -34,7 +34,10 @@ class UnitSimilarityScore:
         Convert the similarity score to a dictionary representation
         """
         return {
-            "unitId1": self.unit_id1,
-            "unitId2": self.unit_id2,
+            # Stringify unit ids to match UnitsTableRow (the similarity column is
+            # matched against the table's current/selected unit id) and the rest
+            # of the spike-sorting views.
+            "unitId1": str(self.unit_id1),
+            "unitId2": str(self.unit_id2),
             "similarity": self.similarity,
         }
