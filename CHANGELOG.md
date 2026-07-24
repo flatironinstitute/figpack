@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- figpack_experimental: SphereEmbedding view - 3D rendering of a sphere embedded into a new geometry, with scalar field heatmaps, pull-back-to-sphere control, and optional time playback
+
 ## [0.3.18] - 2026-03-03
 
 - Fix svg export for raster plot view

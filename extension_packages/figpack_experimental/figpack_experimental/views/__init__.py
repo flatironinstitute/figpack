@@ -9,6 +9,7 @@ from .MultiChannelIntervals import MultiChannelIntervals
 from .LinearDecode import LinearDecode
 from .MEAMovie import MEAMovie
 from .ClusterLens import ClusterLens
+from .SphereEmbedding import SphereEmbedding
 
 __all__ = [
     "EditableNotes",
@@ -18,4 +19,5 @@ __all__ = [
     "LinearDecode",
     "MEAMovie",
     "ClusterLens",
+    "SphereEmbedding",
 ]

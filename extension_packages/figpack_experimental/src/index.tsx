@@ -8,6 +8,7 @@ import FPMultiChannelIntervals from "./views/MultiChannelIntervals/FPMultiChanne
 import FPLinearDecode from "./views/LinearDecode/FPLinearDecode";
 import FPMEAMovie from "./views/MEAMovie/FPMEAMovie";
 import FPClusterLens from "./views/ClusterLens/FPClusterLens";
+import FPSphereEmbedding from "./views/SphereEmbedding/FPSphereEmbedding";
 import {
   FPViewComponent,
   FPViewContext,
@@ -120,6 +121,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "experimental.ClusterLens",
     render: makeRenderFunction(FPClusterLens),
+  });
+  registerFPViewComponent({
+    name: "experimental.SphereEmbedding",
+    render: makeRenderFunction(FPSphereEmbedding),
   });
 
   // Register custom Zarr decoder for 'mp4' codec

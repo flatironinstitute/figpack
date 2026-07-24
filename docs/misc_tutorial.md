@@ -691,6 +691,69 @@ Interactive features:
 - **Create Plot**: Generate new windows from selected points for deeper exploration
 - **UMAP parameters**: Adjust `n_neighbors`, `min_dist`, and `spread` per plot
 
+### Sphere Embedding View
+
+The SphereEmbedding view displays a sphere embedded into a new geometry in R^3, rendered as a rotatable 3D surface with one or more scalar fields shown as heatmaps. The spherical grid follows the [shtns](https://nschaeff.bitbucket.io/shtns/) conventions: spatial arrays have shape `(nlat, nphi)`, the latitudinal grid is given as `cos(theta)` (e.g. `sh.cos_theta`, Gauss nodes with poles not included), and phi is equally spaced starting at 0. The geometry and the fields may optionally vary over time.
+
+```python
+import numpy as np
+from figpack_experimental.views import SphereEmbedding
+
+nlat, nphi, num_times = 64, 128, 60
+
+# Gauss-Legendre latitudinal grid, north pole first
+# (matches the shtns default grid; with shtns, use sh.cos_theta instead)
+cos_theta = np.polynomial.legendre.leggauss(nlat)[0][::-1]
+phi = 2 * np.pi * np.arange(nphi) / nphi
+
+theta_grid, phi_grid = np.meshgrid(np.arccos(cos_theta), phi, indexing="ij")
+times = np.arange(num_times) * 0.1  # seconds
+
+# Time-varying scalar field: a rotating pattern
+t = times[:, None, None]
+field = (
+    np.sin(3 * theta_grid) * np.cos(4 * phi_grid - 6 * np.pi * t / times[-1])
+    + 0.5 * np.cos(5 * theta_grid)
+).astype(np.float32)
+
+# Time-varying geometry: radial displacement proportional to the field,
+# with a breathing amplitude
+amplitude = 0.12 + 0.06 * np.sin(2 * np.pi * t / times[-1])
+r = 1.0 + amplitude * field
+coords = np.stack(
+    [
+        r * np.sin(theta_grid) * np.cos(phi_grid),
+        r * np.sin(theta_grid) * np.sin(phi_grid),
+        r * np.cos(theta_grid),
+    ],
+    axis=-1,
+).astype(np.float32)
+
+# A static field for comparison
+static_field = (np.cos(theta_grid) ** 2).astype(np.float32)
+
+view = SphereEmbedding(
+    coords=coords,
+    fields={"rotating pattern": field, "cos^2(theta)": static_field},
+    cos_theta=cos_theta,
+    phi=phi,
+    times=times,
+)
+view.show(title="Sphere Embedding Example", open_in_browser=True)
+```
+
+<iframe data-src="./tutorial_sphere_embedding_example/index.html?embedded=1" width="100%" height="700" frameborder="0" loading="lazy"></iframe>
+
+For a static figure, omit `times` and pass `coords` with shape `(nlat, nphi, 3)` and fields with shape `(nlat, nphi)`. Static and time-varying fields may be mixed; a field is time-varying when it has a leading time dimension `(num_times, nlat, nphi)`.
+
+Interactive features:
+- **Orbit controls**: Drag to rotate, scroll to zoom, right-drag to pan
+- **Sphere ⟷ Embedded slider**: Morph ("pull back") between the embedded geometry and the original sphere
+- **Field selector**: Choose which field to display as a heatmap, or `(none)` for a plain surface
+- **Colormap and range**: Several colormaps; color range from the global field min/max or per-frame
+- **Wireframe** overlay and **Reset view**
+- **Playback** (when a time dimension is present): play/pause, frame stepping, speed selection, and a time slider, synchronized with other time-based views in the same figure
+
 ## MountainLayout
 
 The MountainLayout provides a workspace-style interface with a left panel for view buttons and controls, and a right panel with dual tab workspaces (north and south). This layout is ideal for applications that need to manage multiple views in a workspace environment.
