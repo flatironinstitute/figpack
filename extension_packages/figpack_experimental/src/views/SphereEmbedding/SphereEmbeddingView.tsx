@@ -25,9 +25,10 @@ type Props = {
   height: number;
 };
 
-const PLAYBACK_SPEEDS = [0.1, 0.25, 0.5, 1, 2, 5, 10];
-const DEFAULT_COLORMAP = "viridis";
+const PLAYBACK_SPEEDS = [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10];
+const DEFAULT_COLORMAP = "jet";
 const PREFETCH_COUNT = 4;
+const RANGE_SLIDER_STEPS = 500;
 
 const selectStyle: React.CSSProperties = {
   padding: "4px",
@@ -55,6 +56,13 @@ const labelStyle: React.CSSProperties = {
   color: "#ccc",
 };
 
+const formatRangeValue = (v: number): string => {
+  if (!isFinite(v)) return "-";
+  const a = Math.abs(v);
+  if (a !== 0 && (a >= 10000 || a < 0.01)) return v.toExponential(1);
+  return parseFloat(v.toPrecision(3)).toString();
+};
+
 const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
   const [client, setClient] = useState<SphereEmbeddingClient | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +75,11 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
   const [colormap, setColormap] = useState<string>(DEFAULT_COLORMAP);
   const [morph, setMorph] = useState<number>(1); // 0 = sphere, 1 = embedded
   const [wireframe, setWireframe] = useState<boolean>(false);
-  const [rangeMode, setRangeMode] = useState<"global" | "frame">("global");
+  const [rangeMode, setRangeMode] = useState<"global" | "frame" | "manual">(
+    "global",
+  );
+  // Manual color range, adjustable with the sliders
+  const [manualRange, setManualRange] = useState<[number, number] | null>(null);
   const [displayRange, setDisplayRange] = useState<[number, number]>([0, 1]);
 
   // Playback state (used only when the data has a time dimension)
@@ -83,6 +95,14 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
   const { currentTime, setCurrentTime, initializeTimeseriesSelection } =
     useTimeseriesSelection();
 
+  // The canvas area is sized by flex layout (so the controls can wrap freely
+  // at narrow widths); measure it to size the renderer
+  const canvasAreaRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState<{
+    width: number;
+    height: number;
+  }>({ width: 0, height: 0 });
+
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SphereScene | null>(null);
   const topoRef = useRef<SphereMeshTopology | null>(null);
@@ -94,8 +114,9 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
   const frameRequestIdRef = useRef<number>(0);
 
   const hasTime = client ? client.hasTime : false;
-  const controlsHeight = hasTime ? 104 : 60;
-  const canvasHeight = Math.max(0, height - controlsHeight);
+  const showRangeRow = fieldIndex >= 0;
+  // Narrow layouts drop the text labels so the controls still fit
+  const compact = width < 720;
 
   // Load the client
   useEffect(() => {
@@ -107,6 +128,20 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
         const c = await SphereEmbeddingClient.create(zarrGroup);
         if (canceled) return;
         setClient(c);
+
+        // Apply the initial display settings specified at figure creation
+        setColormap(c.colormap);
+        setPlaybackSpeed(c.playbackSpeed);
+        const firstField = c.fieldsMeta[0];
+        if (firstField) {
+          const lo = c.vmin !== undefined ? c.vmin : firstField.min;
+          const hi = c.vmax !== undefined ? c.vmax : firstField.max;
+          setManualRange([lo, hi]);
+          if (c.vmin !== undefined || c.vmax !== undefined) {
+            setRangeMode("manual");
+          }
+        }
+
         if (c.hasTime) {
           initializeTimeseriesSelection({
             startTimeSec: c.startTimeSec,
@@ -155,6 +190,70 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
     };
   }, [client]);
 
+  // Bounds of the color-range sliders: the full data range of the current field
+  const fieldBounds = useMemo<[number, number] | null>(() => {
+    if (!client || fieldIndex < 0) return null;
+    const meta = client.fieldsMeta[fieldIndex];
+    if (!meta) return null;
+    return meta.min < meta.max
+      ? [meta.min, meta.max]
+      : [meta.min, meta.min + 1];
+  }, [client, fieldIndex]);
+
+  // Playback speeds, including the one specified at figure creation
+  const speedOptions = useMemo(() => {
+    const speeds = new Set(PLAYBACK_SPEEDS);
+    if (client) speeds.add(client.playbackSpeed);
+    return Array.from(speeds).sort((a, b) => a - b);
+  }, [client]);
+
+  // Slider positions follow whatever range is actually being displayed, so
+  // they stay meaningful in global and per-frame modes too
+  const rangeSliderPositions = useMemo<[number, number]>(() => {
+    if (!fieldBounds) return [0, RANGE_SLIDER_STEPS];
+    const [lo, hi] = fieldBounds;
+    const toPos = (v: number) =>
+      Math.max(
+        0,
+        Math.min(
+          RANGE_SLIDER_STEPS,
+          Math.round(((v - lo) / (hi - lo)) * RANGE_SLIDER_STEPS),
+        ),
+      );
+    return [toPos(displayRange[0]), toPos(displayRange[1])];
+  }, [fieldBounds, displayRange]);
+
+  const handleFieldChange = useCallback(
+    (newIndex: number) => {
+      setFieldIndex(newIndex);
+      // Reset the manual range to the new field's own data range, since
+      // different fields generally have very different scales
+      if (client && newIndex >= 0) {
+        const meta = client.fieldsMeta[newIndex];
+        if (meta) setManualRange([meta.min, meta.max]);
+      }
+    },
+    [client],
+  );
+
+  const handleRangeSlider = useCallback(
+    (which: "min" | "max", sliderValue: number) => {
+      if (!fieldBounds) return;
+      const [lo, hi] = fieldBounds;
+      const value = lo + ((hi - lo) * sliderValue) / RANGE_SLIDER_STEPS;
+      setManualRange((prev) => {
+        const current = prev || [lo, hi];
+        // Keep min strictly below max
+        const eps = (hi - lo) / RANGE_SLIDER_STEPS;
+        return which === "min"
+          ? [Math.min(value, current[1] - eps), current[1]]
+          : [current[0], Math.max(value, current[0] + eps)];
+      });
+      setRangeMode("manual");
+    },
+    [fieldBounds],
+  );
+
   const currentTimeIndex = useMemo(() => {
     if (!client || !client.hasTime || currentTime === undefined) return 0;
     return client.getIndexFromTime(currentTime);
@@ -192,7 +291,9 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
     }
     let valueMin: number;
     let valueMax: number;
-    if (rangeMode === "frame") {
+    if (rangeMode === "manual" && manualRange) {
+      [valueMin, valueMax] = manualRange;
+    } else if (rangeMode === "frame") {
       valueMin = Infinity;
       valueMax = -Infinity;
       for (let i = 0; i < values.length; i++) {
@@ -219,7 +320,7 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
         ? prev
         : [valueMin, valueMax],
     );
-  }, [client, colormap, fieldIndex, rangeMode]);
+  }, [client, colormap, fieldIndex, rangeMode, manualRange]);
 
   // Load the data for the current frame / field, then update the scene
   useEffect(() => {
@@ -278,10 +379,29 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
     sceneRef.current?.setWireframe(wireframe);
   }, [wireframe, sceneReady]);
 
+  // Track the size of the canvas area as the layout reflows (the controls can
+  // wrap to a different number of rows depending on the width)
+  useEffect(() => {
+    const el = canvasAreaRef.current;
+    if (!el) return;
+    const update = () =>
+      setCanvasSize((prev) =>
+        prev.width === el.clientWidth && prev.height === el.clientHeight
+          ? prev
+          : { width: el.clientWidth, height: el.clientHeight },
+      );
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [client, width, height, showRangeRow, hasTime, compact]);
+
   // Resize
   useEffect(() => {
-    sceneRef.current?.resize(width, canvasHeight);
-  }, [width, canvasHeight, sceneReady]);
+    if (canvasSize.width > 0 && canvasSize.height > 0) {
+      sceneRef.current?.resize(canvasSize.width, canvasSize.height);
+    }
+  }, [canvasSize, sceneReady]);
 
   // Prefetch upcoming frames during playback
   useEffect(() => {
@@ -359,6 +479,16 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
     [client, currentTimeIndex, setCurrentTime, isPlaying],
   );
 
+  const handleBackToStart = useCallback(() => {
+    if (!client) return;
+    setCurrentTime(client.startTimeSec);
+    // If playing, continue from the beginning rather than stopping
+    if (isPlaying) {
+      setPlaybackStartWallClockTime(Date.now());
+      setPlaybackStartDataTime(client.startTimeSec);
+    }
+  }, [client, setCurrentTime, isPlaying]);
+
   const handleTimeSlider = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (!client) return;
@@ -434,12 +564,13 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
         backgroundColor: "#1a1a1a",
       }}
     >
-      {/* 3D canvas */}
+      {/* 3D canvas: takes whatever space the controls leave */}
       <div
+        ref={canvasAreaRef}
         style={{
           position: "relative",
-          width,
-          height: canvasHeight,
+          flex: 1,
+          minHeight: 0,
           overflow: "hidden",
         }}
       >
@@ -449,7 +580,7 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
             colormap={colormap}
             valueMin={displayRange[0]}
             valueMax={displayRange[1]}
-            height={canvasHeight}
+            height={canvasSize.height}
           />
         )}
         {frameLoading && (
@@ -472,7 +603,7 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
       {/* Controls */}
       <div
         style={{
-          height: controlsHeight,
+          flexShrink: 0,
           padding: "8px 12px",
           backgroundColor: "#2a2a2a",
           borderTop: "1px solid #444",
@@ -480,7 +611,6 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
           flexDirection: "column",
           gap: "8px",
           boxSizing: "border-box",
-          overflow: "hidden",
         }}
       >
         {/* Display controls */}
@@ -488,15 +618,16 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "14px",
-            flexWrap: "nowrap",
+            gap: compact ? "8px" : "14px",
+            flexWrap: "wrap",
+            rowGap: "8px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={labelStyle}>Field:</span>
+            {!compact && <span style={labelStyle}>Field:</span>}
             <select
               value={fieldIndex}
-              onChange={(e) => setFieldIndex(parseInt(e.target.value, 10))}
+              onChange={(e) => handleFieldChange(parseInt(e.target.value, 10))}
               style={selectStyle}
             >
               {client.fieldsMeta.map((f, i) => (
@@ -509,12 +640,13 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={labelStyle}>Colormap:</span>
+            {!compact && <span style={labelStyle}>Colormap:</span>}
             <select
               value={colormap}
               onChange={(e) => setColormap(e.target.value)}
               style={selectStyle}
               disabled={fieldIndex < 0}
+              title="Colormap"
             >
               {colormapNames.map((name) => (
                 <option key={name} value={name}>
@@ -525,17 +657,19 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={labelStyle}>Range:</span>
+            {!compact && <span style={labelStyle}>Range:</span>}
             <select
               value={rangeMode}
               onChange={(e) =>
-                setRangeMode(e.target.value as "global" | "frame")
+                setRangeMode(e.target.value as "global" | "frame" | "manual")
               }
               style={selectStyle}
               disabled={fieldIndex < 0}
+              title="Color range mode"
             >
               <option value="global">global</option>
               <option value="frame">per-frame</option>
+              <option value="manual">manual</option>
             </select>
           </div>
 
@@ -549,9 +683,9 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
               value={morph}
               onChange={(e) => setMorph(parseFloat(e.target.value))}
               title="Pull back to the original sphere"
-              style={{ width: 110, cursor: "pointer" }}
+              style={{ width: compact ? 80 : 110, cursor: "pointer" }}
             />
-            <span style={labelStyle}>Embedded</span>
+            <span style={labelStyle}>Embed</span>
           </div>
 
           <label
@@ -562,42 +696,134 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
               gap: "4px",
               cursor: "pointer",
             }}
+            title="Show the mesh wireframe"
           >
             <input
               type="checkbox"
               checked={wireframe}
               onChange={(e) => setWireframe(e.target.checked)}
             />
-            Wireframe
+            {compact ? "Wire" : "Wireframe"}
           </label>
 
           <button
             onClick={() => sceneRef.current?.resetCamera()}
             style={{ ...buttonStyle, backgroundColor: "#666" }}
+            title="Reset the camera"
           >
-            Reset view
+            {compact ? "⟳" : "Reset view"}
           </button>
         </div>
 
+        {/* Color range sliders */}
+        {showRangeRow && fieldBounds && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              flexWrap: "wrap",
+              rowGap: "6px",
+            }}
+          >
+            {!compact && (
+              <span style={{ ...labelStyle, whiteSpace: "nowrap" }}>
+                Color range:
+              </span>
+            )}
+            <span
+              style={{
+                ...labelStyle,
+                minWidth: 46,
+                textAlign: "right",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {formatRangeValue(displayRange[0])}
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={RANGE_SLIDER_STEPS}
+              value={rangeSliderPositions[0]}
+              onChange={(e) =>
+                handleRangeSlider("min", parseInt(e.target.value, 10))
+              }
+              title="Lower end of the color range"
+              style={{ width: compact ? 80 : 110, cursor: "pointer" }}
+            />
+            <input
+              type="range"
+              min={0}
+              max={RANGE_SLIDER_STEPS}
+              value={rangeSliderPositions[1]}
+              onChange={(e) =>
+                handleRangeSlider("max", parseInt(e.target.value, 10))
+              }
+              title="Upper end of the color range"
+              style={{ width: compact ? 80 : 110, cursor: "pointer" }}
+            />
+            <span
+              style={{
+                ...labelStyle,
+                minWidth: 46,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {formatRangeValue(displayRange[1])}
+            </span>
+            <button
+              onClick={() => {
+                setManualRange([fieldBounds[0], fieldBounds[1]]);
+                setRangeMode("global");
+              }}
+              style={{
+                ...buttonStyle,
+                backgroundColor: "#666",
+                padding: "3px 8px",
+              }}
+              title="Reset the color range to the full data range"
+            >
+              Reset
+            </button>
+          </div>
+        )}
+
         {/* Playback controls */}
         {hasTime && (
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: compact ? "6px" : "10px",
+              flexWrap: "wrap",
+              rowGap: "8px",
+            }}
+          >
             <button onClick={handlePlayPause} style={buttonStyle}>
-              {isPlaying ? "⏸ Pause" : "▶ Play"}
+              {isPlaying ? "⏸" : "▶"}
+              {compact ? "" : isPlaying ? " Pause" : " Play"}
+            </button>
+            <button
+              onClick={handleBackToStart}
+              style={{ ...buttonStyle, backgroundColor: "#666" }}
+              title="Back to start"
+            >
+              ⏮
             </button>
             <button
               onClick={() => handleStep(-1)}
               style={{ ...buttonStyle, backgroundColor: "#666" }}
               title="Previous frame"
             >
-              ⏮
+              −1
             </button>
             <button
               onClick={() => handleStep(1)}
               style={{ ...buttonStyle, backgroundColor: "#666" }}
               title="Next frame"
             >
-              ⏭
+              +1
             </button>
             <select
               value={playbackSpeed}
@@ -605,7 +831,7 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
               style={selectStyle}
               title="Playback speed"
             >
-              {PLAYBACK_SPEEDS.map((speed) => (
+              {speedOptions.map((speed) => (
                 <option key={speed} value={speed}>
                   {speed}x
                 </option>
@@ -617,11 +843,12 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
               max={client.numTimes - 1}
               value={currentTimeIndex}
               onChange={handleTimeSlider}
-              style={{ flex: 1, cursor: "pointer" }}
+              style={{ flex: 1, minWidth: 100, cursor: "pointer" }}
             />
             <span style={{ ...labelStyle, whiteSpace: "nowrap" }}>
-              t = {currentTimeSec.toFixed(3)} s ({currentTimeIndex + 1}/
-              {client.numTimes})
+              {compact
+                ? `${currentTimeSec.toFixed(2)}s`
+                : `t = ${currentTimeSec.toFixed(3)} s (${currentTimeIndex + 1}/${client.numTimes})`}
             </span>
           </div>
         )}

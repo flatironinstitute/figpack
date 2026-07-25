@@ -32,6 +32,12 @@ export class SphereScene {
 
     this.#renderer = new THREE.WebGLRenderer({ antialias: true });
     this.#renderer.setPixelRatio(window.devicePixelRatio || 1);
+    // Let the canvas always fill its container via CSS; resize() then only
+    // updates the drawing buffer, so a lagging measurement can never leave a
+    // gap between the canvas and the controls
+    this.#renderer.domElement.style.width = "100%";
+    this.#renderer.domElement.style.height = "100%";
+    this.#renderer.domElement.style.display = "block";
     container.appendChild(this.#renderer.domElement);
 
     // Lighting: ambient plus a headlight attached to the camera so the
@@ -152,7 +158,8 @@ export class SphereScene {
   resize(width: number, height: number): void {
     this.#camera.aspect = width / Math.max(1, height);
     this.#camera.updateProjectionMatrix();
-    this.#renderer.setSize(width, height);
+    // updateStyle=false: the canvas keeps its 100%/100% CSS sizing
+    this.#renderer.setSize(width, height, false);
   }
 
   dispose(): void {

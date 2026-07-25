@@ -42,6 +42,11 @@ export class SphereEmbeddingClient {
   cosTheta: Float64Array;
   phi: Float64Array;
   times: Float64Array | null;
+  // Initial display settings, from the Python view
+  colormap: string;
+  playbackSpeed: number;
+  vmin: number | undefined;
+  vmax: number | undefined;
 
   private constructor(
     zarrGroup: ZarrGroup,
@@ -53,6 +58,10 @@ export class SphereEmbeddingClient {
     cosTheta: Float64Array,
     phi: Float64Array,
     times: Float64Array | null,
+    colormap: string,
+    playbackSpeed: number,
+    vmin: number | undefined,
+    vmax: number | undefined,
   ) {
     this.#zarrGroup = zarrGroup;
     this.nlat = nlat;
@@ -63,6 +72,10 @@ export class SphereEmbeddingClient {
     this.cosTheta = cosTheta;
     this.phi = phi;
     this.times = times;
+    this.colormap = colormap;
+    this.playbackSpeed = playbackSpeed;
+    this.vmin = vmin;
+    this.vmax = vmax;
   }
 
   static async create(zarrGroup: ZarrGroup): Promise<SphereEmbeddingClient> {
@@ -72,6 +85,10 @@ export class SphereEmbeddingClient {
     const numTimes = (attrs["num_times"] as number) || 0;
     const coordsTimeVarying = !!attrs["coords_time_varying"];
     const fieldsMeta = attrs["fields_meta"] as FieldMeta[];
+    const colormap = (attrs["colormap"] as string) || "jet";
+    const playbackSpeed = (attrs["playback_speed"] as number) || 1;
+    const vmin = attrs["vmin"] as number | undefined;
+    const vmax = attrs["vmax"] as number | undefined;
 
     if (nlat === undefined || nphi === undefined || !fieldsMeta) {
       throw new Error("Missing required attributes in zarr group");
@@ -104,6 +121,10 @@ export class SphereEmbeddingClient {
       cosTheta,
       phi,
       times,
+      colormap,
+      playbackSpeed,
+      vmin,
+      vmax,
     );
   }
 

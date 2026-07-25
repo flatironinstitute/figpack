@@ -738,6 +738,9 @@ view = SphereEmbedding(
     cos_theta=cos_theta,
     phi=phi,
     times=times,
+    colormap="jet",       # jet, viridis, plasma, inferno, coolwarm, grayscale
+    playback_speed=0.5,   # initial playback speed multiplier
+    # vmin=..., vmax=...  # initial color range; defaults to the data range
 )
 view.show(title="Sphere Embedding Example", open_in_browser=True)
 ```
@@ -750,9 +753,11 @@ Interactive features:
 - **Orbit controls**: Drag to rotate, scroll to zoom, right-drag to pan
 - **Sphere ⟷ Embedded slider**: Morph ("pull back") between the embedded geometry and the original sphere
 - **Field selector**: Choose which field to display as a heatmap, or `(none)` for a plain surface
-- **Colormap and range**: Several colormaps; color range from the global field min/max or per-frame
+- **Colormap and range**: Several colormaps; color range taken from the global field min/max, computed per-frame, or set manually with the two range sliders
 - **Wireframe** overlay and **Reset view**
-- **Playback** (when a time dimension is present): play/pause, frame stepping, speed selection, and a time slider, synchronized with other time-based views in the same figure
+- **Playback** (when a time dimension is present): play/pause, back-to-start, frame stepping, speed selection, and a time slider, synchronized with other time-based views in the same figure
+
+The controls reflow onto multiple rows at narrow widths, so the view remains usable on small screens.
 
 ## MountainLayout
 

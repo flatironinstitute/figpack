@@ -5,6 +5,9 @@ import numpy as np
 import figpack
 from .experimental_extension import experimental_extension
 
+# Must match the colormaps available in the frontend
+COLORMAPS = ("viridis", "plasma", "inferno", "coolwarm", "jet", "grayscale")
+
 
 class SphereEmbedding(figpack.ExtensionView):
     """
@@ -28,6 +31,10 @@ class SphereEmbedding(figpack.ExtensionView):
         cos_theta: np.ndarray,
         phi: Optional[np.ndarray] = None,
         times: Optional[np.ndarray] = None,
+        colormap: str = "jet",
+        playback_speed: float = 1.0,
+        vmin: Optional[float] = None,
+        vmax: Optional[float] = None,
     ):
         """
         Initialize a SphereEmbedding view
@@ -44,11 +51,28 @@ class SphereEmbedding(figpack.ExtensionView):
                 Defaults to 2*pi*arange(nphi)/nphi (shtns default grid)
             times: Time grid in seconds, shape (num_times,). Required if
                 coords or any field has a time dimension
+            colormap: Initial colormap, one of "jet", "viridis", "plasma",
+                "inferno", "coolwarm", "grayscale"
+            playback_speed: Initial playback speed multiplier, e.g. 0.1 to play
+                at a tenth of real time
+            vmin: Optional initial lower end of the color range. Defaults to the
+                minimum over the first field
+            vmax: Optional initial upper end of the color range. Defaults to the
+                maximum over the first field
         """
         super().__init__(
             extension=experimental_extension,
             view_type="experimental.SphereEmbedding",
         )
+
+        if colormap not in COLORMAPS:
+            raise ValueError(
+                f"Invalid colormap: {colormap}. Options are {', '.join(COLORMAPS)}"
+            )
+        if playback_speed <= 0:
+            raise ValueError(f"playback_speed must be positive, got {playback_speed}")
+        if vmin is not None and vmax is not None and vmin >= vmax:
+            raise ValueError(f"vmin ({vmin}) must be less than vmax ({vmax})")
 
         cos_theta = np.asarray(cos_theta, dtype=np.float64)
         if cos_theta.ndim != 1:
@@ -137,6 +161,10 @@ class SphereEmbedding(figpack.ExtensionView):
         self.nlat = nlat
         self.nphi = nphi
         self.num_times = num_times
+        self.colormap = colormap
+        self.playback_speed = playback_speed
+        self.vmin = vmin
+        self.vmax = vmax
 
     def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
@@ -151,6 +179,12 @@ class SphereEmbedding(figpack.ExtensionView):
         group.attrs["nphi"] = self.nphi
         group.attrs["num_times"] = self.num_times
         group.attrs["coords_time_varying"] = self.coords_time_varying
+        group.attrs["colormap"] = self.colormap
+        group.attrs["playback_speed"] = self.playback_speed
+        if self.vmin is not None:
+            group.attrs["vmin"] = self.vmin
+        if self.vmax is not None:
+            group.attrs["vmax"] = self.vmax
 
         # Field metadata: names refer to datasets field_0, field_1, ...
         fields_meta = []
