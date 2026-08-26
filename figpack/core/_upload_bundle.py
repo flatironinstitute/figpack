@@ -363,12 +363,13 @@ def _upload_bundle(
     all_files = []
     for file_path in tmpdir_path.rglob("*"):
         if file_path.is_file():
-            relative_path = file_path.relative_to(tmpdir_path)
+            # Use POSIX-style separators so paths are valid on the server (Windows uses backslashes)
+            relative_path = file_path.relative_to(tmpdir_path).as_posix()
             # Skip individual zarr metadata files if using consolidated metadata only
             if use_consolidated_metadata_only:
-                if str(relative_path).endswith((".zgroup", ".zarray", ".zattrs")):
+                if relative_path.endswith((".zgroup", ".zarray", ".zattrs")):
                     continue
-            all_files.append((str(relative_path), file_path))
+            all_files.append((relative_path, file_path))
 
     # Calculate total files and size for metadata
     total_files = len(all_files)

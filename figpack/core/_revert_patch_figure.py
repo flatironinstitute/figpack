@@ -83,7 +83,7 @@ def revert_patch_figure(
         for item in backup_subdir.rglob("*"):
             if item.is_file() and item.name != "backup_info.json":
                 rel_path = item.relative_to(backup_subdir)
-                backed_up_files.append(str(rel_path))
+                backed_up_files.append(rel_path.as_posix())
     else:
         with open(backup_info_path) as f:
             backup_info = json.load(f)

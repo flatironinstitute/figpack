@@ -81,7 +81,7 @@ class FileUploadCORSRequestHandler(CORSRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
 
-                response_data = f'{{"status": "success", "path": "{file_path.relative_to(pathlib.Path(self.directory))}"}}'
+                response_data = f'{{"status": "success", "path": "{file_path.relative_to(pathlib.Path(self.directory)).as_posix()}"}}'
                 self.wfile.write(response_data.encode("utf-8"))
 
         except Exception as e:
