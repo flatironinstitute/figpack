@@ -4,6 +4,7 @@
 
 - figpack_experimental: SphereEmbedding view - 3D rendering of a sphere embedded into a new geometry, with scalar field heatmaps, pull-back-to-sphere control, and optional time playback
 - figpack_experimental: SphereEmbedding - colormap (now defaulting to jet), playback speed and color range are settable at figure creation; added color range sliders, a back-to-start button, and a responsive control layout for narrow widths
+- figpack_experimental: SphereEmbedding - playback waits for frames to arrive rather than running ahead of the lazily loaded data, and reads ahead over a wider window with prioritized requests to reduce stuttering
 
 ## [0.3.18] - 2026-03-03
 

@@ -27,7 +27,12 @@ type Props = {
 
 const PLAYBACK_SPEEDS = [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10];
 const DEFAULT_COLORMAP = "jet";
-const PREFETCH_COUNT = 4;
+// Number of frames to read ahead of the frame being displayed
+const PREFETCH_COUNT = 20;
+// Frames that must be in hand before playback starts or resumes after a
+// stall. Waiting for a short run rather than for a single frame keeps
+// playback from stopping again immediately.
+const BUFFER_TARGET_FRAMES = 8;
 const RANGE_SLIDER_STEPS = 500;
 
 const selectStyle: React.CSSProperties = {
@@ -85,12 +90,11 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
   // Playback state (used only when the data has a time dimension)
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const [playbackStartWallClockTime, setPlaybackStartWallClockTime] = useState<
-    number | null
-  >(null);
-  const [playbackStartDataTime, setPlaybackStartDataTime] = useState<
-    number | null
-  >(null);
+  // Non-null while playback is held waiting for frames to arrive
+  const [bufferStatus, setBufferStatus] = useState<{
+    numReady: number;
+    numNeeded: number;
+  } | null>(null);
 
   const { currentTime, setCurrentTime, initializeTimeseriesSelection } =
     useTimeseriesSelection();
@@ -112,6 +116,13 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
   const scratchColorsRef = useRef<Float32Array | null>(null);
   const cameraFittedRef = useRef<boolean>(false);
   const frameRequestIdRef = useRef<number>(0);
+  // Wall-clock reference for playback. Held (rather than advanced) while we
+  // are waiting on data, so that no data time is skipped over.
+  const playbackAnchorRef = useRef<{
+    wallClockMsec: number;
+    dataTimeSec: number;
+  } | null>(null);
+  const bufferingRef = useRef<boolean>(false);
 
   const hasTime = client ? client.hasTime : false;
   const showRangeRow = fieldIndex >= 0;
@@ -328,15 +339,8 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
     const topo = topoRef.current;
     if (!topo) return;
     const requestId = ++frameRequestIdRef.current;
-    setFrameLoading(true);
-    const load = async () => {
-      const [coords, field] = await Promise.all([
-        client.getCoordsFrame(currentTimeIndex),
-        fieldIndex >= 0
-          ? client.getFieldFrame(fieldIndex, currentTimeIndex)
-          : Promise.resolve(null),
-      ]);
-      if (requestId !== frameRequestIdRef.current) return; // stale
+
+    const applyFrame = (coords: Float32Array, field: Float32Array | null) => {
       coordsFrameRef.current = coords;
       if (field) {
         let values = vertexValuesRef.current;
@@ -350,6 +354,28 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
       }
       applyPositions(true);
       applyColors();
+    };
+
+    // Fast path: the frame is already cached, so update the scene right away.
+    // Awaiting here instead would delay every update by a microtask and, more
+    // importantly, would let the "loading" indicator flicker on each frame.
+    const cachedFrame = client.getCachedFrame(fieldIndex, currentTimeIndex);
+    if (cachedFrame) {
+      applyFrame(cachedFrame.coords, cachedFrame.field);
+      setFrameLoading(false);
+      return;
+    }
+
+    setFrameLoading(true);
+    const load = async () => {
+      const [coords, field] = await Promise.all([
+        client.getCoordsFrame(currentTimeIndex),
+        fieldIndex >= 0
+          ? client.getFieldFrame(fieldIndex, currentTimeIndex)
+          : Promise.resolve(null),
+      ]);
+      if (requestId !== frameRequestIdRef.current) return; // stale
+      applyFrame(coords, field);
       setFrameLoading(false);
     };
     load().catch((err) => {
@@ -403,64 +429,114 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
     }
   }, [canvasSize, sceneReady]);
 
-  // Prefetch upcoming frames during playback
+  // Read ahead of the current frame. This is done whether or not playback is
+  // running, so that pressing play on a freshly opened figure does not have to
+  // start by waiting on the network.
   useEffect(() => {
-    if (!client || !isPlaying) return;
-    client.prefetch(fieldIndex, currentTimeIndex + 1, PREFETCH_COUNT);
-  }, [client, isPlaying, currentTimeIndex, fieldIndex]);
+    if (!client || !client.hasTime) return;
+    client.prefetch(fieldIndex, currentTimeIndex, PREFETCH_COUNT);
+  }, [client, currentTimeIndex, fieldIndex]);
 
-  // Playback loop based on wall-clock reference time
+  // Playback loop. Data time advances with the wall clock, except that the
+  // clock is held whenever the frame that would come next has not arrived yet.
+  // The frames are fetched lazily from the cloud, so without this the playhead
+  // would run ahead of the data and the view would appear not to change at all.
   useEffect(() => {
-    if (
-      !isPlaying ||
-      !client ||
-      playbackStartWallClockTime === null ||
-      playbackStartDataTime === null
-    )
-      return;
+    if (!isPlaying || !client) return;
 
     let animationFrameId: number;
     const animate = () => {
-      const elapsedSec = (Date.now() - playbackStartWallClockTime) / 1000;
-      const newDataTime = playbackStartDataTime + elapsedSec * playbackSpeed;
-      if (newDataTime >= client.endTimeSec) {
+      const anchor = playbackAnchorRef.current;
+      if (!anchor) {
+        animationFrameId = requestAnimationFrame(animate);
+        return;
+      }
+      const nowMsec = Date.now();
+      const elapsedSec = (nowMsec - anchor.wallClockMsec) / 1000;
+      const targetTimeSec = anchor.dataTimeSec + elapsedSec * playbackSpeed;
+
+      if (targetTimeSec >= client.endTimeSec) {
         setIsPlaying(false);
         setCurrentTime(client.endTimeSec);
-        setPlaybackStartWallClockTime(null);
-        setPlaybackStartDataTime(null);
-      } else {
-        setCurrentTime(newDataTime);
-        animationFrameId = requestAnimationFrame(animate);
+        playbackAnchorRef.current = null;
+        bufferingRef.current = false;
+        setBufferStatus(null);
+        return;
       }
+
+      const targetIndex = client.getIndexFromTime(targetTimeSec);
+      // Keep the read-ahead window on the frames playback is heading into
+      client.prefetch(fieldIndex, targetIndex, PREFETCH_COUNT);
+
+      // While buffering we wait for a short run of frames; otherwise we only
+      // need the one frame we are about to show
+      const numNeeded = bufferingRef.current
+        ? Math.min(BUFFER_TARGET_FRAMES, client.numTimes - targetIndex)
+        : 1;
+      const numReady = client.numBufferedFrames(
+        fieldIndex,
+        targetIndex,
+        numNeeded,
+      );
+      if (numReady < numNeeded) {
+        // Hold the clock at the time we have already reached, so that the
+        // playhead waits for the data rather than skipping past it
+        playbackAnchorRef.current = {
+          wallClockMsec: nowMsec,
+          dataTimeSec: anchor.dataTimeSec,
+        };
+        bufferingRef.current = true;
+        setBufferStatus((prev) =>
+          prev && prev.numReady === numReady && prev.numNeeded === numNeeded
+            ? prev
+            : { numReady, numNeeded },
+        );
+        animationFrameId = requestAnimationFrame(animate);
+        return;
+      }
+      if (bufferingRef.current) {
+        bufferingRef.current = false;
+        setBufferStatus(null);
+      }
+
+      playbackAnchorRef.current = {
+        wallClockMsec: nowMsec,
+        dataTimeSec: targetTimeSec,
+      };
+      setCurrentTime(targetTimeSec);
+      animationFrameId = requestAnimationFrame(animate);
     };
     animationFrameId = requestAnimationFrame(animate);
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [
-    isPlaying,
-    client,
-    playbackSpeed,
-    playbackStartWallClockTime,
-    playbackStartDataTime,
-    setCurrentTime,
-  ]);
+  }, [isPlaying, client, playbackSpeed, fieldIndex, setCurrentTime]);
+
+  // Restart the wall-clock reference at the given data time. Playback then
+  // buffers a short run of frames before it starts moving again.
+  const anchorPlayback = useCallback((dataTimeSec: number) => {
+    playbackAnchorRef.current = {
+      wallClockMsec: Date.now(),
+      dataTimeSec,
+    };
+    bufferingRef.current = true;
+  }, []);
 
   const handlePlayPause = useCallback(() => {
     if (!client) return;
     const t = currentTime !== undefined ? currentTime : client.startTimeSec;
     if (isPlaying) {
       setIsPlaying(false);
-      setPlaybackStartWallClockTime(null);
-      setPlaybackStartDataTime(null);
+      playbackAnchorRef.current = null;
+      bufferingRef.current = false;
+      setBufferStatus(null);
     } else {
       const startFrom = t >= client.endTimeSec ? client.startTimeSec : t;
       if (startFrom !== t) setCurrentTime(startFrom);
-      setPlaybackStartWallClockTime(Date.now());
-      setPlaybackStartDataTime(startFrom);
+      anchorPlayback(startFrom);
       setIsPlaying(true);
     }
-  }, [isPlaying, client, currentTime, setCurrentTime]);
+  }, [isPlaying, client, currentTime, setCurrentTime, anchorPlayback]);
 
   const handleStep = useCallback(
     (delta: number) => {
@@ -471,23 +547,17 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
       );
       const newTime = client.getTimeFromIndex(newIndex);
       setCurrentTime(newTime);
-      if (isPlaying) {
-        setPlaybackStartWallClockTime(Date.now());
-        setPlaybackStartDataTime(newTime);
-      }
+      if (isPlaying) anchorPlayback(newTime);
     },
-    [client, currentTimeIndex, setCurrentTime, isPlaying],
+    [client, currentTimeIndex, setCurrentTime, isPlaying, anchorPlayback],
   );
 
   const handleBackToStart = useCallback(() => {
     if (!client) return;
     setCurrentTime(client.startTimeSec);
     // If playing, continue from the beginning rather than stopping
-    if (isPlaying) {
-      setPlaybackStartWallClockTime(Date.now());
-      setPlaybackStartDataTime(client.startTimeSec);
-    }
-  }, [client, setCurrentTime, isPlaying]);
+    if (isPlaying) anchorPlayback(client.startTimeSec);
+  }, [client, setCurrentTime, isPlaying, anchorPlayback]);
 
   const handleTimeSlider = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -495,12 +565,9 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
       const timeIndex = parseInt(event.target.value, 10);
       const newTime = client.getTimeFromIndex(timeIndex);
       setCurrentTime(newTime);
-      if (isPlaying) {
-        setPlaybackStartWallClockTime(Date.now());
-        setPlaybackStartDataTime(newTime);
-      }
+      if (isPlaying) anchorPlayback(newTime);
     },
-    [client, setCurrentTime, isPlaying],
+    [client, setCurrentTime, isPlaying, anchorPlayback],
   );
 
   const handleSpeedChange = useCallback(
@@ -508,8 +575,12 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
       const newSpeed = parseFloat(event.target.value);
       setPlaybackSpeed(newSpeed);
       if (isPlaying && currentTime !== undefined) {
-        setPlaybackStartWallClockTime(Date.now());
-        setPlaybackStartDataTime(currentTime);
+        // Re-anchor without forcing a re-buffer: the frames already in hand
+        // are still the right ones
+        playbackAnchorRef.current = {
+          wallClockMsec: Date.now(),
+          dataTimeSec: currentTime,
+        };
       }
     },
     [isPlaying, currentTime],
@@ -583,7 +654,7 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
             height={canvasSize.height}
           />
         )}
-        {frameLoading && (
+        {(bufferStatus || frameLoading) && (
           <div
             style={{
               position: "absolute",
@@ -595,7 +666,9 @@ const SphereEmbeddingView: React.FC<Props> = ({ zarrGroup, width, height }) => {
               pointerEvents: "none",
             }}
           >
-            loading...
+            {bufferStatus
+              ? `buffering... (${bufferStatus.numReady}/${bufferStatus.numNeeded} frames)`
+              : "loading..."}
           </div>
         )}
       </div>
