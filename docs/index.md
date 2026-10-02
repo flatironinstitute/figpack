@@ -10,6 +10,8 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 [Figpack Overview Presentation](https://magland.github.io/figpack-overview-presentation/)
 
+[Figpack for the Curious](https://jeremy.magland.org/posts/2026-10-02-figpack-for-the-curious/) (blog post)
+
 **figpack** is a Python package for creating interactive scientific visualizations that can be displayed directly in web browsers and easily shared. Unlike traditional plotting libraries, figpack produces **self-contained HTML bundles** that include both the rendering logic and the underlying data. This makes figures portable, reproducible, and suitable for long-term archiving (for example, uploading to Zenodo).
 
 At its core, figpack provides a flexible system of **views** (such as time series graphs, images, and domain-specific displays), organized into **layouts** that can compose complex dashboards. Different views within a layout are **synchronized**, sharing state such as the current timepoint, visible time range, or selected units, which enables coordinated exploration across multiple visualizations.

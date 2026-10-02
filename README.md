@@ -10,6 +10,8 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 For detailed guidance, tutorials, and API reference, visit our **[documentation](https://flatironinstitute.github.io/figpack)**.
 
+[Figpack for the Curious](https://jeremy.magland.org/posts/2026-10-02-figpack-for-the-curious/) (blog post)
+
 ## Quick Start
 
 Want to jump right in? Here's how to get started:
