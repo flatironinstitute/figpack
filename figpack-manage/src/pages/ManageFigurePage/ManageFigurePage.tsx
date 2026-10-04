@@ -10,7 +10,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useBacklinks } from "../../hooks/useBacklinks";
 import DeleteDialog from "./DeleteDialog";
-import DocumentReferences from "./DocumentReferences";
 import DownloadInstructions from "./DownloadInstructions";
 import FigureDetails from "./FigureDetails";
 import FigureHeader from "./FigureHeader";
@@ -157,9 +156,6 @@ const ManageFigurePage: React.FC = () => {
             backlinks={backlinks?.filter((b) => b.url === figureUrl)}
           />
         )}
-
-        {/* Document References */}
-        <DocumentReferences figureUrl={figureUrl} formatDate={formatDate} />
 
         {/* Figure Preview */}
         <FigurePreview figureUrl={figureUrl} />

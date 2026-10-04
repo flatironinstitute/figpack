@@ -21,14 +21,6 @@ import {
 	handleDeleteFigure,
 	handleFinalizeFigure,
 } from './handlers/figuresHandler';
-import {
-	handleCreateDocument,
-	handleGetDocument,
-	handleListDocuments,
-	handleUpdateDocument,
-	handleDeleteDocument,
-	handleGetDocumentsReferencingFigure,
-} from './handlers/documentsHandler';
 import { handlePinFigure, handleUnpinFigure, handleRenewFigure, handleRenewBulkFigures } from './handlers/figureOpsHandler';
 import { handleUpload } from './handlers/uploadHandler';
 
@@ -236,49 +228,6 @@ export default {
 		if (url.pathname === '/figures/finalize') {
 			if (request.method.toUpperCase() === 'POST') {
 				return handleFinalizeFigure(request, env, rateLimitResult);
-			}
-			return json({ success: false, message: 'Method not allowed' }, 405);
-		}
-
-		// Documents endpoints
-		if (url.pathname === '/documents/create') {
-			if (request.method.toUpperCase() === 'POST') {
-				return handleCreateDocument(request, env, rateLimitResult);
-			}
-			return json({ success: false, message: 'Method not allowed' }, 405);
-		}
-
-		if (url.pathname === '/documents/get') {
-			if (request.method.toUpperCase() === 'GET') {
-				return handleGetDocument(request, env, rateLimitResult);
-			}
-			return json({ success: false, message: 'Method not allowed' }, 405);
-		}
-
-		if (url.pathname === '/documents/list') {
-			if (request.method.toUpperCase() === 'GET') {
-				return handleListDocuments(request, env, rateLimitResult);
-			}
-			return json({ success: false, message: 'Method not allowed' }, 405);
-		}
-
-		if (url.pathname === '/documents/update') {
-			if (request.method.toUpperCase() === 'PUT') {
-				return handleUpdateDocument(request, env, rateLimitResult);
-			}
-			return json({ success: false, message: 'Method not allowed' }, 405);
-		}
-
-		if (url.pathname === '/documents/delete') {
-			if (request.method.toUpperCase() === 'DELETE') {
-				return handleDeleteDocument(request, env, rateLimitResult);
-			}
-			return json({ success: false, message: 'Method not allowed' }, 405);
-		}
-
-		if (url.pathname === '/documents/get-documents-referencing-figure') {
-			if (request.method.toUpperCase() === 'GET') {
-				return handleGetDocumentsReferencingFigure(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}
