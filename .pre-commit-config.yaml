@@ -17,10 +17,6 @@ repos:
         name: Format figpack_manage package files
         entry: bash -c 'cd figpack-manage && npm run format'
         language: system
-      - id: npm-format-figpack-serve
-        name: Format figpack_serve package files
-        entry: bash -c 'cd figpack-serve && npm run format'
-        language: system
       - id: npm-format-figpack-nwb
         name: Format figpack_nwb package files
         entry: bash -c 'cd extension_packages/figpack_nwb && npm run format'

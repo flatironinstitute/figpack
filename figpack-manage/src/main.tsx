@@ -6,12 +6,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 import "./index.css";
 import App from "./App.tsx";
 
-// Redirect /view?source=... URLs to serve.figpack.org
-if (window.location.pathname === "/view") {
-  const newUrl = `https://serve.figpack.org${window.location.search}${window.location.hash}`;
-  window.location.replace(newUrl);
-}
-
 // No longer do this redirect:
 // // Redirect from figpack.org to manage.figpack.org
 // if (window.location.hostname === "figpack.org") {
