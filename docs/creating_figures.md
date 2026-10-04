@@ -122,4 +122,4 @@ Some figpack views support exporting to SVG format for use in publications and p
 
 ## Archiving on Zenodo
 
-For long-term preservation and citability, you can archive your figures on Zenodo and view them through figpack's web interface. See the [Zenodo Archival Guide](zenodo_archival.md) for details.
+For long-term preservation and citability, you can archive your figures on Zenodo and view them with `figpack view`. See the [Zenodo Archival Guide](zenodo_archival.md) for details.
