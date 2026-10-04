@@ -102,23 +102,6 @@ export interface Figure {
 	sourceUrl?: string /* Deprecated */;
 }
 
-// FigpackDocument interface
-export interface FigpackDocument {
-	id?: number;
-	documentId: string;
-	ownerEmail: string;
-	title: string;
-	content: string;
-	figureRefs: string[]; // JSON string array in DB, parsed array in code
-	// Flattened accessControl
-	viewMode: 'owner-only' | 'users' | 'public';
-	editMode: 'owner-only' | 'users';
-	viewerEmails: string[]; // JSON string array in DB, parsed array in code
-	editorEmails: string[]; // JSON string array in DB, parsed array in code
-	createdAt: number;
-	updatedAt: number;
-}
-
 // Upload-related interfaces
 export interface FileToUpload {
 	relativePath: string;
