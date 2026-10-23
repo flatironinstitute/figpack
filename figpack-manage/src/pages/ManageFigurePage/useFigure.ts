@@ -27,6 +27,11 @@ export interface FigpackStatus {
   pin_info?: PinInfo;
   figureManagementUrl?: string; // to phase out
   figpackManageUrl?: string; // new
+  // Provenance, set for figures made by copying another figure
+  copiedFromUrl?: string;
+  copiedFromOwnerEmail?: string;
+  originalUrl?: string;
+  originalOwnerEmail?: string;
 }
 
 interface UseFigureResult {
