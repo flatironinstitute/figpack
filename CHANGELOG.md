@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## [0.4.0] - 2026-10-23
 
 - figpack-manage remix page: a "Let the assistant see the figure" option (off by default) gives the assistant a `snapshot_figure` tool that takes a snapshot (an image) of the figure in the preview. The page captures itself with html-to-image after it has loaded and its network requests have been idle for 750 ms (up to 15 s by default, 30 s at most) and reports whether it hit the time limit; the image is sent to the model in a user message, only the latest snapshot is kept in the conversation, and thumbnails with the time waited appear in the chat
 - figpack-manage: Remix page (`/remix?figure=<url>`, from a "Remix" button on the Manage Figure page) that renders an in-memory copy of a figure's index.html in a sandboxed iframe, with a text editor for the page; the copy loads the original figure's data and code. Figures need a figure spec in index.html to be remixed. A console panel shows the page's console output, uncaught errors and failed resource loads. A chat panel runs an agent in the browser that edits the page through the figpack LLM endpoint (tools: read the page, find-and-replace edit, read the console), with a model selector and the cost of each turn and of the session. The page and chat are kept as a draft in the browser (IndexedDB, per figure) until reset. The figure's owner can save a remix as `remix-N.html` in the figure directory (listed in manifest.json, so `patch-figure` updates it), and update it later. A saved remix (or any other .html page of a figure) can itself be remixed
