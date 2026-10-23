@@ -6,5 +6,5 @@ This package provides interactive force-directed graph visualization using the f
 
 from .force_graph_view import ForceGraphView
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __all__ = ["ForceGraphView"]

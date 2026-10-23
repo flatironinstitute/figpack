@@ -7,6 +7,7 @@ import numpy as np
 from typing import Optional, Literal
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from .three_d_view import _three_d_extension, CustomJSONEncoder
 
 
@@ -17,6 +18,18 @@ class MeshView(figpack.ExtensionView):
     This view renders a 3D triangle mesh with color mapping based on scalar values
     at each vertex, enabling visualization of functions defined on mesh surfaces.
     """
+
+    spec_schema = SpecSchema(
+        view_type="3d.MeshView",
+        description="Interactive 3D triangle mesh colored by per-vertex scalar values (Three.js).",
+        props=[
+            SpecProp(
+                "config",
+                'JSON string: {colormap: "viridis" | "plasma" | "jet" | "rainbow", wireframe: boolean, scalarRange: [min, max], backgroundColor?: string, cameraPosition?: [x, y, z], enableControls?: boolean}',
+                "Display settings as JSON text; scalarRange sets the colormap limits.",
+            ),
+        ],
+    )
 
     def __init__(
         self,

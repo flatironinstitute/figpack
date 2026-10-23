@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- figpack_nwb 0.1.8, figpack_franklab 0.1.11, figpack_3d 0.1.4, figpack_force_graph 0.1.3: figure spec schemas for PlaneSegmentation, PoseEstimation (`node_names`), DecodedPositionAnimation (trail length, scatter size, patch and arrow colors, arrow length), TrackAnimation, ThreeDView and MeshView (`config`), and ForceGraphView (`config`); these packages now require figpack>=0.4.0. ThreeDView and ForceGraphView always write `config` so it appears in the spec
+
 ## [0.4.0] - 2026-10-23
 
 - figpack-manage remix page: a "Let the assistant see the figure" option (off by default) gives the assistant a `snapshot_figure` tool that takes a snapshot (an image) of the figure in the preview. The page captures itself with html-to-image after it has loaded and its network requests have been idle for 750 ms (up to 15 s by default, 30 s at most) and reports whether it hit the time limit; the image is sent to the model in a user message, only the latest snapshot is kept in the conversation, and thumbnails with the time waited appear in the chat
