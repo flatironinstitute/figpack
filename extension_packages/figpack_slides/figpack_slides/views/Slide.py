@@ -2,6 +2,7 @@ import numpy as np
 from typing import Any, Optional, Dict
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from .slides_extension import slides_extension
 
 
@@ -56,6 +57,43 @@ class SlideFooter:
 
 
 class Slide(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="slides.Slide",
+        description="A slide with a title, optional header and footer bands, a content view and arrow shapes.",
+        props=[
+            SpecProp(
+                "title",
+                "{text, font_size?, font_family?, color?}",
+                "Slide title, also shown in the outline; font_size in pixels (default 32).",
+            ),
+            SpecProp(
+                "hide_title", "boolean", "Hide the title (it still names the slide)."
+            ),
+            SpecProp(
+                "header",
+                "{height, background_color}",
+                "Colored band at the top of the slide; height in pixels.",
+            ),
+            SpecProp(
+                "footer",
+                "{height, background_color}",
+                "Colored band at the bottom of the slide; height in pixels.",
+            ),
+            SpecProp(
+                "background_color",
+                "string (CSS color)",
+                "Background color of the slide (default white).",
+            ),
+            SpecProp(
+                "slide_metadata",
+                "{elements?: list of arrows}",
+                'Arrows drawn over the slide, each {id, type: "shape", shape: "arrow", direction: "right" | "left" | "up" | "down", position: {x, y}, size: {length, thickness}, style: {stroke, strokeWidth, fill}} in slide pixels; other keys are ignored.',
+            ),
+        ],
+        children="views",
+        children_description="content, the view shown below the title.",
+    )
+
     def __init__(
         self,
         *,
@@ -139,5 +177,5 @@ class Slide(figpack.ExtensionView):
             content_group = group.create_group("content")
             self.content.write_to_zarr_group(content_group)
 
-        if self.slide_metadata is not None:
+        if self.slide_metadata:
             group.attrs["slide_metadata"] = self.slide_metadata

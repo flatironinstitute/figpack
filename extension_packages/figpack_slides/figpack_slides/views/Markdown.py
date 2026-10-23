@@ -6,12 +6,19 @@ from typing import Optional
 import numpy as np
 
 from figpack import FigpackView, Group
+from figpack.core._figure_spec import SpecProp, SpecSchema
 
 
 class Markdown(FigpackView):
     """
     A markdown content visualization component
     """
+
+    spec_schema = SpecSchema(
+        view_type="slides.Markdown",
+        description="Markdown text on a slide (the text is stored in data.zarr and cannot be changed through the spec).",
+        props=[SpecProp("font_size", "number", "Font size in pixels.")],
+    )
 
     def __init__(
         self,

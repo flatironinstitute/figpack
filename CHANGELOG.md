@@ -4,6 +4,9 @@
 
 - figpack_nwb 0.1.8, figpack_franklab 0.1.11, figpack_3d 0.1.4, figpack_force_graph 0.1.3: figure spec schemas for PlaneSegmentation, PoseEstimation (`node_names`), DecodedPositionAnimation (trail length, scatter size, patch and arrow colors, arrow length), TrackAnimation, ThreeDView and MeshView (`config`), and ForceGraphView (`config`); these packages now require figpack>=0.4.0. ThreeDView and ForceGraphView always write `config` so it appears in the spec
 - figpack_spike_sorting 0.1.16: figure spec schemas for all spike sorting views, so their user-facing settings appear in the figure spec (CrossCorrelograms `hide_unit_selector`, UnitsTable `columns`, SortingCuration `default_label_options`, UnitLocations and SpikeLocations `disable_auto_rotate`, UnitSimilarityMatrix `range`, UnitMetricsGraph `metrics`, TiledImage layer `label`); Autocorrelograms, AverageWaveforms, RasterPlot and SpikeAmplitudes are documented without props. Requires figpack>=0.4.0
+- figpack_experimental 0.1.16 and figpack_slides 0.2.12 (both now require figpack>=0.4.0): figure spec schemas for their views. SphereEmbedding exposes colormap, playback_speed, vmin and vmax; Slide exposes title, hide_title, header, footer, background_color and slide_metadata (arrows); TitleSlideContent exposes title, subtitle and author; slides Markdown exposes font_size; Slides and Slide list their child views. ClusterLens, EditableNotes, FmriBold, LinearDecode, LossyVideo, MEAMovie and MultiChannelIntervals are documented without props
+- figpack_experimental: EditableNotes now stores `initial_text` (it was never written) and shows it until the notes are edited
+- figpack_slides: Slide writes `slide_metadata` only when it is not empty
 
 ## [0.4.0] - 2026-10-23
 
