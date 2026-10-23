@@ -71,10 +71,18 @@ const ConsolePanel: React.FC<ConsolePanelProps> = ({
           Console
         </Typography>
         {errorCount > 0 && (
-          <Chip size="small" color="error" label={`${errorCount} errors`} />
+          <Chip
+            size="small"
+            color="error"
+            label={`${errorCount} error${errorCount === 1 ? "" : "s"}`}
+          />
         )}
         {warnCount > 0 && (
-          <Chip size="small" color="warning" label={`${warnCount} warnings`} />
+          <Chip
+            size="small"
+            color="warning"
+            label={`${warnCount} warning${warnCount === 1 ? "" : "s"}`}
+          />
         )}
         <Box sx={{ flexGrow: 1 }} />
         <Tooltip title="Clear console">

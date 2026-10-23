@@ -1,12 +1,22 @@
-import { Alert, Box, CircularProgress } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Box, CircularProgress, Tab, Tabs } from "@mui/material";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useAuth } from "../../hooks/useAuth";
+import ChatPanel from "./ChatPanel";
 import ConsolePanel from "./ConsolePanel";
 import HtmlEditor from "./HtmlEditor";
 import RemixHeader from "./RemixHeader";
 import RemixPreview from "./RemixPreview";
 import { hasFigureSpec, toFigureDirUrl, toSrcdoc } from "./remixHtml";
 import useConsoleLog from "./useConsoleLog";
+import type { RemixToolContext } from "./remixTools";
 import useFigureHtml from "./useFigureHtml";
+import useRemixAgent from "./useRemixAgent";
 
 const RemixPage: React.FC = () => {
   const figureUrl = useMemo(() => {
@@ -19,14 +29,36 @@ const RemixPage: React.FC = () => {
   );
 
   const { html: originalHtml, error } = useFigureHtml(figureDirUrl);
-  const [html, setHtml] = useState<string | null>(null);
+  const [html, setHtmlState] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const consoleLog = useConsoleLog();
   const [consoleExpanded, setConsoleExpanded] = useState(true);
+  const [leftTab, setLeftTab] = useState<"chat" | "html">("chat");
+  const { apiKey, isLoggedIn } = useAuth();
+
+  // The page is also kept in a ref, so that consecutive agent edits within
+  // one render see each other's changes
+  const htmlRef = useRef<string | null>(null);
+  const setHtml = useCallback((h: string | null) => {
+    htmlRef.current = h;
+    setHtmlState(h);
+  }, []);
 
   useEffect(() => {
     setHtml(originalHtml);
-  }, [originalHtml]);
+  }, [originalHtml, setHtml]);
+
+  const { getEntries, startReloadWait } = consoleLog;
+  const toolContext: RemixToolContext = useMemo(
+    () => ({
+      getHtml: () => htmlRef.current ?? "",
+      setHtml,
+      getConsoleEntries: getEntries,
+      waitForReload: () => startReloadWait()(),
+    }),
+    [setHtml, getEntries, startReloadWait],
+  );
+  const agent = useRemixAgent(apiKey, toolContext);
 
   const srcdoc = useMemo(
     () => (html !== null && figureDirUrl ? toSrcdoc(html, figureDirUrl) : ""),
@@ -36,7 +68,10 @@ const RemixPage: React.FC = () => {
   const canRemix =
     !error && originalHtml !== null && hasFigureSpec(originalHtml);
 
-  const handleReset = useCallback(() => setHtml(originalHtml), [originalHtml]);
+  const handleReset = useCallback(
+    () => setHtml(originalHtml),
+    [originalHtml, setHtml],
+  );
   const handleReload = useCallback(() => setReloadKey((k) => k + 1), []);
 
   if (!figureUrl) {
@@ -87,7 +122,29 @@ const RemixPage: React.FC = () => {
               flexDirection: "column",
             }}
           >
-            <HtmlEditor html={html} onChange={setHtml} />
+            <Tabs
+              value={leftTab}
+              onChange={(_e, v) => setLeftTab(v)}
+              sx={{
+                minHeight: 36,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Tab value="chat" label="Chat" sx={{ minHeight: 36, py: 0 }} />
+              <Tab value="html" label="HTML" sx={{ minHeight: 36, py: 0 }} />
+            </Tabs>
+            <Box sx={{ flex: 1, minHeight: 0 }}>
+              {leftTab === "chat" ? (
+                <ChatPanel agent={agent} isLoggedIn={isLoggedIn} />
+              ) : (
+                <HtmlEditor
+                  html={html}
+                  onChange={setHtml}
+                  readOnly={agent.running}
+                />
+              )}
+            </Box>
           </Box>
           <Box
             sx={{
