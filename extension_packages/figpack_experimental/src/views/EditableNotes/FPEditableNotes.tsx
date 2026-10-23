@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useMemo } from "react";
+import React, { FunctionComponent, useEffect, useMemo, useState } from "react";
 import {
   FigureAnnotationsAction,
   FigureAnnotationsState,
@@ -30,12 +30,31 @@ const FPEditableNotes: React.FC<Props> = ({ zarrGroup, contexts }) => {
     if (!figureAnnotationsDispatch) return;
     figureAnnotationsDispatch({ type: "reportViewWithAnnotations" });
   }, [figureAnnotationsDispatch]);
+  // Initial text stored with the figure, shown until the notes are edited
+  const [initialText, setInitialText] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    let canceled = false;
+    setInitialText(undefined);
+    zarrGroup
+      .getDatasetData("text", {})
+      .then((data) => {
+        if (canceled || !data) return;
+        setInitialText(new TextDecoder("utf-8").decode(new Uint8Array(data)));
+      })
+      .catch(() => {
+        // Figures without stored initial text
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [zarrGroup]);
   const annotations = useMemo(
     () => figureAnnotations?.annotations[zarrGroup.path],
     [figureAnnotations, zarrGroup.path],
   );
   const { text, setText } = useMemo(() => {
-    const text = annotations ? annotations["notes"] : undefined;
+    const text =
+      annotations?.["notes"] !== undefined ? annotations["notes"] : initialText;
     const setText =
       figureAnnotationsDispatch && figureAnnotations?.editingAnnotations
         ? (text: string) => {
@@ -50,6 +69,7 @@ const FPEditableNotes: React.FC<Props> = ({ zarrGroup, contexts }) => {
     return { text, setText };
   }, [
     annotations,
+    initialText,
     figureAnnotationsDispatch,
     figureAnnotations,
     zarrGroup.path,

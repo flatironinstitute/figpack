@@ -7,6 +7,7 @@ from typing import List, Optional, Union
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .experimental_extension import experimental_extension
 
 
@@ -14,6 +15,11 @@ class MultiChannelIntervals(figpack.ExtensionView):
     """
     A multi-channel intervals visualization component
     """
+
+    spec_schema = SpecSchema(
+        view_type="experimental.MultiChannelIntervals",
+        description="Multi-channel signal in a window around each interval, one interval at a time, with the interval highlighted.",
+    )
 
     def __init__(
         self,

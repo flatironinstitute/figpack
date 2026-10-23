@@ -3,10 +3,16 @@ from typing import Union
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .experimental_extension import experimental_extension
 
 
 class MEAMovie(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="experimental.MEAMovie",
+        description="Movie of multi-electrode array signals drawn at the electrode positions, with optional spike markers.",
+    )
+
     def __init__(
         self,
         raw_data: np.ndarray,

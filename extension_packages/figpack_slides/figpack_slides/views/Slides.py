@@ -1,11 +1,19 @@
 from typing import List
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .slides_extension import slides_extension
 from .Slide import Slide
 
 
 class Slides(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="slides.Slides",
+        description="A slide deck with one slide at a time, keyboard navigation and an outline; slides are 1920 x 1080 pixels, scaled to fit.",
+        children="views",
+        children_description="slides, named slide_1, slide_2, ... in order.",
+    )
+
     def __init__(self, *, slides: List[Slide]):
         """
         A slide deck containing multiple slides

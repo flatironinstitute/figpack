@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_slides",
-    version="0.2.11",
+    version="0.2.12",
     description="Extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
@@ -30,7 +30,7 @@ setup(
     },
     include_package_data=True,
     install_requires=[
-        "figpack>=0.2.28",
+        "figpack>=0.4.0",
         "flask>=2.0.0",
         "flask-cors>=3.0.0",
     ],

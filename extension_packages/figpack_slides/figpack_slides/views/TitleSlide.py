@@ -1,10 +1,33 @@
 from typing import Optional, Dict, Any
 from .slides_extension import slides_extension
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from .Slide import SlideText, Slide
 
 
 class TitleSlideContent(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="slides.TitleSlideContent",
+        description="Content of a title slide: a title, a subtitle and an author line.",
+        props=[
+            SpecProp(
+                "title",
+                "{text, font_size?, font_family?, color?}",
+                "Title; font_size in pixels (default 80).",
+            ),
+            SpecProp(
+                "subtitle",
+                "{text, font_size?, font_family?, color?}",
+                "Subtitle; font_size in pixels (default 40).",
+            ),
+            SpecProp(
+                "author",
+                "{text, font_size?, font_family?, color?}",
+                "Author line; font_size in pixels (default 30).",
+            ),
+        ],
+    )
+
     def __init__(
         self,
         *,

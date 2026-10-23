@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+- figpack_experimental 0.1.16 and figpack_slides 0.2.12 (both now require figpack>=0.4.0): figure spec schemas for their views. SphereEmbedding exposes colormap, playback_speed, vmin and vmax; Slide exposes title, hide_title, header, footer, background_color and slide_metadata (arrows); TitleSlideContent exposes title, subtitle and author; slides Markdown exposes font_size; Slides and Slide list their child views. ClusterLens, EditableNotes, FmriBold, LinearDecode, LossyVideo, MEAMovie and MultiChannelIntervals are documented without props
+- figpack_experimental: EditableNotes now stores `initial_text` (it was never written) and shows it until the notes are edited
+- figpack_slides: Slide writes `slide_metadata` only when it is not empty
+
 ## [0.4.0] - 2026-10-23
 
 - figpack-manage remix page: a "Let the assistant see the figure" option (off by default) gives the assistant a `snapshot_figure` tool that takes a snapshot (an image) of the figure in the preview. The page captures itself with html-to-image after it has loaded and its network requests have been idle for 750 ms (up to 15 s by default, 30 s at most) and reports whether it hit the time limit; the image is sent to the model in a user message, only the latest snapshot is kept in the conversation, and thumbnails with the time waited appear in the chat
