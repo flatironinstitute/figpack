@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 
@@ -15,6 +16,73 @@ class TimeseriesGraph(FigpackView):
     """
     A timeseries graph visualization component
     """
+
+    spec_schema = SpecSchema(
+        view_type="TimeseriesGraph",
+        description="Plots series (lines, markers, intervals, multi-channel signals) against time.",
+        props=[
+            SpecProp("y_label", "string", "Y axis label."),
+            SpecProp(
+                "y_range",
+                "[min, max] | null",
+                "Y axis range; null to fit the data. Zooming in y overrides it.",
+            ),
+            SpecProp(
+                "hide_x_gridlines", "boolean", "Hide the gridlines at the time ticks."
+            ),
+            SpecProp(
+                "hide_y_gridlines", "boolean", "Hide the gridlines at the y ticks."
+            ),
+            SpecProp(
+                "legend_opts",
+                '{location?: "northwest" | "northeast", hideLegend?: boolean}',
+                "Legend placement; no legend is drawn unless location is set.",
+            ),
+            SpecProp(
+                "hide_nav_toolbar",
+                "boolean",
+                "Hide the navigation toolbar below the plot.",
+            ),
+            SpecProp("hide_time_axis_labels", "boolean", "Hide the time axis labels."),
+            SpecProp(
+                "series_names",
+                "list of strings",
+                "Series to draw, in drawing order; each must be a child name.",
+            ),
+        ],
+        children="groups",
+        children_description="series, named as in series_names.",
+        child_props=[
+            SpecProp(
+                "color",
+                "string (CSS color)",
+                "Color of a line, marker or interval series.",
+            ),
+            SpecProp(
+                "width",
+                "number",
+                "Line width in pixels (line and multi-channel series).",
+            ),
+            SpecProp(
+                "dash",
+                "list of numbers",
+                "Dash pattern of a line series in pixels, e.g. [5, 3]; [] for solid.",
+            ),
+            SpecProp("radius", "number", "Marker radius in pixels."),
+            SpecProp("shape", '"circle" | "square"', "Marker shape."),
+            SpecProp("alpha", "number (0 to 1)", "Fill opacity of an interval series."),
+            SpecProp(
+                "border_color",
+                "string | null",
+                "Border color of an interval series; null for none.",
+            ),
+            SpecProp(
+                "colors",
+                "list of strings",
+                "Per-channel colors of a multi-channel (uniform) series.",
+            ),
+        ],
+    )
 
     def __init__(
         self,

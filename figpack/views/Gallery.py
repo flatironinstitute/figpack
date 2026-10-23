@@ -4,6 +4,7 @@ Gallery view for figpack - a gallery layout container that handles other views w
 
 from typing import Any, Dict, List, Optional
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 from .GalleryItem import GalleryItem
@@ -22,6 +23,25 @@ class Gallery(FigpackView):
     This is particularly useful when comparing different datasets or views that
     should not share the same time selection state.
     """
+
+    spec_schema = SpecSchema(
+        view_type="Gallery",
+        description="Shows one child view at a time, selected by tabs; each item has its own time selection.",
+        props=[
+            SpecProp(
+                "items",
+                "list of {name, label}",
+                "Items in display order. name is the child name; label is the tab text.",
+            ),
+            SpecProp(
+                "initial_item_index",
+                "integer",
+                "Index of the item shown first (default 0).",
+            ),
+        ],
+        children="views",
+        children_description="child views, named by items[].name.",
+    )
 
     def __init__(
         self,

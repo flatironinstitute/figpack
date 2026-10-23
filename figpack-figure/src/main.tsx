@@ -19,6 +19,7 @@ import {
 } from "./extensionRegistry.ts";
 import { registerMainPlugin } from "./figpack-main-plugin/index.tsx";
 import { registerCustomZarrDecoder } from "./customZarrDecodersRegistry.ts";
+import { renderFigureSpec } from "./figureSpec.ts";
 
 registerFPViewContextCreator({
   name: "figureAnnotations",
@@ -33,6 +34,12 @@ registerFPViewContextCreator({
   registeredFPViewComponents,
   registeredFPViewContextCreators,
   registeredFPExtensions,
+};
+
+// Public API for scripts in the figure page (see figureSpec.ts)
+(window as any).figpack = {
+  ...((window as any).figpack || {}),
+  render: renderFigureSpec,
 };
 
 registerMainPlugin();

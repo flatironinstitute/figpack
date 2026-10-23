@@ -72,7 +72,7 @@ def test_write_to_zarr(sample_tab_items):
 
     # Check basic attributes
     assert group.attrs["view_type"] == "TabLayout"
-    assert group.attrs["initial_tab_index"] == 1
+    assert group.attrs["initial_item_index"] == 1
 
     # Check items metadata
     items_metadata = group.attrs["items"]

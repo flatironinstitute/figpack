@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add `figpack edit <url>`: downloads a figure's index.html to ~/.figpack/edits/<figure id>, serves it on localhost with other files proxied from the remote figure, reloads the page on local changes, writes the browser console to a log file, and prints a line to hand to an AI agent
+- Figure spec: index.html now contains a `figpack.render(spec)` script with the figure's layout and user-facing settings, plus a short reference for the view types it uses; spec props override the zarr attributes, so editing index.html changes the figure. Exposed props are declared by per-view `spec_schema`s (Box, Splitter, TabLayout, Gallery, VerticalLayout, MountainLayout, CaptionedView, TimeseriesGraph, MultiChannelTimeseries)
+- Any .html page in a figure directory (not only index.html) now loads the figure's data
+- `patch-figure` updates the bundle references in each .html page instead of replacing index.html, so figure specs and edits are kept; all .html pages are backed up
+- Fix reading zarr data from servers that ignore HTTP Range requests (previously returned wrong bytes)
+- TimeseriesGraph: `y_range`, `hide_x_gridlines` and `hide_y_gridlines` now take effect
+- TabLayout: `initial_tab_index` now takes effect
 - Remove Figpack Documents (documents.figpack.org): the figpack-documents app, the /documents API endpoints and figpack_documents table (migration 0009), and the document references panel in figpack-manage
 - Remove figpack-serve (serve.figpack.org) and the figpack.org/view redirect to it; the Zenodo archival guide now uses `figpack view` with the Zenodo URL
 - figpack_experimental: SphereEmbedding view - 3D rendering of a sphere embedded into a new geometry, with scalar field heatmaps, pull-back-to-sphere control, and optional time playback

@@ -4,6 +4,7 @@ MountainLayout view for figpack - a workspace-style layout container with left p
 
 from typing import List
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 from .MountainLayoutItem import MountainLayoutItem
@@ -16,6 +17,20 @@ class MountainLayout(FigpackView):
     - Right panel split into north and south tab workspaces
     - Views can be opened/closed and reopened in either workspace area
     """
+
+    spec_schema = SpecSchema(
+        view_type="MountainLayout",
+        description="A list of view buttons that open child views in tabbed workspaces, with an optional controls panel.",
+        props=[
+            SpecProp(
+                "items",
+                "list of {name, label, is_control, ...}",
+                "Items in display order. name is the child name; label is the button text; is_control puts the item in the controls panel instead.",
+            ),
+        ],
+        children="views",
+        children_description="child views, named by items[].name.",
+    )
 
     def __init__(
         self,

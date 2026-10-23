@@ -7,6 +7,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 
@@ -15,6 +16,11 @@ class MultiChannelTimeseries(FigpackView):
     """
     A multi-channel timeseries visualization component
     """
+
+    spec_schema = SpecSchema(
+        view_type="MultiChannelTimeseries",
+        description="Multi-channel signal sampled at a uniform rate, with zooming and panning.",
+    )
 
     def __init__(
         self,

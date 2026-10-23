@@ -10,6 +10,11 @@ from .figpack_extension import FigpackExtension
 from .extension_view import ExtensionView
 from .zarr import Group, _check_zarr_version
 from ._zarr_consolidate import consolidate_zarr_chunks
+from ._figure_spec import (
+    build_figure_spec,
+    build_figure_spec_docs,
+    insert_figure_spec_into_html,
+)
 
 thisdir = pathlib.Path(__file__).parent.resolve()
 
@@ -28,8 +33,9 @@ def prepare_figure_bundle(
     This function:
     1. Copies all files from the figpack-figure-dist directory to tmpdir
     2. Writes the view data to a zarr group
-    3. Discovers and writes extension JavaScript files
-    4. Consolidates zarr metadata
+    3. Writes the figure spec (layout and settings) into index.html
+    4. Discovers and writes extension JavaScript files
+    5. Consolidates zarr metadata
 
     Args:
         view: The figpack view to prepare
@@ -73,6 +79,19 @@ def prepare_figure_bundle(
             zarr_group.attrs["description"] = description
         if script:
             zarr_group.attrs["script"] = script
+
+        # Write the figure spec (layout and settings) into index.html
+        index_html_path = pathlib.Path(tmpdir) / "index.html"
+        figure_spec = build_figure_spec(zarr_group._zarr_group)
+        figure_spec_docs = build_figure_spec_docs(zarr_group._zarr_group)
+        index_html_path.write_text(
+            insert_figure_spec_into_html(
+                index_html_path.read_text(encoding="utf-8"),
+                figure_spec,
+                figure_spec_docs,
+            ),
+            encoding="utf-8",
+        )
 
         # Discover and write extension JavaScript files
         required_extensions = _discover_required_extensions(view)

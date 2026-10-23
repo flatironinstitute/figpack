@@ -5,6 +5,7 @@ CaptionedView for figpack - displays a view with a caption below it
 from typing import Optional
 import numpy as np
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 
@@ -14,6 +15,16 @@ class CaptionedView(FigpackView):
     A view that displays a child view with a text caption below it.
     The caption height dynamically adjusts based on text length and container width.
     """
+
+    spec_schema = SpecSchema(
+        view_type="CaptionedView",
+        description="A child view with a text caption below it (the caption text is stored in data.zarr).",
+        props=[
+            SpecProp("font_size", "number", "Caption font size in pixels."),
+        ],
+        children="views",
+        children_description="the child view child_view.",
+    )
 
     def __init__(
         self,

@@ -17,6 +17,7 @@ export const createDraw = ({
   globalYRange,
   yRangeMode,
   customYRange,
+  fixedYRange,
 }: {
   visibleStartTimeSec: number;
   visibleEndTimeSec: number;
@@ -24,6 +25,9 @@ export const createDraw = ({
   globalYRange: { yMin: number; yMax: number };
   yRangeMode: "global" | "window";
   customYRange: { yMin: number; yMax: number } | null;
+  // y range set by the figure (y_range); used as is, without padding, unless
+  // the user has zoomed in y
+  fixedYRange?: { yMin: number; yMax: number } | null;
 }) => {
   return async (
     context: CanvasRenderingContext2D,
@@ -154,12 +158,16 @@ export const createDraw = ({
           : globalYRange;
     yRange.yMin = yRange.yMin ?? 0;
     yRange.yMax = yRange.yMax ?? 10;
-    // pad it by 5% on each side
-    const yPadding = (yRange.yMax! - yRange.yMin!) * 0.05;
-    yRange = {
-      yMin: yRange.yMin! - yPadding,
-      yMax: yRange.yMax! + yPadding,
-    };
+    if (!customYRange && fixedYRange) {
+      yRange = { ...fixedYRange };
+    } else {
+      // pad it by 5% on each side
+      const yPadding = (yRange.yMax! - yRange.yMin!) * 0.05;
+      yRange = {
+        yMin: yRange.yMin! - yPadding,
+        yMax: yRange.yMax! + yPadding,
+      };
+    }
 
     // Set clipping region to graph area
     context.save();
