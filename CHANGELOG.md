@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- figpack-api-cf: `POST /llm/chat-completions` forwards chat-completion requests from authenticated users to OpenRouter with a figpack-owned key (models restricted to an allowlist, `max_tokens` capped) and records each request's tokens and cost in a new `llm_usage` table (migration 0010); the response is OpenRouter's plus `figpack_cost_usd`. Per-user daily caps on requests and cost, plus a figpack-wide daily cost cap. `GET /llm/usage` returns the caller's request, token and cost totals, overall and per day for the last 30 days, and for admins the totals across all users and per user
 - Add `figpack remix <url>`: for making a remix (a modified copy of a figure's page that uses the original figure's data); downloads the figure's index.html to ~/.figpack/remixes/<figure id>, serves it on localhost with other files proxied from the remote figure, reloads the page on local changes, writes the browser console to a log file, and prints a line to hand to an AI agent
 - Figure spec: index.html now contains a `figpack.render(spec)` script with the figure's layout and user-facing settings, plus a short reference for the view types it uses; spec props override the zarr attributes, so editing index.html changes the figure. Exposed props are declared by per-view `spec_schema`s (Box, Splitter, TabLayout, Gallery, VerticalLayout, MountainLayout, CaptionedView, TimeseriesGraph, MultiChannelTimeseries)
 - Any .html page in a figure directory (not only index.html) now loads the figure's data
