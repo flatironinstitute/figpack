@@ -61,6 +61,13 @@ The figpack-api-cf Cloudflare Worker has been hardened with multiple layers of p
 - **Location**: `src/handlers/uploadHandler.ts`
 - **Benefit**: Prevents excessively large files from filling R2 storage
 
+### 8. LLM Proxy Limits
+
+- **Endpoints**: `POST /llm/chat-completions` forwards requests to OpenRouter with a figpack-owned key (`OPENROUTER_API_KEY` secret); `GET /llm/usage` reports spending
+- **Location**: `src/handlers/llmHandler.ts`, configured by `LLM_CONFIG` in `src/config.ts`, usage in the `llm_usage` table (migration 0010)
+- **Limits**: models restricted to an allowlist; `max_tokens` capped at 16384; per UTC day, 200 requests and $0.50 per user (2000 requests and $5 for admins), and $10 across all users
+- **Benefit**: Bounds what the figpack OpenRouter key can be charged. Caps are checked against recorded usage before each call, so concurrent requests can overshoot a cap by a few calls
+
 ## Configuration File
 
 All limits are centralized in `src/config.ts`:
