@@ -1,10 +1,11 @@
 """
-Core functionality for editing a remote figure locally
+Core functionality for remixing a figure locally
 
-Downloads the figure's index.html into a local directory and serves that
-directory on localhost. Requests for files that are not present locally
+A remix is a modified copy of a figure's page that reads the original figure's
+data and code; the original figure is not changed. This downloads the figure's
+index.html into a local directory and serves that directory on localhost. Requests for files that are not present locally
 (data.zarr/, assets/, extension .js files, ...) are proxied to the remote
-figure, so the edited page reads the same underlying data via relative paths.
+figure, so the remixed page reads the same underlying data via relative paths.
 
 Served .html pages get a small client script injected (not written to disk)
 that reloads the page when local files change and forwards the browser
@@ -25,11 +26,11 @@ import requests
 from ._figure_utils import get_figure_base_url
 from ._server_manager import CORSRequestHandler
 
-EDITS_DIR = pathlib.Path.home() / ".figpack" / "edits"
+REMIXES_DIR = pathlib.Path.home() / ".figpack" / "remixes"
 
 CONSOLE_LOG_FILENAME = ".console.log"
 
-_ENDPOINT_PREFIX = "/__figpack_edit__/"
+_ENDPOINT_PREFIX = "/__figpack_remix__/"
 
 # Headers passed through from the remote response to the browser
 _PASSTHROUGH_RESPONSE_HEADERS = [
@@ -44,10 +45,10 @@ _PASSTHROUGH_RESPONSE_HEADERS = [
 
 _CLIENT_JS = r"""
 (function () {
-  var prefix = "/__figpack_edit__/";
+  var prefix = "/__figpack_remix__/";
   var page = location.pathname;
 
-  // Forward console output and uncaught errors to the edit server
+  // Forward console output and uncaught errors to the remix server
   var queue = [];
   var flushTimer = null;
   function flush() {
@@ -131,7 +132,7 @@ def _make_handler(
     log_lock = threading.Lock()
 
     # CORSRequestHandler serves local files with support for Range requests
-    class EditFigureRequestHandler(CORSRequestHandler):
+    class RemixRequestHandler(CORSRequestHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=str(local_dir), **kwargs)
 
@@ -258,28 +259,28 @@ def _make_handler(
         def log_message(self, format, *args):
             pass
 
-    return EditFigureRequestHandler
+    return RemixRequestHandler
 
 
-def edit_figure(
+def remix_figure(
     figure_url: str,
     *,
     dir_path: Union[str, None] = None,
     port: Union[int, None] = None,
 ) -> None:
     """
-    Download a figure's index.html and serve it locally for editing
+    Download a figure's index.html and serve it locally for remixing
 
     Args:
-        figure_url: The figpack URL of the figure to edit
-        dir_path: Local directory for the editable files (default: ~/.figpack/edits/<figure id>)
+        figure_url: The figpack URL of the figure to remix
+        dir_path: Local directory for the remix (default: ~/.figpack/remixes/<figure id>)
         port: Port number to serve on (default: auto-select)
     """
     remote_base_url = get_figure_base_url(figure_url)
 
     if dir_path is None:
         figure_id = remote_base_url.rstrip("/").split("/")[-1]
-        local_dir = EDITS_DIR / figure_id
+        local_dir = REMIXES_DIR / figure_id
     else:
         local_dir = pathlib.Path(dir_path).resolve()
     local_dir.mkdir(parents=True, exist_ok=True)
@@ -316,10 +317,10 @@ def edit_figure(
             "The figure's layout and settings are in the figpack.render(...) script at the end of the page, "
             "and the reference just above it documents the spec and the props of each view type. "
         )
-    print("To edit with an AI agent, give it this line:")
+    print("To remix with an AI agent, give it this line:")
     print("")
     print(
-        f"Edit the figpack figure page {index_html} (preview: {local_url}). "
+        f"Create a remix of a figpack figure by editing {index_html} (preview: {local_url}). "
         f"{spec_note}"
         f"Files not in {local_dir} (data.zarr/, assets/, extension .js) are proxied from {remote_base_url}, "
         f"so keep relative references to them unchanged. "

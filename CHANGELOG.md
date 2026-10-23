@@ -2,10 +2,10 @@
 
 ## Unreleased
 
-- Add `figpack edit <url>`: downloads a figure's index.html to ~/.figpack/edits/<figure id>, serves it on localhost with other files proxied from the remote figure, reloads the page on local changes, writes the browser console to a log file, and prints a line to hand to an AI agent
+- Add `figpack remix <url>`: for making a remix (a modified copy of a figure's page that uses the original figure's data); downloads the figure's index.html to ~/.figpack/remixes/<figure id>, serves it on localhost with other files proxied from the remote figure, reloads the page on local changes, writes the browser console to a log file, and prints a line to hand to an AI agent
 - Figure spec: index.html now contains a `figpack.render(spec)` script with the figure's layout and user-facing settings, plus a short reference for the view types it uses; spec props override the zarr attributes, so editing index.html changes the figure. Exposed props are declared by per-view `spec_schema`s (Box, Splitter, TabLayout, Gallery, VerticalLayout, MountainLayout, CaptionedView, TimeseriesGraph, MultiChannelTimeseries)
 - Any .html page in a figure directory (not only index.html) now loads the figure's data
-- `patch-figure` updates the bundle references in each .html page instead of replacing index.html, so figure specs and edits are kept; all .html pages are backed up
+- `patch-figure` updates the bundle references in each .html page instead of replacing index.html, so figure specs and remixed pages are kept; all .html pages are backed up
 - Fix reading zarr data from servers that ignore HTTP Range requests (previously returned wrong bytes)
 - TimeseriesGraph: `y_range`, `hide_x_gridlines` and `hide_y_gridlines` now take effect
 - TabLayout: `initial_tab_index` now takes effect
