@@ -57,7 +57,9 @@ const ManageButton: React.FC<{ figpackManageUrl: string }> = ({
   figpackManageUrl,
 }) => {
   const handleManageClick = () => {
-    const currentUrl = window.location.href;
+    // document.baseURI rather than location.href, so that a remix rendered in
+    // an iframe srcdoc (with <base href>) still points at its figure
+    const currentUrl = document.baseURI;
     const managementUrl = `${figpackManageUrl}/figure?figure_url=${encodeURIComponent(currentUrl)}`;
     window.open(managementUrl, "_blank");
   };

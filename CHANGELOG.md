@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- figpack-manage: Remix page (`/remix?figure=<url>`, from a "Remix" button on the Manage Figure page) that renders an in-memory copy of a figure's index.html in a sandboxed iframe, with a text editor for the page; the copy loads the original figure's data and code. Figures need a figure spec in index.html to be remixed
+- figpack-figure: resolve the figure directory from `document.baseURI`, so a page with `<base href>` (such as a remix rendered via iframe srcdoc) loads the figure's data
 - Add `figpack edit <url>`: downloads a figure's index.html to ~/.figpack/edits/<figure id>, serves it on localhost with other files proxied from the remote figure, reloads the page on local changes, writes the browser console to a log file, and prints a line to hand to an AI agent
 - Figure spec: index.html now contains a `figpack.render(spec)` script with the figure's layout and user-facing settings, plus a short reference for the view types it uses; spec props override the zarr attributes, so editing index.html changes the figure. Exposed props are declared by per-view `spec_schema`s (Box, Splitter, TabLayout, Gallery, VerticalLayout, MountainLayout, CaptionedView, TimeseriesGraph, MultiChannelTimeseries)
 - Any .html page in a figure directory (not only index.html) now loads the figure's data
