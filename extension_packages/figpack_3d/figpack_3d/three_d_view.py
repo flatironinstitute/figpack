@@ -8,6 +8,7 @@ import zarr
 from typing import List, Dict, Any, Optional, Tuple
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -53,6 +54,18 @@ class ThreeDView(figpack.ExtensionView):
     This view displays interactive 3D scenes with various geometric objects,
     supporting mouse controls, lighting, and customizable styling.
     """
+
+    spec_schema = SpecSchema(
+        view_type="3d.ThreeDView",
+        description="Interactive 3D scene of cubes, spheres and cylinders (Three.js), rotated with the mouse.",
+        props=[
+            SpecProp(
+                "config",
+                "JSON string: {backgroundColor?: string, cameraPosition?: [x, y, z], enableControls?: boolean}",
+                "Scene settings as JSON text; defaults are black, [5, 5, 5] and true.",
+            ),
+        ],
+    )
 
     def __init__(
         self,
@@ -253,8 +266,7 @@ class ThreeDView(figpack.ExtensionView):
             config["enableControls"] = False
 
         # Store configuration as JSON in attributes
-        if config:
-            group.attrs["config"] = json.dumps(config)
+        group.attrs["config"] = json.dumps(config)
 
         # Store data size for reference
         group.attrs["data_size"] = len(json_bytes)

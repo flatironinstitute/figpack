@@ -3,6 +3,7 @@ from typing import Dict, Optional, Union
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from .experimental_extension import experimental_extension
 
 # Must match the colormaps available in the frontend
@@ -22,6 +23,33 @@ class SphereEmbedding(figpack.ExtensionView):
     The geometry and the fields may optionally vary over time, in which case a
     time grid (in seconds) must be provided.
     """
+
+    spec_schema = SpecSchema(
+        view_type="experimental.SphereEmbedding",
+        description="3D view of a sphere embedded into a new geometry, with scalar fields shown as heatmaps on the surface.",
+        props=[
+            SpecProp(
+                "colormap",
+                '"jet" | "viridis" | "plasma" | "inferno" | "coolwarm" | "grayscale"',
+                "Initial colormap.",
+            ),
+            SpecProp(
+                "playback_speed",
+                "number",
+                "Initial playback speed relative to real time (time-varying data).",
+            ),
+            SpecProp(
+                "vmin",
+                "number",
+                "Initial lower end of a manual color range; defaults to the minimum of the first field.",
+            ),
+            SpecProp(
+                "vmax",
+                "number",
+                "Initial upper end of a manual color range; defaults to the maximum of the first field.",
+            ),
+        ],
+    )
 
     def __init__(
         self,

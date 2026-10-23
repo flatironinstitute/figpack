@@ -1,10 +1,16 @@
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .experimental_extension import experimental_extension
 
 
 class FmriBold(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="experimental.FmriBold",
+        description="fMRI BOLD volume over time, shown one slice at a time, with the time course of a selected voxel.",
+    )
+
     def __init__(
         self, data: np.ndarray, *, resolution: list[float], temporal_resolution: float
     ):

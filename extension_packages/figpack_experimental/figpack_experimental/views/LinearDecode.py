@@ -9,12 +9,18 @@ import numpy as np
 from typing import Optional
 
 from figpack import Group, ExtensionView
+from figpack.core._figure_spec import SpecSchema
 
 
 class LinearDecode(ExtensionView):
     """
     A linear decode visualization component for time-position data
     """
+
+    spec_schema = SpecSchema(
+        view_type="experimental.LinearDecode",
+        description="Heatmap of decoded position over time, with the observed position drawn as a line.",
+    )
 
     def __init__(
         self,

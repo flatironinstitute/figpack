@@ -9,6 +9,7 @@ from typing import Any, List, Union
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 
 pyvips_installation_msg = "To use TiledImage you need to install pyvips (conda install -c conda-forge pyvips recommended)"
@@ -49,6 +50,14 @@ class TiledImage(figpack.ExtensionView):
     """
     A view that displays large images using tiled rendering for efficient viewing
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.TiledImage",
+        description="Large image with zooming and panning; a menu switches between layers.",
+        children="groups",
+        children_description="layers, named layer_0, layer_1, ...",
+        child_props=[SpecProp("label", "string", "Layer name in the layer menu.")],
+    )
 
     def __init__(
         self, *, tile_size: int, layers: List[TiledImageLayer], verbose: bool = False

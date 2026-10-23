@@ -7,6 +7,7 @@ from typing import List, Union
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 
 
@@ -29,6 +30,18 @@ class UnitLocations(figpack.ExtensionView):
     """
     A view that displays the locations of units in a 2D space
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.UnitLocations",
+        description="Unit locations on the probe layout; clicking units sets the unit selection.",
+        props=[
+            SpecProp(
+                "disable_auto_rotate",
+                "boolean",
+                "Do not rotate the probe layout by 90 degrees to match the view's orientation.",
+            ),
+        ],
+    )
 
     def __init__(
         self,

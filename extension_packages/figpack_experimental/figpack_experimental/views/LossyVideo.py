@@ -1,11 +1,17 @@
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .experimental_extension import experimental_extension
 from .MP4Codec import MP4Codec
 
 
 class LossyVideo(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="experimental.LossyVideo",
+        description="Video stored with lossy (MP4) compression, with playback controls.",
+    )
+
     def __init__(self, data: np.ndarray, *, fps: float):
         """
         Initialize a LossyVideo view

@@ -9,6 +9,7 @@ from .RasterPlotItem import RasterPlotItem
 from .UnitsTable import UnitsTable, UnitsTableColumn, UnitsTableRow
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 import figpack.views as fv
 from ..spike_sorting_extension import spike_sorting_extension
 
@@ -17,6 +18,11 @@ class RasterPlot(figpack.ExtensionView):
     """
     A view that displays multiple raster plots for spike sorting analysis
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.RasterPlot",
+        description="Spike raster of all units against time, with zooming and panning.",
+    )
 
     def __init__(
         self,

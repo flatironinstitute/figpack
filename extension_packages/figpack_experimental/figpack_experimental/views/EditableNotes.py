@@ -1,10 +1,16 @@
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .experimental_extension import experimental_extension
 
 
 class EditableNotes(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="experimental.EditableNotes",
+        description="Text notes edited in annotation mode; the initial text is stored in data.zarr and edits in the figure's annotations, not in the spec.",
+    )
+
     def __init__(
         self,
         *,
@@ -22,7 +28,7 @@ class EditableNotes(figpack.ExtensionView):
 
         self.initial_text = initial_text
 
-    def _write_to_zarr_group(self, group: figpack.Group) -> None:
+    def write_to_zarr_group(self, group: figpack.Group) -> None:
         """
         Write the data to a Zarr group
 
@@ -31,7 +37,9 @@ class EditableNotes(figpack.ExtensionView):
         """
         super().write_to_zarr_group(group)
 
-        group.create_dataset("text", data=text_to_bytes(self.initial_text))
+        # Shown until the notes are edited (edits are stored as annotations)
+        if self.initial_text:
+            group.create_dataset("text", data=text_to_bytes(self.initial_text))
 
 
 def text_to_bytes(text: str) -> np.ndarray:
