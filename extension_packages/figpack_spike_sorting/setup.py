@@ -29,7 +29,7 @@ setup(
         "figpack_spike_sorting": ["*.js", "*.css"],
     },
     include_package_data=True,
-    install_requires=["figpack>=0.2.17"],
+    install_requires=["figpack>=0.4.0"],
     python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",

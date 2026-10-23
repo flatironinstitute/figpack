@@ -8,6 +8,7 @@ import json
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 from .UnitSimilarityScore import UnitSimilarityScore
 from .UnitsTableColumn import UnitsTableColumn
@@ -18,6 +19,18 @@ class UnitsTable(figpack.ExtensionView):
     """
     A view that displays a table of units with their properties and optional similarity scores
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.UnitsTable",
+        description="Sortable table of units; clicking rows sets the unit selection.",
+        props=[
+            SpecProp(
+                "columns",
+                'list of {key, label, dtype: "int" | "float" | "str" | "bool"}',
+                "Columns in display order, after the built-in Unit column. key names a value in the row data (a unitId column is skipped); label is the header text; dtype sets how the column sorts.",
+            ),
+        ],
+    )
 
     def __init__(
         self,
