@@ -18,6 +18,8 @@ type ChatItemBody =
       args: string;
       result: string;
       isError: boolean;
+      imageDataUrl?: string;
+      imageCaption?: string;
     }
   | { kind: "turn-end"; costUsd: number; llmCalls: number }
   | { kind: "error"; text: string };
@@ -30,6 +32,8 @@ const useRemixAgent = (apiKey: string, toolContext: RemixToolContext) => {
   const [running, setRunning] = useState(false);
   const [sessionCostUsd, setSessionCostUsd] = useState(0);
   const [model, setModel] = useState(DEFAULT_LLM_MODEL);
+  // Off by default and not kept in drafts, since snapshots add cost
+  const [allowSnapshots, setAllowSnapshots] = useState(false);
   const historyRef = useRef<LlmMessage[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const nextId = useRef(1);
@@ -64,6 +68,7 @@ const useRemixAgent = (apiKey: string, toolContext: RemixToolContext) => {
           history: historyRef.current,
           userText: text,
           model,
+          allowSnapshots,
           callLlm: createLlmClient(apiKey),
           toolContext,
           onEvent,
@@ -92,7 +97,7 @@ const useRemixAgent = (apiKey: string, toolContext: RemixToolContext) => {
         setRunning(false);
       }
     },
-    [running, model, apiKey, toolContext, addItem],
+    [running, model, allowSnapshots, apiKey, toolContext, addItem],
   );
 
   const cancel = useCallback(() => abortRef.current?.abort(), []);
@@ -128,6 +133,8 @@ const useRemixAgent = (apiKey: string, toolContext: RemixToolContext) => {
       sessionCostUsd,
       model,
       setModel,
+      allowSnapshots,
+      setAllowSnapshots,
       sendMessage,
       cancel,
       newChat,
@@ -139,6 +146,7 @@ const useRemixAgent = (apiKey: string, toolContext: RemixToolContext) => {
       running,
       sessionCostUsd,
       model,
+      allowSnapshots,
       sendMessage,
       cancel,
       newChat,
