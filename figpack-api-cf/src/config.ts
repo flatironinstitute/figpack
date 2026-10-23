@@ -56,3 +56,22 @@ export const API_LIMITS = {
 	RATE_LIMIT_CLEANUP_INTERVAL_MS: 60 * 60 * 1000, // 1 hour
 	RATE_LIMIT_RETENTION_MS: 24 * 60 * 60 * 1000, // 24 hours
 } as const;
+
+/**
+ * LLM proxy configuration (POST /llm/chat-completions)
+ * Prices are OpenRouter's per million tokens (input / output) as of 2026-10-23.
+ */
+export const LLM_CONFIG = {
+	OPENROUTER_URL: 'https://openrouter.ai/api/v1/chat/completions',
+	DEFAULT_MODEL: 'anthropic/claude-haiku-5.5',
+	ALLOWED_MODELS: [
+		'anthropic/claude-haiku-5.5', // $0.10 / $0.50
+		'openai/gpt-6-luna', // $0.10 / $0.50
+		'deepseek/deepseek-v4.1-flash-1017', // $0.15 / $0.60
+		'google/gemini-3.5-flash-lite', // $0.30 / $2.50
+		'qwen/qwen3.7-flash', // $0.03 / $0.13
+	] as readonly string[],
+	DEFAULT_MAX_TOKENS: 4096,
+	MAX_MAX_TOKENS: 16384,
+	MAX_PURPOSE_LENGTH: 64,
+} as const;

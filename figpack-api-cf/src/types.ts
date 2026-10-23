@@ -6,6 +6,7 @@ export interface Env {
 	RESEND_API_KEY: string; // Add as a secret in Cloudflare for email sending
 	NEW_ACCOUNT_ACCESS_CODES: string; // Comma-separated list of valid access codes for account creation
 	MAX_BUCKETS_PER_USER?: string; // Max buckets a non-admin user can own. Defaults to 5.
+	OPENROUTER_API_KEY?: string; // Add as a secret in Cloudflare for the /llm endpoints
 }
 
 // User interface matching original API (camelCase)
