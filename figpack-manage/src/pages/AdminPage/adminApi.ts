@@ -337,3 +337,45 @@ export const getAllUsersUsageStats = async (
     };
   }
 };
+
+export interface LlmUsageTotals {
+  requests: number;
+  promptTokens: number;
+  completionTokens: number;
+  costUsd: number;
+}
+
+export interface LlmUsageResult {
+  success: boolean;
+  message?: string;
+  user?: {
+    email: string;
+    total: LlmUsageTotals;
+    daily: (LlmUsageTotals & { day: string })[];
+    today: LlmUsageTotals & { maxRequests: number; maxCostUsd: number };
+  };
+  // Only present for admin API keys
+  all?: {
+    total: LlmUsageTotals;
+    daily: (LlmUsageTotals & { day: string })[];
+    today: LlmUsageTotals & { maxCostUsd: number };
+    perUser: (LlmUsageTotals & { email: string; lastRequestAt: number })[];
+  };
+}
+
+// Get LLM request counts, tokens and cost (GET /llm/usage)
+export const getLlmUsage = async (apiKey: string): Promise<LlmUsageResult> => {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
+  }
+
+  try {
+    const response = await fetch(`${FIGPACK_API_BASE_URL}/llm/usage`, {
+      method: "GET",
+      headers: { "x-api-key": apiKey },
+    });
+    return await response.json();
+  } catch (err) {
+    return { success: false, message: `Error getting LLM usage: ${err}` };
+  }
+};
