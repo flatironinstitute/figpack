@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 
 
@@ -49,6 +50,18 @@ class SpikeLocations(figpack.ExtensionView):
     """
     A view that displays spike locations in 2D space
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.SpikeLocations",
+        description="Spike locations of the selected units on the probe layout.",
+        props=[
+            SpecProp(
+                "disable_auto_rotate",
+                "boolean",
+                "Do not rotate the probe layout by 90 degrees to match the view's orientation.",
+            ),
+        ],
+    )
 
     def __init__(
         self,

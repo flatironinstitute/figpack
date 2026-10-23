@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- figpack_spike_sorting 0.1.16: figure spec schemas for all spike sorting views, so their user-facing settings appear in the figure spec (CrossCorrelograms `hide_unit_selector`, UnitsTable `columns`, SortingCuration `default_label_options`, UnitLocations and SpikeLocations `disable_auto_rotate`, UnitSimilarityMatrix `range`, UnitMetricsGraph `metrics`, TiledImage layer `label`); Autocorrelograms, AverageWaveforms, RasterPlot and SpikeAmplitudes are documented without props. Requires figpack>=0.4.0
+
 ## [0.4.0] - 2026-10-23
 
 - figpack-manage remix page: a "Let the assistant see the figure" option (off by default) gives the assistant a `snapshot_figure` tool that takes a snapshot (an image) of the figure in the preview. The page captures itself with html-to-image after it has loaded and its network requests have been idle for 750 ms (up to 15 s by default, 30 s at most) and reports whether it hit the time limit; the image is sent to the model in a user message, only the latest snapshot is kept in the conversation, and thumbnails with the time waited appear in the chat

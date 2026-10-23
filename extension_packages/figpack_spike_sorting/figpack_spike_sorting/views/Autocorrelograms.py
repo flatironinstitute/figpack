@@ -19,7 +19,7 @@ class Autocorrelograms(figpack.ExtensionView):
 
     spec_schema = SpecSchema(
         view_type="spike_sorting.Autocorrelograms",
-        description="Autocorrelograms of the selected units.",
+        description="Autocorrelogram of each unit.",
     )
 
     def __init__(
