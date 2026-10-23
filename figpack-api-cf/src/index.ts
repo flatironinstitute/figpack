@@ -23,7 +23,7 @@ import {
 } from './handlers/figuresHandler';
 import { handlePinFigure, handleUnpinFigure, handleRenewFigure, handleRenewBulkFigures } from './handlers/figureOpsHandler';
 import { handleUpload } from './handlers/uploadHandler';
-import { handleLlmChatCompletions } from './handlers/llmHandler';
+import { handleLlmChatCompletions, handleGetLlmUsage } from './handlers/llmHandler';
 
 export type { Env } from './types';
 
@@ -274,6 +274,13 @@ export default {
 		if (url.pathname === '/llm/chat-completions') {
 			if (request.method.toUpperCase() === 'POST') {
 				return handleLlmChatCompletions(request, env, rateLimitResult);
+			}
+			return json({ success: false, message: 'Method not allowed' }, 405);
+		}
+
+		if (url.pathname === '/llm/usage') {
+			if (request.method.toUpperCase() === 'GET') {
+				return handleGetLlmUsage(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}

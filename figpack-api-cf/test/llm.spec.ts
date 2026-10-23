@@ -104,3 +104,84 @@ describe('POST /llm/chat-completions', () => {
 		expect(count).toBe(0);
 	});
 });
+
+async function insertUsage(email: string, costUsd: number, createdAt = Date.now(), count = 1) {
+	for (let i = 0; i < count; i++) {
+		await env.figpack_db
+			.prepare(
+				'INSERT INTO llm_usage (user_email, model, prompt_tokens, completion_tokens, cost_usd, created_at) VALUES (?, ?, ?, ?, ?, ?);',
+			)
+			.bind(email, 'anthropic/claude-haiku-5.5', 100, 10, costUsd, createdAt)
+			.run();
+	}
+}
+
+describe('daily caps', () => {
+	const messages = [{ role: 'user', content: 'hi' }];
+
+	it('rejects a user who reached the daily cost cap', async () => {
+		await insertUsage('user@example.com', 0.5);
+		const resp = await chatRequest({ messages });
+		expect(resp.status).toBe(429);
+		expect(((await resp.json()) as any).message).toContain('cost limit');
+	});
+
+	it('rejects a user who reached the daily request cap', async () => {
+		await insertUsage('user@example.com', 0, Date.now(), 200);
+		expect((await chatRequest({ messages })).status).toBe(429);
+	});
+
+	it('ignores usage from previous days and gives admins a higher cap', async () => {
+		await insertUsage('user@example.com', 1, Date.now() - 2 * 24 * 60 * 60 * 1000);
+		await insertUsage('admin@example.com', 1);
+		mockOpenRouter(200, okResponse);
+		expect((await chatRequest({ messages })).status).toBe(200);
+		mockOpenRouter(200, okResponse);
+		expect((await chatRequest({ messages }, ADMIN_KEY)).status).toBe(200);
+	});
+
+	it('rejects everyone once the global daily budget is reached', async () => {
+		await insertUsage('admin@example.com', 10);
+		expect((await chatRequest({ messages })).status).toBe(429);
+	});
+});
+
+describe('GET /llm/usage', () => {
+	const getUsage = (apiKey: string) => SELF.fetch('https://example.com/llm/usage', { headers: { 'x-api-key': apiKey } });
+	const day = 24 * 60 * 60 * 1000;
+
+	beforeEach(async () => {
+		await insertUsage('user@example.com', 0.01, Date.now(), 2);
+		await insertUsage('user@example.com', 0.02, Date.now() - 3 * day);
+		await insertUsage('user@example.com', 0.04, Date.now() - 40 * day);
+		await insertUsage('admin@example.com', 0.1);
+	});
+
+	it("returns the caller's totals, daily breakdown and today's usage", async () => {
+		const resp = await getUsage(USER_KEY);
+		expect(resp.status).toBe(200);
+		const data = (await resp.json()) as any;
+		expect(data.all).toBeUndefined();
+		expect(data.user.email).toBe('user@example.com');
+		expect(data.user.total).toEqual({ requests: 4, promptTokens: 400, completionTokens: 40, costUsd: expect.closeTo(0.08) });
+		expect(data.user.daily).toHaveLength(2); // The 40-day-old row is outside the 30-day window
+		expect(data.user.daily[0]).toMatchObject({ requests: 2, costUsd: expect.closeTo(0.02) });
+		expect(data.user.today).toMatchObject({ requests: 2, maxRequests: 200, maxCostUsd: 0.5 });
+	});
+
+	it('returns totals for all users and per user to admins', async () => {
+		const data = (await (await getUsage(ADMIN_KEY)).json()) as any;
+		expect(data.user.email).toBe('admin@example.com');
+		expect(data.user.today).toMatchObject({ requests: 1, maxRequests: 2000, maxCostUsd: 5 });
+		expect(data.all.total.requests).toBe(5);
+		expect(data.all.today).toMatchObject({ requests: 3, maxCostUsd: 10 });
+		expect(data.all.perUser.map((u: any) => [u.email, u.requests])).toEqual([
+			['admin@example.com', 1],
+			['user@example.com', 4],
+		]);
+	});
+
+	it('requires a valid API key', async () => {
+		expect((await getUsage('wrong-key')).status).toBe(401);
+	});
+});

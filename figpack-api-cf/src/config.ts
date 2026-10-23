@@ -74,4 +74,12 @@ export const LLM_CONFIG = {
 	DEFAULT_MAX_TOKENS: 4096,
 	MAX_MAX_TOKENS: 16384,
 	MAX_PURPOSE_LENGTH: 64,
+
+	// Daily caps (per UTC day), counted from the llm_usage table
+	DAILY_LIMITS: {
+		USER: { MAX_REQUESTS: 200, MAX_COST_USD: 0.5 },
+		ADMIN: { MAX_REQUESTS: 2000, MAX_COST_USD: 5 },
+		GLOBAL_MAX_COST_USD: 10, // Across all users
+	},
+	USAGE_HISTORY_DAYS: 30, // Days of per-day totals returned by GET /llm/usage
 } as const;
