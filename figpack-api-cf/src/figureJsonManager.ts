@@ -1,4 +1,4 @@
-import { BucketInfo, putObject } from './s3Utils';
+import { bucketInfoFromRow, putObject } from './s3Utils';
 import { Env, Figure } from './types';
 
 // Helper to convert database row to Figure object
@@ -29,6 +29,10 @@ function rowToFigure(row: any): Figure {
 		figpackManageUrl: row.figpack_manage_url,
 		channel: row.channel,
 		isEphemeral: row.is_ephemeral === 1,
+		copiedFromUrl: row.copied_from_url ?? undefined,
+		copiedFromOwnerEmail: row.copied_from_owner_email ?? undefined,
+		originalUrl: row.original_url ?? undefined,
+		originalOwnerEmail: row.original_owner_email ?? undefined,
 		// sourceUrl: row.source_url,
 	};
 }
@@ -73,6 +77,19 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 		};
 	}
 
+	// Provenance of copied figures, kept here so the record survives the source figure
+	if (figure.copiedFromUrl) {
+		jsonContent.copiedFrom = {
+			figureUrl: figure.copiedFromUrl,
+			ownerEmail: figure.copiedFromOwnerEmail ?? null,
+			copiedAt: figure.createdAt,
+		};
+		jsonContent.original = {
+			figureUrl: figure.originalUrl,
+			ownerEmail: figure.originalOwnerEmail ?? null,
+		};
+	}
+
 	if (additionalFields) {
 		for (const key of Object.keys(additionalFields)) {
 			jsonContent[key] = additionalFields[key];
@@ -89,24 +106,9 @@ export async function updateFigureJson(figureUrl: string, env: Env, additionalFi
 	}
 
 	const bucketBaseUrl = bucketRow.bucket_base_url as string;
-	const provider = bucketRow.provider as string;
+	const bucketInfo = bucketInfoFromRow(bucketRow);
 
-	const hasServerCredentials = !!(bucketRow.aws_access_key_id && bucketRow.aws_secret_access_key);
-
-	if (hasServerCredentials) {
-		const region = bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1');
-
-		const bucketInfo: BucketInfo = {
-			provider,
-			bucketName,
-			nativeBucketName: bucketRow.native_bucket_name || bucketName,
-			accessKeyId: bucketRow.aws_access_key_id,
-			secretAccessKey: bucketRow.aws_secret_access_key,
-			sessionToken: bucketRow.aws_session_token || undefined,
-			endpoint: bucketRow.s3_endpoint,
-			region,
-		};
-
+	if (bucketInfo) {
 		try {
 			const prefix = `${bucketBaseUrl}/`;
 			if (!figure.figureUrl.startsWith(prefix)) {

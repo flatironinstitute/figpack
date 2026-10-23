@@ -21,6 +21,7 @@ import {
 	handleDeleteFigure,
 	handleFinalizeFigure,
 } from './handlers/figuresHandler';
+import { handleCopyFigure } from './handlers/figureCopyHandler';
 import { handlePinFigure, handleUnpinFigure, handleRenewFigure, handleRenewBulkFigures } from './handlers/figureOpsHandler';
 import { handleUpload } from './handlers/uploadHandler';
 import { handleLlmChatCompletions, handleGetLlmUsage } from './handlers/llmHandler';
@@ -229,6 +230,13 @@ export default {
 		if (url.pathname === '/figures/finalize') {
 			if (request.method.toUpperCase() === 'POST') {
 				return handleFinalizeFigure(request, env, rateLimitResult);
+			}
+			return json({ success: false, message: 'Method not allowed' }, 405);
+		}
+
+		if (url.pathname === '/figures/copy') {
+			if (request.method.toUpperCase() === 'POST') {
+				return handleCopyFigure(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}

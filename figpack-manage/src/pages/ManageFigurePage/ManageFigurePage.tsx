@@ -7,6 +7,7 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useBacklinks } from "../../hooks/useBacklinks";
 import DeleteDialog from "./DeleteDialog";
@@ -15,6 +16,7 @@ import FigureDetails from "./FigureDetails";
 import FigureHeader from "./FigureHeader";
 import FigurePreview from "./FigurePreview";
 import FileManifest from "./FileManifest";
+import { useCopy } from "./useCopy";
 import PinDialog from "./PinDialog";
 import { useDelete } from "./useDelete";
 import useFigure from "./useFigure";
@@ -29,10 +31,14 @@ const ManageFigurePage: React.FC = () => {
   const { apiKey, user } = useAuth();
   const { backlinks } = useBacklinks();
 
+  // From the location, so that going to another figure's page (e.g. a new
+  // copy) updates this one
+  const location = useLocation();
+  const navigate = useNavigate();
   const figureUrl = useMemo(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(location.search);
     return urlParams.get("figure_url") || "";
-  }, []);
+  }, [location.search]);
 
   const {
     figpackStatus,
@@ -77,6 +83,16 @@ const ManageFigurePage: React.FC = () => {
         window.location.href = "/";
       }, 1000);
     },
+  );
+
+  const { copyLoading, copyError, handleCopy } = useCopy(
+    figureUrl,
+    apiKey,
+    useCallback(
+      (newFigureUrl: string) =>
+        navigate(`/figure?figure_url=${encodeURIComponent(newFigureUrl)}`),
+      [navigate],
+    ),
   );
 
   const handleOpenDeleteDialog = useCallback(() => {
@@ -141,10 +157,19 @@ const ManageFigurePage: React.FC = () => {
           handleDelete={
             handleDelete && canManageFigure ? handleOpenDeleteDialog : null
           }
+          handleCopy={user && figpackStatus ? handleCopy : null}
+          copyLabel={
+            user?.email === figpackStatus?.ownerEmail
+              ? "Duplicate"
+              : "Copy to my figures"
+          }
+          copyLoading={copyLoading}
           unpinLoading={unpinLoading}
           deleteLoading={deleteLoading}
           formatDate={formatDate}
-          errorMessage={error || apiError || pinError || deleteError}
+          errorMessage={
+            error || apiError || pinError || deleteError || copyError
+          }
         />
 
         {/* Details Section */}

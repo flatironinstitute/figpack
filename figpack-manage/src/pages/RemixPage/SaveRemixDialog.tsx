@@ -16,7 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useState } from "react";
-import { saveRemix } from "./saveRemixApi";
+import { saveRemix, saveRemixAsCopy } from "./saveRemixApi";
 
 interface SaveRemixDialogProps {
   open: boolean;
@@ -27,6 +27,10 @@ interface SaveRemixDialogProps {
   // The remix page this draft was last saved to, if any
   savedPath: string | null;
   onSaved: (path: string) => void;
+  // For a figure the user does not own: save into a copy of the figure, then
+  // hand over to onSavedAsCopy (which opens the copy's remix)
+  asCopy: boolean;
+  onSavedAsCopy: (figureDirUrl: string, path: string) => Promise<void>;
 }
 
 const SaveRemixDialog: React.FC<SaveRemixDialogProps> = ({
@@ -37,6 +41,8 @@ const SaveRemixDialog: React.FC<SaveRemixDialogProps> = ({
   html,
   savedPath,
   onSaved,
+  asCopy,
+  onSavedAsCopy,
 }) => {
   // Mounted for each opening (see RemixPage), so the state starts fresh
   const [mode, setMode] = useState<"update" | "new">(
@@ -45,8 +51,29 @@ const SaveRemixDialog: React.FC<SaveRemixDialogProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultPath, setResultPath] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+
+  const handleSaveAsCopy = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const copy = await saveRemixAsCopy({
+        apiKey,
+        figureDirUrl,
+        html,
+        onProgress: setProgress,
+      });
+      setProgress("Opening the remix in your copy...");
+      await onSavedAsCopy(copy.figureDirUrl, copy.path);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setProgress(null);
+      setSaving(false);
+    }
+  };
 
   const handleSave = async () => {
+    if (asCopy) return handleSaveAsCopy();
     setSaving(true);
     setError(null);
     try {
@@ -74,7 +101,7 @@ const SaveRemixDialog: React.FC<SaveRemixDialogProps> = ({
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>Save remix</DialogTitle>
+      <DialogTitle>{asCopy ? "Save as a copy" : "Save remix"}</DialogTitle>
       <DialogContent>
         {resultUrl ? (
           <>
@@ -103,6 +130,28 @@ const SaveRemixDialog: React.FC<SaveRemixDialogProps> = ({
                 </IconButton>
               </Tooltip>
             </Box>
+          </>
+        ) : asCopy ? (
+          <>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              You don&apos;t own this figure, so the remix is saved into a copy
+              of the figure that you own. The copy has all of the figure&apos;s
+              files and records where it came from; like your other figures, it
+              expires unless you renew or pin it. The original figure is not
+              changed. The remix then opens in your copy, where you can keep
+              working on it.
+            </Typography>
+            {progress && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={16} />
+                <Typography variant="body2">{progress}</Typography>
+              </Box>
+            )}
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
           </>
         ) : (
           <>
@@ -160,7 +209,7 @@ const SaveRemixDialog: React.FC<SaveRemixDialogProps> = ({
               disabled={saving}
               startIcon={saving ? <CircularProgress size={16} /> : undefined}
             >
-              Save
+              {asCopy ? "Save as a copy" : "Save"}
             </Button>
           </>
         )}

@@ -198,3 +198,19 @@ export async function listObjects(
 		continuationToken: response.IsTruncated ? response.NextContinuationToken : undefined,
 	};
 }
+
+// Build BucketInfo from a buckets table row; undefined if the bucket has no server-side credentials
+export function bucketInfoFromRow(bucketRow: any): BucketInfo | undefined {
+	if (!bucketRow.aws_access_key_id || !bucketRow.aws_secret_access_key) return undefined;
+	const provider = bucketRow.provider as string;
+	return {
+		provider,
+		bucketName: bucketRow.name,
+		nativeBucketName: bucketRow.native_bucket_name || bucketRow.name,
+		accessKeyId: bucketRow.aws_access_key_id,
+		secretAccessKey: bucketRow.aws_secret_access_key,
+		sessionToken: bucketRow.aws_session_token || undefined,
+		endpoint: bucketRow.s3_endpoint,
+		region: bucketRow.region || (provider === 'cloudflare' ? 'auto' : 'us-east-1'),
+	};
+}

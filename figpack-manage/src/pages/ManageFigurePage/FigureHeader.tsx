@@ -1,6 +1,7 @@
 import {
   AutoFixHigh,
   CheckCircle,
+  ContentCopy,
   Delete,
   Error,
   Launch,
@@ -27,6 +28,7 @@ import {
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getStatusLabel } from "../FiguresPage/utils";
+import FigureProvenance from "./FigureProvenance";
 
 interface FigpackStatus {
   status: string;
@@ -47,6 +49,9 @@ interface FigpackStatus {
   title?: string;
   figureManagementUrl?: string; // to phase out
   figpackManageUrl?: string; // new
+  copiedFromUrl?: string;
+  originalUrl?: string;
+  originalOwnerEmail?: string;
 }
 
 interface FigureHeaderProps {
@@ -61,6 +66,9 @@ interface FigureHeaderProps {
   handleOpenPinDialog: (() => void) | null;
   handleUnpin: (() => void) | null;
   handleDelete: (() => void) | null;
+  handleCopy: (() => void) | null;
+  copyLabel: string;
+  copyLoading: boolean;
   deleteLoading: boolean;
   unpinLoading: boolean;
   formatDate: (timestamp: number) => string;
@@ -79,6 +87,9 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
   handleOpenPinDialog,
   handleUnpin,
   handleDelete,
+  handleCopy,
+  copyLabel,
+  copyLoading,
   deleteLoading,
   unpinLoading,
   formatDate,
@@ -166,6 +177,25 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
                 </Button>
               </Tooltip>
             )}
+            {handleCopy && (
+              <Tooltip title="Make a copy of this figure, with all its files, that you own">
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={
+                    copyLoading ? (
+                      <CircularProgress size={16} />
+                    ) : (
+                      <ContentCopy />
+                    )
+                  }
+                  onClick={handleCopy}
+                  disabled={copyLoading}
+                >
+                  {copyLoading ? "Copying..." : copyLabel}
+                </Button>
+              </Tooltip>
+            )}
             {figureUrl && (
               <Tooltip title="Open Figure">
                 <IconButton
@@ -223,6 +253,14 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
             )}
           </Box>
         </Box>
+
+        {figpackStatus?.copiedFromUrl && (
+          <FigureProvenance
+            copiedFromUrl={figpackStatus.copiedFromUrl}
+            originalUrl={figpackStatus.originalUrl}
+            originalOwnerEmail={figpackStatus.originalOwnerEmail}
+          />
+        )}
 
         {/* Status Alerts */}
         {figpackStatus?.pinned && figpackStatus.pinName && (

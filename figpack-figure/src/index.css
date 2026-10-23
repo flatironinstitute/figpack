@@ -204,6 +204,14 @@ button:focus-visible {
   line-height: 1.6;
 }
 
+.about-dialog-provenance {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 0.9em;
+  color: #555;
+  overflow-wrap: anywhere;
+}
+
 .about-dialog-description h1,
 .about-dialog-description h2,
 .about-dialog-description h3 {
