@@ -1,9 +1,11 @@
 import { Alert, Box, CircularProgress } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import ConsolePanel from "./ConsolePanel";
 import HtmlEditor from "./HtmlEditor";
 import RemixHeader from "./RemixHeader";
 import RemixPreview from "./RemixPreview";
 import { hasFigureSpec, toFigureDirUrl, toSrcdoc } from "./remixHtml";
+import useConsoleLog from "./useConsoleLog";
 import useFigureHtml from "./useFigureHtml";
 
 const RemixPage: React.FC = () => {
@@ -19,6 +21,8 @@ const RemixPage: React.FC = () => {
   const { html: originalHtml, error } = useFigureHtml(figureDirUrl);
   const [html, setHtml] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const consoleLog = useConsoleLog();
+  const [consoleExpanded, setConsoleExpanded] = useState(true);
 
   useEffect(() => {
     setHtml(originalHtml);
@@ -85,8 +89,27 @@ const RemixPage: React.FC = () => {
           >
             <HtmlEditor html={html} onChange={setHtml} />
           </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <RemixPreview srcdoc={srcdoc} reloadKey={reloadKey} />
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box sx={{ flex: 1, minHeight: 0 }}>
+              <RemixPreview
+                srcdoc={srcdoc}
+                reloadKey={reloadKey}
+                onConsoleMessage={consoleLog.addEntry}
+              />
+            </Box>
+            <ConsolePanel
+              entries={consoleLog.entries}
+              expanded={consoleExpanded}
+              onToggle={() => setConsoleExpanded((x) => !x)}
+              onClear={consoleLog.clear}
+            />
           </Box>
         </Box>
       )}

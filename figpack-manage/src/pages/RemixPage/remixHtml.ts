@@ -1,3 +1,5 @@
+import { CONSOLE_CLIENT_JS } from "./consoleCapture";
+
 // Helpers for the in-memory remix page. A remix is a modified copy of a
 // figure's page (index.html) that reuses the original figure's data and
 // code; it is rendered in a sandboxed iframe via srcdoc.
@@ -34,6 +36,9 @@ const insertAtHeadStart = (html: string, tags: string) => {
 
 // The srcdoc for the preview iframe: the page with a <base href> pointing at
 // the figure directory, so that ./assets/..., data.zarr/ and extension
-// scripts load from the original figure
+// scripts load from the original figure, and the console capture script
 export const toSrcdoc = (html: string, figureDirUrl: string) =>
-  insertAtHeadStart(html, `<base href="${escapeAttr(figureDirUrl)}">`);
+  insertAtHeadStart(
+    html,
+    `<base href="${escapeAttr(figureDirUrl)}">\n    <script>${CONSOLE_CLIENT_JS}</script>`,
+  );
