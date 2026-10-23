@@ -147,6 +147,7 @@ misc_tutorial
 nwb_tutorial
 show_function
 exporting_figures
+remix_patches
 slides_tutorial
 zenodo_archival
 figpack_vs_figurl_comparison

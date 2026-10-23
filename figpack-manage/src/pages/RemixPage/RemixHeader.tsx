@@ -1,4 +1,10 @@
-import { ArrowBack, Refresh, RestartAlt, Save } from "@mui/icons-material";
+import {
+  ArrowBack,
+  FileDownload,
+  Refresh,
+  RestartAlt,
+  Save,
+} from "@mui/icons-material";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +26,7 @@ interface RemixHeaderProps {
   // A user who does not own the figure saves into a copy of it
   saveAsCopy: boolean;
   onSave: () => void;
+  onExportPatch: () => void;
 }
 
 const RemixHeader: React.FC<RemixHeaderProps> = ({
@@ -33,6 +40,7 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
   saveDisabledReason,
   saveAsCopy,
   onSave,
+  onExportPatch,
 }) => {
   const navigate = useNavigate();
   return (
@@ -109,6 +117,15 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
                 {saveAsCopy ? "Save as a copy" : "Save remix"}
               </Button>
             </span>
+          </Tooltip>
+          <Tooltip title="Download the remix's changes to the figure spec as a patch file, to apply when the figure is made again">
+            <Button
+              size="small"
+              startIcon={<FileDownload />}
+              onClick={onExportPatch}
+            >
+              Export patch
+            </Button>
           </Tooltip>
           <Button
             size="small"
