@@ -64,6 +64,49 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
+  extension-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: extension_packages/*/package-lock.json
+
+      - name: Install main figpack package
+        run: |
+          python -m pip install --upgrade pip
+          pip install . pytest pytest-cov
+
+      - name: Build, install and test each extension package that has tests
+        run: |
+          failed=""
+          for tests in extension_packages/*/tests; do
+            [ -d "$tests" ] || continue
+            pkg=$(dirname "$tests")
+            echo "::group::$pkg"
+            if [ -f "$pkg/package.json" ]; then
+              (cd "$pkg" && npm ci && npm run build)
+            fi
+            pip install "./$pkg"
+            # --no-cov: the root pytest config requires coverage of figpack
+            pytest --no-cov "$tests" || failed="$failed $pkg"
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then
+            echo "Failed:$failed"
+            exit 1
+          fi
+
   lint:
     runs-on: ubuntu-latest
     steps:
