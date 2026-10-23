@@ -15,6 +15,9 @@ export class TimeseriesGraphClient {
     public seriesNames: string[] = [],
     public hideNavToolbar: boolean = false,
     public hideTimeAxisLabels: boolean = false,
+    public yRange: { yMin: number; yMax: number } | null = null,
+    public hideXGridlines: boolean = false,
+    public hideYGridlines: boolean = false,
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
@@ -165,6 +168,13 @@ export class TimeseriesGraphClient {
     const hideNavToolbar = zarrGroup.attrs["hide_nav_toolbar"] || false;
     const hideTimeAxisLabels =
       zarrGroup.attrs["hide_time_axis_labels"] || false;
+    const yRangeAttr = zarrGroup.attrs["y_range"];
+    const yRange =
+      Array.isArray(yRangeAttr) && yRangeAttr.length === 2
+        ? { yMin: yRangeAttr[0], yMax: yRangeAttr[1] }
+        : null;
+    const hideXGridlines = zarrGroup.attrs["hide_x_gridlines"] || false;
+    const hideYGridlines = zarrGroup.attrs["hide_y_gridlines"] || false;
 
     return new TimeseriesGraphClient(
       series,
@@ -174,6 +184,9 @@ export class TimeseriesGraphClient {
       seriesNames,
       hideNavToolbar,
       hideTimeAxisLabels,
+      yRange,
+      hideXGridlines,
+      hideYGridlines,
     );
   }
 }

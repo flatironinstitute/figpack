@@ -19,6 +19,7 @@ import { registeredFPViewContextCreators } from "./contextRegistry";
 import { registeredFPExtensions } from "./extensionRegistry";
 import { customZarrDecoders } from "./customZarrDecodersRegistry";
 import { ProvideTimeseriesSelectionContext } from "./figpack-main-plugin/views/FPMultiChannelTimeseries";
+import { useRootGroup } from "./hooks/useRootGroup";
 
 function App() {
   const hasBeenVisible = usePageVisibility();
@@ -66,6 +67,9 @@ function AppContent() {
 
   const figureInfoResult = useFigureInfo();
 
+  // The view tree to render: data.zarr, or a figure spec from the page on top of it
+  const { rootGroup, rootGroupError, specVersion } = useRootGroup(zarrData);
+
   // Track fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -82,15 +86,15 @@ function AppContent() {
 
   // Set document title from zarr data
   useEffect(() => {
-    if (zarrData && zarrData.attrs) {
-      const title = zarrData.attrs.title;
+    if (rootGroup && rootGroup.attrs) {
+      const title = rootGroup.attrs.title;
       if (title) {
         document.title = title;
       } else {
         document.title = "figpack figure";
       }
     }
-  }, [zarrData]);
+  }, [rootGroup]);
 
   const { extensionLoadingStatus, extensionLoadingStatusString } =
     useLoadExtensions();
@@ -173,6 +177,12 @@ function AppContent() {
       <div>zarrData is undefined</div>
     ) : zarrData === undefined ? (
       <div>Error loading data</div>
+    ) : rootGroupError ? (
+      <div style={{ color: "#d32f2f", padding: 16 }}>
+        Error in figure spec: {rootGroupError}
+      </div>
+    ) : !rootGroup ? (
+      <div>Loading...</div>
     ) : extensionLoadingStatus !== "loaded" ? (
       <div>Extension loading status: {extensionLoadingStatusString}</div>
     ) : !contexts ? (
@@ -205,7 +215,8 @@ function AppContent() {
       </div>
     ) : (
       <FPView2
-        zarrGroup={zarrData}
+        key={specVersion}
+        zarrGroup={rootGroup}
         width={width}
         height={height - statusBarHeight - uploadFilesPanelHeight}
         contexts={contexts}

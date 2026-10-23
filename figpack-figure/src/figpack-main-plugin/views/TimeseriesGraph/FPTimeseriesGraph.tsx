@@ -113,6 +113,7 @@ export const FPTimeseriesGraphChild: React.FC<{
       },
       yRangeMode,
       customYRange,
+      fixedYRange: client.yRange,
     });
   }, [
     visibleStartTimeSec,
@@ -193,6 +194,14 @@ export const FPTimeseriesGraphChild: React.FC<{
     ];
   }, [yRangeMode]);
 
+  const gridlineOpts = useMemo(
+    () => ({
+      hideX: client?.hideXGridlines ?? false,
+      hideY: client?.hideYGridlines ?? false,
+    }),
+    [client],
+  );
+
   const handleZoomY = useCallback(
     (yRange: { yMin: number; yMax: number } | null) => {
       setCustomYRange(yRange);
@@ -215,6 +224,7 @@ export const FPTimeseriesGraphChild: React.FC<{
       yAxisInfo={yAxisInfo}
       hideNavToolbar={client?.hideNavToolbar ?? false}
       hideTimeAxisLabels={client?.hideTimeAxisLabels ?? false}
+      gridlineOpts={gridlineOpts}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}
       customToolbarActions={customToolbarActions}

@@ -4,6 +4,7 @@ TabLayout view for figpack - a tabbed layout container that handles other views
 
 from typing import Any, Dict, List, Optional
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 from .TabLayoutItem import TabLayoutItem
@@ -13,6 +14,25 @@ class TabLayout(FigpackView):
     """
     A tabbed layout container view that arranges other views in tabs
     """
+
+    spec_schema = SpecSchema(
+        view_type="TabLayout",
+        description="Shows one child view at a time, selected by tabs.",
+        props=[
+            SpecProp(
+                "items",
+                "list of {name, label}",
+                "Tabs in display order. name is the child name; label is the tab text.",
+            ),
+            SpecProp(
+                "initial_item_index",
+                "integer",
+                "Index of the tab shown first (default 0).",
+            ),
+        ],
+        children="views",
+        children_description="child views, named by items[].name.",
+    )
 
     def __init__(
         self,
@@ -43,7 +63,8 @@ class TabLayout(FigpackView):
         group.attrs["view_type"] = "TabLayout"
 
         # Set layout properties
-        group.attrs["initial_tab_index"] = self.initial_tab_index
+        # The frontend reads initial_item_index (as for Gallery)
+        group.attrs["initial_item_index"] = self.initial_tab_index
 
         # Create a list to store item metadata
         items_metadata = []

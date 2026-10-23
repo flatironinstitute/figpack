@@ -9,7 +9,10 @@ Core functionality for patching figpack figures
 import json
 import os
 import pathlib
+import re
+import tempfile
 import time
+from typing import Optional, Tuple
 from urllib.parse import urljoin
 
 import requests
@@ -17,6 +20,58 @@ import requests
 from .. import __version__
 from .config import FIGPACK_API_BASE_URL
 from ._figure_utils import get_figure_base_url
+
+# A reference to a hashed bundle asset in a src/href attribute, e.g.
+# src="./assets/index-CSMGUquF.js" (Vite names assets <name>-<8-char hash>.<ext>)
+_ASSET_REF_RE = re.compile(
+    r"""((?:src|href)=["'])((?:\./)?assets/)([A-Za-z0-9_.-]+)-([A-Za-z0-9_-]{8})\.([A-Za-z0-9]+)(["'])"""
+)
+
+
+def swap_bundle_references(page_html: str, new_index_html: str) -> Tuple[str, int]:
+    """
+    Point the bundle asset references of a figure page to the assets of a new
+    figpack-figure bundle, leaving the rest of the page (such as the figure
+    spec, its reference docs, and any edits) unchanged
+
+    Args:
+        page_html: The html of the figure page to patch
+        new_index_html: The index.html of the new figpack-figure bundle
+
+    Returns:
+        The patched html and the number of references replaced
+    """
+    new_refs = {}
+    for m in _ASSET_REF_RE.finditer(new_index_html):
+        new_refs[(m.group(3), m.group(5))] = m.group(3) + "-" + m.group(4)
+
+    count = 0
+
+    def replace(m):
+        nonlocal count
+        key = (m.group(3), m.group(5))
+        if key not in new_refs:
+            return m.group(0)
+        count += 1
+        return m.group(1) + m.group(2) + new_refs[key] + "." + m.group(5) + m.group(6)
+
+    return _ASSET_REF_RE.sub(replace, page_html), count
+
+
+def _patched_page_html(path: str, page_html: str, new_index_html: str) -> Optional[str]:
+    """
+    The patched contents of a figure page, or None if it cannot be patched
+
+    An index.html without a figure spec (from figpack versions before figure
+    specs) is replaced by the new bundle's index.html, as before. Other pages
+    keep their contents, with the bundle references swapped.
+    """
+    if path == "index.html" and "data-figpack-spec" not in page_html:
+        return new_index_html
+    patched, count = swap_bundle_references(page_html, new_index_html)
+    if count == 0:
+        return None
+    return patched
 
 
 def patch_figure(
@@ -93,7 +148,7 @@ def patch_figure(
             if admin_override and figure_owner:
                 print(f"⚠️  ADMIN OVERRIDE: Modifying figure owned by {figure_owner}")
             print(
-                f"This will update the rendering code (index.html, assets/*, extension-*.js)"
+                f"This will update the rendering code (assets/*, and the bundle references in the figure's .html pages)"
             )
             print(f"to figpack version {__version__}")
             print(
@@ -128,7 +183,7 @@ def patch_figure(
         file_path = file_info["path"]
         # Only backup rendering files
         if (
-            file_path == "index.html"
+            file_path.endswith(".html")
             or file_path.startswith("assets/")
             or file_path.startswith("extension-")
             or file_path == "extension_manifest.json"
@@ -205,8 +260,36 @@ def patch_figure(
     # Collect all files to upload
     files_to_upload = []
 
+    new_index_html = (html_dir / "index.html").read_text(encoding="utf-8")
+    patched_pages_dir = pathlib.Path(tempfile.mkdtemp(prefix="figpack_patch_"))
+    page_paths = [
+        f["path"]
+        for f in rendering_files
+        if f["path"].endswith(".html") and f["path"] not in failed_backups
+    ]
+    if "index.html" not in page_paths:
+        page_paths.append("index.html")
+    for page_path in page_paths:
+        backup_page = backup_subdir / page_path
+        page_html = (
+            backup_page.read_text(encoding="utf-8") if backup_page.exists() else ""
+        )
+        patched = _patched_page_html(page_path, page_html, new_index_html)
+        if patched is None:
+            if verbose:
+                print(
+                    f"Warning: {page_path} has no bundle references to update; leaving it unchanged"
+                )
+            continue
+        patched_page = patched_pages_dir / page_path
+        patched_page.parent.mkdir(parents=True, exist_ok=True)
+        patched_page.write_text(patched, encoding="utf-8")
+        files_to_upload.append((page_path, patched_page))
+
     for item in html_dir.iterdir():
         if item.is_file():
+            if item.name.endswith(".html"):
+                continue  # pages are patched above
             files_to_upload.append((str(item.name), item))
         elif item.is_dir() and item.name == "assets":
             for subitem in item.iterdir():
@@ -339,8 +422,6 @@ def patch_figure(
         manifest["total_size"] = sum(f.get("size", 0) for f in updated_files)
 
         # Upload manifest.json
-        import tempfile
-
         manifest_content = json.dumps(manifest, indent=2)
 
         with tempfile.NamedTemporaryFile(

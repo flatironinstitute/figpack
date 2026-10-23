@@ -4,6 +4,7 @@ Box view for figpack - a layout container that handles other views
 
 from typing import List, Literal, Optional
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 from .LayoutItem import LayoutItem
@@ -13,6 +14,29 @@ class Box(FigpackView):
     """
     A layout container view that arranges other views in horizontal or vertical layouts
     """
+
+    spec_schema = SpecSchema(
+        view_type="Box",
+        description="Arranges child views in a row or a column.",
+        props=[
+            SpecProp(
+                "direction",
+                '"horizontal" | "vertical"',
+                "Direction in which the items are arranged.",
+            ),
+            SpecProp(
+                "show_titles", "boolean", "Whether to show a title bar above each item."
+            ),
+            SpecProp("title", "string | null", "Title bar text above the whole box."),
+            SpecProp(
+                "items",
+                "list of {name, title, stretch, min_size, max_size, collapsible}",
+                "Items in display order. name is the child name; stretch is the relative size; min_size and max_size are in pixels; collapsible lets the user collapse the item from its title bar.",
+            ),
+        ],
+        children="views",
+        children_description="child views, named by items[].name.",
+    )
 
     def __init__(
         self,

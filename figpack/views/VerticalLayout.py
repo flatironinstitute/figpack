@@ -4,6 +4,7 @@ VerticalLayout view for figpack - a vertically scrolling layout container
 
 from typing import List, Optional
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 from .VerticalLayoutItem import VerticalLayoutItem
@@ -13,6 +14,24 @@ class VerticalLayout(FigpackView):
     """
     A vertically scrolling layout container that arranges views with fixed heights
     """
+
+    spec_schema = SpecSchema(
+        view_type="VerticalLayout",
+        description="Stacks child views of fixed heights in a scrollable column.",
+        props=[
+            SpecProp(
+                "show_titles", "boolean", "Whether to show a title bar above each item."
+            ),
+            SpecProp("title", "string | null", "Title text above the layout."),
+            SpecProp(
+                "items",
+                "list of {name, height, title}",
+                "Items in display order. name is the child name; height is in pixels.",
+            ),
+        ],
+        children="views",
+        children_description="child views, named by items[].name.",
+    )
 
     def __init__(
         self,

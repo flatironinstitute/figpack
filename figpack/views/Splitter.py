@@ -4,6 +4,7 @@ Splitter view for figpack - a resizable split layout container
 
 from typing import Literal
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 from .LayoutItem import LayoutItem
@@ -13,6 +14,35 @@ class Splitter(FigpackView):
     """
     A resizable split layout container that divides space between two items
     """
+
+    spec_schema = SpecSchema(
+        view_type="Splitter",
+        description="Two child views separated by a draggable divider.",
+        props=[
+            SpecProp(
+                "direction",
+                '"horizontal" | "vertical"',
+                "Whether the panes are side by side (horizontal) or stacked (vertical).",
+            ),
+            SpecProp(
+                "split_pos",
+                "number (0 to 1)",
+                "Initial position of the divider, as a fraction of the size.",
+            ),
+            SpecProp(
+                "item1_metadata",
+                "{min_size, max_size, ...}",
+                "Size limits of the first pane, in pixels.",
+            ),
+            SpecProp(
+                "item2_metadata",
+                "{min_size, max_size, ...}",
+                "Size limits of the second pane, in pixels.",
+            ),
+        ],
+        children="views",
+        children_description="child views item1 and item2.",
+    )
 
     def __init__(
         self,

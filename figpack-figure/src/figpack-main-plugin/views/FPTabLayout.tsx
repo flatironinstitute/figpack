@@ -24,7 +24,11 @@ export const FPTabLayout: React.FC<{
   renderFPView,
   eachItemGetsTimeseriesSelectionContext,
 }) => {
-  const initialItemIndex = zarrGroup.attrs["initial_item_index"] || 0;
+  // initial_tab_index is what older versions of the Python TabLayout wrote
+  const initialItemIndex =
+    zarrGroup.attrs["initial_item_index"] ??
+    zarrGroup.attrs["initial_tab_index"] ??
+    0;
   const itemsMetadata: TabLayoutItemData[] = useMemo(
     () => zarrGroup.attrs["items"] || [],
     [zarrGroup],

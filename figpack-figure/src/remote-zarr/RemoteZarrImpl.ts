@@ -526,8 +526,26 @@ const fetchByteRange = async (url: string, startByte: number, size: number) => {
     throw Error(
       `Failed to fetch byte range ${startByte}-${startByte + size - 1} of ${url}`,
     );
-  return await r.arrayBuffer();
+  const buf = await r.arrayBuffer();
+  if (r.status !== 206) {
+    // The server ignored the Range header and sent the whole file
+    if (!warnedNoRangeSupport) {
+      console.warn(
+        `Server does not support Range requests (got status ${r.status} for ${url}); falling back to reading whole files, which is slower.`,
+      );
+      warnedNoRangeSupport = true;
+    }
+    if (startByte + size > buf.byteLength) {
+      throw Error(
+        `Byte range ${startByte}-${startByte + size - 1} is beyond the end of ${url} (${buf.byteLength} bytes)`,
+      );
+    }
+    return buf.slice(startByte, startByte + size);
+  }
+  return buf;
 };
+
+let warnedNoRangeSupport = false;
 
 const getNameFromPath = (path: string) => {
   const parts = path.split("/");

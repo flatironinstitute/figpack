@@ -18,6 +18,7 @@ import requests
 
 from . import __version__
 from .core._view_figure import view_figure
+from .core._edit_figure import edit_figure
 from .core._patch_figure import patch_figure as core_patch_figure
 from .core._revert_patch_figure import revert_patch_figure as core_revert_patch_figure
 from .core._figure_utils import get_figure_base_url, download_file
@@ -715,6 +716,20 @@ def main():
         "--port", type=int, help="Port number to serve on (default: auto-select)"
     )
 
+    # Edit command
+    edit_parser = subparsers.add_parser(
+        "edit",
+        help="Download a figure's index.html and serve it locally for editing",
+    )
+    edit_parser.add_argument("figure_url", help="The figpack URL to edit")
+    edit_parser.add_argument(
+        "--dir",
+        help="Local directory for the editable files (default: ~/.figpack/edits/<figure id>)",
+    )
+    edit_parser.add_argument(
+        "--port", type=int, help="Port number to serve on (default: auto-select)"
+    )
+
     # Patch figure command
     patch_figure_parser = subparsers.add_parser(
         "patch-figure", help="Update a figure's rendering code to the latest version"
@@ -797,6 +812,8 @@ def main():
             download_and_view_archive(args.archive, port=args.port)
         else:
             view_figure(args.archive, port=args.port)
+    elif args.command == "edit":
+        edit_figure(args.figure_url, dir_path=args.dir, port=args.port)
     elif args.command == "patch-figure":
         patch_figure(args.figure_url, admin_override=args.admin_override)
     elif args.command == "revert-patch-figure":
