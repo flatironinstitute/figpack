@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { ChatState } from "./draftStore";
 import { type AgentEvent, runAgentTurn } from "./remixAgent";
 import type { RemixToolContext } from "./remixTools";
 import {
@@ -96,6 +97,24 @@ const useRemixAgent = (apiKey: string, toolContext: RemixToolContext) => {
 
   const cancel = useCallback(() => abortRef.current?.abort(), []);
 
+  // For saving and restoring drafts
+  const getChatState = useCallback(
+    (): ChatState => ({
+      items,
+      history: historyRef.current,
+      sessionCostUsd,
+      model,
+    }),
+    [items, sessionCostUsd, model],
+  );
+  const restoreChatState = useCallback((state: ChatState) => {
+    historyRef.current = state.history;
+    nextId.current = Math.max(0, ...state.items.map((i) => i.id)) + 1;
+    setItems(state.items);
+    setSessionCostUsd(state.sessionCostUsd);
+    setModel(state.model);
+  }, []);
+
   const newChat = useCallback(() => {
     if (running) return;
     historyRef.current = [];
@@ -112,8 +131,20 @@ const useRemixAgent = (apiKey: string, toolContext: RemixToolContext) => {
       sendMessage,
       cancel,
       newChat,
+      getChatState,
+      restoreChatState,
     }),
-    [items, running, sessionCostUsd, model, sendMessage, cancel, newChat],
+    [
+      items,
+      running,
+      sessionCostUsd,
+      model,
+      sendMessage,
+      cancel,
+      newChat,
+      getChatState,
+      restoreChatState,
+    ],
   );
 };
 

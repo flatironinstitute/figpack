@@ -87,6 +87,7 @@ const ConsolePanel: React.FC<ConsolePanelProps> = ({
         <Box sx={{ flexGrow: 1 }} />
         <Tooltip title="Clear console">
           <IconButton
+            aria-label="Clear console"
             size="small"
             onClick={(e) => {
               e.stopPropagation();

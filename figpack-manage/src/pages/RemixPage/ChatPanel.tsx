@@ -73,6 +73,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ agent, isLoggedIn }) => {
         <Tooltip title="New chat (keeps the page)">
           <span>
             <IconButton
+              aria-label="New chat (keeps the page)"
               size="small"
               onClick={agent.newChat}
               disabled={agent.running || agent.items.length === 0}
@@ -126,12 +127,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ agent, isLoggedIn }) => {
             />
             {agent.running ? (
               <Tooltip title="Stop">
-                <IconButton onClick={agent.cancel} color="error">
+                <IconButton
+                  aria-label="Stop"
+                  onClick={agent.cancel}
+                  color="error"
+                >
                   <Stop />
                 </IconButton>
               </Tooltip>
             ) : (
               <IconButton
+                aria-label="Send"
                 onClick={handleSend}
                 color="primary"
                 disabled={!input.trim()}
