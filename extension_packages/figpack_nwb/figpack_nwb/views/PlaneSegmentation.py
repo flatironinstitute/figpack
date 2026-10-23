@@ -1,10 +1,16 @@
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .nwb_extension import nwb_extension
 
 
 class PlaneSegmentation(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="nwb.PlaneSegmentation",
+        description="ROI image masks of an NWB PlaneSegmentation, with ROI selection and labels.",
+    )
+
     def __init__(
         self,
         *,

@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_nwb",
-    version="0.1.7",
+    version="0.1.8",
     description="Extension for figpack",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
@@ -29,7 +29,7 @@ setup(
         "figpack_nwb": ["*.js"],
     },
     include_package_data=True,
-    install_requires=["figpack>=0.2.17"],
+    install_requires=["figpack>=0.4.0"],
     python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
