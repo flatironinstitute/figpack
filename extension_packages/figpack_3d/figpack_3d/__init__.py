@@ -7,5 +7,5 @@ This package provides interactive 3D scene visualization using the Three.js libr
 from .three_d_view import ThreeDView
 from .mesh_view import MeshView
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __all__ = ["ThreeDView", "MeshView"]
