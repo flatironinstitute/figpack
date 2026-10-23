@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+- figpack-api-cf: `POST /figures/copy` (`x-api-key`, `{ sourceUrl }`) copies any completed, unexpired figure in the default bucket (ephemeral, someone else's or your own) into a new figure owned by the caller, with the caller's default expiration and the source's title. Files are copied server-side with S3 CopyObject (all pages, remixes, annotations, assets, zarr and extension files); manifest.json is rewritten to list the copied files and figpack.json is written fresh. New figures-table columns `copied_from_url`, `copied_from_owner_email`, `original_url` and `original_owner_email` (migration 0011) record provenance; a copy of a copy keeps the original. figpack.json of a copy has `copiedFrom: { figureUrl, ownerEmail, copiedAt }` and `original: { figureUrl, ownerEmail }` (`ownerEmail` is null for an anonymous ephemeral figure). Copies count against the per-user figure limit, are rate limited to 20 per user per hour, and are capped at 5 GB and 500 files (admins are exempt from the size cap). Figures in user-owned buckets cannot be copied yet
+- figpack-api-cf: migration 0012 recreates the `rate_limits` table so its `endpoint_type` check allows every endpoint type the code uses; inserts for `send_api_key` and `request_account` previously failed, so those rate limits were not enforced
+
 ## [0.4.0] - 2026-10-23
 
 - figpack-manage remix page: a "Let the assistant see the figure" option (off by default) gives the assistant a `snapshot_figure` tool that takes a snapshot (an image) of the figure in the preview. The page captures itself with html-to-image after it has loaded and its network requests have been idle for 750 ms (up to 15 s by default, 30 s at most) and reports whether it hit the time limit; the image is sent to the model in a user message, only the latest snapshot is kept in the conversation, and thumbnails with the time waited appear in the chat

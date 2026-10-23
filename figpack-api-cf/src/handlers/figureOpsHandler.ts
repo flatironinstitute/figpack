@@ -32,6 +32,10 @@ function parseFigure(row: any): Figure {
 		figpackManageUrl: row.figpack_manage_url,
 		channel: row.channel as 'default' | 'ephemeral',
 		isEphemeral: Boolean(row.is_ephemeral),
+		copiedFromUrl: row.copied_from_url ?? undefined,
+		copiedFromOwnerEmail: row.copied_from_owner_email ?? undefined,
+		originalUrl: row.original_url ?? undefined,
+		originalOwnerEmail: row.original_owner_email ?? undefined,
 		// sourceUrl: row.source_url,
 	};
 }

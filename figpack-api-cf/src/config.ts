@@ -3,11 +3,18 @@
  * Adjust these values as needed to control resource usage and prevent abuse
  */
 
+// Bucket used when no bucket is specified (the public figures.figpack.org bucket)
+export const DEFAULT_BUCKET_NAME = 'figpack-figures';
+
 export const API_LIMITS = {
 	// Figure limits
 	MAX_FILES_PER_FIGURE: 100,
 	MAX_FIGURES_PER_USER: 1000,
 	MAX_FILE_SIZE_BYTES: 1024 * 1024 * 1024, // 1GB per file
+
+	// Figure copies (POST /figures/copy)
+	MAX_COPY_TOTAL_SIZE_BYTES: 5 * 1024 * 1024 * 1024, // 5GB per copy (admins exempt)
+	MAX_COPY_FILES: 500, // Each file is one CopyObject subrequest
 
 	// Ephemeral figure limits (global)
 	MAX_EPHEMERAL_FIGURES_PER_WINDOW: 30,
@@ -34,6 +41,11 @@ export const API_LIMITS = {
 		CREATE_FIGURE: {
 			WINDOW_MS: 60 * 1000, // 1 minute
 			MAX_REQUESTS: 30,
+		},
+		// Figure copies, per user (each copy duplicates up to MAX_COPY_TOTAL_SIZE_BYTES of storage)
+		COPY_FIGURE: {
+			WINDOW_MS: 60 * 60 * 1000, // 1 hour
+			MAX_REQUESTS: 20,
 		},
 		// Admin operations
 		ADMIN: {

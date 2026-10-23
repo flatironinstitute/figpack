@@ -6,7 +6,7 @@ import { Bucket, Env, Figure, RateLimitResult } from '../types';
 import { json } from '../utils';
 
 // Helper function to create figure ID
-function createFigureId(): string {
+export function createFigureId(): string {
 	const chars = 'abcdef0123456789';
 	let result = '';
 	for (let i = 0; i < 24; i++) {
@@ -16,7 +16,7 @@ function createFigureId(): string {
 }
 
 // Helper function to parse bucket from database
-function parseBucket(row: any): Bucket {
+export function parseBucket(row: any): Bucket {
 	return {
 		id: row.id,
 		name: row.name,
@@ -38,7 +38,7 @@ function parseBucket(row: any): Bucket {
 }
 
 // Helper function to parse figure from database
-function parseFigure(row: any): Figure {
+export function parseFigure(row: any): Figure {
 	return {
 		id: row.id,
 		figureUrl: row.figure_url,
@@ -65,8 +65,25 @@ function parseFigure(row: any): Figure {
 		figpackManageUrl: row.figpack_manage_url,
 		channel: row.channel as 'default' | 'ephemeral',
 		isEphemeral: Boolean(row.is_ephemeral),
+		copiedFromUrl: row.copied_from_url ?? undefined,
+		copiedFromOwnerEmail: row.copied_from_owner_email ?? undefined,
+		originalUrl: row.original_url ?? undefined,
+		originalOwnerEmail: row.original_owner_email ?? undefined,
 		// sourceUrl: row.source_url,
 	};
+}
+
+// Expiration:
+//   Ephemeral figures always use the 6-hour cap (per-bucket override does not apply).
+//   Regular figures default to 24 hours, optionally overridden per-bucket:
+//     bucket.defaultExpirationSeconds === undefined → 24h
+//     bucket.defaultExpirationSeconds === 0         → never expires (stored as 0)
+//     bucket.defaultExpirationSeconds  >  0         → that many seconds from now
+export function defaultExpiration(bucket: Bucket, ephemeral: boolean, now: number): number {
+	if (ephemeral) return now + 6 * 60 * 60 * 1000;
+	if (bucket.defaultExpirationSeconds === undefined) return now + 24 * 60 * 60 * 1000;
+	if (bucket.defaultExpirationSeconds === 0) return 0;
+	return now + bucket.defaultExpirationSeconds * 1000;
 }
 
 export async function handleCreateFigure(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
@@ -251,22 +268,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 
 		// Create new figure document
 		const now = Date.now();
-		// Expiration:
-		//   Ephemeral figures always use the 6-hour cap (per-bucket override does not apply).
-		//   Regular figures default to 24 hours, optionally overridden per-bucket:
-		//     bucket.defaultExpirationSeconds === undefined → 24h
-		//     bucket.defaultExpirationSeconds === 0         → never expires (stored as 0)
-		//     bucket.defaultExpirationSeconds  >  0         → that many seconds from now
-		let expirationTime: number;
-		if (ephemeral) {
-			expirationTime = now + 6 * 60 * 60 * 1000;
-		} else if (targetBucket.defaultExpirationSeconds === undefined) {
-			expirationTime = now + 24 * 60 * 60 * 1000;
-		} else if (targetBucket.defaultExpirationSeconds === 0) {
-			expirationTime = 0;
-		} else {
-			expirationTime = now + targetBucket.defaultExpirationSeconds * 1000;
-		}
+		const expirationTime = defaultExpiration(targetBucket, !!ephemeral, now);
 
 		const prepareResult = env.figpack_db.prepare(`
         INSERT INTO figures (

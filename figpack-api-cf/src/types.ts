@@ -33,7 +33,7 @@ export interface RateLimitResult {
 	resetTime: number;
 }
 
-export type EndpointType = 'general' | 'upload' | 'create_figure' | 'admin' | 'send_api_key' | 'request_account';
+export type EndpointType = 'general' | 'upload' | 'create_figure' | 'admin' | 'send_api_key' | 'request_account' | 'copy_figure';
 
 export interface RateLimitConfig {
 	WINDOW_MS: number;
@@ -100,6 +100,11 @@ export interface Figure {
 	figpackManageUrl?: string;
 	channel: 'default' | 'ephemeral';
 	isEphemeral: boolean;
+	// Provenance, set for figures made by POST /figures/copy
+	copiedFromUrl?: string;
+	copiedFromOwnerEmail?: string; // undefined if the source was an anonymous ephemeral upload
+	originalUrl?: string;
+	originalOwnerEmail?: string; // undefined if the original was an anonymous ephemeral upload
 	sourceUrl?: string /* Deprecated */;
 }
 
