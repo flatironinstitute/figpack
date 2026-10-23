@@ -2,10 +2,12 @@ import {
   getBatchSignedUrls,
   uploadFileToSignedUrl,
 } from "../EditFigureServicePage/uploadFilesApi";
+import { copyFigure } from "../ManageFigurePage/copyFigureApi";
 
 // Saving a remix: upload it as remix-N.html into the figure directory and
 // add it to the figure's manifest.json (patch-figure only updates pages
-// listed there). Only the figure's owner can upload.
+// listed there). Only the figure's owner can upload; other users save into
+// a copy of the figure (saveRemixAsCopy).
 
 type Manifest = {
   files: { path: string; size: number }[];
@@ -96,4 +98,29 @@ export const saveRemix = async (opts: {
     }
   }
   return path;
+};
+
+// For a figure the user does not own: copy the figure into the user's
+// figures (POST /figures/copy, server-side), then save the remix as a new
+// remix-N.html in the copy. Returns the copy's directory and the remix path.
+export const saveRemixAsCopy = async (opts: {
+  apiKey: string;
+  figureDirUrl: string;
+  html: string;
+  onProgress: (message: string) => void;
+}): Promise<{ figureDirUrl: string; path: string }> => {
+  const { apiKey, html, onProgress } = opts;
+  onProgress("Copying the figure...");
+  const copyUrl = await copyFigure(opts.figureDirUrl + "index.html", apiKey);
+  const figureDirUrl = copyUrl.replace(/index\.html$/, "");
+  onProgress("Saving the remix in the copy...");
+  try {
+    const path = await saveRemix({ apiKey, figureDirUrl, html, path: null });
+    return { figureDirUrl, path };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `The figure was copied to ${copyUrl}, but saving the remix failed: ${message}`,
+    );
+  }
 };

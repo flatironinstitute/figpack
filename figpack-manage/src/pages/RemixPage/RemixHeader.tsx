@@ -17,6 +17,8 @@ interface RemixHeaderProps {
   onReload: () => void;
   // null if saving is allowed, otherwise why not
   saveDisabledReason: string | null;
+  // A user who does not own the figure saves into a copy of it
+  saveAsCopy: boolean;
   onSave: () => void;
 }
 
@@ -29,6 +31,7 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
   onReset,
   onReload,
   saveDisabledReason,
+  saveAsCopy,
   onSave,
 }) => {
   const navigate = useNavigate();
@@ -89,7 +92,10 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
           )}
           <Tooltip
             title={
-              saveDisabledReason ?? "Save this remix as a page of the figure"
+              saveDisabledReason ??
+              (saveAsCopy
+                ? "Copy this figure into your figures and save the remix there"
+                : "Save this remix as a page of the figure")
             }
           >
             <span>
@@ -100,7 +106,7 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
                 onClick={onSave}
                 disabled={saveDisabledReason !== null}
               >
-                Save remix
+                {saveAsCopy ? "Save as a copy" : "Save remix"}
               </Button>
             </span>
           </Tooltip>

@@ -12,6 +12,7 @@ import {
   toPageUrl,
   toSrcdoc,
 } from "./remixHtml";
+import { deleteDraft, saveDraft } from "./draftStore";
 import SaveRemixDialog from "./SaveRemixDialog";
 import useConsoleLog from "./useConsoleLog";
 import type { RemixToolContext } from "./remixTools";
@@ -82,13 +83,42 @@ const RemixPage: React.FC = () => {
     agent,
   });
 
+  // Users who do not own the figure save into a copy of it
+  const saveAsCopy = !!user && !!ownerEmail && user.email !== ownerEmail;
   const saveDisabledReason = !isLoggedIn
-    ? "Log in as the figure's owner to save remixes"
-    : !user || !ownerEmail || user.email !== ownerEmail
-      ? "Only the figure's owner can save remixes"
+    ? "Log in to save remixes"
+    : !user || !ownerEmail
+      ? "Only figures registered with figpack can be saved"
       : agent.running
         ? "Wait for the assistant to finish"
         : null;
+
+  // After saving into a copy, the draft (page and chat) moves to the saved
+  // remix in the copy, which then opens; there the user is the owner
+  const { getChatState } = agent;
+  const handleSavedAsCopy = useCallback(
+    async (copyDirUrl: string, path: string) => {
+      if (html === null) return;
+      const copyPageUrl = copyDirUrl + path;
+      try {
+        await saveDraft({
+          figureUrl: copyPageUrl,
+          html,
+          savedPath: path,
+          originalHtml: html,
+          chat: getChatState(),
+          updatedAt: Date.now(),
+        });
+        if (pageUrl) await deleteDraft(pageUrl);
+      } catch (err) {
+        console.warn("Could not move the remix draft", err);
+      }
+      window.location.assign(
+        `/remix?figure=${encodeURIComponent(copyPageUrl)}`,
+      );
+    },
+    [html, pageUrl, getChatState],
+  );
 
   const srcdoc = useMemo(
     () => (html !== null && figureDirUrl ? toSrcdoc(html, figureDirUrl) : ""),
@@ -129,6 +159,7 @@ const RemixPage: React.FC = () => {
         onReset={handleReset}
         onReload={handleReload}
         saveDisabledReason={saveDisabledReason}
+        saveAsCopy={saveAsCopy}
         onSave={() => setSaveDialogOpen(true)}
       />
       {saveDialogOpen && figureDirUrl && html !== null && (
@@ -140,6 +171,8 @@ const RemixPage: React.FC = () => {
           html={html}
           savedPath={savedPath}
           onSaved={setSavedPath}
+          asCopy={saveAsCopy}
+          onSavedAsCopy={handleSavedAsCopy}
         />
       )}
       {error ? (
