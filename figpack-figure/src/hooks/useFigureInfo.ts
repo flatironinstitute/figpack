@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
 
+// Provenance of a figure made by copying another figure (ownerEmail is null
+// for an anonymous ephemeral figure)
+export type FigureProvenance = {
+  copiedFrom: {
+    figureUrl: string;
+    ownerEmail: string | null;
+    copiedAt: number;
+  };
+  original?: { figureUrl: string; ownerEmail: string | null };
+};
+
 export type FigureInfo = {
   status: string;
   uploadStarted?: string;
@@ -10,6 +21,8 @@ export type FigureInfo = {
   figureManagementUrl?: string; // to phase out
   figpackManageUrl?: string; // new
   deleted?: boolean;
+  copiedFrom?: FigureProvenance["copiedFrom"];
+  original?: FigureProvenance["original"];
 };
 
 export type FigureInfoResult = {

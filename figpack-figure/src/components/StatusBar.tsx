@@ -6,7 +6,7 @@ import {
   FigureAnnotationsState,
   ZarrGroup,
 } from "src/figpack-interface";
-import { FigureInfoResult } from "../hooks/useFigureInfo";
+import { FigureInfoResult, FigureProvenance } from "../hooks/useFigureInfo";
 import { useUrlParams } from "../hooks/useUrlParams";
 import { AboutDialog } from "./AboutDialog";
 import FigureAnnotationsStatusComponent from "./FigureAnnotationsStatusComponent";
@@ -17,7 +17,8 @@ const AboutButton: React.FC<{
   title?: string;
   description?: string;
   script?: string;
-}> = ({ title, description, script }) => {
+  provenance?: FigureProvenance;
+}> = ({ title, description, script, provenance }) => {
   const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
 
   const handleAboutClick = () => {
@@ -28,8 +29,8 @@ const AboutButton: React.FC<{
     setIsAboutDialogOpen(false);
   };
 
-  // Only show the About button if there's a title or description
-  if (!title && !description) {
+  // Only show the About button if there's a title, description or provenance
+  if (!title && !description && !provenance) {
     return null;
   }
 
@@ -48,6 +49,7 @@ const AboutButton: React.FC<{
         title={title}
         description={description}
         script={script}
+        provenance={provenance}
       />
     </>
   );
@@ -151,8 +153,15 @@ export const StatusBar: React.FC<{
       "https://manage.figpack.org"
     : undefined;
 
+  const copiedFrom = figureInfoResult?.figureInfo?.copiedFrom;
+  const original = figureInfoResult?.figureInfo?.original;
   const aboutButton = (
-    <AboutButton title={title} description={description} script={script} />
+    <AboutButton
+      title={title}
+      description={description}
+      script={script}
+      provenance={copiedFrom ? { copiedFrom, original } : undefined}
+    />
   );
 
   const manageButton =
