@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 
-// Fetch the original page (index.html) of a figure
-const useFigureHtml = (figureDirUrl: string | null) => {
+// Fetch the original page of a figure (its index.html or another page)
+const useFigureHtml = (pageUrl: string | null) => {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!figureDirUrl) return;
+    if (!pageUrl) return;
     let canceled = false;
     setHtml(null);
     setError(null);
     (async () => {
       try {
-        const response = await fetch(figureDirUrl + "index.html", {
+        const response = await fetch(pageUrl, {
           cache: "no-store",
         });
         if (!response.ok) {
@@ -23,7 +23,7 @@ const useFigureHtml = (figureDirUrl: string | null) => {
       } catch (err) {
         if (!canceled) {
           setError(
-            `Error loading ${figureDirUrl}index.html: ${err instanceof Error ? err.message : err}`,
+            `Error loading ${pageUrl}: ${err instanceof Error ? err.message : err}`,
           );
         }
       }
@@ -31,7 +31,7 @@ const useFigureHtml = (figureDirUrl: string | null) => {
     return () => {
       canceled = true;
     };
-  }, [figureDirUrl]);
+  }, [pageUrl]);
 
   return { html, error };
 };

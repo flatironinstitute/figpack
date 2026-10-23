@@ -53,14 +53,17 @@ const AboutButton: React.FC<{
   );
 };
 
-const ManageButton: React.FC<{ figpackManageUrl: string }> = ({
-  figpackManageUrl,
-}) => {
+const ManageButton: React.FC<{
+  figpackManageUrl: string;
+  figureUrl: string;
+}> = ({ figpackManageUrl, figureUrl }) => {
   const handleManageClick = () => {
-    // document.baseURI rather than location.href, so that a remix rendered in
-    // an iframe srcdoc (with <base href>) still points at its figure
-    const currentUrl = document.baseURI;
-    const managementUrl = `${figpackManageUrl}/figure?figure_url=${encodeURIComponent(currentUrl)}`;
+    // The figure is registered by its index.html, also when this page is
+    // another page of the figure (such as a remix)
+    const indexUrl = figureUrl.endsWith("/")
+      ? figureUrl + "index.html"
+      : figureUrl + "/index.html";
+    const managementUrl = `${figpackManageUrl}/figure?figure_url=${encodeURIComponent(indexUrl)}`;
     window.open(managementUrl, "_blank");
   };
 
@@ -154,7 +157,7 @@ export const StatusBar: React.FC<{
 
   const manageButton =
     !embedded && figpackManageUrl ? (
-      <ManageButton figpackManageUrl={figpackManageUrl} />
+      <ManageButton figpackManageUrl={figpackManageUrl} figureUrl={figureUrl} />
     ) : null;
 
   const shareButton = <ShareButton figureUrl={figureUrl} />;

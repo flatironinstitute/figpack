@@ -15,6 +15,13 @@ export const toFigureDirUrl = (figureUrl: string) => {
   return url.endsWith("/") ? url : url + "/";
 };
 
+// The URL of the page to remix: the page named in the figure URL (such as
+// a saved remix-1.html), or the figure's index.html
+export const toPageUrl = (figureUrl: string) => {
+  const url = figureUrl.split("?")[0].split("#")[0];
+  return url.endsWith(".html") ? url : toFigureDirUrl(url) + "index.html";
+};
+
 // Pages built with a figpack-figure bundle that supports remixing contain a
 // figure spec script
 export const hasFigureSpec = (html: string) =>
