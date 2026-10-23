@@ -1,11 +1,44 @@
 import { Build, ErrorOutline } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
+import { Box, Dialog, Typography } from "@mui/material";
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { formatCost } from "./formatCost";
 import { describeToolCall } from "./remixTools";
 import type { ChatItem } from "./useRemixAgent";
+
+// A screenshot the assistant took, shown small; click to enlarge
+const Screenshot: React.FC<{ url: string }> = ({ url }) => {
+  const [enlarged, setEnlarged] = useState(false);
+  return (
+    <>
+      <Box
+        component="img"
+        src={url}
+        alt="Screenshot of the preview"
+        onClick={() => setEnlarged(true)}
+        sx={{
+          display: "block",
+          mt: 0.5,
+          maxWidth: 240,
+          border: "1px solid",
+          borderColor: "grey.300",
+          borderRadius: 1,
+          cursor: "zoom-in",
+        }}
+      />
+      <Dialog open={enlarged} onClose={() => setEnlarged(false)} maxWidth="lg">
+        <Box
+          component="img"
+          src={url}
+          alt="Screenshot of the preview"
+          onClick={() => setEnlarged(false)}
+          sx={{ display: "block", maxWidth: "100%", cursor: "zoom-out" }}
+        />
+      </Dialog>
+    </>
+  );
+};
 
 const ToolItem: React.FC<{
   item: Extract<ChatItem, { kind: "tool" }>;
@@ -50,6 +83,7 @@ const ToolItem: React.FC<{
           {item.result}
         </Box>
       )}
+      {item.imageDataUrl && <Screenshot url={item.imageDataUrl} />}
     </Box>
   );
 };

@@ -19,9 +19,13 @@ export type LlmToolCall = {
   function: { name: string; arguments: string };
 };
 
+export type LlmContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
 export type LlmMessage =
   | { role: "system"; content: string }
-  | { role: "user"; content: string }
+  | { role: "user"; content: string | LlmContentPart[] }
   | { role: "assistant"; content: string | null; tool_calls?: LlmToolCall[] }
   | { role: "tool"; tool_call_id: string; content: string };
 

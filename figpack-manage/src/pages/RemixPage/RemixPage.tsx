@@ -5,7 +5,7 @@ import ChatPanel from "./ChatPanel";
 import ConsolePanel from "./ConsolePanel";
 import HtmlEditor from "./HtmlEditor";
 import RemixHeader from "./RemixHeader";
-import RemixPreview from "./RemixPreview";
+import RemixPreview, { type RemixPreviewHandle } from "./RemixPreview";
 import {
   hasFigureSpec,
   toFigureDirUrl,
@@ -54,6 +54,7 @@ const RemixPage: React.FC = () => {
     setHtmlState(h);
   }, []);
 
+  const previewRef = useRef<RemixPreviewHandle>(null);
   const { getEntries, startReloadWait } = consoleLog;
   const toolContext: RemixToolContext = useMemo(
     () => ({
@@ -61,6 +62,12 @@ const RemixPage: React.FC = () => {
       setHtml,
       getConsoleEntries: getEntries,
       waitForReload: () => startReloadWait()(),
+      takeScreenshot: (maxWaitMs: number) => {
+        if (!previewRef.current) {
+          return Promise.reject(new Error("The preview is not available"));
+        }
+        return previewRef.current.capture(maxWaitMs);
+      },
     }),
     [setHtml, getEntries, startReloadWait],
   );
@@ -208,6 +215,7 @@ const RemixPage: React.FC = () => {
                   srcdoc={srcdoc}
                   reloadKey={reloadKey}
                   onConsoleMessage={consoleLog.addEntry}
+                  previewRef={previewRef}
                 />
               </Box>
               <ConsolePanel

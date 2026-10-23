@@ -1,7 +1,9 @@
 import { AddComment, Send, Stop } from "@mui/icons-material";
 import {
   Box,
+  Checkbox,
   CircularProgress,
+  FormControlLabel,
   IconButton,
   MenuItem,
   Select,
@@ -64,6 +66,21 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ agent, isLoggedIn }) => {
             </MenuItem>
           ))}
         </Select>
+        <Tooltip title="Let the assistant take screenshots of the preview. Each screenshot adds to the cost.">
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={agent.allowScreenshots}
+                onChange={(e) => agent.setAllowScreenshots(e.target.checked)}
+                disabled={agent.running}
+              />
+            }
+            label="Allow screenshots"
+            slotProps={{ typography: { variant: "caption" } }}
+            sx={{ ml: 1, mr: 0 }}
+          />
+        </Tooltip>
         <Box sx={{ flexGrow: 1 }} />
         <Tooltip title="Total cost of this session's LLM calls">
           <Typography variant="caption" color="text.secondary">

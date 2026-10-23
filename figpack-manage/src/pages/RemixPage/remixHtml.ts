@@ -1,4 +1,5 @@
 import { CONSOLE_CLIENT_JS } from "./consoleCapture";
+import { CAPTURE_CLIENT_JS } from "./screenshotCapture";
 
 // Helpers for the in-memory remix page. A remix is a modified copy of a
 // figure's page (index.html) that reuses the original figure's data and
@@ -43,9 +44,10 @@ const insertAtHeadStart = (html: string, tags: string) => {
 
 // The srcdoc for the preview iframe: the page with a <base href> pointing at
 // the figure directory, so that ./assets/..., data.zarr/ and extension
-// scripts load from the original figure, and the console capture script
+// scripts load from the original figure, and the console and screenshot
+// capture scripts
 export const toSrcdoc = (html: string, figureDirUrl: string) =>
   insertAtHeadStart(
     html,
-    `<base href="${escapeAttr(figureDirUrl)}">\n    <script>${CONSOLE_CLIENT_JS}</script>`,
+    `<base href="${escapeAttr(figureDirUrl)}">\n    <script>${CONSOLE_CLIENT_JS}</script>\n    <script>${CAPTURE_CLIENT_JS}</script>`,
   );
