@@ -3,11 +3,24 @@ import json
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 
 from ..spike_sorting_extension import spike_sorting_extension
 
 
 class SortingCuration(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.SortingCuration",
+        description="Controls for labeling and merging the selected units.",
+        props=[
+            SpecProp(
+                "default_label_options",
+                "list of strings",
+                "Label choices to start with when the curation has none yet.",
+            ),
+        ],
+    )
+
     def __init__(
         self,
         *,

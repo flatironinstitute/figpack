@@ -3,6 +3,7 @@ from typing import List, Optional
 from dataclasses import dataclass
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from .nwb_extension import nwb_extension
 
 
@@ -18,6 +19,18 @@ class PoseEstimationItem:
 
 
 class PoseEstimation(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="nwb.PoseEstimation",
+        description="Animated 2D positions of tracked body parts (pose estimation), with playback controls.",
+        props=[
+            SpecProp(
+                "node_names",
+                "list of strings",
+                "Labels of the nodes (body parts), one per node in stored order.",
+            ),
+        ],
+    )
+
     def __init__(
         self,
         *,

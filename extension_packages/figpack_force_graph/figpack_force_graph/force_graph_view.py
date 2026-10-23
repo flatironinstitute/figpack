@@ -10,6 +10,7 @@ import urllib.error
 from typing import List, Dict, Any, Optional, Union
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -75,6 +76,18 @@ class ForceGraphView(figpack.ExtensionView):
     This view displays interactive network graphs with nodes and links,
     supporting various styling and interaction options.
     """
+
+    spec_schema = SpecSchema(
+        view_type="force-graph.ForceGraphView",
+        description="Interactive force-directed graph of nodes and links.",
+        props=[
+            SpecProp(
+                "config",
+                'JSON string: {backgroundColor?: string, highlightConnected?: boolean, dagMode?: "td" | "bu" | "lr" | "rl" | "radialout" | "radialin", cooldownTicks?: integer, warmupTicks?: integer}',
+                "Graph settings as JSON text; highlightConnected highlights neighbors on hover; dagMode sets a DAG layout.",
+            ),
+        ],
+    )
 
     def __init__(
         self,
@@ -267,8 +280,7 @@ class ForceGraphView(figpack.ExtensionView):
             config["warmupTicks"] = self.warmup_ticks
 
         # Store configuration as JSON in attributes
-        if config:
-            group.attrs["config"] = json.dumps(config)
+        group.attrs["config"] = json.dumps(config)
 
         # Store data size for reference
         group.attrs["data_size"] = len(json_bytes)

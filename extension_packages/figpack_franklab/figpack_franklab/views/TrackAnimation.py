@@ -1,6 +1,7 @@
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .franklab_extension import franklab_extension
 
 
@@ -8,6 +9,11 @@ class TrackAnimation(figpack.ExtensionView):
     """
     A track animation visualization component for displaying animal tracking data
     """
+
+    spec_schema = SpecSchema(
+        view_type="franklab.TrackAnimation",
+        description="Animated position and head direction on a binned track, with per-frame bin values.",
+    )
 
     def __init__(
         self,

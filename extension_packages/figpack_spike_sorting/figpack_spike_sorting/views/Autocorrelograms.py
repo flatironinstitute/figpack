@@ -7,6 +7,7 @@ from typing import List
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .AutocorrelogramItem import AutocorrelogramItem
 from ..spike_sorting_extension import spike_sorting_extension
 
@@ -15,6 +16,11 @@ class Autocorrelograms(figpack.ExtensionView):
     """
     A view that displays multiple autocorrelograms for spike sorting analysis
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.Autocorrelograms",
+        description="Autocorrelogram of each unit.",
+    )
 
     def __init__(
         self,

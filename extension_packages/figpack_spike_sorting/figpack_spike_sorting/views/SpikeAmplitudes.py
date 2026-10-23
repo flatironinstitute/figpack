@@ -10,6 +10,7 @@ from .SpikeAmplitudesItem import SpikeAmplitudesItem
 from .UnitsTable import UnitsTable, UnitsTableColumn, UnitsTableRow
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 import figpack.views as fpv
 from ..spike_sorting_extension import spike_sorting_extension
 
@@ -18,6 +19,11 @@ class SpikeAmplitudes(figpack.ExtensionView):
     """
     A view that displays spike amplitudes over time for multiple units
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.SpikeAmplitudes",
+        description="Spike amplitudes of all units against time, with zooming and panning.",
+    )
 
     def __init__(
         self,
