@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_3d",
-    version="0.1.3",
+    version="0.1.4",
     description="3D visualization extension for figpack using Three.js",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
@@ -30,7 +30,7 @@ setup(
     },
     include_package_data=True,
     install_requires=[
-        "figpack>=0.2.9",
+        "figpack>=0.4.0",
         "numpy",
         "zarr",
     ],
