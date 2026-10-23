@@ -59,7 +59,8 @@ def test_schemas_are_registered():
 def test_slide_props_are_written():
     spec = _spec(_deck())
     slides = spec["children"]
-    assert list(slides) == ["slide_1", "slide_2", "slide_3"]
+    # zarr 2 and zarr 3 list groups in different orders
+    assert sorted(slides) == ["slide_1", "slide_2", "slide_3"]
     slide = slides["slide_2"]
     assert set(slide["props"]) == {p.name for p in fpsv.Slide.spec_schema.props}
     assert slide["props"]["slide_metadata"] == {"elements": [ARROW]}
