@@ -3,6 +3,7 @@ from typing import Any, List, Optional, Sequence, Union
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from .franklab_extension import franklab_extension
 
 
@@ -44,6 +45,39 @@ class DecodedPositionAnimation(figpack.ExtensionView):
     The view has playback controls (play/pause, speed) and a scrub bar, and
     syncs with other figpack views through the timeseriesSelection context.
     """
+
+    spec_schema = SpecSchema(
+        view_type="franklab.DecodedPositionAnimation",
+        description="Animated decoded position (with a fading trail) over the actual position and head direction.",
+        props=[
+            SpecProp(
+                "trail_len",
+                "integer",
+                "Number of frames the decoded-point trail persists.",
+            ),
+            SpecProp(
+                "default_scatter_size",
+                "number",
+                "Decoded point size (points^2, as matplotlib's s) when no per-frame sizes are stored.",
+            ),
+            SpecProp(
+                "patch_face_color",
+                "string (CSS color)",
+                "Fill color of the background patches.",
+            ),
+            SpecProp(
+                "patch_edge_color",
+                "string (CSS color)",
+                "Edge color of the background patches.",
+            ),
+            SpecProp(
+                "arrow_color", "string (CSS color)", "Color of the heading arrow."
+            ),
+            SpecProp(
+                "arrow_length", "number", "Heading arrow length in spatial units."
+            ),
+        ],
+    )
 
     def __init__(
         self,
