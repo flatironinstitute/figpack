@@ -1,0 +1,138 @@
+{
+  "description": "data replaces when the path exists; a spec-only node (data null) is added; bad paths are skipped",
+  "spec": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        }
+      }
+    }
+  },
+  "zarr_groups": [
+    "",
+    "item_0",
+    "item_0/a",
+    "item_0/b",
+    "item_1",
+    "item_1/c"
+  ],
+  "patch": {
+    "children": {
+      "item_1": {
+        "data": "/item_0/a",
+        "props": {
+          "y_label": "copy"
+        }
+      },
+      "item_0": {
+        "data": "/missing",
+        "props": {
+          "y_label": "mV"
+        }
+      },
+      "notes": {
+        "data": null,
+        "view_type": "Markdown",
+        "props": {
+          "content": "# Notes"
+        }
+      },
+      "extra": {
+        "data": "/item_0/b"
+      },
+      "ghost": {
+        "data": "/nope",
+        "props": {
+          "y_label": "x"
+        }
+      }
+    }
+  },
+  "expected": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "mV",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": "copy"
+        },
+        "data": "/item_0/a"
+      },
+      "notes": {
+        "data": null,
+        "view_type": "Markdown",
+        "props": {
+          "content": "# Notes"
+        }
+      },
+      "extra": {
+        "data": "/item_0/b"
+      }
+    }
+  },
+  "warnings": [
+    "remix: data path '/missing' at 'item_0' is not in data.zarr; skipped",
+    "remix: no child 'ghost' under 'root'; skipped"
+  ]
+}

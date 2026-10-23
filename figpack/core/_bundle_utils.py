@@ -3,6 +3,8 @@ import pathlib
 import json
 from typing import Optional, List
 
+from ._remix_patch import RemixArg, apply_remix_patch
+
 import zarr
 
 from .figpack_view import FigpackView
@@ -26,6 +28,7 @@ def prepare_figure_bundle(
     title: str,
     description: Optional[str] = None,
     script: Optional[str] = None,
+    remix: Optional[RemixArg] = None,
 ) -> None:
     """
     Prepare a figure bundle in the specified temporary directory.
@@ -33,7 +36,8 @@ def prepare_figure_bundle(
     This function:
     1. Copies all files from the figpack-figure-dist directory to tmpdir
     2. Writes the view data to a zarr group
-    3. Writes the figure spec (layout and settings) into index.html
+    3. Writes the figure spec (layout and settings) into index.html, with a
+       remix patch merged in if given
     4. Discovers and writes extension JavaScript files
     5. Consolidates zarr metadata
 
@@ -43,6 +47,8 @@ def prepare_figure_bundle(
         title: Title for the figure (required)
         description: Optional description for the figure (markdown supported)
         script: Optional script text used to generate the figure
+        remix: Optional remix patch (a file path or a loaded dict) to merge
+            into the figure spec
     """
     html_dir = thisdir / ".." / "figpack-figure-dist"
     if not os.path.exists(html_dir):
@@ -84,11 +90,17 @@ def prepare_figure_bundle(
         index_html_path = pathlib.Path(tmpdir) / "index.html"
         figure_spec = build_figure_spec(zarr_group._zarr_group)
         figure_spec_docs = build_figure_spec_docs(zarr_group._zarr_group)
+        remix_record = None
+        if remix is not None:
+            figure_spec, remix_record = apply_remix_patch(
+                figure_spec, remix, zarr_group._zarr_group
+            )
         index_html_path.write_text(
             insert_figure_spec_into_html(
                 index_html_path.read_text(encoding="utf-8"),
                 figure_spec,
                 figure_spec_docs,
+                remix_record,
             ),
             encoding="utf-8",
         )

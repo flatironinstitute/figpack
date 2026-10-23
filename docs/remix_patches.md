@@ -10,6 +10,33 @@ On the remix page, "Export patch" compares the spec that the remixed page render
 
 A patch only carries changes to the spec. Other edits to the page, such as added styles, markup or scripts, are not included. The export dialog lists each such change so that nothing is left out silently. Edits to the spec reference block (`data-figpack-spec-docs`) are ignored, since figpack writes that block anew for each figure.
 
+## Applying a patch in Python
+
+Pass the patch file (or the patch as an already-loaded dict) as `remix` when making the figure:
+
+```python
+view.show(title="My figure", remix="my-figure-remix.json")
+view.save("my_figure", title="My figure", remix="my-figure-remix.json")
+```
+
+figpack builds the figure spec from the views as usual and then merges the patch into it before writing index.html. The data in data.zarr is unchanged. Note that `remix=` requires a figpack release newer than 0.4.0.
+
+The merge follows the same rules as the spec itself:
+
+- props replace the existing values per key, as whole values;
+- children merge by name;
+- `data` and `view_type` replace the existing values, and a `data` path must exist in data.zarr.
+
+Parts of the patch that do not match the figure are skipped, each with a printed warning such as `remix: no child 'item_2' under 'item_0'; skipped`. A child matches if it is in the spec or is a subgroup of the node's group in data.zarr; a child that the patch gives its own `data` (an existing path, or `null` for a node defined only by the spec) is added. A `data` path that does not exist, and values of the wrong type, are also skipped. Props are not checked against the view's documented props, so a prop that the view does not use is applied but has no effect.
+
+The figure records the patch it was made with in index.html, next to the spec:
+
+```html
+<script type="application/json" data-figpack-remix-patch>
+{"file": "my-figure-remix.json", "source": {...}, "patch": {...}, "skipped": ["remix: no child 'item_2' under 'item_0'; skipped"]}
+</script>
+```
+
 ## Format
 
 ```json

@@ -243,7 +243,10 @@ def _escape_for_script(text: str) -> str:
 
 
 def insert_figure_spec_into_html(
-    html: str, spec: Dict[str, Any], docs: Optional[str] = None
+    html: str,
+    spec: Dict[str, Any],
+    docs: Optional[str] = None,
+    remix_record: Optional[Dict[str, Any]] = None,
 ) -> str:
     """
     Insert the spec reference and a figpack.render(spec) script at the end of
@@ -253,6 +256,9 @@ def insert_figure_spec_into_html(
         html: The contents of index.html
         spec: The figure spec
         docs: Optional markdown reference for the spec
+        remix_record: Optional record of a remix patch applied to the spec,
+            written as a <script type="application/json"
+            data-figpack-remix-patch> element
 
     Returns:
         The updated html
@@ -269,6 +275,12 @@ def insert_figure_spec_into_html(
             '    <script type="text/markdown" data-figpack-spec-docs>\n'
             + _escape_for_script(docs)
             + "    </script>\n"
+        )
+    if remix_record is not None:
+        script += (
+            '    <script type="application/json" data-figpack-remix-patch>\n    '
+            + _escape_for_script(format_spec_json(remix_record, indent=4))
+            + "\n    </script>\n"
         )
     script += (
         '    <script type="module" data-figpack-spec>\n'

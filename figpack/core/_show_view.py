@@ -5,6 +5,7 @@ import webbrowser
 from typing import Union
 
 from ._bundle_utils import prepare_figure_bundle
+from ._remix_patch import RemixArg
 from ._server_manager import ProcessServerManager
 from ._upload_bundle import _upload_bundle
 from .figpack_view import FigpackView
@@ -92,6 +93,7 @@ def _show_view(
     title: str,
     description: Union[str, None],
     script: Union[str, None],
+    remix: Union[RemixArg, None],
     inline: bool,
     inline_height: int,
     wait_for_input: bool,
@@ -101,7 +103,12 @@ def _show_view(
         # Upload behavior: create temporary directory for this upload only
         with tempfile.TemporaryDirectory(prefix="figpack_upload_") as tmpdir:
             prepare_figure_bundle(
-                view, tmpdir, title=title, description=description, script=script
+                view,
+                tmpdir,
+                title=title,
+                description=description,
+                script=script,
+                remix=remix,
             )
 
             # Check for API key - required for regular uploads, optional for ephemeral
@@ -146,7 +153,12 @@ def _show_view(
 
         # Prepare the figure bundle in the subdirectory
         prepare_figure_bundle(
-            view, str(figure_dir), title=title, description=description, script=script
+            view,
+            str(figure_dir),
+            title=title,
+            description=description,
+            script=script,
+            remix=remix,
         )
 
         # Start or get existing server

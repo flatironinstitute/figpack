@@ -1,0 +1,68 @@
+{
+  "description": "A node with data null has no data group, so its children must be in the spec or have their own data",
+  "spec": {
+    "children": {
+      "notes": {
+        "data": null,
+        "view_type": "Box",
+        "children": {
+          "m": {
+            "data": null,
+            "view_type": "Markdown",
+            "props": {
+              "content": "x"
+            }
+          }
+        }
+      }
+    }
+  },
+  "zarr_groups": [
+    "",
+    "item_0"
+  ],
+  "patch": {
+    "children": {
+      "notes": {
+        "children": {
+          "m": {
+            "props": {
+              "content": "y"
+            }
+          },
+          "k": {
+            "props": {
+              "content": "z"
+            }
+          },
+          "j": {
+            "data": "/item_0"
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "children": {
+      "notes": {
+        "data": null,
+        "view_type": "Box",
+        "children": {
+          "m": {
+            "data": null,
+            "view_type": "Markdown",
+            "props": {
+              "content": "y"
+            }
+          },
+          "j": {
+            "data": "/item_0"
+          }
+        }
+      }
+    }
+  },
+  "warnings": [
+    "remix: no child 'k' under 'notes'; skipped"
+  ]
+}

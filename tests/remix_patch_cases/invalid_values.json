@@ -1,0 +1,116 @@
+{
+  "description": "Values of the wrong type and unknown keys are skipped with a warning",
+  "spec": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        }
+      }
+    }
+  },
+  "zarr_groups": [
+    "",
+    "item_0",
+    "item_0/a",
+    "item_0/b",
+    "item_1",
+    "item_1/c"
+  ],
+  "patch": {
+    "comment": "hi",
+    "view_type": 3,
+    "props": [
+      1
+    ],
+    "children": {
+      "item_0": "red",
+      "item_1": {
+        "children": [],
+        "data": 5,
+        "props": {
+          "y_label": "ok"
+        }
+      }
+    }
+  },
+  "expected": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": "ok"
+        }
+      }
+    }
+  },
+  "warnings": [
+    "remix: unknown key 'comment' at 'root'; skipped",
+    "remix: view_type at 'root' is not a string; skipped",
+    "remix: props at 'root' is not an object; skipped",
+    "remix: child 'item_0' is not an object; skipped",
+    "remix: data at 'item_1' is not a string; skipped",
+    "remix: children at 'item_1' is not an object; skipped"
+  ]
+}

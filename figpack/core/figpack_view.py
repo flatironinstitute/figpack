@@ -5,9 +5,12 @@ Base view class for figpack visualization components
 import os
 import random
 import string
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from .zarr import Group
+
+if TYPE_CHECKING:
+    from ._remix_patch import RemixArg
 
 
 class FigpackView:
@@ -21,6 +24,7 @@ class FigpackView:
         title: str,
         description: Optional[str] = None,
         script: Optional[str] = None,
+        remix: Optional["RemixArg"] = None,
         port: Optional[int] = None,
         open_in_browser: Optional[bool] = None,
         upload: Optional[bool] = None,
@@ -43,6 +47,9 @@ class FigpackView:
             title: Title for browser tab and figure (required)
             description: Description text with markdown support (optional)
             script: Optional script text used to generate the figure
+            remix: Optional remix patch to apply to the figure spec: a path to a
+                patch file exported from the remix page, or the loaded dict (see
+                https://flatironinstitute.github.io/figpack/remix_patches.html)
             port: Local server port, random if None
             open_in_browser: Auto-open in browser, auto-detects by environment
             upload: Upload figure to figpack servers, auto-detects by environment
@@ -164,6 +171,7 @@ class FigpackView:
             title=title,
             description=description,
             script=script,
+            remix=remix,
             inline=inline,
             inline_height=inline_height,
             wait_for_input=wait_for_input,
@@ -171,7 +179,13 @@ class FigpackView:
         )
 
     def save(
-        self, output_path: str, *, title: str, description: str = "", script: str = ""
+        self,
+        output_path: str,
+        *,
+        title: str,
+        description: str = "",
+        script: str = "",
+        remix: Optional["RemixArg"] = None,
     ) -> None:
         """
         Save as figure either to a folder or to a .tar.gz file
@@ -180,11 +194,18 @@ class FigpackView:
             title: Title for the figure
             description: Description text with markdown support
             script: Optional script text used to generate the figure
+            remix: Optional remix patch to apply to the figure spec: a path to a
+                patch file exported from the remix page, or the loaded dict
         """
         from ._save_figure import _save_figure
 
         _save_figure(
-            self, output_path, title=title, description=description, script=script
+            self,
+            output_path,
+            title=title,
+            description=description,
+            script=script,
+            remix=remix,
         )
 
     def write_to_zarr_group(self, group: Group) -> None:

@@ -1,0 +1,116 @@
+{
+  "description": "Children that are neither in the spec nor in data.zarr are skipped with a warning",
+  "spec": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        }
+      }
+    }
+  },
+  "zarr_groups": [
+    "",
+    "item_0",
+    "item_0/a",
+    "item_0/b",
+    "item_1",
+    "item_1/c"
+  ],
+  "patch": {
+    "children": {
+      "item_2": {
+        "props": {
+          "y_label": "x"
+        }
+      },
+      "item_0": {
+        "props": {
+          "y_label": "mV"
+        },
+        "children": {
+          "z": {
+            "props": {
+              "color": "red"
+            }
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "mV",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        }
+      }
+    }
+  },
+  "warnings": [
+    "remix: no child 'item_2' under 'root'; skipped",
+    "remix: no child 'z' under 'item_0'; skipped"
+  ]
+}

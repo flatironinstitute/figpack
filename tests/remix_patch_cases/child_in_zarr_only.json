@@ -1,0 +1,126 @@
+{
+  "description": "A child that is not in the spec but is a subgroup in data.zarr is added",
+  "spec": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        }
+      }
+    }
+  },
+  "zarr_groups": [
+    "",
+    "item_0",
+    "item_0/a",
+    "item_0/b",
+    "item_1",
+    "item_1/c"
+  ],
+  "patch": {
+    "children": {
+      "item_0": {
+        "children": {
+          "b": {
+            "props": {
+              "color": "green"
+            }
+          }
+        }
+      },
+      "item_1": {
+        "children": {
+          "c": {
+            "props": {
+              "color": "black"
+            }
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          },
+          "b": {
+            "props": {
+              "color": "green"
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        },
+        "children": {
+          "c": {
+            "props": {
+              "color": "black"
+            }
+          }
+        }
+      }
+    }
+  },
+  "warnings": []
+}

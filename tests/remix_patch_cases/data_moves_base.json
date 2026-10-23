@@ -1,0 +1,124 @@
+{
+  "description": "Children of a node whose data changed are matched against its new data group",
+  "spec": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "children": {
+          "a": {
+            "props": {
+              "color": "blue",
+              "width": 1
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        }
+      }
+    }
+  },
+  "zarr_groups": [
+    "",
+    "item_0",
+    "item_0/a",
+    "item_0/b",
+    "item_1",
+    "item_1/c"
+  ],
+  "patch": {
+    "children": {
+      "item_0": {
+        "data": "/item_1",
+        "children": {
+          "c": {
+            "props": {
+              "color": "red"
+            }
+          },
+          "a": {
+            "props": {
+              "color": "green"
+            }
+          },
+          "b": {
+            "props": {
+              "color": "black"
+            }
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "props": {
+      "title": "Demo",
+      "direction": "vertical",
+      "items": [
+        {
+          "name": "item_0",
+          "title": "Top"
+        },
+        {
+          "name": "item_1",
+          "title": "Bottom"
+        }
+      ]
+    },
+    "children": {
+      "item_0": {
+        "props": {
+          "y_label": "V",
+          "series_names": [
+            "a",
+            "b"
+          ]
+        },
+        "data": "/item_1",
+        "children": {
+          "a": {
+            "props": {
+              "color": "green",
+              "width": 1
+            }
+          },
+          "c": {
+            "props": {
+              "color": "red"
+            }
+          }
+        }
+      },
+      "item_1": {
+        "props": {
+          "y_label": ""
+        }
+      }
+    }
+  },
+  "warnings": [
+    "remix: no child 'b' under 'item_0'; skipped"
+  ]
+}
