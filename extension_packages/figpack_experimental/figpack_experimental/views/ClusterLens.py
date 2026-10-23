@@ -3,10 +3,16 @@ from typing import Union
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .experimental_extension import experimental_extension
 
 
 class ClusterLens(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="experimental.ClusterLens",
+        description="2D UMAP embedding of points computed in the browser, colored by cluster label, with point selection.",
+    )
+
     def __init__(
         self,
         data: np.ndarray,

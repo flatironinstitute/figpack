@@ -1,10 +1,16 @@
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from .experimental_extension import experimental_extension
 
 
 class EditableNotes(figpack.ExtensionView):
+    spec_schema = SpecSchema(
+        view_type="experimental.EditableNotes",
+        description="Text notes edited in annotation mode; the text is stored in the figure's annotations, not in the spec.",
+    )
+
     def __init__(
         self,
         *,
