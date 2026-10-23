@@ -1,6 +1,7 @@
 import type { ConsoleEntry } from "./consoleCapture";
 import { isErrorLevel } from "./consoleCapture";
 import type { LlmTool } from "./llmApi";
+import type { CaptureResult } from "./snapshotCapture";
 
 // Tools of the remix agent. They act only on the in-memory remix page and
 // on the console log of its preview.
@@ -66,6 +67,28 @@ export const REMIX_TOOLS: LlmTool[] = [
   },
 ];
 
+// Offered only when the user lets the assistant see the figure
+export const SNAPSHOT_TOOL: LlmTool = {
+  type: "function",
+  function: {
+    name: "snapshot_figure",
+    description:
+      "Take a snapshot (an image) of the figure as rendered in the preview, as the user sees it. Waits for the page to load and for its data requests to finish (up to wait_seconds), then returns the image. Costs extra; use sparingly.",
+    parameters: {
+      type: "object",
+      properties: {
+        wait_seconds: {
+          type: "number",
+          description: `Maximum time to wait for the page and its data to load (default 15, at most 30)`,
+        },
+      },
+    },
+  },
+};
+
+const DEFAULT_SNAPSHOT_WAIT_S = 15;
+const MAX_SNAPSHOT_WAIT_S = 30;
+
 export interface RemixToolContext {
   getHtml: () => string;
   setHtml: (html: string) => void;
@@ -73,9 +96,16 @@ export interface RemixToolContext {
   // Resolves once the preview has reloaded after a change and settled;
   // false if it did not reload in time
   waitForReload: () => Promise<boolean>;
+  snapshotFigure: (maxWaitMs: number) => Promise<CaptureResult>;
 }
 
-export type ToolResult = { content: string; isError: boolean };
+export type ToolResult = {
+  content: string;
+  isError: boolean;
+  // A snapshot, as a JPEG data URL, with a caption for the chat
+  imageDataUrl?: string;
+  imageCaption?: string;
+};
 
 const MAX_READ_CHARS = 60000;
 const MAX_LINE_CHARS = 2000;
@@ -188,6 +218,43 @@ const readConsole = (ctx: RemixToolContext, args: Record<string, unknown>) => {
   };
 };
 
+const snapshotFigure = async (
+  ctx: RemixToolContext,
+  args: Record<string, unknown>,
+): Promise<ToolResult> => {
+  const waitS = Math.min(
+    MAX_SNAPSHOT_WAIT_S,
+    Math.max(1, Number(args.wait_seconds) || DEFAULT_SNAPSHOT_WAIT_S),
+  );
+  let result: CaptureResult;
+  try {
+    result = await ctx.snapshotFigure(waitS * 1000);
+  } catch (err) {
+    return {
+      content: `Snapshot failed: ${err instanceof Error ? err.message : err}`,
+      isError: true,
+    };
+  }
+  if (!result.dataUrl) {
+    return {
+      content: `Snapshot failed: ${result.error ?? "no image"}`,
+      isError: true,
+    };
+  }
+  const waited = (result.waitedMs / 1000).toFixed(1);
+  const status = result.idle
+    ? `Captured after ${waited} s, when the page's network requests had finished.`
+    : `Captured after the time limit (${waited} s) with ${result.pendingRequests} request(s) still pending; the image may be incomplete. Use a larger wait_seconds if the figure is slow to load.`;
+  return {
+    content: `${status} Image size ${result.width}x${result.height}; the image follows in the next message.`,
+    isError: false,
+    imageDataUrl: result.dataUrl,
+    imageCaption: result.idle
+      ? `Snapshot after ${waited} s`
+      : `Snapshot after ${waited} s (time limit reached; may be incomplete)`,
+  };
+};
+
 export const executeRemixTool = async (
   ctx: RemixToolContext,
   name: string,
@@ -206,6 +273,8 @@ export const executeRemixTool = async (
       return editPage(ctx, args);
     case "read_console":
       return readConsole(ctx, args);
+    case "snapshot_figure":
+      return snapshotFigure(ctx, args);
     default:
       return { content: `Unknown tool: ${name}`, isError: true };
   }
@@ -230,6 +299,8 @@ export const describeToolCall = (name: string, argsJson: string) => {
       return "Edited page";
     case "read_console":
       return "Read console";
+    case "snapshot_figure":
+      return "Took a snapshot of the figure";
     default:
       return name;
   }
