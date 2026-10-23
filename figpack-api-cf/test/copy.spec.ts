@@ -3,56 +3,68 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 const USER_KEY = 'user-key-0123456789';
 const ADMIN_KEY = 'admin-key-0123456789';
+const LAB_KEY = 'lab-key-0123456789';
 const BASE = 'https://figures.figpack.org';
 const R2 = 'https://acct.r2.cloudflarestorage.com';
 
-// In-memory stand-in for the figures bucket, served through fetchMock (ListObjectsV2, CopyObject, GET, PUT)
+// In-memory stand-in for R2 served through fetchMock (ListObjectsV2, CopyObject, GET, PUT), with objects keyed
+// by "<native bucket>/<key>" and the native buckets each access key can use
 let objects: Map<string, { body: string; size: number }>;
-let copyRequests: string[];
+let copies: { accessKey: string; source: string; dest: string }[];
+let copyRequests: string[]; // Source of each copy
+const ACCESS: Record<string, string[]> = {
+	'AKID-DEFAULT': ['figpack-figures', 'lab-r2-native'],
+	'AKID-LAB': ['lab-r2-native'],
+	'AKID-PRIV': ['lab-r2-private'],
+};
 
-function keyFromPath(path: string) {
-	return decodeURIComponent(path.split('?')[0].slice('/figpack-figures/'.length));
-}
+const pathOf = (path: string) => decodeURIComponent(path.split('?')[0].slice(1));
+const bucketOf = (path: string) => path.split('/')[0];
 
 function handleS3(opts: any) {
 	const headers = new Headers(opts.headers as HeadersInit);
 	const path = opts.path as string;
 	const auth = headers.get('authorization') || '';
-	if (!auth.startsWith('AWS4-HMAC-SHA256 ') || (headers.get('x-amz-copy-source') && !auth.includes('x-amz-copy-source'))) {
+	const copySource = headers.get('x-amz-copy-source');
+	if (!auth.startsWith('AWS4-HMAC-SHA256 ') || (copySource && !auth.includes('x-amz-copy-source'))) {
 		return { statusCode: 403, data: '<Error><Message>Unsigned request</Message></Error>' };
 	}
-	if (opts.method === 'GET' && path.startsWith('/figpack-figures?')) {
-		const prefix = new URL(`${R2}${path}`).searchParams.get('prefix') || '';
+	const accessKey = auth.match(/Credential=([^/]+)\//)?.[1] || '';
+	const target = pathOf(path);
+	const denied = [target, ...(copySource ? [pathOf(copySource)] : [])].some((p) => !ACCESS[accessKey]?.includes(bucketOf(p)));
+	if (denied) return { statusCode: 403, data: '<Error><Message>Access Denied</Message></Error>' };
+	if (opts.method === 'GET' && !target.includes('/')) {
+		const prefix = `${target}/${new URL(`${R2}${path}`).searchParams.get('prefix') || ''}`;
 		const contents = [...objects.entries()]
 			.filter(([key]) => key.startsWith(prefix))
-			.map(([key, o]) => `<Contents><Key>${key}</Key><Size>${o.size}</Size></Contents>`);
+			.map(([key, o]) => `<Contents><Key>${key.slice(target.length + 1)}</Key><Size>${o.size}</Size></Contents>`);
 		return { statusCode: 200, data: `<ListBucketResult><IsTruncated>false</IsTruncated>${contents.join('')}</ListBucketResult>` };
 	}
-	const key = keyFromPath(path);
 	if (opts.method === 'GET') {
-		const o = objects.get(key);
+		const o = objects.get(target);
 		return o ? { statusCode: 200, data: o.body } : { statusCode: 404, data: '' };
 	}
-	if (opts.method === 'PUT' && headers.get('x-amz-copy-source')) {
-		const sourceKey = keyFromPath(headers.get('x-amz-copy-source')!);
-		const o = objects.get(sourceKey);
+	if (opts.method === 'PUT' && copySource) {
+		const source = pathOf(copySource);
+		const o = objects.get(source);
 		if (!o) return { statusCode: 404, data: '<Error><Message>NoSuchKey</Message></Error>' };
-		objects.set(key, o);
-		copyRequests.push(sourceKey);
+		objects.set(target, o);
+		copies.push({ accessKey, source, dest: target });
+		copyRequests.push(source);
 		return { statusCode: 200, data: '<CopyObjectResult></CopyObjectResult>' };
 	}
 	if (opts.method === 'PUT') {
 		const body = String(opts.body);
-		objects.set(key, { body, size: body.length });
+		objects.set(target, { body, size: body.length });
 		return { statusCode: 200, data: '' };
 	}
 	return { statusCode: 400, data: '' };
 }
 
-function putFigureFiles(dir: string, files: Record<string, string | number>) {
+function putFigureFiles(dir: string, files: Record<string, string | number>, nativeBucket = 'figpack-figures') {
 	for (const [path, content] of Object.entries(files)) {
 		const body = typeof content === 'string' ? content : '';
-		objects.set(`${dir}/${path}`, { body, size: typeof content === 'number' ? content : body.length });
+		objects.set(`${nativeBucket}/${dir}/${path}`, { body, size: typeof content === 'number' ? content : body.length });
 	}
 }
 
@@ -79,20 +91,21 @@ async function insertFigure(id: string, fields: Record<string, any> = {}) {
 	return row.figure_url;
 }
 
-function copyRequest(sourceUrl: string, apiKey: string | null = USER_KEY) {
+function copyRequest(sourceUrl: string, apiKey: string | null = USER_KEY, bucket?: string) {
 	const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 	if (apiKey) headers['x-api-key'] = apiKey;
-	return SELF.fetch('https://example.com/figures/copy', { method: 'POST', headers, body: JSON.stringify({ sourceUrl }) });
+	return SELF.fetch('https://example.com/figures/copy', { method: 'POST', headers, body: JSON.stringify({ sourceUrl, bucket }) });
 }
 
-async function copyOk(sourceUrl: string, apiKey = USER_KEY) {
-	const resp = await copyRequest(sourceUrl, apiKey);
+async function copyOk(sourceUrl: string, apiKey = USER_KEY, bucket?: string) {
+	const resp = await copyRequest(sourceUrl, apiKey, bucket);
 	const data = (await resp.json()) as any;
 	expect(resp.status, data.message).toBe(201);
 	return data.figure;
 }
 
-const dirKey = (figureUrl: string) => figureUrl.slice(`${BASE}/`.length, -'/index.html'.length);
+// Object path of a figure's directory in the default bucket
+const dirKey = (figureUrl: string) => `figpack-figures/${figureUrl.slice(`${BASE}/`.length, -'/index.html'.length)}`;
 const readJson = (key: string) => JSON.parse(objects.get(key)!.body);
 
 beforeAll(() => {
@@ -102,6 +115,7 @@ beforeAll(() => {
 
 beforeEach(async () => {
 	objects = new Map();
+	copies = [];
 	copyRequests = [];
 	fetchMock
 		.get(R2)
@@ -109,14 +123,24 @@ beforeEach(async () => {
 		.reply(handleS3 as any)
 		.persist();
 	await env.figpack_db
-		.prepare('INSERT INTO users (email, name, research_description, api_key, is_admin) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?);')
-		.bind('user@example.com', 'User', 'Research', USER_KEY, 0, 'admin@example.com', 'Admin', 'Research', ADMIN_KEY, 1)
+		.prepare(
+			'INSERT INTO users (email, name, research_description, api_key, is_admin) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?);',
+		)
+		.bind(
+			...['user@example.com', 'User', 'Research', USER_KEY, 0],
+			...['admin@example.com', 'Admin', 'Research', ADMIN_KEY, 1],
+			...['lab@example.com', 'Lab member', 'Research', LAB_KEY, 0],
+		)
 		.run();
 	await env.figpack_db
 		.prepare(
-			`INSERT INTO buckets (name, provider, description, bucket_base_url, aws_access_key_id, aws_secret_access_key, s3_endpoint, is_public, region)
-			 VALUES ('figpack-figures', 'cloudflare', 'Default', ?, 'AKID', 'SECRET', ?, 1, 'auto'),
-			        ('lab-bucket', 'aws', 'Lab', 'https://lab.example.com', 'AKID', 'SECRET', 'https://s3.amazonaws.com', 0, 'us-east-1');`,
+			`INSERT INTO buckets (name, provider, description, bucket_base_url, aws_access_key_id, aws_secret_access_key, s3_endpoint,
+			                     is_public, region, native_bucket_name, owner_email, authorized_users)
+			 VALUES ('figpack-figures', 'cloudflare', 'Default', ?1, 'AKID-DEFAULT', 'S', ?2, 1, 'auto', NULL, NULL, '[]'),
+			        ('lab-r2', 'cloudflare', 'Lab', 'https://lab-r2.example.com', 'AKID-LAB', 'S', ?2, 0, 'auto', 'lab-r2-native', 'owner@example.com', '["lab@example.com"]'),
+			        ('lab-r2-private', 'cloudflare', 'Private', 'https://priv.example.com', 'AKID-PRIV', 'S', ?2, 0, 'auto', NULL, NULL, '[]'),
+			        ('other-account', 'cloudflare', 'Other account', 'https://other.example.com', 'AKID-OTHER', 'S', 'https://other.r2.cloudflarestorage.com', 0, 'auto', NULL, NULL, '[]'),
+			        ('lab-aws', 'aws', 'AWS lab', 'https://lab-aws.example.com', 'AKID-AWS', 'S', 'https://s3.amazonaws.com', 0, 'us-east-1', NULL, NULL, '[]');`,
 		)
 		.bind(BASE, R2)
 		.run();
@@ -167,7 +191,7 @@ describe('POST /figures/copy', () => {
 		expect(copyRequests.sort()).toEqual(
 			Object.keys(files)
 				.filter((p) => p !== 'figpack.json' && p !== 'manifest.json')
-				.map((p) => `figures/ephemeral/eph1/${p}`)
+				.map((p) => `figpack-figures/figures/ephemeral/eph1/${p}`)
 				.sort(),
 		);
 		const dir = dirKey(figure.figureUrl);
@@ -177,7 +201,7 @@ describe('POST /figures/copy', () => {
 		expect(manifest.timestamp).toBe(1);
 		expect(manifest.copied_timestamp).toBeGreaterThan(0);
 		expect(manifest.files.map((f: any) => f.path).sort()).toEqual(
-			copyRequests.map((k) => k.slice('figures/ephemeral/eph1/'.length)).sort(),
+			copyRequests.map((k) => k.slice('figpack-figures/figures/ephemeral/eph1/'.length)).sort(),
 		);
 		expect(manifest.total_files).toBe(8);
 
@@ -224,15 +248,11 @@ describe('POST /figures/copy', () => {
 		expect((await copyOk(`${BASE}/figures/default/mine/`)).originalOwnerEmail).toBe('user@example.com');
 	});
 
-	it('rejects figures that are expired, not completed, or in another bucket', async () => {
+	it('rejects figures that are expired or not completed', async () => {
 		const expired = await insertFigure('exp', { expiration: Date.now() - 1000 });
 		const uploading = await insertFigure('upl', { status: 'uploading' });
-		const lab = await insertFigure('lab', { bucket: 'lab-bucket', figure_url: 'https://lab.example.com/figures/default/lab/index.html' });
 		expect((await copyRequest(expired)).status).toBe(400);
 		expect((await copyRequest(uploading)).status).toBe(400);
-		const resp = await copyRequest(lab);
-		expect(resp.status).toBe(400);
-		expect(((await resp.json()) as any).message).toContain('not supported yet');
 		expect(copyRequests).toEqual([]);
 	});
 
@@ -283,10 +303,71 @@ describe('POST /figures/copy', () => {
 		putFigureFiles('figures/default/bad', { 'index.html': 'a' });
 		// Listed but missing at copy time
 		const realGet = objects.get.bind(objects);
-		objects.get = (key: string) => (key === 'figures/default/bad/index.html' && copyRequests.length === 0 ? undefined : realGet(key));
+		objects.get = (key: string) =>
+			key === 'figpack-figures/figures/default/bad/index.html' && copyRequests.length === 0 ? undefined : realGet(key);
 		const resp = await copyRequest(sourceUrl);
 		expect(resp.status).toBe(500);
 		const row = (await env.figpack_db.prepare("SELECT status FROM figures WHERE owner_email = 'user@example.com';").first()) as any;
 		expect(row.status).toBe('failed');
+	});
+});
+
+describe('POST /figures/copy between buckets', () => {
+	const labFigure = (id: string, bucket = 'lab-r2', base = 'https://lab-r2.example.com') =>
+		insertFigure(id, { bucket, figure_url: `${base}/figures/default/${id}/index.html`, owner_email: 'owner@example.com' });
+
+	it('copies within a non-default bucket for a user who may upload there', async () => {
+		const sourceUrl = await labFigure('lab1');
+		putFigureFiles('figures/default/lab1', { 'index.html': 'a', 'data.zarr/.zmetadata': '{}' }, 'lab-r2-native');
+		const figure = await copyOk(sourceUrl, LAB_KEY);
+		expect(figure).toMatchObject({ bucket: 'lab-r2', ownerEmail: 'lab@example.com', originalOwnerEmail: 'owner@example.com' });
+		expect(figure.figureUrl.startsWith('https://lab-r2.example.com/figures/default/')).toBe(true);
+		expect(copies.map((c) => [c.accessKey, bucketOf(c.source), bucketOf(c.dest)])).toEqual([
+			['AKID-LAB', 'lab-r2-native', 'lab-r2-native'],
+			['AKID-LAB', 'lab-r2-native', 'lab-r2-native'],
+		]);
+	});
+
+	it("copies into the default bucket from another R2 bucket on the same account, with the default bucket's credentials", async () => {
+		const sourceUrl = await labFigure('lab2');
+		putFigureFiles('figures/default/lab2', { 'index.html': 'a', 'manifest.json': '{"timestamp":5}' }, 'lab-r2-native');
+		const figure = await copyOk(sourceUrl);
+		expect(figure).toMatchObject({ bucket: 'figpack-figures', ownerEmail: 'user@example.com', copiedFromUrl: sourceUrl });
+		expect(figure.figureUrl.startsWith(`${BASE}/figures/default/`)).toBe(true);
+		expect(copies).toEqual([
+			{
+				accessKey: 'AKID-DEFAULT',
+				source: 'lab-r2-native/figures/default/lab2/index.html',
+				dest: `${dirKey(figure.figureUrl)}/index.html`,
+			},
+		]);
+		expect(readJson(`${dirKey(figure.figureUrl)}/manifest.json`)).toMatchObject({ timestamp: 5, total_files: 1 });
+	});
+
+	it("rejects copies the default bucket's credentials cannot read, other accounts and AWS buckets", async () => {
+		const sources = [
+			await labFigure('p1', 'lab-r2-private', 'https://priv.example.com'),
+			await labFigure('o1', 'other-account', 'https://other.example.com'),
+			await labFigure('a1', 'lab-aws', 'https://lab-aws.example.com'),
+		];
+		putFigureFiles('figures/default/p1', { 'index.html': 'a' }, 'lab-r2-private');
+		for (const sourceUrl of sources) {
+			const resp = await copyRequest(sourceUrl);
+			expect(resp.status).toBe(400);
+			expect(((await resp.json()) as any).message).toBe("Copying between these buckets isn't supported yet.");
+		}
+		expect(copies).toEqual([]);
+		const count = await env.figpack_db.prepare("SELECT COUNT(*) AS n FROM figures WHERE owner_email = 'user@example.com';").first('n');
+		expect(count).toBe(0);
+	});
+
+	it('honors a requested destination bucket only if the user may upload to it', async () => {
+		const sourceUrl = await insertFigure('d1');
+		putFigureFiles('figures/default/d1', { 'index.html': 'a' });
+		expect((await copyRequest(sourceUrl, USER_KEY, 'lab-r2')).status).toBe(403);
+		expect((await copyRequest(sourceUrl, USER_KEY, 'no-such-bucket')).status).toBe(400);
+		// Lab member: default bucket -> lab bucket needs the lab credentials to read the default bucket, which they cannot
+		expect((await copyRequest(sourceUrl, LAB_KEY, 'lab-r2')).status).toBe(400);
+		expect((await copyOk(sourceUrl, LAB_KEY, 'figpack-figures')).bucket).toBe('figpack-figures');
 	});
 });

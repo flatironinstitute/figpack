@@ -7,6 +7,15 @@ import { BucketInfo } from './s3Utils';
 
 export type S3Object = { key: string; size: number };
 
+export class S3Error extends Error {
+	constructor(
+		message: string,
+		public status: number,
+	) {
+		super(message);
+	}
+}
+
 function bucketEndpoint(bucketInfo: BucketInfo): string {
 	const bucketName = bucketInfo.nativeBucketName || bucketInfo.bucketName;
 	// Same rule as createS3Client: AWS uses the regional host, others the stored endpoint (path style)
@@ -50,7 +59,7 @@ export async function listAllObjects(bucketInfo: BucketInfo, prefix: string): Pr
 		if (continuationToken) params.set('continuation-token', continuationToken);
 		const resp = await client.fetch(`${bucketEndpoint(bucketInfo)}?${params}`);
 		const xml = await resp.text();
-		if (!resp.ok) throw new Error(`Failed to list objects (${resp.status}): ${xmlTag(xml, 'Message') || xml.slice(0, 200)}`);
+		if (!resp.ok) throw new S3Error(`Failed to list objects (${resp.status}): ${xmlTag(xml, 'Message') || xml.slice(0, 200)}`, resp.status);
 		for (const m of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
 			objects.push({ key: xmlTag(m[1], 'Key') || '', size: Number(xmlTag(m[1], 'Size') || 0) });
 		}
@@ -59,12 +68,12 @@ export async function listAllObjects(bucketInfo: BucketInfo, prefix: string): Pr
 	return objects;
 }
 
-// Copy one object within the bucket (CopyObject keeps the content type and other metadata)
-export async function copyObject(bucketInfo: BucketInfo, sourceKey: string, destKey: string): Promise<void> {
-	const bucketName = bucketInfo.nativeBucketName || bucketInfo.bucketName;
+// Copy one object into bucketInfo's bucket, from the same bucket or another bucket the credentials can read
+// (CopyObject keeps the content type and other metadata)
+export async function copyObject(bucketInfo: BucketInfo, sourceNativeBucket: string, sourceKey: string, destKey: string): Promise<void> {
 	const resp = await awsClient(bucketInfo).fetch(`${bucketEndpoint(bucketInfo)}/${encodeKey(destKey)}`, {
 		method: 'PUT',
-		headers: { 'x-amz-copy-source': `/${bucketName}/${encodeKey(sourceKey)}` },
+		headers: { 'x-amz-copy-source': `/${sourceNativeBucket}/${encodeKey(sourceKey)}` },
 	});
 	const body = await resp.text();
 	// CopyObject can fail with status 200 and an <Error> body

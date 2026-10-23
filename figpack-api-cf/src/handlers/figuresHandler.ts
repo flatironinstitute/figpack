@@ -30,6 +30,7 @@ export function parseBucket(row: any): Bucket {
 		s3Endpoint: row.s3_endpoint,
 		isPublic: Boolean(row.is_public),
 		authorizedUsers: JSON.parse(row.authorized_users || '[]'),
+		ownerEmail: row.owner_email || undefined,
 		defaultExpirationSeconds:
 			row.default_expiration_seconds === null || row.default_expiration_seconds === undefined
 				? undefined
