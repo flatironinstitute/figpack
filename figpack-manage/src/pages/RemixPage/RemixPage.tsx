@@ -6,10 +6,17 @@ import ConsolePanel from "./ConsolePanel";
 import HtmlEditor from "./HtmlEditor";
 import RemixHeader from "./RemixHeader";
 import RemixPreview from "./RemixPreview";
-import { hasFigureSpec, toFigureDirUrl, toSrcdoc } from "./remixHtml";
+import {
+  hasFigureSpec,
+  toFigureDirUrl,
+  toPageUrl,
+  toSrcdoc,
+} from "./remixHtml";
+import SaveRemixDialog from "./SaveRemixDialog";
 import useConsoleLog from "./useConsoleLog";
 import type { RemixToolContext } from "./remixTools";
 import useFigureHtml from "./useFigureHtml";
+import useFigureOwner from "./useFigureOwner";
 import useRemixAgent from "./useRemixAgent";
 import useRemixDraft from "./useRemixDraft";
 
@@ -23,13 +30,21 @@ const RemixPage: React.FC = () => {
     [figureUrl],
   );
 
-  const { html: originalHtml, error } = useFigureHtml(figureDirUrl);
+  const pageUrl = useMemo(
+    () => (figureUrl ? toPageUrl(figureUrl) : null),
+    [figureUrl],
+  );
+
+  const { html: originalHtml, error } = useFigureHtml(pageUrl);
   const [html, setHtmlState] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const consoleLog = useConsoleLog();
   const [consoleExpanded, setConsoleExpanded] = useState(true);
   const [leftTab, setLeftTab] = useState<"chat" | "html">("chat");
-  const { apiKey, isLoggedIn } = useAuth();
+  const { apiKey, isLoggedIn, user } = useAuth();
+  const ownerEmail = useFigureOwner(figureDirUrl);
+  const [savedPath, setSavedPath] = useState<string | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   // The page is also kept in a ref, so that consecutive agent edits within
   // one render see each other's changes
@@ -51,12 +66,22 @@ const RemixPage: React.FC = () => {
   );
   const agent = useRemixAgent(apiKey, toolContext);
   const draft = useRemixDraft({
-    figureDirUrl,
+    pageUrl,
     originalHtml,
     html,
     setHtml,
+    savedPath,
+    setSavedPath,
     agent,
   });
+
+  const saveDisabledReason = !isLoggedIn
+    ? "Log in as the figure's owner to save remixes"
+    : !user || !ownerEmail || user.email !== ownerEmail
+      ? "Only the figure's owner can save remixes"
+      : agent.running
+        ? "Wait for the assistant to finish"
+        : null;
 
   const srcdoc = useMemo(
     () => (html !== null && figureDirUrl ? toSrcdoc(html, figureDirUrl) : ""),
@@ -89,13 +114,27 @@ const RemixPage: React.FC = () => {
       }}
     >
       <RemixHeader
-        figureUrl={figureUrl}
+        figureUrl={figureDirUrl ? figureDirUrl + "index.html" : figureUrl}
+        pageUrl={pageUrl ?? figureUrl}
         showControls={canRemix}
         modified={html !== originalHtml}
         draftRestoredFrom={draft.status.restoredFrom}
         onReset={handleReset}
         onReload={handleReload}
+        saveDisabledReason={saveDisabledReason}
+        onSave={() => setSaveDialogOpen(true)}
       />
+      {saveDialogOpen && figureDirUrl && html !== null && (
+        <SaveRemixDialog
+          open
+          onClose={() => setSaveDialogOpen(false)}
+          apiKey={apiKey}
+          figureDirUrl={figureDirUrl}
+          html={html}
+          savedPath={savedPath}
+          onSaved={setSavedPath}
+        />
+      )}
       {error ? (
         <Alert severity="error" sx={{ m: 2 }}>
           {error}

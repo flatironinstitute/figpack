@@ -16,13 +16,23 @@ export type DraftStatus = {
 // then saves the page and chat as they change. A draft that matches the
 // original page and has no chat is deleted.
 const useRemixDraft = (opts: {
-  figureDirUrl: string | null;
+  pageUrl: string | null;
   originalHtml: string | null;
   html: string | null;
   setHtml: (html: string) => void;
+  savedPath: string | null;
+  setSavedPath: (path: string | null) => void;
   agent: ReturnType<typeof useRemixAgent>;
 }) => {
-  const { figureDirUrl, originalHtml, html, setHtml, agent } = opts;
+  const {
+    pageUrl,
+    originalHtml,
+    html,
+    setHtml,
+    savedPath,
+    setSavedPath,
+    agent,
+  } = opts;
   const [restored, setRestored] = useState(false);
   const [status, setStatus] = useState<DraftStatus>({
     restoredFrom: null,
@@ -32,25 +42,34 @@ const useRemixDraft = (opts: {
   // The original page the current draft is based on
   const draftOriginalRef = useRef<string | null>(null);
   // What was last restored or saved, to skip saving it again
-  const lastSavedRef = useRef<{ html: string; items: unknown } | null>(null);
+  const lastSavedRef = useRef<{
+    html: string;
+    items: unknown;
+    savedPath: string | null;
+  } | null>(null);
 
   const { restoreChatState, getChatState } = agent;
 
   useEffect(() => {
-    if (!figureDirUrl || originalHtml === null || restored) return;
+    if (!pageUrl || originalHtml === null || restored) return;
     let canceled = false;
     (async () => {
       let draft = undefined;
       try {
-        draft = await loadDraft(figureDirUrl);
+        draft = await loadDraft(pageUrl);
       } catch (err) {
         console.warn("Could not load remix draft", err);
       }
       if (canceled) return;
       if (draft) {
         draftOriginalRef.current = draft.originalHtml;
-        lastSavedRef.current = { html: draft.html, items: draft.chat.items };
+        lastSavedRef.current = {
+          html: draft.html,
+          items: draft.chat.items,
+          savedPath: draft.savedPath ?? null,
+        };
         setHtml(draft.html);
+        setSavedPath(draft.savedPath ?? null);
         restoreChatState(draft.chat);
         setStatus((s) => ({
           ...s,
@@ -66,26 +85,41 @@ const useRemixDraft = (opts: {
     return () => {
       canceled = true;
     };
-  }, [figureDirUrl, originalHtml, restored, setHtml, restoreChatState]);
+  }, [
+    pageUrl,
+    originalHtml,
+    restored,
+    setHtml,
+    setSavedPath,
+    restoreChatState,
+  ]);
 
   useEffect(() => {
-    if (!restored || !figureDirUrl || html === null || originalHtml === null) {
+    if (!restored || !pageUrl || html === null || originalHtml === null) {
       return;
     }
     const timer = setTimeout(async () => {
       const chat = getChatState();
       const last = lastSavedRef.current;
-      if (last && last.html === html && last.items === chat.items) return;
-      lastSavedRef.current = { html, items: chat.items };
+      if (
+        last &&
+        last.html === html &&
+        last.items === chat.items &&
+        last.savedPath === savedPath
+      ) {
+        return;
+      }
+      lastSavedRef.current = { html, items: chat.items, savedPath };
       try {
-        if (html === originalHtml && chat.items.length === 0) {
+        if (html === originalHtml && chat.items.length === 0 && !savedPath) {
           // Nothing to keep; a later draft starts from the current original
           draftOriginalRef.current = originalHtml;
-          await deleteDraft(figureDirUrl);
+          await deleteDraft(pageUrl);
         } else {
           await saveDraft({
-            figureUrl: figureDirUrl,
+            figureUrl: pageUrl,
             html,
+            ...(savedPath ? { savedPath } : {}),
             originalHtml: draftOriginalRef.current ?? originalHtml,
             chat,
             updatedAt: Date.now(),
@@ -100,7 +134,7 @@ const useRemixDraft = (opts: {
       }
     }, SAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [restored, figureDirUrl, html, originalHtml, getChatState]);
+  }, [restored, pageUrl, html, originalHtml, savedPath, getChatState]);
 
   const dismissOriginalChanged = () =>
     setStatus((s) => ({ ...s, originalChanged: false }));

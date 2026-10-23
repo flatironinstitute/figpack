@@ -12,8 +12,10 @@ export type ChatState = {
 };
 
 export type RemixDraft = {
-  figureUrl: string; // the figure directory URL; the key
+  figureUrl: string; // the URL of the remixed page; the key
   html: string;
+  // The page in the figure directory this remix was last saved to, if any
+  savedPath?: string;
   // The figure's index.html when the draft was started, to detect changes
   originalHtml: string;
   chat: ChatState;

@@ -1,10 +1,13 @@
-import { ArrowBack, Refresh, RestartAlt } from "@mui/icons-material";
+import { ArrowBack, Refresh, RestartAlt, Save } from "@mui/icons-material";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
 interface RemixHeaderProps {
+  // The figure as registered (its index.html), for the Manage Figure page
   figureUrl: string;
+  // The page being remixed
+  pageUrl: string;
   // false while loading, or if the figure cannot be remixed
   showControls: boolean;
   modified: boolean;
@@ -12,15 +15,21 @@ interface RemixHeaderProps {
   draftRestoredFrom: number | null;
   onReset: () => void;
   onReload: () => void;
+  // null if saving is allowed, otherwise why not
+  saveDisabledReason: string | null;
+  onSave: () => void;
 }
 
 const RemixHeader: React.FC<RemixHeaderProps> = ({
   figureUrl,
+  pageUrl,
   showControls,
   modified,
   draftRestoredFrom,
   onReset,
   onReload,
+  saveDisabledReason,
+  onSave,
 }) => {
   const navigate = useNavigate();
   return (
@@ -52,7 +61,7 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
       </Typography>
       <Typography
         component="a"
-        href={figureUrl}
+        href={pageUrl}
         target="_blank"
         rel="noopener noreferrer"
         variant="body2"
@@ -65,7 +74,7 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
           "&:hover": { textDecoration: "underline" },
         }}
       >
-        {figureUrl}
+        {pageUrl}
       </Typography>
       <Box sx={{ flexGrow: 1 }} />
       {showControls && (
@@ -78,6 +87,23 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
               </Typography>
             </Tooltip>
           )}
+          <Tooltip
+            title={
+              saveDisabledReason ?? "Save this remix as a page of the figure"
+            }
+          >
+            <span>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<Save />}
+                onClick={onSave}
+                disabled={saveDisabledReason !== null}
+              >
+                Save remix
+              </Button>
+            </span>
+          </Tooltip>
           <Button
             size="small"
             startIcon={<RestartAlt />}
