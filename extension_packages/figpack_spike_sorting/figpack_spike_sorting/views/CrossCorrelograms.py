@@ -61,16 +61,13 @@ class CrossCorrelograms(figpack.ExtensionView):
 
     @staticmethod
     def from_spikeinterface_widget(W):
-        from spikeinterface.widgets.base import to_attr
-        from spikeinterface.widgets.utils_sortingview import make_serializable
+        from ._spikeinterface_utils import serializable_unit_ids, widget_plot_data
 
         from .CrossCorrelogramItem import CrossCorrelogramItem
 
-        data_plot = W.data_plot
+        dp = widget_plot_data(W)
 
-        dp = to_attr(data_plot)
-
-        unit_ids = make_serializable(dp.unit_ids)
+        unit_ids = serializable_unit_ids(dp.unit_ids)
 
         if dp.similarity is not None:
             similarity = dp.similarity
