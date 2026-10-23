@@ -13,6 +13,7 @@ import {
   toSrcdoc,
 } from "./remixHtml";
 import { deleteDraft, saveDraft } from "./draftStore";
+import ExportPatchDialog from "./ExportPatchDialog";
 import SaveRemixDialog from "./SaveRemixDialog";
 import useConsoleLog from "./useConsoleLog";
 import type { RemixToolContext } from "./remixTools";
@@ -20,6 +21,9 @@ import useFigureHtml from "./useFigureHtml";
 import useFigureOwner from "./useFigureOwner";
 import useRemixAgent from "./useRemixAgent";
 import useRemixDraft from "./useRemixDraft";
+
+// How long Export patch waits for the preview to render the latest page
+const EXPORT_WAIT_MS = 20000;
 
 const RemixPage: React.FC = () => {
   const figureUrl = useMemo(() => {
@@ -46,6 +50,7 @@ const RemixPage: React.FC = () => {
   const ownerEmail = useFigureOwner(figureDirUrl);
   const [savedPath, setSavedPath] = useState<string | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // The page is also kept in a ref, so that consecutive agent edits within
   // one render see each other's changes
@@ -72,6 +77,12 @@ const RemixPage: React.FC = () => {
     }),
     [setHtml, getEntries, startReloadWait],
   );
+  const getRenderedSpec = useCallback(() => {
+    if (!previewRef.current) {
+      return Promise.reject(new Error("The preview is not available"));
+    }
+    return previewRef.current.getRenderedSpec(EXPORT_WAIT_MS);
+  }, []);
   const agent = useRemixAgent(apiKey, toolContext);
   const draft = useRemixDraft({
     pageUrl,
@@ -161,7 +172,16 @@ const RemixPage: React.FC = () => {
         saveDisabledReason={saveDisabledReason}
         saveAsCopy={saveAsCopy}
         onSave={() => setSaveDialogOpen(true)}
+        onExportPatch={() => setExportDialogOpen(true)}
       />
+      {exportDialogOpen && figureDirUrl && html !== null && (
+        <ExportPatchDialog
+          onClose={() => setExportDialogOpen(false)}
+          getRenderedSpec={getRenderedSpec}
+          html={html}
+          figureDirUrl={figureDirUrl}
+        />
+      )}
       {saveDialogOpen && figureDirUrl && html !== null && (
         <SaveRemixDialog
           open

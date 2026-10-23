@@ -8,11 +8,15 @@ import {
   loadCaptureLibrarySource,
   parseCaptureResult,
 } from "./snapshotCapture";
+import { parseSpecMessage, type SpecMessage } from "./specCapture";
 
 export type RemixPreviewHandle = {
   // Snapshot of the figure in the preview once the latest page has been rendered,
   // loaded and has gone idle (waiting at most maxWaitMs in all)
   capture: (maxWaitMs: number) => Promise<CaptureResult>;
+  // The spec that the latest page passed to figpack.render (waiting at most
+  // maxWaitMs for the page to render and load)
+  getRenderedSpec: (maxWaitMs: number) => Promise<Record<string, unknown>>;
 };
 
 interface RemixPreviewProps {
@@ -55,6 +59,8 @@ const RemixPreview: React.FC<RemixPreviewProps> = ({
   const captureWaiters = useRef(
     new Map<string, (result: CaptureResult) => void>(),
   );
+  // The last spec passed to figpack.render, and the page it came from
+  const renderedSpec = useRef<{ seq: number; msg: SpecMessage } | null>(null);
 
   useEffect(() => {
     renderSeq.current++;
@@ -77,6 +83,11 @@ const RemixPreview: React.FC<RemixPreviewProps> = ({
         onConsoleMessage(msg.level, msg.text);
         return;
       }
+      const specMsg = parseSpecMessage(event.data);
+      if (specMsg) {
+        renderedSpec.current = { seq: renderSeq.current, msg: specMsg };
+        return;
+      }
       const result = parseCaptureResult(event.data);
       if (result) {
         captureWaiters.current.get(result.requestId)?.(result);
@@ -91,23 +102,25 @@ const RemixPreview: React.FC<RemixPreviewProps> = ({
     return () => clearTimeout(timer);
   }, [srcdoc]);
 
-  useImperativeHandle(
-    previewRef,
-    () => ({
+  useImperativeHandle(previewRef, () => {
+    // Wait for the latest page to be rendered and loaded
+    const waitForLatestPage = async (start: number, maxWaitMs: number) => {
+      while (
+        renderedSrcdocRef.current !== latestSrcdocRef.current ||
+        loadedSeq.current !== renderSeq.current
+      ) {
+        if (Date.now() - start > maxWaitMs) {
+          throw new Error(
+            `The preview did not load within ${Math.round(maxWaitMs / 1000)} s`,
+          );
+        }
+        await sleep(100);
+      }
+    };
+    return {
       capture: async (maxWaitMs: number) => {
         const start = Date.now();
-        // Wait for the latest page to be rendered and loaded
-        while (
-          renderedSrcdocRef.current !== latestSrcdocRef.current ||
-          loadedSeq.current !== renderSeq.current
-        ) {
-          if (Date.now() - start > maxWaitMs) {
-            throw new Error(
-              `The preview did not load within ${Math.round(maxWaitMs / 1000)} s`,
-            );
-          }
-          await sleep(100);
-        }
+        await waitForLatestPage(start, maxWaitMs);
         const win = iframeRef.current?.contentWindow;
         if (!win) throw new Error("The preview is not available");
         const librarySource = await loadCaptureLibrarySource();
@@ -141,9 +154,25 @@ const RemixPreview: React.FC<RemixPreviewProps> = ({
         // Include the wait for the page to render and load
         return { ...result, waitedMs: sentAt - start + result.waitedMs };
       },
-    }),
-    [],
-  );
+      getRenderedSpec: async (maxWaitMs: number) => {
+        const start = Date.now();
+        await waitForLatestPage(start, maxWaitMs);
+        // The spec script runs after the figure bundle has loaded
+        while (renderedSpec.current?.seq !== renderSeq.current) {
+          if (Date.now() - start > maxWaitMs) {
+            throw new Error(
+              "The page did not call figpack.render. Check the console for errors.",
+            );
+          }
+          await sleep(100);
+        }
+        const msg = renderedSpec.current?.msg;
+        if (!msg) throw new Error("No spec from the preview");
+        if (!msg.ok) throw new Error(msg.error);
+        return msg.spec;
+      },
+    };
+  }, []);
 
   return (
     <Box sx={{ width: "100%", height: "100%", bgcolor: "white" }}>
