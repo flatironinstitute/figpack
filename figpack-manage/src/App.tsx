@@ -9,6 +9,7 @@ import UserProfilePage from "./pages/UserProfilePage/UserProfilePage";
 import FiguresPage from "./pages/FiguresPage/FiguresPage";
 import AnnotatePage from "./pages/AnnotatePage/AnnotatePage";
 import EditFigureServicePage from "./pages/EditFigureServicePage/EditFigureServicePage";
+import RemixPage from "./pages/RemixPage/RemixPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { BacklinksProvider } from "./contexts/BacklinksProvider";
 import LoginButton from "./components/LoginButton";
@@ -18,6 +19,14 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const showAppBar = location.pathname !== "/edit-figure-service";
+  if (location.pathname === "/remix") {
+    // Full-window page, without the app bar and page container
+    return (
+      <AuthProvider>
+        <RemixPage />
+      </AuthProvider>
+    );
+  }
   return (
     <AuthProvider>
       <BacklinksProvider>

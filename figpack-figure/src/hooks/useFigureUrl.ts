@@ -21,8 +21,10 @@ export const useFigureUrl = () => {
       // Development mode: use the provided figure URL
       return toFigureDirUrl(figureUrl);
     } else {
-      // everything before the ? (and #)
-      const baseUrl = window.location.href.split("?")[0].split("#")[0];
+      // document.baseURI is the page URL unless the page sets <base href>,
+      // as a remix rendered in an iframe srcdoc does (there the page URL is
+      // about:srcdoc). Use everything before the ? (and #).
+      const baseUrl = document.baseURI.split("?")[0].split("#")[0];
       return toFigureDirUrl(baseUrl);
     }
   }, []);

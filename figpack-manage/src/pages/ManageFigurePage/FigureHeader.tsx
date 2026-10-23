@@ -1,4 +1,5 @@
 import {
+  AutoFixHigh,
   CheckCircle,
   Delete,
   Error,
@@ -24,6 +25,7 @@ import {
   Typography,
 } from "@mui/material";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { getStatusLabel } from "../FiguresPage/utils";
 
 interface FigpackStatus {
@@ -82,6 +84,8 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
   formatDate,
   errorMessage,
 }) => {
+  const navigate = useNavigate();
+
   const getStatusIcon = () => {
     if (!figpackStatus) return <Warning color="warning" />;
 
@@ -147,7 +151,21 @@ const FigureHeader: React.FC<FigureHeaderProps> = ({
           </Box>
         }
         action={
-          <Box display="flex" gap={1}>
+          <Box display="flex" gap={1} alignItems="center">
+            {figureUrl && (
+              <Tooltip title="Make a modified copy of this figure's page that uses the same data">
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<AutoFixHigh />}
+                  onClick={() =>
+                    navigate(`/remix?figure=${encodeURIComponent(figureUrl)}`)
+                  }
+                >
+                  Remix
+                </Button>
+              </Tooltip>
+            )}
             {figureUrl && (
               <Tooltip title="Open Figure">
                 <IconButton
