@@ -32,6 +32,7 @@ import {
 import BucketsSummary from "../BucketsPage/BucketsSummary";
 import EditBucketDialog from "../BucketsPage/EditBucketDialog";
 import EditUserDialog from "./EditUserDialog";
+import LlmSpendingPanel from "./LlmSpendingPanel";
 import RenewBulkResultsDialog from "./RenewBulkResultsDialog";
 import type { User } from "./UsersSummary";
 import UsersSummary from "./UsersSummary";
@@ -364,6 +365,9 @@ const AdminPage: React.FC = () => {
             showOwnerColumn
           />
         )}
+
+        {/* LLM proxy spending */}
+        {apiKey && <LlmSpendingPanel apiKey={apiKey} />}
 
         <AddUserDialog
           open={addUserDialogOpen}
