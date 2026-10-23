@@ -7,6 +7,7 @@ from typing import List, Optional
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 
 from .CrossCorrelogramItem import CrossCorrelogramItem
@@ -16,6 +17,18 @@ class CrossCorrelograms(figpack.ExtensionView):
     """
     A view that displays multiple cross-correlograms for spike sorting analysis
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.CrossCorrelograms",
+        description="Matrix of cross-correlograms between the selected units.",
+        props=[
+            SpecProp(
+                "hide_unit_selector",
+                "boolean",
+                "Hide the unit selector to the left of the plots.",
+            ),
+        ],
+    )
 
     def __init__(
         self,

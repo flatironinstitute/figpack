@@ -5,6 +5,7 @@ UnitSimilarityMatrix view for figpack - displays a similarity matrix between uni
 from typing import List, Optional, Tuple, Union
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 from .UnitSimilarityScore import UnitSimilarityScore
 
@@ -13,6 +14,18 @@ class UnitSimilarityMatrix(figpack.ExtensionView):
     """
     A view that displays a similarity matrix between units
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.UnitSimilarityMatrix",
+        description="Matrix of pairwise unit similarities, linked to the unit selection.",
+        props=[
+            SpecProp(
+                "range",
+                "[min, max]",
+                "Similarity values at the ends of the color scale (default [0, 1]).",
+            ),
+        ],
+    )
 
     def __init__(
         self,

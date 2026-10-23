@@ -3,6 +3,7 @@
 ## Unreleased
 
 - figpack_nwb 0.1.8, figpack_franklab 0.1.11, figpack_3d 0.1.4, figpack_force_graph 0.1.3: figure spec schemas for PlaneSegmentation, PoseEstimation (`node_names`), DecodedPositionAnimation (trail length, scatter size, patch and arrow colors, arrow length), TrackAnimation, ThreeDView and MeshView (`config`), and ForceGraphView (`config`); these packages now require figpack>=0.4.0. ThreeDView and ForceGraphView always write `config` so it appears in the spec
+- figpack_spike_sorting 0.1.16: figure spec schemas for all spike sorting views, so their user-facing settings appear in the figure spec (CrossCorrelograms `hide_unit_selector`, UnitsTable `columns`, SortingCuration `default_label_options`, UnitLocations and SpikeLocations `disable_auto_rotate`, UnitSimilarityMatrix `range`, UnitMetricsGraph `metrics`, TiledImage layer `label`); Autocorrelograms, AverageWaveforms, RasterPlot and SpikeAmplitudes are documented without props. Requires figpack>=0.4.0
 
 ## [0.4.0] - 2026-10-23
 

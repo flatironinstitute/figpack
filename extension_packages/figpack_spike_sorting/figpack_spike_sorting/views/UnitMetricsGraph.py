@@ -8,6 +8,7 @@ import json
 import numpy as np
 
 import figpack
+from figpack.core._figure_spec import SpecProp, SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 
 
@@ -77,6 +78,18 @@ class UnitMetricsGraph(figpack.ExtensionView):
     """
     A view that displays unit metrics in a graph format
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.UnitMetricsGraph",
+        description="Histograms and pairwise scatter plots of unit metrics.",
+        props=[
+            SpecProp(
+                "metrics",
+                "list of {key, label, dtype}",
+                "Metrics in display order. key names a value in the unit data; label is the plot label.",
+            ),
+        ],
+    )
 
     def __init__(
         self,

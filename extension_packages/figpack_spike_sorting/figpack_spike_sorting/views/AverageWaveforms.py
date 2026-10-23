@@ -6,6 +6,7 @@ from typing import List, Optional, Union, Dict, Any
 
 import numpy as np
 import figpack
+from figpack.core._figure_spec import SpecSchema
 from ..spike_sorting_extension import spike_sorting_extension
 
 
@@ -53,6 +54,11 @@ class AverageWaveforms(figpack.ExtensionView):
     """
     A view that displays multiple average waveforms for spike sorting analysis
     """
+
+    spec_schema = SpecSchema(
+        view_type="spike_sorting.AverageWaveforms",
+        description="Average waveform of each unit on its channels.",
+    )
 
     def __init__(
         self,
