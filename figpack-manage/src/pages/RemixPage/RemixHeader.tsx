@@ -1,12 +1,13 @@
 import {
   ArrowBack,
   FileDownload,
+  FileUpload,
   Refresh,
   RestartAlt,
   Save,
 } from "@mui/icons-material";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
-import React from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface RemixHeaderProps {
@@ -27,6 +28,10 @@ interface RemixHeaderProps {
   saveAsCopy: boolean;
   onSave: () => void;
   onExportPatch: () => void;
+  // A patch file chosen with Apply patch
+  onApplyPatch: (file: File) => void;
+  // null if a patch can be applied, otherwise why not
+  applyPatchDisabledReason: string | null;
 }
 
 const RemixHeader: React.FC<RemixHeaderProps> = ({
@@ -41,8 +46,11 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
   saveAsCopy,
   onSave,
   onExportPatch,
+  onApplyPatch,
+  applyPatchDisabledReason,
 }) => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <Box
       sx={{
@@ -127,6 +135,34 @@ const RemixHeader: React.FC<RemixHeaderProps> = ({
               Export patch
             </Button>
           </Tooltip>
+          <Tooltip
+            title={
+              applyPatchDisabledReason ??
+              "Apply a remix patch file to this remix's figure spec"
+            }
+          >
+            <span>
+              <Button
+                size="small"
+                startIcon={<FileUpload />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={applyPatchDisabledReason !== null}
+              >
+                Apply patch
+              </Button>
+            </span>
+          </Tooltip>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) onApplyPatch(file);
+            }}
+          />
           <Button
             size="small"
             startIcon={<RestartAlt />}

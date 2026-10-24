@@ -37,6 +37,14 @@ The figure records the patch it was made with in index.html, next to the spec:
 </script>
 ```
 
+## Applying a patch on the remix page
+
+"Apply patch" on the remix page takes a patch file from your disk and merges it into the spec that the remix currently renders, with the same rules as `remix=` in Python. The two implementations are kept in step by a shared set of test cases (tests/remix_patch_cases), which both pytest and the figpack-manage tests run. The spec script is then rewritten as formatted JSON, so code that the remix had added to the spec script is replaced, and the dialog says so. The preview re-renders, the dialog lists what changed and which parts of the patch were skipped, and "Undo" restores the page as it was.
+
+If a figure was itself made with a patch, "Export patch" on a remix of it includes that patch, followed by the remix's own changes. The exported patch therefore reproduces the remix on a figure made without a patch.
+
+Note that a patch can be applied to a figure whose structure differs only in part. For example, a changed `items` list is applied as a whole value even if it names a layout item that the other figure does not have, since the merge checks children and data paths but not the contents of props.
+
 ## Format
 
 ```json

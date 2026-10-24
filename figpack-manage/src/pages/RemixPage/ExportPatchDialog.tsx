@@ -105,6 +105,13 @@ const ExportPatchDialog: React.FC<ExportPatchDialogProps> = ({
                 empty.
               </Alert>
             )}
+            {result.includesPatch && (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                This figure was made with a remix patch ({result.includesPatch}
+                ). It is included, so the exported patch reproduces this remix
+                on a figure made without a patch.
+              </Alert>
+            )}
             {result.leftOut.length > 0 && (
               <Alert severity="warning" sx={{ mt: 2 }}>
                 These changes are outside the figure spec, so the patch does not

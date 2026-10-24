@@ -13,6 +13,8 @@ import {
   toSrcdoc,
 } from "./remixHtml";
 import { deleteDraft, saveDraft } from "./draftStore";
+import { applyPatchToRemix } from "./applyPatch";
+import ApplyPatchDialog, { type ApplyPatchState } from "./ApplyPatchDialog";
 import ExportPatchDialog from "./ExportPatchDialog";
 import SaveRemixDialog from "./SaveRemixDialog";
 import useConsoleLog from "./useConsoleLog";
@@ -51,6 +53,10 @@ const RemixPage: React.FC = () => {
   const [savedPath, setSavedPath] = useState<string | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [applyPatchState, setApplyPatchState] =
+    useState<ApplyPatchState | null>(null);
+  // The page before the last applied patch, for Undo
+  const htmlBeforePatch = useRef<string | null>(null);
 
   // The page is also kept in a ref, so that consecutive agent edits within
   // one render see each other's changes
@@ -84,6 +90,36 @@ const RemixPage: React.FC = () => {
     return previewRef.current.getRenderedSpec(EXPORT_WAIT_MS);
   }, []);
   const agent = useRemixAgent(apiKey, toolContext);
+
+  const handleApplyPatch = useCallback(
+    async (file: File) => {
+      const current = htmlRef.current;
+      if (current === null || !figureDirUrl) return;
+      setApplyPatchState({ status: "working", fileName: file.name });
+      try {
+        const result = await applyPatchToRemix(
+          await file.text(),
+          await getRenderedSpec(),
+          current,
+          figureDirUrl,
+        );
+        htmlBeforePatch.current = current;
+        setHtml(result.html);
+        setApplyPatchState({ status: "done", fileName: file.name, result });
+      } catch (err) {
+        setApplyPatchState({
+          status: "error",
+          fileName: file.name,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    },
+    [figureDirUrl, getRenderedSpec, setHtml],
+  );
+  const handleUndoPatch = useCallback(() => {
+    if (htmlBeforePatch.current !== null) setHtml(htmlBeforePatch.current);
+    setApplyPatchState(null);
+  }, [setHtml]);
   const draft = useRemixDraft({
     pageUrl,
     originalHtml,
@@ -173,7 +209,18 @@ const RemixPage: React.FC = () => {
         saveAsCopy={saveAsCopy}
         onSave={() => setSaveDialogOpen(true)}
         onExportPatch={() => setExportDialogOpen(true)}
+        onApplyPatch={handleApplyPatch}
+        applyPatchDisabledReason={
+          agent.running ? "Wait for the assistant to finish" : null
+        }
       />
+      {applyPatchState && (
+        <ApplyPatchDialog
+          state={applyPatchState}
+          onClose={() => setApplyPatchState(null)}
+          onUndo={handleUndoPatch}
+        />
+      )}
       {exportDialogOpen && figureDirUrl && html !== null && (
         <ExportPatchDialog
           onClose={() => setExportDialogOpen(false)}

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { describeSpecDiff, diffSpec, patchFileName } from "./remixPatch";
-import { findChangesOutsideSpec, parseSpecFromHtml } from "./specHtml";
+import {
+  findChangesOutsideSpec,
+  formatSpecJson,
+  parseSpecFromHtml,
+  replaceSpecInHtml,
+} from "./specHtml";
 
 const original = {
   props: { title: "Demo", direction: "horizontal", items: [{ name: "a" }] },
@@ -94,6 +99,42 @@ describe("specHtml", () => {
       "The spec script contains code besides the JSON spec; only the spec it passed to figpack.render is in the patch",
       "Added: <style>body { background: black; }</style>",
     ]);
+  });
+});
+
+describe("formatSpecJson", () => {
+  it("formats like figpack's Python format_spec_json", () => {
+    const value = {
+      props: {
+        title: "T",
+        items: [
+          { name: "item_0", title: "x".repeat(60) },
+          { name: "item_1", title: "y".repeat(60) },
+        ],
+      },
+      children: { a: { props: { c: [1, 2], d: null, e: true } } },
+    };
+    // format_spec_json(value, indent=4) in figpack/core/_figure_spec.py
+    const expected =
+      '{\n      "props": {\n        "title": "T",\n        "items": [\n          {"name": "item_0", "title": "' +
+      "x".repeat(60) +
+      '"},\n          {"name": "item_1", "title": "' +
+      "y".repeat(60) +
+      '"}\n        ]\n      },\n      "children": {"a": {"props": {"c": [1, 2], "d": null, "e": true}}}\n    }';
+    expect(formatSpecJson(value, 4)).toBe(expected);
+  });
+});
+
+describe("replaceSpecInHtml", () => {
+  it("replaces a spec script (even one with other code) with JSON", () => {
+    const html = page(
+      `const s = {"props": {}};\n    figpack.render(s, { specVersion: 1 });`,
+    );
+    const spec = { props: { title: "a </script> b" } };
+    const out = replaceSpecInHtml(html, spec);
+    expect(parseSpecFromHtml(out)).toEqual(spec);
+    expect(out).toContain("<\\/script>");
+    expect(findChangesOutsideSpec(html, out)).toEqual([]);
   });
 });
 
