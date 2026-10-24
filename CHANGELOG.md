@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## [0.4.1] - 2026-10-24
 
 - figpack-manage remix page: "Apply patch" takes a remix patch file from disk and merges it into the spec the remix renders, with the same rules as `remix=` in Python (implemented in TypeScript; both run the shared cases in tests/remix_patch_cases, and figpack-manage `npm test` runs them with vitest). The spec script is rewritten as formatted JSON, the preview re-renders, and a dialog lists what changed and each skipped part, with Undo. Export patch on a remix of a figure made with a patch now includes that patch, so the export reproduces the remix on a figure made without one
 - `view.show(..., remix=...)` and `view.save(..., remix=...)` apply a remix patch (a path to a patch file exported from the remix page, or the loaded dict) to the figure spec before index.html is written; the data is unchanged. Props replace per key, children merge by name, and `data`/`view_type` replace (a `data` path must exist in data.zarr). Parts that do not match the figure are skipped with a printed warning (e.g. `remix: no child 'item_2' under 'item_0'; skipped`). index.html records the applied patch and the skipped parts in a `<script type="application/json" data-figpack-remix-patch>` element. Merge cases shared with the remix page are in tests/remix_patch_cases
