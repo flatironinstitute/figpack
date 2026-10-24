@@ -1,7 +1,9 @@
 import pathlib
 import tempfile
+from typing import Optional
 
 from ._bundle_utils import prepare_figure_bundle
+from ._remix_patch import RemixArg
 from .figpack_view import FigpackView
 
 
@@ -12,6 +14,7 @@ def _save_figure(
     title: str,
     description: str = "",
     script: str = "",
+    remix: Optional[RemixArg] = None,
 ) -> None:
     """
     Save the figure to a folder or a .tar.gz file
@@ -22,6 +25,7 @@ def _save_figure(
         title: Title for the figure
         description: Description text with markdown support
         script: Optional script text used to generate the figure
+        remix: Optional remix patch to apply (a file path or a loaded dict)
     """
     output_path_2 = pathlib.Path(output_path)
     if (output_path_2.suffix == ".gz" and output_path_2.suffixes[-2] == ".tar") or (
@@ -30,7 +34,12 @@ def _save_figure(
         # It's a .tar.gz file
         with tempfile.TemporaryDirectory(prefix="figpack_save_") as tmpdir:
             prepare_figure_bundle(
-                view, tmpdir, title=title, description=description, script=script
+                view,
+                tmpdir,
+                title=title,
+                description=description,
+                script=script,
+                remix=remix,
             )
             # Create tar.gz file
             import tarfile
@@ -46,4 +55,5 @@ def _save_figure(
             title=title,
             description=description,
             script=script,
+            remix=remix,
         )
