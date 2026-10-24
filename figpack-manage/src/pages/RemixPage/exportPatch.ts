@@ -5,7 +5,12 @@ import {
   type RemixPatch,
   type SpecNode,
 } from "./remixPatch";
-import { findChangesOutsideSpec, parseSpecFromHtml } from "./specHtml";
+import { composePatches } from "./remixMerge";
+import {
+  findChangesOutsideSpec,
+  getRemixRecord,
+  parseSpecFromHtml,
+} from "./specHtml";
 
 export type PatchExport = {
   patch: RemixPatch;
@@ -14,10 +19,15 @@ export type PatchExport = {
   changes: string[];
   // Changes in the remix that the patch does not carry
   leftOut: string[];
+  // If the figure was made with a remix patch: that patch's file name (it
+  // is included in this patch)
+  includesPatch: string | null;
 };
 
 // The patch from the figure's original spec (in its index.html, written by
-// figpack as pure JSON) to the spec that the remixed page rendered
+// figpack as pure JSON) to the spec that the remixed page rendered. If the
+// figure was itself made with a remix patch, that patch comes first, so the
+// result reproduces the remix from a figure made without a patch.
 export const prepareExport = async (
   remixedSpec: SpecNode,
   html: string,
@@ -38,12 +48,15 @@ export const prepareExport = async (
     );
   }
   const patch = makeRemixPatch(original, remixedSpec, indexUrl);
+  const record = getRemixRecord(indexHtml);
+  if (record) patch.patch = composePatches(record.patch, patch.patch);
   const title = remixedSpec.props?.title ?? original.props?.title;
   return {
     patch,
     fileName: patchFileName(typeof title === "string" ? title : undefined),
     changes: describeSpecDiff(patch.patch),
     leftOut: findChangesOutsideSpec(indexHtml, html),
+    includesPatch: record ? record.file || "unnamed patch" : null,
   };
 };
 

@@ -1,5 +1,8 @@
 import type { SpecNode } from "./remixPatch";
 
+// The spec format version written into the spec script
+const FIGURE_SPEC_VERSION = 1;
+
 // Reading the figure spec script of a page, and finding the changes a remix
 // makes outside of it (which a remix patch cannot carry)
 
@@ -124,4 +127,85 @@ export const findChangesOutsideSpec = (
   }
   flush();
   return items;
+};
+
+// Line width used when formatting the spec JSON (as in figpack's
+// _figure_spec.py)
+const SPEC_LINE_WIDTH = 120;
+
+// JSON on one line, spaced like Python's json.dumps
+const compactJson = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(compactJson).join(", ")}]`;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value).map(
+      ([k, v]) => `${JSON.stringify(k)}: ${compactJson(v)}`,
+    );
+    return `{${entries.join(", ")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+};
+
+// JSON with one entry per line, except that values short enough to fit on
+// the current line are written inline (as figpack writes the spec)
+export const formatSpecJson = (
+  value: unknown,
+  indent = 0,
+  prefixLen = 0,
+): string => {
+  const compact = compactJson(value);
+  const isContainer = !!value && typeof value === "object";
+  if (
+    !isContainer ||
+    Object.keys(value as object).length === 0 ||
+    indent + prefixLen + compact.length <= SPEC_LINE_WIDTH
+  ) {
+    return compact;
+  }
+  const pad = " ".repeat(indent + 2);
+  const entries = Array.isArray(value)
+    ? value.map((v) => pad + formatSpecJson(v, indent + 2))
+    : Object.entries(value as object).map(([k, v]) => {
+        const key = JSON.stringify(k) + ": ";
+        return pad + key + formatSpecJson(v, indent + 2, key.length);
+      });
+  const [open, close] = Array.isArray(value) ? ["[", "]"] : ["{", "}"];
+  return `${open}\n${entries.join(",\n")}\n${" ".repeat(indent)}${close}`;
+};
+
+const escapeForScript = (text: string) =>
+  text
+    .replace(/<\//g, "<\\/")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+
+// The page with its spec script replaced by figpack.render(<spec as JSON>)
+export const replaceSpecInHtml = (html: string, spec: SpecNode): string => {
+  const m = SPEC_SCRIPT_REGEX.exec(html);
+  if (!m) throw new Error("The page has no data-figpack-spec script");
+  const json = escapeForScript(formatSpecJson(spec, 4));
+  const script = `\n    figpack.render(${json}, { specVersion: ${FIGURE_SPEC_VERSION} });\n    `;
+  const start = m.index + m[0].length - "</script>".length - m[1].length;
+  return html.slice(0, start) + script + html.slice(start + m[1].length);
+};
+
+const REMIX_RECORD_REGEX =
+  /<script\b[^>]*\sdata-figpack-remix-patch(?=[\s>=/])[^>]*>([\s\S]*?)<\/script>/i;
+
+// The record of the remix patch a figure was made with (written by figpack
+// as <script type="application/json" data-figpack-remix-patch>), if any
+export const getRemixRecord = (
+  html: string,
+): { file?: string | null; patch: SpecNode } | null => {
+  const m = REMIX_RECORD_REGEX.exec(html);
+  if (!m) return null;
+  try {
+    const record = JSON.parse(m[1]);
+    const patch = record?.patch;
+    if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+      return null;
+    }
+    return record;
+  } catch {
+    return null;
+  }
 };
