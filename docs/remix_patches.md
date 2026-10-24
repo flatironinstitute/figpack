@@ -19,7 +19,7 @@ view.show(title="My figure", remix="my-figure-remix.json")
 view.save("my_figure", title="My figure", remix="my-figure-remix.json")
 ```
 
-figpack builds the figure spec from the views as usual and then merges the patch into it before writing index.html. The data in data.zarr is unchanged. Note that `remix=` requires a figpack release newer than 0.4.0.
+figpack builds the figure spec from the views as usual and then merges the patch into it before writing index.html. The data in data.zarr is unchanged. Note that `remix=` requires figpack 0.4.1 or later.
 
 The merge follows the same rules as the spec itself:
 
