@@ -1,5 +1,5 @@
 import { authenticateUser, validateApiKey } from '../auth';
-import { API_LIMITS } from '../config';
+import { API_LIMITS, DEFAULT_BUCKET_NAME } from '../config';
 import { updateFigureJson } from '../figureJsonManager';
 import { checkEphemeralFigureLimit } from '../rateLimit';
 import { Bucket, Env, Figure, RateLimitResult } from '../types';
@@ -35,6 +35,8 @@ export function parseBucket(row: any): Bucket {
 			row.default_expiration_seconds === null || row.default_expiration_seconds === undefined
 				? undefined
 				: Number(row.default_expiration_seconds),
+		maxFiguresPerUser:
+			row.max_figures_per_user === null || row.max_figures_per_user === undefined ? undefined : Number(row.max_figures_per_user),
 	};
 }
 
@@ -87,6 +89,22 @@ export function defaultExpiration(bucket: Bucket, ephemeral: boolean, now: numbe
 	return now + bucket.defaultExpirationSeconds * 1000;
 }
 
+// Figure limit: a user may have at most N unexpired figures in a bucket, where N is
+// bucket.maxFiguresPerUser (0 = no limit) or the system default. Legacy rows with no
+// bucket belong to the default bucket. Returns a 429 response if the limit is reached.
+export async function checkFigureLimit(bucket: Bucket, userEmail: string, env: Env): Promise<Response | undefined> {
+	const limit = bucket.maxFiguresPerUser ?? API_LIMITS.MAX_FIGURES_PER_USER;
+	if (limit === 0) return undefined;
+	const bucketClause = bucket.name === DEFAULT_BUCKET_NAME ? '(bucket = ? OR bucket IS NULL)' : 'bucket = ?';
+	const count = (await env.figpack_db
+		.prepare(`SELECT COUNT(*) as count FROM figures WHERE owner_email = ? AND ${bucketClause} AND (expiration = 0 OR expiration > ?)`)
+		.bind(userEmail, bucket.name, Date.now())
+		.first('count')) as number;
+	if (count < limit) return undefined;
+	const message = `Figure limit reached. Maximum ${limit} unexpired figures per user in bucket "${bucket.name}". You currently have ${count}.`;
+	return json({ success: false, message }, 429);
+}
+
 export async function handleCreateFigure(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
 		const body = (await request.json()) as any;
@@ -99,7 +117,7 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 		const figureId = createFigureId();
 
 		// Get bucket information (default to "figpack-figures")
-		const targetBucketName = bucketName || 'figpack-figures';
+		const targetBucketName = bucketName || DEFAULT_BUCKET_NAME;
 		const bucketRow = await env.figpack_db.prepare('SELECT * FROM buckets WHERE name = ?').bind(targetBucketName).first();
 
 		if (!bucketRow) {
@@ -166,24 +184,10 @@ export async function handleCreateFigure(request: Request, env: Env, rateLimitRe
 			);
 		}
 
-		// Check per-user figure limit (count all figures for this user)
+		// Check the bucket's per-user figure limit
 		if (userEmail !== 'anonymous') {
-			const figureCountResult = await env.figpack_db
-				.prepare('SELECT COUNT(*) as count FROM figures WHERE owner_email = ?')
-				.bind(userEmail)
-				.first();
-
-			const currentFigureCount = (figureCountResult?.count as number) || 0;
-
-			if (currentFigureCount >= API_LIMITS.MAX_FIGURES_PER_USER) {
-				return json(
-					{
-						success: false,
-						message: `Figure limit reached. Maximum ${API_LIMITS.MAX_FIGURES_PER_USER} figures per user. You currently have ${currentFigureCount} figures.`,
-					},
-					429,
-				);
-			}
+			const limitResponse = await checkFigureLimit(targetBucket, userEmail, env);
+			if (limitResponse) return limitResponse;
 		}
 
 		// Check global ephemeral figure limit

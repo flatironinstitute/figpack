@@ -271,15 +271,30 @@ describe('POST /figures/copy', () => {
 		await copyOk(sourceUrl, ADMIN_KEY);
 	});
 
-	it('counts copies against the per-user figure limit', async () => {
+	it("counts copies against the destination bucket's per-user figure limit", async () => {
 		const sourceUrl = await insertFigure('lim');
-		await env.figpack_db
-			.prepare(
-				`WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 1000)
-				 INSERT INTO figures (figure_url, owner_email, upload_started, upload_updated, expiration, figpack_version)
-				 SELECT 'https://x/' || i, 'user@example.com', 1, 1, 0, '0.4.0' FROM n;`,
-			)
-			.run();
+		putFigureFiles('figures/default/lim', { 'index.html': 'a' });
+		const insertMany = (tag: string, n: number, bucket: string | null, expiration: number) =>
+			env.figpack_db
+				.prepare(
+					`WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < ?1)
+					 INSERT INTO figures (figure_url, bucket, owner_email, upload_started, upload_updated, expiration, figpack_version)
+					 SELECT 'https://x/' || ?2 || '/' || i, ?3, 'user@example.com', 1, 1, ?4, '0.4.0' FROM n;`,
+				)
+				.bind(n, tag, bucket, expiration)
+				.run();
+		const setLimit = (limit: number | null) =>
+			env.figpack_db.prepare("UPDATE buckets SET max_figures_per_user = ? WHERE name = 'figpack-figures'").bind(limit).run();
+		// Legacy rows with no bucket count toward the default bucket; expired figures and other buckets do not
+		await insertMany('legacy', 999, null, 0);
+		await insertMany('expired', 1000, 'figpack-figures', 1);
+		await insertMany('lab', 1000, 'lab-r2', 0);
+		await copyOk(sourceUrl);
+		expect((await copyRequest(sourceUrl)).status).toBe(429);
+		await setLimit(0);
+		await copyOk(sourceUrl);
+		await setLimit(1002);
+		await copyOk(sourceUrl);
 		expect((await copyRequest(sourceUrl)).status).toBe(429);
 	});
 

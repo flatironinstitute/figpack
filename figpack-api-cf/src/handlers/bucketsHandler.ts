@@ -35,6 +35,8 @@ function parseBucket(row: any): Bucket {
 			row.default_expiration_seconds === null || row.default_expiration_seconds === undefined
 				? undefined
 				: Number(row.default_expiration_seconds),
+		maxFiguresPerUser:
+			row.max_figures_per_user === null || row.max_figures_per_user === undefined ? undefined : Number(row.max_figures_per_user),
 	};
 }
 
@@ -57,11 +59,11 @@ function isRealCredential(value: unknown): value is string {
 	return typeof value === 'string' && value.length > 0 && value !== HIDDEN_CREDENTIAL_PLACEHOLDER;
 }
 
-// Normalize the user-supplied defaultExpirationSeconds. Returns:
+// Normalize a user-supplied per-bucket override (defaultExpirationSeconds, maxFiguresPerUser). Returns:
 //   null      → caller intends "no override" / "use system default"
-//   number    → integer seconds, may be 0 (never expires)
+//   number    → non-negative integer, may be 0 (never expires / no limit)
 //   'invalid' → reject the request
-function normalizeExpirationSeconds(value: unknown): number | null | 'invalid' {
+function normalizeOverride(value: unknown): number | null | 'invalid' {
 	if (value === undefined || value === null || value === '') return null;
 	const n = typeof value === 'number' ? value : Number(value);
 	if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) return 'invalid';
@@ -228,6 +230,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 			authorizedUsers,
 			nativeBucketName,
 			defaultExpirationSeconds,
+			maxFiguresPerUser,
 		} = bucketData;
 
 		if (!name || !provider || !description || !bucketBaseUrl) {
@@ -301,12 +304,24 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 
 		// Validate defaultExpirationSeconds. undefined/null = use system default;
 		// 0 = never expires; positive integer = seconds.
-		const expirationOverride = normalizeExpirationSeconds(defaultExpirationSeconds);
+		const expirationOverride = normalizeOverride(defaultExpirationSeconds);
 		if (expirationOverride === 'invalid') {
 			return json(
 				{
 					success: false,
 					message: 'defaultExpirationSeconds must be null/undefined or a non-negative integer (seconds)',
+				},
+				400,
+			);
+		}
+
+		// Validate maxFiguresPerUser. undefined/null = use system default; 0 = no limit.
+		const figureLimitOverride = normalizeOverride(maxFiguresPerUser);
+		if (figureLimitOverride === 'invalid') {
+			return json(
+				{
+					success: false,
+					message: 'maxFiguresPerUser must be null/undefined or a non-negative integer',
 				},
 				400,
 			);
@@ -338,9 +353,9 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
           name, provider, description, bucket_base_url,
           aws_access_key_id, aws_secret_access_key, aws_session_token, s3_endpoint, region,
           is_public, authorized_users, native_bucket_name, owner_email,
-          default_expiration_seconds,
+          default_expiration_seconds, max_figures_per_user,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
 			)
 			.bind(
@@ -358,6 +373,7 @@ export async function handleCreateBucket(request: Request, env: Env, rateLimitRe
 				bucketNativeName,
 				userEmail,
 				expirationOverride,
+				figureLimitOverride,
 				now,
 				now,
 			)
@@ -538,7 +554,7 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 
 		// defaultExpirationSeconds: undefined = no change; null/'' = revert to system default.
 		if (bucketData.defaultExpirationSeconds !== undefined) {
-			const normalized = normalizeExpirationSeconds(bucketData.defaultExpirationSeconds);
+			const normalized = normalizeOverride(bucketData.defaultExpirationSeconds);
 			if (normalized === 'invalid') {
 				return json(
 					{
@@ -549,6 +565,22 @@ export async function handleUpdateBucket(request: Request, env: Env, rateLimitRe
 				);
 			}
 			updates.push('default_expiration_seconds = ?');
+			values.push(normalized);
+		}
+
+		// maxFiguresPerUser: undefined = no change; null/'' = revert to system default.
+		if (bucketData.maxFiguresPerUser !== undefined) {
+			const normalized = normalizeOverride(bucketData.maxFiguresPerUser);
+			if (normalized === 'invalid') {
+				return json(
+					{
+						success: false,
+						message: 'maxFiguresPerUser must be null or a non-negative integer',
+					},
+					400,
+				);
+			}
+			updates.push('max_figures_per_user = ?');
 			values.push(normalized);
 		}
 
