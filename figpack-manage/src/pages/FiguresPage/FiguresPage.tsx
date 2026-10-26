@@ -52,6 +52,9 @@ import { getUserBuckets } from "../BucketsPage/bucketsApi";
 import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+// Choices for figures per page; the API returns at most 100
+const PAGE_SIZES = [25, 50, 100];
+
 const FiguresPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -74,6 +77,10 @@ const FiguresPage: React.FC = () => {
       statusFilter: searchParams.get("status") || "",
       bucketFilter: searchParams.get("bucket") || "",
       pinnedFilter: searchParams.get("pinned") === "true",
+      expiredFilter: searchParams.get("expired") === "true",
+      pageSize: PAGE_SIZES.includes(Number(searchParams.get("page_size")))
+        ? Number(searchParams.get("page_size"))
+        : PAGE_SIZES[0],
       sortBy: searchParams.get("sort_by") || "createdAt",
       sortOrder: (searchParams.get("sort_order") || "desc") as "asc" | "desc",
       showAll: searchParams.get("show_all") === "true",
@@ -92,6 +99,9 @@ const FiguresPage: React.FC = () => {
     initialState.bucketFilter,
   );
   const [pinnedFilter, setPinnedFilter] = useState(initialState.pinnedFilter);
+  const [expiredFilter, setExpiredFilter] = useState(
+    initialState.expiredFilter,
+  );
   const [sortBy, setSortBy] = useState<string>(initialState.sortBy);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">(
     initialState.sortOrder,
@@ -112,7 +122,7 @@ const FiguresPage: React.FC = () => {
   const [buckets, setBuckets] = useState<BucketListItem[]>([]);
   const [bucketsLoading, setBucketsLoading] = useState(false);
 
-  const limit = 25; // Items per page
+  const [limit, setLimit] = useState(initialState.pageSize); // Items per page
 
   // Update URL when filter state changes
   useEffect(() => {
@@ -123,6 +133,8 @@ const FiguresPage: React.FC = () => {
     if (statusFilter) params.set("status", statusFilter);
     if (bucketFilter) params.set("bucket", bucketFilter);
     if (pinnedFilter) params.set("pinned", "true");
+    if (expiredFilter) params.set("expired", "true");
+    if (limit !== PAGE_SIZES[0]) params.set("page_size", limit.toString());
     if (sortBy !== "createdAt") params.set("sort_by", sortBy);
     if (sortOrder !== "desc") params.set("sort_order", sortOrder);
     if (showAll) params.set("show_all", "true");
@@ -134,6 +146,8 @@ const FiguresPage: React.FC = () => {
     statusFilter,
     bucketFilter,
     pinnedFilter,
+    expiredFilter,
+    limit,
     sortBy,
     sortOrder,
     showAll,
@@ -241,6 +255,10 @@ const FiguresPage: React.FC = () => {
       params.pinned = true;
     }
 
+    if (expiredFilter) {
+      params.expired = true;
+    }
+
     if (search.trim()) {
       params.search = search.trim();
     }
@@ -268,6 +286,7 @@ const FiguresPage: React.FC = () => {
     statusFilter,
     bucketFilter,
     pinnedFilter,
+    expiredFilter,
     sortBy,
     sortOrder,
     showAll,
@@ -330,6 +349,18 @@ const FiguresPage: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setPinnedFilter(event.target.checked);
+    setPage(1);
+  };
+
+  const handleExpiredFilterChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setExpiredFilter(event.target.checked);
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (event: any) => {
+    setLimit(Number(event.target.value));
     setPage(1);
   };
 
@@ -449,6 +480,18 @@ const FiguresPage: React.FC = () => {
               label="Show only pinned figures"
             />
 
+            {/* Expired Filter Toggle */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={expiredFilter}
+                  onChange={handleExpiredFilterChange}
+                  disabled={loading}
+                />
+              }
+              label="Show only expired figures"
+            />
+
             {/* Filters */}
             <Stack
               direction={isMobile ? "column" : "row"}
@@ -500,6 +543,21 @@ const FiguresPage: React.FC = () => {
                   {buckets.map((bucket) => (
                     <MenuItem key={bucket.id} value={bucket.name}>
                       {bucket.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 110 }}>
+                <InputLabel>Per page</InputLabel>
+                <Select
+                  value={limit}
+                  onChange={handlePageSizeChange}
+                  label="Per page"
+                >
+                  {PAGE_SIZES.map((size) => (
+                    <MenuItem key={size} value={size}>
+                      {size}
                     </MenuItem>
                   ))}
                 </Select>
@@ -892,7 +950,7 @@ const FiguresPage: React.FC = () => {
                   No figures found
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {search || statusFilter
+                  {search || statusFilter || expiredFilter
                     ? "Try adjusting your search or filter criteria."
                     : "You haven't uploaded any figures yet."}
                 </Typography>

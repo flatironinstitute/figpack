@@ -43,6 +43,7 @@ export interface FigureListParams {
   search?: string;
   bucket?: string;
   pinned?: boolean;
+  expired?: boolean;
   sortBy?:
     | "createdAt"
     | "updatedAt"
@@ -66,6 +67,7 @@ export const getFigures = async (
     search,
     bucket,
     pinned,
+    expired,
     sortBy = "createdAt",
     sortOrder = "desc",
   } = params;
@@ -101,6 +103,10 @@ export const getFigures = async (
 
     if (pinned !== undefined) {
       queryParams.append("pinned", pinned.toString());
+    }
+
+    if (expired) {
+      queryParams.append("expired", "true");
     }
 
     const response = await fetch(
