@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  Delete,
   PushPin,
   Refresh,
   Schedule,
@@ -14,6 +15,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
   CircularProgress,
   FormControl,
@@ -43,7 +45,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useBacklinks } from "../../hooks/useBacklinks";
 import type { FigureListItem, FigureListParams } from "./figuresApi";
-import { getFigures } from "./figuresApi";
+import { deleteFigures, getFigures } from "./figuresApi";
+import DeleteFiguresDialog from "./DeleteFiguresDialog";
 import type { Bucket as BucketListItem } from "../BucketsPage/bucketsApi";
 import { getUserBuckets } from "../BucketsPage/bucketsApi";
 import { getStatusColor, getStatusIcon, getStatusLabel } from "./utils";
@@ -94,6 +97,16 @@ const FiguresPage: React.FC = () => {
     initialState.sortOrder,
   );
   const [showAll, setShowAll] = useState(initialState.showAll);
+
+  // Selection and bulk delete
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteNotice, setDeleteNotice] = useState<{
+    severity: "success" | "warning";
+    text: string;
+  } | null>(null);
 
   // Buckets
   const [buckets, setBuckets] = useState<BucketListItem[]>([]);
@@ -238,6 +251,7 @@ const FiguresPage: React.FC = () => {
       if (result.success) {
         setFigures(result.figures || []);
         setTotal(result.total || 0);
+        setSelected(new Set());
       } else {
         setError(result.message || "Failed to load figures");
       }
@@ -322,6 +336,52 @@ const FiguresPage: React.FC = () => {
   const getBacklinkCount = (figureUrl: string) => {
     if (backlinksLoading || !backlinks) return 0;
     return backlinks.filter((backlink) => backlink.url === figureUrl).length;
+  };
+
+  // Pinned figures cannot be bulk deleted; others' figures only by admins
+  const canSelect = (figure: FigureListItem) =>
+    !figure.pinned && (isAdmin || figure.ownerEmail === user?.email);
+  const selectableUrls = figures.filter(canSelect).map((f) => f.figureUrl);
+  const allSelected =
+    selectableUrls.length > 0 && selectableUrls.every((u) => selected.has(u));
+
+  const toggleSelected = (figureUrl: string) => {
+    const next = new Set(selected);
+    if (next.has(figureUrl)) next.delete(figureUrl);
+    else next.add(figureUrl);
+    setSelected(next);
+  };
+
+  const toggleSelectAll = () => {
+    setSelected(allSelected ? new Set() : new Set(selectableUrls));
+  };
+
+  const othersSelectedCount = figures.filter(
+    (f) => selected.has(f.figureUrl) && f.ownerEmail !== user?.email,
+  ).length;
+
+  const handleDeleteSelected = async () => {
+    if (!apiKey) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const result = await deleteFigures(apiKey, [...selected]);
+    setDeleting(false);
+    if (!result.success) {
+      setDeleteError(result.message || "Failed to delete figures");
+      return;
+    }
+    setDeleteDialogOpen(false);
+    const deletedCount = result.deletedCount || 0;
+    const failed = result.failed || [];
+    setDeleteNotice(
+      failed.length === 0
+        ? { severity: "success", text: `Deleted ${deletedCount} figure(s).` }
+        : {
+            severity: "warning",
+            text: `Deleted ${deletedCount} figure(s). ${failed.length} could not be deleted: ${failed[0].message}${failed.length > 1 ? " (and others)" : ""}.`,
+          },
+    );
+    loadFigures();
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -453,6 +513,15 @@ const FiguresPage: React.FC = () => {
               </Alert>
             )}
 
+            {deleteNotice && (
+              <Alert
+                severity={deleteNotice.severity}
+                onClose={() => setDeleteNotice(null)}
+              >
+                {deleteNotice.text}
+              </Alert>
+            )}
+
             {/* Loading */}
             {loading && (
               <Box display="flex" justifyContent="center" py={4}>
@@ -460,13 +529,43 @@ const FiguresPage: React.FC = () => {
               </Box>
             )}
 
-            {/* Results Summary */}
+            {/* Results Summary and bulk actions */}
             {!loading && (
-              <Typography variant="body2" color="text.secondary">
-                {total === 0
-                  ? "No figures found"
-                  : `Showing ${figures.length} of ${total} figures`}
-              </Typography>
+              <Box
+                display="flex"
+                alignItems="center"
+                gap={2}
+                flexWrap="wrap"
+                minHeight={36}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {total === 0
+                    ? "No figures found"
+                    : `Showing ${figures.length} of ${total} figures`}
+                </Typography>
+                {selected.size > 0 && (
+                  <>
+                    <Typography variant="body2">
+                      {selected.size} selected
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      startIcon={<Delete />}
+                      onClick={() => {
+                        setDeleteError(null);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      Delete selected
+                    </Button>
+                    <Button size="small" onClick={() => setSelected(new Set())}>
+                      Clear selection
+                    </Button>
+                  </>
+                )}
+              </Box>
             )}
 
             {/* Table */}
@@ -475,6 +574,21 @@ const FiguresPage: React.FC = () => {
                 <Table size={isMobile ? "small" : "medium"}>
                   <TableHead>
                     <TableRow>
+                      <TableCell padding="checkbox">
+                        <Tooltip title="Select all on this page (pinned figures are skipped)">
+                          <span>
+                            <Checkbox
+                              checked={allSelected}
+                              indeterminate={selected.size > 0 && !allSelected}
+                              onChange={toggleSelectAll}
+                              disabled={selectableUrls.length === 0}
+                              inputProps={{
+                                "aria-label": "Select all figures on this page",
+                              }}
+                            />
+                          </span>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="text"
@@ -540,7 +654,21 @@ const FiguresPage: React.FC = () => {
                   </TableHead>
                   <TableBody>
                     {figures.map((figure) => (
-                      <TableRow key={figure.figureUrl} hover>
+                      <TableRow
+                        key={figure.figureUrl}
+                        hover
+                        selected={selected.has(figure.figureUrl)}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={selected.has(figure.figureUrl)}
+                            onChange={() => toggleSelected(figure.figureUrl)}
+                            disabled={!canSelect(figure)}
+                            inputProps={{
+                              "aria-label": `Select ${figure.title || figure.figureUrl}`,
+                            }}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Stack
                             direction="row"
@@ -773,6 +901,15 @@ const FiguresPage: React.FC = () => {
           </Stack>
         </CardContent>
       </Card>
+      <DeleteFiguresDialog
+        open={deleteDialogOpen}
+        count={selected.size}
+        othersCount={othersSelectedCount}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDeleteSelected}
+        loading={deleting}
+        error={deleteError}
+      />
     </Box>
   );
 };

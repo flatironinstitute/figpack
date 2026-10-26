@@ -138,3 +138,41 @@ export const getFigures = async (
     };
   }
 };
+
+export interface DeleteFiguresResponse {
+  success: boolean;
+  message?: string;
+  deletedCount?: number;
+  failed?: { figureUrl: string; message: string }[];
+}
+
+// Deletes up to 100 figures (POST /figures/delete-bulk). Pinned figures and
+// figures the user does not own come back in `failed`.
+export const deleteFigures = async (
+  apiKey: string,
+  figureUrls: string[],
+): Promise<DeleteFiguresResponse> => {
+  try {
+    const response = await fetch(
+      `${FIGPACK_API_BASE_URL}/figures/delete-bulk`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
+        body: JSON.stringify({ figureUrls }),
+      },
+    );
+    const result = await response.json();
+    if (!result.success) {
+      return {
+        success: false,
+        message: result.message || "Failed to delete figures",
+      };
+    }
+    return result;
+  } catch (err) {
+    return { success: false, message: `Error deleting figures: ${err}` };
+  }
+};
