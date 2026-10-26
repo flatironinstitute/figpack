@@ -27,6 +27,11 @@ import {
   secondsToExpirationOption,
   type ExpirationOptionValue,
 } from "./bucketExpirationOptions";
+import {
+  FIGURE_LIMIT_HELPER_TEXT,
+  figureLimitToText,
+  parseFigureLimit,
+} from "./bucketFigureLimit";
 
 interface EditBucketDialogProps {
   open: boolean;
@@ -73,6 +78,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
   const [clearSessionToken, setClearSessionToken] = useState<boolean>(false);
   const [expirationOption, setExpirationOption] =
     useState<ExpirationOptionValue>("default");
+  const [figureLimitText, setFigureLimitText] = useState("");
 
   const [newUserEmail, setNewUserEmail] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -102,6 +108,7 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       setHasSessionToken(!!bucket.awsSessionToken);
       setClearSessionToken(false);
       setExpirationOption(secondsToExpirationOption(bucket.defaultExpirationSeconds));
+      setFigureLimitText(figureLimitToText(bucket.maxFiguresPerUser));
       setNewUserEmail("");
       setFormErrors({});
     }
@@ -143,6 +150,10 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       } catch {
         errors.s3Endpoint = "Invalid URL format";
       }
+    }
+
+    if (parseFigureLimit(figureLimitText) === "invalid") {
+      errors.maxFiguresPerUser = "Enter a whole number (0 for no limit)";
     }
 
     setFormErrors(errors);
@@ -193,6 +204,8 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
       updateData.defaultExpirationSeconds = expirationOptionToSeconds(
         expirationOption,
       );
+      // Likewise for the figure limit (validated above); null = revert to system default.
+      updateData.maxFiguresPerUser = parseFigureLimit(figureLimitText) as number | null;
 
       onUpdateBucket(bucket.name, updateData);
     } else {
@@ -451,6 +464,26 @@ const EditBucketDialog: React.FC<EditBucketDialogProps> = ({
               ))}
             </Select>
           </FormControl>
+
+          <TextField
+            fullWidth
+            label="Max figures per user"
+            value={figureLimitText}
+            onChange={(e) => {
+              setFigureLimitText(e.target.value);
+              if (formErrors.maxFiguresPerUser) {
+                setFormErrors((prev) => ({ ...prev, maxFiguresPerUser: "" }));
+              }
+            }}
+            error={!!formErrors.maxFiguresPerUser}
+            helperText={
+              formErrors.maxFiguresPerUser || FIGURE_LIMIT_HELPER_TEXT
+            }
+            placeholder="1000"
+            inputProps={{ inputMode: "numeric" }}
+            margin="normal"
+            disabled={loading}
+          />
 
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
             Authorization

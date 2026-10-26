@@ -34,6 +34,9 @@ export interface Bucket {
   // Per-bucket override for figure expiration (seconds). undefined = use system default
   // (24h), 0 = never expire, positive integer = seconds.
   defaultExpirationSeconds?: number | null;
+  // Per-bucket figure limit. undefined/null = system default (1000), 0 = no limit,
+  // positive integer = maximum unexpired figures per user in this bucket.
+  maxFiguresPerUser?: number | null;
 }
 
 export interface BucketApiResponse {
