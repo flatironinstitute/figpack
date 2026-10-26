@@ -24,6 +24,7 @@ export const API_LIMITS = {
 	MAX_REQUEST_BODY_SIZE: 5 * 1024 * 1024, // 5MB JSON payload
 	MAX_BATCH_UPLOAD_FILES: 100, // Max files in a single batch upload request
 	MAX_BATCH_RENEW_FIGURES: 50, // Max figures in bulk renew operation
+	MAX_BATCH_DELETE_FIGURES: 100, // Max figures in a bulk delete request (POST /figures/delete-bulk)
 
 	// Rate limiting windows (in milliseconds)
 	RATE_LIMIT_WINDOWS: {

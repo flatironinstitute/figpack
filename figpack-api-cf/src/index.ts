@@ -22,6 +22,7 @@ import {
 	handleFinalizeFigure,
 } from './handlers/figuresHandler';
 import { handleCopyFigure } from './handlers/figureCopyHandler';
+import { handleDeleteBulkFigures } from './handlers/figureBulkDeleteHandler';
 import { handlePinFigure, handleUnpinFigure, handleRenewFigure, handleRenewBulkFigures } from './handlers/figureOpsHandler';
 import { handleUpload } from './handlers/uploadHandler';
 import { handleLlmChatCompletions, handleGetLlmUsage } from './handlers/llmHandler';
@@ -223,6 +224,13 @@ export default {
 		if (url.pathname === '/figures/delete') {
 			if (request.method.toUpperCase() === 'POST') {
 				return handleDeleteFigure(request, env, rateLimitResult);
+			}
+			return json({ success: false, message: 'Method not allowed' }, 405);
+		}
+
+		if (url.pathname === '/figures/delete-bulk') {
+			if (request.method.toUpperCase() === 'POST') {
+				return handleDeleteBulkFigures(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}
