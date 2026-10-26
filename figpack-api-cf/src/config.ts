@@ -9,7 +9,7 @@ export const DEFAULT_BUCKET_NAME = 'figpack-figures';
 export const API_LIMITS = {
 	// Figure limits
 	MAX_FILES_PER_FIGURE: 100,
-	MAX_FIGURES_PER_USER: 1000,
+	MAX_FIGURES_PER_USER: 1000, // Unexpired figures per user per bucket; buckets may override (max_figures_per_user)
 	MAX_FILE_SIZE_BYTES: 1024 * 1024 * 1024, // 1GB per file
 
 	// Figure copies (POST /figures/copy)

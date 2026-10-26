@@ -70,6 +70,9 @@ export interface Bucket {
 	// Per-bucket override for figure expiration (seconds). undefined = system default,
 	// 0 = never expire, positive integer = seconds from creation.
 	defaultExpirationSeconds?: number;
+	// Per-bucket override for the figure limit per user. undefined = system default,
+	// 0 = no limit, positive integer = maximum number of unexpired figures per user in this bucket.
+	maxFiguresPerUser?: number;
 }
 
 // Figure interface

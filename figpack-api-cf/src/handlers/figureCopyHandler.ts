@@ -6,7 +6,7 @@ import { copyObject, getObjectText, listAllObjects, runLimited, S3Error, S3Objec
 import { BucketInfo, bucketInfoFromRow, putObject } from '../s3Utils';
 import { Bucket, Env, Figure, RateLimitResult } from '../types';
 import { json } from '../utils';
-import { createFigureId, defaultExpiration, parseBucket, parseFigure } from './figuresHandler';
+import { checkFigureLimit, createFigureId, defaultExpiration, parseBucket, parseFigure } from './figuresHandler';
 
 const UNSUPPORTED_MESSAGE = "Copying between these buckets isn't supported yet.";
 
@@ -90,18 +90,10 @@ async function resolveCopyPlan(
 }
 
 // Reasons a figure cannot be copied by this user, or undefined if it can
-async function checkCopyAllowed(source: Figure, userEmail: string, env: Env): Promise<Response | undefined> {
+function checkCopyAllowed(source: Figure): Response | undefined {
 	if (source.status !== 'completed') return json({ success: false, message: 'Only completed figures can be copied' }, 400);
 	if (source.expiration > 0 && source.expiration < Date.now()) {
 		return json({ success: false, message: 'This figure has expired and can no longer be copied' }, 400);
-	}
-	const count = (await env.figpack_db
-		.prepare('SELECT COUNT(*) as count FROM figures WHERE owner_email = ?')
-		.bind(userEmail)
-		.first('count')) as number;
-	if (count >= API_LIMITS.MAX_FIGURES_PER_USER) {
-		const message = `Figure limit reached. Maximum ${API_LIMITS.MAX_FIGURES_PER_USER} figures per user. You currently have ${count} figures.`;
-		return json({ success: false, message }, 429);
 	}
 	return undefined;
 }
@@ -210,11 +202,13 @@ export async function handleCopyFigure(request: Request, env: Env, rateLimitResu
 		const sourceRow = await env.figpack_db.prepare('SELECT * FROM figures WHERE figure_url = ?').bind(sourceUrl).first();
 		if (!sourceRow) return json({ success: false, message: 'Figure not found' }, 404);
 		const source = parseFigure(sourceRow);
-		const notAllowed = await checkCopyAllowed(source, userEmail, env);
+		const notAllowed = checkCopyAllowed(source);
 		if (notAllowed) return notAllowed;
 
 		const plan = await resolveCopyPlan(source, body?.bucket, userEmail, authResult.isAdmin, env);
 		if (plan instanceof Response) return plan;
+		const limitResponse = await checkFigureLimit(plan.dest, userEmail, env);
+		if (limitResponse) return limitResponse;
 		const srcDir = figureDirKey(source.figureUrl, plan.source.bucketBaseUrl);
 		const objects = await listSourceFiles(plan, srcDir, authResult.isAdmin);
 		if (objects instanceof Response) return objects;
