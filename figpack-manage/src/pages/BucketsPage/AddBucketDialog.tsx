@@ -26,6 +26,10 @@ import {
   expirationOptionToSeconds,
   type ExpirationOptionValue,
 } from "./bucketExpirationOptions";
+import {
+  FIGURE_LIMIT_HELPER_TEXT,
+  parseFigureLimit,
+} from "./bucketFigureLimit";
 
 interface AddBucketDialogProps {
   open: boolean;
@@ -65,6 +69,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
   const [newUserEmail, setNewUserEmail] = useState("");
   const [expirationOption, setExpirationOption] =
     useState<ExpirationOptionValue>("default");
+  const [figureLimitText, setFigureLimitText] = useState("");
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -87,6 +92,7 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
       });
       setNewUserEmail("");
       setExpirationOption("default");
+      setFigureLimitText("");
       setFormErrors({});
       onClose();
     }
@@ -137,6 +143,10 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
       }
     }
 
+    if (parseFigureLimit(figureLimitText) === "invalid") {
+      errors.maxFiguresPerUser = "Enter a whole number (0 for no limit)";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -148,6 +158,8 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
         ...formData,
         // null when "system default" so the API stores NULL.
         defaultExpirationSeconds: seconds,
+        // Validated above, so never "invalid" here.
+        maxFiguresPerUser: parseFigureLimit(figureLimitText) as number | null,
       });
     }
   };
@@ -382,6 +394,26 @@ const AddBucketDialog: React.FC<AddBucketDialogProps> = ({
               ))}
             </Select>
           </FormControl>
+
+          <TextField
+            fullWidth
+            label="Max figures per user"
+            value={figureLimitText}
+            onChange={(e) => {
+              setFigureLimitText(e.target.value);
+              if (formErrors.maxFiguresPerUser) {
+                setFormErrors((prev) => ({ ...prev, maxFiguresPerUser: "" }));
+              }
+            }}
+            error={!!formErrors.maxFiguresPerUser}
+            helperText={
+              formErrors.maxFiguresPerUser || FIGURE_LIMIT_HELPER_TEXT
+            }
+            placeholder="1000"
+            inputProps={{ inputMode: "numeric" }}
+            margin="normal"
+            disabled={loading}
+          />
 
           <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
             Authorization
