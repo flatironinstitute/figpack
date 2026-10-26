@@ -423,6 +423,7 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		const search = url.searchParams.get('search');
 		const bucket = url.searchParams.get('bucket');
 		const pinned = url.searchParams.get('pinned') === 'true';
+		const expired = url.searchParams.get('expired') === 'true';
 		const sortBy = url.searchParams.get('sortBy') || 'created_at';
 		const sortOrder = url.searchParams.get('sortOrder') || 'desc';
 
@@ -460,15 +461,21 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 			values.push(status);
 		}
 
-		// Add bucket filter
+		// Add bucket filter (legacy rows with no bucket belong to the default bucket)
 		if (bucket && bucket.trim()) {
-			conditions.push('bucket = ?');
+			conditions.push(bucket.trim() === DEFAULT_BUCKET_NAME ? '(bucket = ? OR bucket IS NULL)' : 'bucket = ?');
 			values.push(bucket.trim());
 		}
 
 		// Add pinned filter
 		if (pinned) {
 			conditions.push('pinned = 1');
+		}
+
+		// Add expired filter (expiration 0 means the figure never expires)
+		if (expired) {
+			conditions.push('expiration > 0 AND expiration <= ?');
+			values.push(Date.now());
 		}
 
 		// Add search filter (simplified - searching in title and figure_url)
