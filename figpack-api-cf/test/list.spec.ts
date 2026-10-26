@@ -54,4 +54,14 @@ describe('GET /figures/list', () => {
 		expect((await listTitles({ bucket: 'figpack-figures', expired: 'true' })).titles).toEqual(['expired', 'legacy-expired']);
 		expect((await listTitles({ bucket: 'lab' })).titles).toEqual(['lab-expired']);
 	});
+
+	it('sorts by client field names and column names', async () => {
+		await env.figpack_db.prepare("UPDATE users SET is_admin = 1 WHERE email = 'user@example.com'").run();
+		for (const sortBy of ['ownerEmail', 'owner_email']) {
+			const query = new URLSearchParams({ all: 'true', sortBy, sortOrder: 'asc' });
+			const resp = await SELF.fetch(`https://example.com/figures/list?${query}`, { headers: { 'x-api-key': USER_KEY } });
+			const owners = ((await resp.json()) as any).figures.map((f: any) => f.ownerEmail);
+			expect(owners).toEqual(['other@example.com', ...Array(5).fill('user@example.com')]);
+		}
+	});
 });

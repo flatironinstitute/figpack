@@ -400,6 +400,21 @@ export async function handleGetFigure(request: Request, env: Env, rateLimitResul
 	}
 }
 
+// Sort fields accepted by /figures/list, by client name (as in Figure) or column name
+const SORT_COLUMNS: Record<string, string> = {
+	status: 'status',
+	title: 'title',
+	expiration: 'expiration',
+	createdAt: 'created_at',
+	created_at: 'created_at',
+	updatedAt: 'updated_at',
+	updated_at: 'updated_at',
+	ownerEmail: 'owner_email',
+	owner_email: 'owner_email',
+	figureUrl: 'figure_url',
+	figure_url: 'figure_url',
+};
+
 export async function handleListFigures(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
 	try {
 		const apiKey = request.headers.get('x-api-key');
@@ -499,8 +514,7 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		const total = countResult?.count ?? 0;
 
 		// Add sorting
-		const validSortFields = ['status', 'title', 'created_at', 'updated_at', 'owner_email', 'expiration'];
-		const sortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
+		const sortField = Object.prototype.hasOwnProperty.call(SORT_COLUMNS, sortBy) ? SORT_COLUMNS[sortBy] : 'created_at';
 		const sortDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
 		query += ` ORDER BY ${sortField} ${sortDirection}`;
 
