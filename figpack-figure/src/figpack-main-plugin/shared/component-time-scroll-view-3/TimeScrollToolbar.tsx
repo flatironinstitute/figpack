@@ -168,7 +168,7 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
               fontWeight: "500",
               transition: "all 0.15s ease",
             }}
-            title="Annotate mode: Drag to mark an interval, click an interval to select it (Delete to remove, Ctrl+Z to undo)"
+            title="Annotate mode: Drag to mark an interval or click to place a point; click an annotation to select it (Delete to remove, Ctrl+Z to undo)"
           >
             ✏️ Annotate
           </button>
