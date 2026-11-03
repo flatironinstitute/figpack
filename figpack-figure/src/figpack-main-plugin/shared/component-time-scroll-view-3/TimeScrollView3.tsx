@@ -72,8 +72,10 @@ type Props = {
   onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
   // When onAnnotateInterval is set, the toolbar offers an annotate mode
   annotatedIntervals?: AnnotatedInterval[];
+  selectedAnnotationId?: string;
   onAnnotateInterval?: (tStart: number, tEnd: number) => void;
-  onAnnotateClick?: (t: number) => void;
+  // tolerance is a few pixels expressed in seconds, for hitting an annotation
+  onAnnotateClick?: (t: number, tolerance: number) => void;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -98,6 +100,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   setDrawForExport,
   onZoomY,
   annotatedIntervals,
+  selectedAnnotationId,
   onAnnotateInterval,
   onAnnotateClick,
 }) => {
@@ -263,6 +266,13 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     };
   }, [onZoomY, pixelToY]);
 
+  const handleAnnotateClick = useMemo(() => {
+    if (!onAnnotateClick) return undefined;
+    return (t: number) => {
+      onAnnotateClick(t, Math.abs(pixelToTime(4) - pixelToTime(0)));
+    };
+  }, [onAnnotateClick, pixelToTime]);
+
   const {
     isViewClicked,
     hoverTime,
@@ -283,7 +293,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     interactionMode,
     onZoomY: onZoomYPixel,
     onAnnotateInterval,
-    onAnnotateClick,
+    onAnnotateClick: handleAnnotateClick,
   });
 
   useEffect(() => {
@@ -365,9 +375,17 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         margins={margins}
         intervals={annotatedIntervals}
         timeToPixel={timeToPixel}
+        selectedId={selectedAnnotationId}
       />
     );
-  }, [annotatedIntervals, canvasWidth, plotHeight, margins, timeToPixel]);
+  }, [
+    annotatedIntervals,
+    selectedAnnotationId,
+    canvasWidth,
+    plotHeight,
+    margins,
+    timeToPixel,
+  ]);
 
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
     null,
