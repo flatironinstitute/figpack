@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { CustomToolbarAction } from "../../shared/component-time-scroll-view-3/TimeScrollToolbar";
 import { TimeAnnotationMark } from "../../shared/component-time-scroll-view-3/TSV2AnnotationsLayer";
+import { downloadAnnotationsCsv, parseAnnotationsCsv } from "./annotationCsv";
 import { newAnnotationId, usePersistedAnnotations } from "./annotationStorage";
 import {
   AnnotationLabelChips,
   AnnotationLabelInput,
 } from "./AnnotationLabelControls";
+import ImportCsvButton from "./ImportCsvButton";
 import ToolbarButton from "./ToolbarButton";
 import { TimeAnnotation } from "./types";
 
@@ -124,6 +126,48 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
     [selectedId, update],
   );
 
+  // Clear all asks for confirmation in the toolbar row before deleting
+  const [confirmingClear, setConfirmingClear] = useState(false);
+  const clearAll = useCallback(() => {
+    update((s) =>
+      s.annotations.length === 0 ? s : { annotations: [], labels: [] },
+    );
+    setSelectedId(undefined);
+    setConfirmingClear(false);
+  }, [update]);
+
+  // Import CSV replaces all annotations, asking for confirmation in the
+  // toolbar row when there are annotations to replace
+  const [pendingImport, setPendingImport] = useState<
+    { fileName: string; annotations: TimeAnnotation[] } | undefined
+  >(undefined);
+  const [importError, setImportError] = useState<string | undefined>(undefined);
+  const applyImport = useCallback(
+    (imported: TimeAnnotation[]) => {
+      update(() => ({ annotations: imported, labels: [] }));
+      setSelectedId(undefined);
+      setPendingImport(undefined);
+    },
+    [update],
+  );
+  const onImportFile = useCallback(
+    (text: string, fileName: string) => {
+      setImportError(undefined);
+      let imported: TimeAnnotation[];
+      try {
+        imported = parseAnnotationsCsv(text);
+      } catch (err) {
+        setImportError(
+          `Could not import ${fileName}: ${err instanceof Error ? err.message : err}`,
+        );
+        return;
+      }
+      if (annotations.length === 0) applyImport(imported);
+      else setPendingImport({ fileName, annotations: imported });
+    },
+    [annotations, applyImport],
+  );
+
   const undo = useCallback(() => {
     undoAnnotations();
     setSelectedId(undefined);
@@ -140,6 +184,8 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
         undo();
       } else if (e.key === "Escape") {
         setSelectedId(undefined);
+        setConfirmingClear(false);
+        setPendingImport(undefined);
       } else if (selectedId && digit >= 1 && digit <= labels.length) {
         setSelectedLabel(labels[digit - 1].name);
       } else {
@@ -165,7 +211,87 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
 
   const toolbarActions: CustomToolbarAction[] = useMemo(() => {
     if (!enabled) return [];
+    if (pendingImport) {
+      const n = pendingImport.annotations.length;
+      return [
+        {
+          id: "confirm-import-annotations",
+          label: "Confirm import",
+          inline: false,
+          component: (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "12px", color: "#495057" }}>
+                Replace all {annotations.length} annotations with the {n} in{" "}
+                {pendingImport.fileName}?
+              </span>
+              <ToolbarButton
+                onClick={() => applyImport(pendingImport.annotations)}
+                danger
+                title="Replace the annotations (Undo restores them)"
+              >
+                Replace
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={() => setPendingImport(undefined)}
+                title="Keep the current annotations"
+              >
+                Cancel
+              </ToolbarButton>
+            </div>
+          ),
+        },
+      ];
+    }
+    if (confirmingClear) {
+      return [
+        {
+          id: "confirm-clear-annotations",
+          label: "Confirm clear all",
+          inline: false,
+          component: (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "12px", color: "#495057" }}>
+                Delete all {annotations.length} annotations?
+              </span>
+              <ToolbarButton
+                onClick={clearAll}
+                danger
+                title="Delete all annotations (Undo restores them)"
+              >
+                Delete all
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={() => setConfirmingClear(false)}
+                title="Keep the annotations"
+              >
+                Cancel
+              </ToolbarButton>
+            </div>
+          ),
+        },
+      ];
+    }
     const actions: CustomToolbarAction[] = [];
+    if (importError) {
+      actions.push({
+        id: "annotation-import-error",
+        label: "Import error",
+        inline: false,
+        component: (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "12px", color: "#dc3545" }}>
+              {importError}
+            </span>
+            <ToolbarButton
+              onClick={() => setImportError(undefined)}
+              title="Dismiss this message"
+            >
+              OK
+            </ToolbarButton>
+          </div>
+        ),
+      });
+    }
     if (selectedId) {
       actions.push({
         id: "delete-annotation",
@@ -226,6 +352,26 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
           </ToolbarButton>
         ),
       },
+      {
+        id: "import-annotations-csv",
+        label: "Import CSV",
+        inline: false,
+        component: <ImportCsvButton onFile={onImportFile} />,
+      },
+      {
+        id: "clear-annotations",
+        label: "Clear all",
+        inline: false,
+        component: (
+          <ToolbarButton
+            onClick={() => setConfirmingClear(true)}
+            disabled={annotations.length === 0}
+            title="Delete all annotations (asks for confirmation)"
+          >
+            Clear all
+          </ToolbarButton>
+        ),
+      },
     );
     if (labels.length > 0) {
       actions.push({
@@ -247,8 +393,8 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
         inline: false,
         component: (
           <span style={{ fontSize: "12px", color: "#6c757d" }}>
-            In ✏️ Annotate mode: double-click to place a point, drag to mark an
-            interval, click an annotation to select and label it.
+            In ✏️ Annotate mode: double-click places a point, drag marks an
+            interval, click selects (then label it).
           </span>
         ),
       });
@@ -256,6 +402,12 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
     return actions;
   }, [
     enabled,
+    pendingImport,
+    importError,
+    applyImport,
+    onImportFile,
+    confirmingClear,
+    clearAll,
     selectedId,
     selectedAnnotation,
     deleteSelected,
@@ -276,23 +428,4 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
     onKeyDown,
     toolbarActions,
   };
-};
-
-const csvField = (s: string) =>
-  /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-
-// One row per annotation; label is empty when unlabeled, end_time is empty
-// for a time point
-const downloadAnnotationsCsv = (annotations: TimeAnnotation[]) => {
-  const lines = ["label,start_time,end_time"];
-  for (const a of annotations) {
-    lines.push(`${csvField(a.label ?? "")},${a.tStart},${a.tEnd ?? ""}`);
-  }
-  const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "annotations.csv";
-  link.click();
-  URL.revokeObjectURL(url);
 };

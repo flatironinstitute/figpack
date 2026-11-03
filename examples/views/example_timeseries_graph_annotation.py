@@ -17,6 +17,7 @@ To annotate the LFP panel:
 - Click an annotation to select it; Delete removes the selection, Ctrl+Z undoes
 - To label the selection, type a label (e.g. seizure, spike) in the box below the plot and press Enter; once labels exist, the label chips or number keys 1, 2, ... apply them
 - Export CSV downloads `label,start_time,end_time` (label is empty when unlabeled, end_time is empty for time points)
+- Import CSV replaces all annotations with those in a CSV file of the same format, and Clear all deletes them; both ask first, and Undo restores the previous annotations
 
 Annotations are saved in your browser, so they persist across reloads of this figure.
 """
