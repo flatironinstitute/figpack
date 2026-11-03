@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AnnotatedInterval } from "../../shared/component-time-scroll-view-3/TSV2AnnotationsLayer";
+import { AnnotationLabel, TimeAnnotation } from "./types";
 
-// Annotated intervals are kept in the viewer's browser (localStorage), keyed by
-// figure URL and view path, so they survive a reload of the same figure.
+// Annotations are kept in the viewer's browser (localStorage), keyed by figure
+// URL and view path, so they survive a reload of the same figure.
 
 const MAX_UNDO = 100;
 
@@ -21,61 +21,78 @@ const getFigureDirUrl = () => {
   return url.endsWith("/") ? url : url + "/";
 };
 
-const loadIntervals = (key: string): AnnotatedInterval[] => {
+const loadAnnotations = (
+  key: string,
+  labels: AnnotationLabel[],
+): TimeAnnotation[] => {
+  // entries saved before labels existed were intervals without a label
+  const fallbackLabel = labels.find((l) => l.kind === "interval")?.name;
   try {
     const s = localStorage.getItem(key);
     if (!s) return [];
     const x = JSON.parse(s);
     if (!Array.isArray(x)) return [];
-    return x
-      .filter(
-        (a) => typeof a?.tStart === "number" && typeof a?.tEnd === "number",
-      )
-      .map((a) => ({
+    const result: TimeAnnotation[] = [];
+    for (const a of x) {
+      if (typeof a?.tStart !== "number") continue;
+      const label = typeof a.label === "string" ? a.label : fallbackLabel;
+      if (label === undefined) continue;
+      result.push({
         id: typeof a.id === "string" ? a.id : newAnnotationId(),
+        label,
         tStart: a.tStart,
-        tEnd: a.tEnd,
-      }));
+        tEnd: typeof a.tEnd === "number" ? a.tEnd : undefined,
+      });
+    }
+    return result;
   } catch {
     return [];
   }
 };
 
-const saveIntervals = (key: string, intervals: AnnotatedInterval[]) => {
+const saveAnnotations = (key: string, annotations: TimeAnnotation[]) => {
   try {
-    if (intervals.length === 0) localStorage.removeItem(key);
-    else localStorage.setItem(key, JSON.stringify(intervals));
+    if (annotations.length === 0) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(annotations));
   } catch (err) {
     console.warn("Unable to save annotations to browser storage", err);
   }
 };
 
 type State = {
-  intervals: AnnotatedInterval[];
-  // previous versions of intervals, most recent last
-  history: AnnotatedInterval[][];
+  annotations: TimeAnnotation[];
+  // previous versions of annotations, most recent last
+  history: TimeAnnotation[][];
 };
 
-export const usePersistedIntervals = (viewPath: string) => {
+// labels is undefined until known; nothing is loaded or saved before then
+export const usePersistedAnnotations = (
+  viewPath: string,
+  labels: AnnotationLabel[] | undefined,
+) => {
   const key = useMemo(
     () => `figpack-time-annotations:${getFigureDirUrl()}:${viewPath}`,
     [viewPath],
   );
-  const [state, setState] = useState<State>(() => ({
-    intervals: loadIntervals(key),
-    history: [],
-  }));
+  const [state, setState] = useState<State | undefined>(undefined);
   useEffect(() => {
-    saveIntervals(key, state.intervals);
-  }, [key, state.intervals]);
-  const setIntervals = useCallback(
-    (update: (prev: AnnotatedInterval[]) => AnnotatedInterval[]) => {
+    if (!labels) return;
+    setState({ annotations: loadAnnotations(key, labels), history: [] });
+  }, [key, labels]);
+  const annotations = state?.annotations;
+  useEffect(() => {
+    if (!annotations) return;
+    saveAnnotations(key, annotations);
+  }, [key, annotations]);
+  const setAnnotations = useCallback(
+    (update: (prev: TimeAnnotation[]) => TimeAnnotation[]) => {
       setState((s) => {
-        const next = update(s.intervals);
-        if (next === s.intervals) return s;
+        if (!s) return s;
+        const next = update(s.annotations);
+        if (next === s.annotations) return s;
         return {
-          intervals: next,
-          history: [...s.history, s.intervals].slice(-MAX_UNDO),
+          annotations: next,
+          history: [...s.history, s.annotations].slice(-MAX_UNDO),
         };
       });
     },
@@ -83,17 +100,17 @@ export const usePersistedIntervals = (viewPath: string) => {
   );
   const undo = useCallback(() => {
     setState((s) => {
-      if (s.history.length === 0) return s;
+      if (!s || s.history.length === 0) return s;
       return {
-        intervals: s.history[s.history.length - 1],
+        annotations: s.history[s.history.length - 1],
         history: s.history.slice(0, -1),
       };
     });
   }, []);
   return {
-    intervals: state.intervals,
-    setIntervals,
+    annotations: annotations || [],
+    setAnnotations,
     undo,
-    canUndo: state.history.length > 0,
+    canUndo: (state?.history.length || 0) > 0,
   };
 };

@@ -7,8 +7,7 @@ import { ProvideTimeseriesSelectionContext } from "../FPMultiChannelTimeseries";
 import { DrawForExportFunction } from "src/figpack-interface";
 import { useTimeseriesGraphClient } from "./useTimeseriesGraphClient";
 import { createDraw } from "./drawFunction";
-import { AnnotatedInterval } from "../../shared/component-time-scroll-view-3/TSV2AnnotationsLayer";
-import { newAnnotationId, usePersistedIntervals } from "./annotationStorage";
+import { useTimeAnnotations } from "./useTimeAnnotations";
 
 export const FPTimeseriesGraph: React.FC<{
   zarrGroup: ZarrGroup;
@@ -157,129 +156,14 @@ export const FPTimeseriesGraphChild: React.FC<{
     };
   }, [context, margins, draw, canvasWidth, canvasHeight]);
 
-  const {
-    intervals: annotatedIntervals,
-    setIntervals: setAnnotatedIntervals,
-    undo: undoAnnotation,
-    canUndo: canUndoAnnotation,
-  } = usePersistedIntervals(zarrGroup.path);
-  const [selectedAnnotationId, setSelectedAnnotationId] = useState<
-    string | undefined
-  >(undefined);
-
-  const handleAnnotateInterval = useCallback(
-    (tStart: number, tEnd: number) => {
-      const id = newAnnotationId();
-      setAnnotatedIntervals((prev) =>
-        [...prev, { id, tStart, tEnd }].sort((a, b) => a.tStart - b.tStart),
-      );
-      // select the new interval so a mistake can be deleted right away
-      setSelectedAnnotationId(id);
-    },
-    [setAnnotatedIntervals],
-  );
-
-  const handleAnnotateClick = useCallback(
-    (t: number, tolerance: number) => {
-      // select the topmost interval under the click, or clear the selection
-      const hits = annotatedIntervals.filter(
-        (a) => a.tStart - tolerance <= t && t <= a.tEnd + tolerance,
-      );
-      setSelectedAnnotationId(
-        hits.length > 0 ? hits[hits.length - 1].id : undefined,
-      );
-    },
-    [annotatedIntervals],
-  );
-
-  const deleteSelectedAnnotation = useCallback(() => {
-    if (!selectedAnnotationId) return;
-    setAnnotatedIntervals((prev) =>
-      prev.filter((a) => a.id !== selectedAnnotationId),
-    );
-    setSelectedAnnotationId(undefined);
-  }, [selectedAnnotationId, setAnnotatedIntervals]);
-
-  const handleUndoAnnotation = useCallback(() => {
-    undoAnnotation();
-    setSelectedAnnotationId(undefined);
-  }, [undoAnnotation]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (!client?.allowAnnotation) return;
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (!selectedAnnotationId) return;
-        deleteSelectedAnnotation();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
-        handleUndoAnnotation();
-      } else if (e.key === "Escape") {
-        setSelectedAnnotationId(undefined);
-      } else {
-        return;
-      }
-      e.preventDefault();
-    },
-    [
-      client,
-      selectedAnnotationId,
-      deleteSelectedAnnotation,
-      handleUndoAnnotation,
-    ],
+  const annotation = useTimeAnnotations(
+    zarrGroup.path,
+    client?.annotationLabels,
   );
 
   const customToolbarActions = useMemo(() => {
-    const annotationActions = client?.allowAnnotation
-      ? [
-          ...(selectedAnnotationId
-            ? [
-                {
-                  id: "delete-annotation",
-                  label: "Delete",
-                  inline: true,
-                  component: (
-                    <ToolbarButton
-                      onClick={deleteSelectedAnnotation}
-                      title="Delete the selected interval (Delete key)"
-                    >
-                      Delete
-                    </ToolbarButton>
-                  ),
-                },
-              ]
-            : []),
-          {
-            id: "undo-annotation",
-            label: "Undo",
-            inline: true,
-            component: (
-              <ToolbarButton
-                onClick={handleUndoAnnotation}
-                disabled={!canUndoAnnotation}
-                title="Undo the last annotation change (Ctrl+Z)"
-              >
-                Undo
-              </ToolbarButton>
-            ),
-          },
-          {
-            id: "export-annotations-csv",
-            label: "Export CSV",
-            inline: true,
-            component: (
-              <ToolbarButton
-                onClick={() => downloadIntervalsCsv(annotatedIntervals)}
-                disabled={annotatedIntervals.length === 0}
-                title="Download the annotated intervals as a CSV file"
-              >
-                Export CSV ({annotatedIntervals.length})
-              </ToolbarButton>
-            ),
-          },
-        ]
-      : [];
     return [
-      ...annotationActions,
+      ...annotation.toolbarActions,
       {
         id: "y-range-mode",
         label: "Y Range Mode",
@@ -315,15 +199,7 @@ export const FPTimeseriesGraphChild: React.FC<{
         ),
       },
     ];
-  }, [
-    yRangeMode,
-    client,
-    annotatedIntervals,
-    selectedAnnotationId,
-    deleteSelectedAnnotation,
-    handleUndoAnnotation,
-    canUndoAnnotation,
-  ]);
+  }, [yRangeMode, annotation.toolbarActions]);
 
   const gridlineOpts = useMemo(
     () => ({
@@ -360,56 +236,15 @@ export const FPTimeseriesGraphChild: React.FC<{
       setDrawForExport={setDrawForExport}
       customToolbarActions={customToolbarActions}
       onZoomY={handleZoomY}
-      onKeyDown={handleKeyDown}
-      selectedAnnotationId={selectedAnnotationId}
-      annotatedIntervals={
-        client?.allowAnnotation ? annotatedIntervals : undefined
-      }
+      onKeyDown={annotation.onKeyDown}
+      selectedAnnotationId={annotation.selectedId}
+      annotationMarks={annotation.enabled ? annotation.marks : undefined}
       onAnnotateInterval={
-        client?.allowAnnotation ? handleAnnotateInterval : undefined
+        annotation.enabled ? annotation.onAnnotateInterval : undefined
       }
       onAnnotateClick={
-        client?.allowAnnotation ? handleAnnotateClick : undefined
+        annotation.enabled ? annotation.onAnnotateClick : undefined
       }
     />
   );
-};
-
-const ToolbarButton: React.FC<{
-  onClick: () => void;
-  disabled?: boolean;
-  title: string;
-  children: React.ReactNode;
-}> = ({ onClick, disabled, title, children }) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    style={{
-      padding: "4px 8px",
-      border: "1px solid #ced4da",
-      borderRadius: "4px",
-      backgroundColor: "#ffffff",
-      color: "#495057",
-      cursor: disabled ? "default" : "pointer",
-      fontSize: "12px",
-      fontWeight: "500",
-    }}
-    title={title}
-  >
-    {children}
-  </button>
-);
-
-const downloadIntervalsCsv = (intervals: AnnotatedInterval[]) => {
-  const lines = ["start_time,end_time"];
-  for (const a of intervals) {
-    lines.push(`${a.tStart},${a.tEnd}`);
-  }
-  const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "annotations.csv";
-  link.click();
-  URL.revokeObjectURL(url);
 };

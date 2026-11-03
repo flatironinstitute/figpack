@@ -72,3 +72,17 @@ export type LegendOptions = {
   location?: string;
   hideLegend?: boolean;
 };
+
+export type AnnotationLabel = {
+  name: string;
+  kind: "interval" | "point";
+  color: string;
+};
+
+// A manual annotation: an interval when tEnd is set, otherwise a time point
+export type TimeAnnotation = {
+  id: string;
+  label: string;
+  tStart: number;
+  tEnd?: number;
+};

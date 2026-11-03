@@ -19,7 +19,7 @@ import TimeScrollToolbar, {
 } from "./TimeScrollToolbar";
 import { computeTimeTicks, useTimeTicks } from "./timeTicks";
 import TSV2AnnotationsLayer, {
-  AnnotatedInterval,
+  TimeAnnotationMark,
 } from "./TSV2AnnotationsLayer";
 import TSV2AxesLayer from "./TSV2AxesLayer";
 import TSV2CursorLayer from "./TSV2CursorLayer";
@@ -71,7 +71,7 @@ type Props = {
   setDrawForExport?: (draw: DrawForExportFunction) => void;
   onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
   // When onAnnotateInterval is set, the toolbar offers an annotate mode
-  annotatedIntervals?: AnnotatedInterval[];
+  annotationMarks?: TimeAnnotationMark[];
   selectedAnnotationId?: string;
   onAnnotateInterval?: (tStart: number, tEnd: number) => void;
   // tolerance is a few pixels expressed in seconds, for hitting an annotation
@@ -99,7 +99,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   drawContentForExport,
   setDrawForExport,
   onZoomY,
-  annotatedIntervals,
+  annotationMarks,
   selectedAnnotationId,
   onAnnotateInterval,
   onAnnotateClick,
@@ -367,19 +367,19 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   }, [canvasWidth, plotHeight, selectionRect, interactionMode]);
 
   const annotationsLayer = useMemo(() => {
-    if (!annotatedIntervals || annotatedIntervals.length === 0) return null;
+    if (!annotationMarks || annotationMarks.length === 0) return null;
     return (
       <TSV2AnnotationsLayer
         width={canvasWidth}
         height={plotHeight}
         margins={margins}
-        intervals={annotatedIntervals}
+        marks={annotationMarks}
         timeToPixel={timeToPixel}
         selectedId={selectedAnnotationId}
       />
     );
   }, [
-    annotatedIntervals,
+    annotationMarks,
     selectedAnnotationId,
     canvasWidth,
     plotHeight,

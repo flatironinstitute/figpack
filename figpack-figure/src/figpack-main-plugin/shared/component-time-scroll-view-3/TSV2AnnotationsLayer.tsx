@@ -1,12 +1,19 @@
 import { FunctionComponent } from "react";
 
-export type AnnotatedInterval = { id: string; tStart: number; tEnd: number };
+// An annotation as drawn: an interval (band) when tEnd is set, otherwise a
+// single time point (vertical line)
+export type TimeAnnotationMark = {
+  id: string;
+  tStart: number;
+  tEnd?: number;
+  color: string;
+};
 
 type Props = {
   width: number;
   height: number;
   margins: { left: number; right: number; top: number; bottom: number };
-  intervals: AnnotatedInterval[];
+  marks: TimeAnnotationMark[];
   timeToPixel: (t: number) => number;
   selectedId?: string;
 };
@@ -15,12 +22,13 @@ const TSV2AnnotationsLayer: FunctionComponent<Props> = ({
   width,
   height,
   margins,
-  intervals,
+  marks,
   timeToPixel,
   selectedId,
 }) => {
   const xMin = margins.left;
   const xMax = width - margins.right;
+  const plotHeight = height - margins.top - margins.bottom;
   return (
     <div
       style={{
@@ -33,26 +41,43 @@ const TSV2AnnotationsLayer: FunctionComponent<Props> = ({
         zIndex: 5,
       }}
     >
-      {intervals.map((interval) => {
-        const x1 = Math.max(xMin, timeToPixel(interval.tStart));
-        const x2 = Math.min(xMax, timeToPixel(interval.tEnd));
+      {marks.map((mark) => {
+        const selected = mark.id === selectedId;
+        if (mark.tEnd === undefined) {
+          const x = timeToPixel(mark.tStart);
+          if (x < xMin || x > xMax) return null;
+          const lineWidth = selected ? 4 : 2;
+          return (
+            <div
+              key={mark.id}
+              style={{
+                position: "absolute",
+                left: x - lineWidth / 2,
+                top: margins.top,
+                width: lineWidth,
+                height: plotHeight,
+                backgroundColor: mark.color,
+                opacity: selected ? 1 : 0.7,
+              }}
+            />
+          );
+        }
+        const x1 = Math.max(xMin, timeToPixel(mark.tStart));
+        const x2 = Math.min(xMax, timeToPixel(mark.tEnd));
         if (x2 <= x1) return null;
-        const selected = interval.id === selectedId;
-        const border = selected
-          ? "2px solid rgba(255, 140, 0, 1)"
-          : "1px solid rgba(255, 140, 0, 0.8)";
+        const border = `${selected ? 2 : 1}px solid ${mark.color}`;
         return (
           <div
-            key={interval.id}
+            key={mark.id}
             style={{
               position: "absolute",
               left: x1,
               top: margins.top,
               width: x2 - x1,
-              height: height - margins.top - margins.bottom,
-              backgroundColor: selected
-                ? "rgba(255, 140, 0, 0.3)"
-                : "rgba(255, 140, 0, 0.15)",
+              height: plotHeight,
+              backgroundColor: `color-mix(in srgb, ${mark.color} ${
+                selected ? 30 : 15
+              }%, transparent)`,
               borderLeft: border,
               borderRight: border,
               boxSizing: "border-box",
