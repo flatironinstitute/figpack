@@ -353,13 +353,12 @@ class SVGContextImpl implements SVGContext {
     // Convert canvas to base64 PNG
     const dataURL = canvas.toDataURL("image/png");
 
-    // Apply current transformations
-    const transformX = dx + this.transform.translateX;
-    const transformY = dy + this.transform.translateY;
-
-    // Create SVG image element
+    // Create SVG image element. Like the other elements, it carries the
+    // current transform as an attribute, so the active clip path (recorded
+    // in untransformed coordinates) lines up with it; adding the translation
+    // to x and y instead clips the image away inside a layout.
     this.svgElements.push(
-      `<image x="${transformX}" y="${transformY}" width="${imageData.width}" height="${imageData.height}" href="${dataURL}"${this.getOpacityAttr()}${this.getClipPathAttr()} />`,
+      `<image x="${dx}" y="${dy}" width="${imageData.width}" height="${imageData.height}" href="${dataURL}"${this.getOpacityAttr()}${this.getClipPathAttr()}${this.getTransformAttr()} />`,
     );
   }
 
