@@ -1,4 +1,5 @@
 import { FunctionComponent } from "react";
+import { InteractionMode } from "./TimeScrollToolbar";
 
 type Props = {
   width: number;
@@ -9,7 +10,7 @@ type Props = {
     startY: number;
     endY: number;
   } | null;
-  interactionMode: "pan" | "select-zoom" | "select-zoom-y";
+  interactionMode: InteractionMode;
 };
 
 const TSV2SelectionLayer: FunctionComponent<Props> = ({
@@ -20,7 +21,8 @@ const TSV2SelectionLayer: FunctionComponent<Props> = ({
 }) => {
   if (!selectionRect) return null;
 
-  if (interactionMode === "select-zoom") {
+  if (interactionMode === "select-zoom" || interactionMode === "annotate") {
+    const annotating = interactionMode === "annotate";
     const { startX, endX } = selectionRect;
     const rectWidth = Math.abs(endX - startX);
     const rectLeft = Math.min(startX, endX);
@@ -43,8 +45,12 @@ const TSV2SelectionLayer: FunctionComponent<Props> = ({
             top: 0,
             width: rectWidth,
             height: height,
-            backgroundColor: "rgba(0, 123, 255, 0.2)",
-            border: "1px solid rgba(0, 123, 255, 0.6)",
+            backgroundColor: annotating
+              ? "rgba(255, 140, 0, 0.2)"
+              : "rgba(0, 123, 255, 0.2)",
+            border: annotating
+              ? "1px solid rgba(255, 140, 0, 0.6)"
+              : "1px solid rgba(0, 123, 255, 0.6)",
             borderRadius: "2px",
           }}
         />

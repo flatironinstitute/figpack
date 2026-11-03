@@ -45,6 +45,11 @@ class TimeseriesGraph(FigpackView):
             ),
             SpecProp("hide_time_axis_labels", "boolean", "Hide the time axis labels."),
             SpecProp(
+                "allow_annotation",
+                "boolean",
+                "Let the viewer mark time intervals by dragging and export them as CSV.",
+            ),
+            SpecProp(
                 "series_names",
                 "list of strings",
                 "Series to draw, in drawing order; each must be a child name.",
@@ -94,6 +99,7 @@ class TimeseriesGraph(FigpackView):
         hide_nav_toolbar: bool = False,
         hide_time_axis_labels: bool = False,
         y_label: str = "",
+        allow_annotation: bool = False,
     ) -> None:
         """
         Initialize a TimeseriesGraph
@@ -106,6 +112,7 @@ class TimeseriesGraph(FigpackView):
             hide_nav_toolbar: Whether to hide the navigation toolbar
             hide_time_axis_labels: Whether to hide time axis labels
             y_label: Label for the y-axis
+            allow_annotation: Whether the viewer can mark time intervals and export them as CSV
         """
         self.legend_opts = legend_opts or {}
         self.y_range = y_range
@@ -114,6 +121,7 @@ class TimeseriesGraph(FigpackView):
         self.hide_nav_toolbar = hide_nav_toolbar
         self.hide_time_axis_labels = hide_time_axis_labels
         self.y_label = y_label
+        self.allow_annotation = allow_annotation
 
         # Internal storage for series data
         self._series = []
@@ -301,6 +309,7 @@ class TimeseriesGraph(FigpackView):
         group.attrs["hide_nav_toolbar"] = self.hide_nav_toolbar
         group.attrs["hide_time_axis_labels"] = self.hide_time_axis_labels
         group.attrs["y_label"] = self.y_label
+        group.attrs["allow_annotation"] = self.allow_annotation
 
         # series names
         group.attrs["series_names"] = [series.name for series in self._series]

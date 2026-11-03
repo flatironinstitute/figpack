@@ -1,7 +1,11 @@
 import { useTimeRange } from "../../shared/context-timeseries-selection";
 import { FunctionComponent, useCallback } from "react";
 
-export type InteractionMode = "pan" | "select-zoom" | "select-zoom-y";
+export type InteractionMode =
+  | "pan"
+  | "select-zoom"
+  | "select-zoom-y"
+  | "annotate";
 
 export type CustomToolbarAction = {
   id: string;
@@ -25,6 +29,7 @@ type Props = {
   inlineCustomActions?: CustomToolbarAction[];
   onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
   onResetZoom?: () => void;
+  allowAnnotate?: boolean;
 };
 
 const formatTime = (timeSec: number): string => {
@@ -48,6 +53,7 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
   inlineCustomActions,
   onZoomY,
   onResetZoom,
+  allowAnnotate,
 }) => {
   const { zoomTimeseriesSelection, panTimeseriesSelection } = useTimeRange();
 
@@ -145,6 +151,26 @@ const TimeScrollToolbar: FunctionComponent<Props> = ({
             title="Select Y zoom mode: Drag to select Y range and zoom in"
           >
             🔍 Y
+          </button>
+        )}
+        {allowAnnotate && (
+          <button
+            onClick={() => handleModeChange("annotate")}
+            style={{
+              padding: "4px 8px",
+              border: "1px solid #ced4da",
+              borderRadius: "4px",
+              backgroundColor:
+                interactionMode === "annotate" ? "#007bff" : "#ffffff",
+              color: interactionMode === "annotate" ? "#ffffff" : "#495057",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: "500",
+              transition: "all 0.15s ease",
+            }}
+            title="Annotate mode: Drag to mark an interval, click an interval to remove it"
+          >
+            ✏️ Annotate
           </button>
         )}
         {(interactionMode === "select-zoom" ||

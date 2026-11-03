@@ -7,6 +7,8 @@ import { ProvideTimeseriesSelectionContext } from "../FPMultiChannelTimeseries";
 import { DrawForExportFunction } from "src/figpack-interface";
 import { useTimeseriesGraphClient } from "./useTimeseriesGraphClient";
 import { createDraw } from "./drawFunction";
+import { AnnotatedInterval } from "../../shared/component-time-scroll-view-3/TSV2AnnotationsLayer";
+import { usePersistedIntervals } from "./annotationStorage";
 
 export const FPTimeseriesGraph: React.FC<{
   zarrGroup: ZarrGroup;
@@ -155,8 +157,61 @@ export const FPTimeseriesGraphChild: React.FC<{
     };
   }, [context, margins, draw, canvasWidth, canvasHeight]);
 
+  const [annotatedIntervals, setAnnotatedIntervals] = usePersistedIntervals(
+    zarrGroup.path,
+  );
+
+  const handleAnnotateInterval = useCallback(
+    (tStart: number, tEnd: number) => {
+      setAnnotatedIntervals((prev) =>
+        [...prev, { tStart, tEnd }].sort((a, b) => a.tStart - b.tStart),
+      );
+    },
+    [setAnnotatedIntervals],
+  );
+
+  const handleAnnotateClick = useCallback(
+    (t: number) => {
+      // clicking inside an annotated interval removes it
+      setAnnotatedIntervals((prev) =>
+        prev.filter((a) => !(a.tStart <= t && t <= a.tEnd)),
+      );
+    },
+    [setAnnotatedIntervals],
+  );
+
   const customToolbarActions = useMemo(() => {
+    const annotationActions = client?.allowAnnotation
+      ? [
+          {
+            id: "export-annotations-csv",
+            label: "Export CSV",
+            inline: true,
+            component: (
+              <button
+                onClick={() => downloadIntervalsCsv(annotatedIntervals)}
+                disabled={annotatedIntervals.length === 0}
+                style={{
+                  padding: "4px 8px",
+                  border: "1px solid #ced4da",
+                  borderRadius: "4px",
+                  backgroundColor: "#ffffff",
+                  color: "#495057",
+                  cursor:
+                    annotatedIntervals.length === 0 ? "default" : "pointer",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                }}
+                title="Download the annotated intervals as a CSV file"
+              >
+                Export CSV ({annotatedIntervals.length})
+              </button>
+            ),
+          },
+        ]
+      : [];
     return [
+      ...annotationActions,
       {
         id: "y-range-mode",
         label: "Y Range Mode",
@@ -192,7 +247,7 @@ export const FPTimeseriesGraphChild: React.FC<{
         ),
       },
     ];
-  }, [yRangeMode]);
+  }, [yRangeMode, client, annotatedIntervals]);
 
   const gridlineOpts = useMemo(
     () => ({
@@ -229,6 +284,29 @@ export const FPTimeseriesGraphChild: React.FC<{
       setDrawForExport={setDrawForExport}
       customToolbarActions={customToolbarActions}
       onZoomY={handleZoomY}
+      annotatedIntervals={
+        client?.allowAnnotation ? annotatedIntervals : undefined
+      }
+      onAnnotateInterval={
+        client?.allowAnnotation ? handleAnnotateInterval : undefined
+      }
+      onAnnotateClick={
+        client?.allowAnnotation ? handleAnnotateClick : undefined
+      }
     />
   );
+};
+
+const downloadIntervalsCsv = (intervals: AnnotatedInterval[]) => {
+  const lines = ["start_time,end_time"];
+  for (const a of intervals) {
+    lines.push(`${a.tStart},${a.tEnd}`);
+  }
+  const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "annotations.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 };
