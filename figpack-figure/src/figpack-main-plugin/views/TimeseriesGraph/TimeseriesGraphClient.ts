@@ -1,14 +1,5 @@
 import { ZarrGroup } from "../../figpack-interface";
-import { TimeseriesSeries, LegendOptions, AnnotationLabel } from "./types";
-
-const defaultAnnotationColors = [
-  "#ff8c00",
-  "#7b3fbf",
-  "#2a9d3c",
-  "#1f6fd1",
-  "#d62728",
-  "#555555",
-];
+import { TimeseriesSeries, LegendOptions } from "./types";
 
 export class TimeseriesGraphClient {
   constructor(
@@ -27,7 +18,7 @@ export class TimeseriesGraphClient {
     public yRange: { yMin: number; yMax: number } | null = null,
     public hideXGridlines: boolean = false,
     public hideYGridlines: boolean = false,
-    public annotationLabels: AnnotationLabel[] = [],
+    public allowAnnotation: boolean = false,
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
@@ -185,14 +176,7 @@ export class TimeseriesGraphClient {
         : null;
     const hideXGridlines = zarrGroup.attrs["hide_x_gridlines"] || false;
     const hideYGridlines = zarrGroup.attrs["hide_y_gridlines"] || false;
-    const annotationLabels: AnnotationLabel[] = (
-      zarrGroup.attrs["annotation_labels"] || []
-    ).map((a: { name: string; kind: string; color?: string }, i: number) => ({
-      name: a.name,
-      kind: a.kind === "point" ? "point" : "interval",
-      color:
-        a.color || defaultAnnotationColors[i % defaultAnnotationColors.length],
-    }));
+    const allowAnnotation = zarrGroup.attrs["allow_annotation"] || false;
 
     return new TimeseriesGraphClient(
       series,
@@ -205,7 +189,7 @@ export class TimeseriesGraphClient {
       yRange,
       hideXGridlines,
       hideYGridlines,
-      annotationLabels,
+      allowAnnotation,
     );
   }
 }

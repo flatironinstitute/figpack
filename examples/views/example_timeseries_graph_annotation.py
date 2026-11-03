@@ -12,9 +12,9 @@ Synthetic 4-channel LFP with two seizures and scattered spikes. The lower panel 
 
 To annotate the LFP panel:
 
-- Click ✏️ Annotate in its toolbar, then choose a label in the row below (or press 1 or 2)
-- "seizure" marks an interval by dragging; "epileptiform spike" places a time point by clicking
-- Click an annotation to select it; Delete removes it, Ctrl+Z undoes
+- Click ✏️ Annotate in its toolbar
+- Click to place a time point (e.g. a spike); drag to mark an interval (e.g. a seizure)
+- Select a point by clicking it, and an interval by clicking its top bar or an edge; Delete removes the selection, Ctrl+Z undoes
 - Export CSV downloads `label,start_time,end_time` (end_time is empty for time points)
 
 Annotations are saved in your browser, so they persist across reloads of this figure.
@@ -41,12 +41,7 @@ def example_timeseries_graph_annotation():
         [s for s in spike_times if not any(a - 1 < s < b + 1 for a, b in seizures)]
     )
 
-    lfp_graph = vv.TimeseriesGraph(
-        annotation_labels=[
-            {"name": "seizure", "kind": "interval", "color": "purple"},
-            {"name": "epileptiform spike", "kind": "point", "color": "darkorange"},
-        ],
-    )
+    lfp_graph = vv.TimeseriesGraph(allow_annotation=True)
     for ch in range(n_channels):
         y = rng.normal(0, 1, len(t))
         for a, b in seizures:

@@ -158,7 +158,7 @@ export const FPTimeseriesGraphChild: React.FC<{
 
   const annotation = useTimeAnnotations(
     zarrGroup.path,
-    client?.annotationLabels,
+    client?.allowAnnotation ?? false,
   );
 
   const customToolbarActions = useMemo(() => {
@@ -238,12 +238,12 @@ export const FPTimeseriesGraphChild: React.FC<{
       onZoomY={handleZoomY}
       onKeyDown={annotation.onKeyDown}
       selectedAnnotationId={annotation.selectedId}
-      annotationMarks={annotation.enabled ? annotation.marks : undefined}
+      annotationMarks={client?.allowAnnotation ? annotation.marks : undefined}
       onAnnotateInterval={
-        annotation.enabled ? annotation.onAnnotateInterval : undefined
+        client?.allowAnnotation ? annotation.onAnnotateInterval : undefined
       }
       onAnnotateClick={
-        annotation.enabled ? annotation.onAnnotateClick : undefined
+        client?.allowAnnotation ? annotation.onAnnotateClick : undefined
       }
     />
   );

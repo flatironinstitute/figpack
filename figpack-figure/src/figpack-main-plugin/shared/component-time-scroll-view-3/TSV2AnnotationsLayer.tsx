@@ -9,6 +9,10 @@ export type TimeAnnotationMark = {
   color: string;
 };
 
+// Height of the bar along the top of each interval, which selects it when
+// clicked (clicks elsewhere inside an interval are free for placing points)
+export const ANNOTATION_TAB_HEIGHT = 14;
+
 type Props = {
   width: number;
   height: number;
@@ -82,7 +86,16 @@ const TSV2AnnotationsLayer: FunctionComponent<Props> = ({
               borderRight: border,
               boxSizing: "border-box",
             }}
-          />
+          >
+            <div
+              style={{
+                height: ANNOTATION_TAB_HEIGHT,
+                backgroundColor: `color-mix(in srgb, ${mark.color} ${
+                  selected ? 90 : 55
+                }%, transparent)`,
+              }}
+            />
+          </div>
         );
       })}
     </div>

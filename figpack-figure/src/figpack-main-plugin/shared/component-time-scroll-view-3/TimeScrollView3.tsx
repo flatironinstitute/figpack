@@ -19,6 +19,7 @@ import TimeScrollToolbar, {
 } from "./TimeScrollToolbar";
 import { computeTimeTicks, useTimeTicks } from "./timeTicks";
 import TSV2AnnotationsLayer, {
+  ANNOTATION_TAB_HEIGHT,
   TimeAnnotationMark,
 } from "./TSV2AnnotationsLayer";
 import TSV2AxesLayer from "./TSV2AxesLayer";
@@ -74,8 +75,9 @@ type Props = {
   annotationMarks?: TimeAnnotationMark[];
   selectedAnnotationId?: string;
   onAnnotateInterval?: (tStart: number, tEnd: number) => void;
-  // tolerance is a few pixels expressed in seconds, for hitting an annotation
-  onAnnotateClick?: (t: number, tolerance: number) => void;
+  // tolerance is a few pixels expressed in seconds, for hitting an annotation;
+  // onTabStrip is true for a click in the strip where interval tabs are drawn
+  onAnnotateClick?: (t: number, tolerance: number, onTabStrip: boolean) => void;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -268,10 +270,14 @@ const TimeScrollView3: FunctionComponent<Props> = ({
 
   const handleAnnotateClick = useMemo(() => {
     if (!onAnnotateClick) return undefined;
-    return (t: number) => {
-      onAnnotateClick(t, Math.abs(pixelToTime(4) - pixelToTime(0)));
+    return (t: number, y: number) => {
+      onAnnotateClick(
+        t,
+        Math.abs(pixelToTime(4) - pixelToTime(0)),
+        y >= margins.top && y <= margins.top + ANNOTATION_TAB_HEIGHT,
+      );
     };
-  }, [onAnnotateClick, pixelToTime]);
+  }, [onAnnotateClick, pixelToTime, margins]);
 
   const {
     isViewClicked,

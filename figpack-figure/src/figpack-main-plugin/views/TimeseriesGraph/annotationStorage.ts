@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AnnotationLabel, TimeAnnotation } from "./types";
+import { TimeAnnotation } from "./types";
 
 // Annotations are kept in the viewer's browser (localStorage), keyed by figure
 // URL and view path, so they survive a reload of the same figure.
@@ -21,30 +21,20 @@ const getFigureDirUrl = () => {
   return url.endsWith("/") ? url : url + "/";
 };
 
-const loadAnnotations = (
-  key: string,
-  labels: AnnotationLabel[],
-): TimeAnnotation[] => {
-  // entries saved before labels existed were intervals without a label
-  const fallbackLabel = labels.find((l) => l.kind === "interval")?.name;
+const loadAnnotations = (key: string): TimeAnnotation[] => {
   try {
     const s = localStorage.getItem(key);
     if (!s) return [];
     const x = JSON.parse(s);
     if (!Array.isArray(x)) return [];
-    const result: TimeAnnotation[] = [];
-    for (const a of x) {
-      if (typeof a?.tStart !== "number") continue;
-      const label = typeof a.label === "string" ? a.label : fallbackLabel;
-      if (label === undefined) continue;
-      result.push({
+    return x
+      .filter((a) => typeof a?.tStart === "number")
+      .map((a) => ({
         id: typeof a.id === "string" ? a.id : newAnnotationId(),
-        label,
+        label: typeof a.label === "string" ? a.label : undefined,
         tStart: a.tStart,
         tEnd: typeof a.tEnd === "number" ? a.tEnd : undefined,
-      });
-    }
-    return result;
+      }));
   } catch {
     return [];
   }
@@ -65,20 +55,17 @@ type State = {
   history: TimeAnnotation[][];
 };
 
-// labels is undefined until known; nothing is loaded or saved before then
-export const usePersistedAnnotations = (
-  viewPath: string,
-  labels: AnnotationLabel[] | undefined,
-) => {
+// nothing is loaded or saved until enabled
+export const usePersistedAnnotations = (viewPath: string, enabled: boolean) => {
   const key = useMemo(
     () => `figpack-time-annotations:${getFigureDirUrl()}:${viewPath}`,
     [viewPath],
   );
   const [state, setState] = useState<State | undefined>(undefined);
   useEffect(() => {
-    if (!labels) return;
-    setState({ annotations: loadAnnotations(key, labels), history: [] });
-  }, [key, labels]);
+    if (!enabled) return;
+    setState({ annotations: loadAnnotations(key), history: [] });
+  }, [key, enabled]);
   const annotations = state?.annotations;
   useEffect(() => {
     if (!annotations) return;

@@ -45,9 +45,9 @@ class TimeseriesGraph(FigpackView):
             ),
             SpecProp("hide_time_axis_labels", "boolean", "Hide the time axis labels."),
             SpecProp(
-                "annotation_labels",
-                '[{name: string, kind: "interval" | "point", color?: string}]',
-                "Labels the viewer can annotate with; an empty list disables annotation.",
+                "allow_annotation",
+                "boolean",
+                "Let the viewer mark time points and intervals and export them as CSV.",
             ),
             SpecProp(
                 "series_names",
@@ -99,7 +99,7 @@ class TimeseriesGraph(FigpackView):
         hide_nav_toolbar: bool = False,
         hide_time_axis_labels: bool = False,
         y_label: str = "",
-        annotation_labels: Optional[List[Dict[str, str]]] = None,
+        allow_annotation: bool = False,
     ) -> None:
         """
         Initialize a TimeseriesGraph
@@ -112,9 +112,7 @@ class TimeseriesGraph(FigpackView):
             hide_nav_toolbar: Whether to hide the navigation toolbar
             hide_time_axis_labels: Whether to hide time axis labels
             y_label: Label for the y-axis
-            annotation_labels: Labels the viewer can annotate with, each a dict with
-                "name", "kind" ("interval" or "point") and optional "color". When
-                given, the viewer can mark points and intervals and export them as CSV.
+            allow_annotation: Whether the viewer can mark time points and intervals and export them as CSV
         """
         self.legend_opts = legend_opts or {}
         self.y_range = y_range
@@ -123,7 +121,7 @@ class TimeseriesGraph(FigpackView):
         self.hide_nav_toolbar = hide_nav_toolbar
         self.hide_time_axis_labels = hide_time_axis_labels
         self.y_label = y_label
-        self.annotation_labels = _validate_annotation_labels(annotation_labels or [])
+        self.allow_annotation = allow_annotation
 
         # Internal storage for series data
         self._series = []
@@ -311,32 +309,10 @@ class TimeseriesGraph(FigpackView):
         group.attrs["hide_nav_toolbar"] = self.hide_nav_toolbar
         group.attrs["hide_time_axis_labels"] = self.hide_time_axis_labels
         group.attrs["y_label"] = self.y_label
-        group.attrs["annotation_labels"] = self.annotation_labels
+        group.attrs["allow_annotation"] = self.allow_annotation
 
         # series names
         group.attrs["series_names"] = [series.name for series in self._series]
-
-
-def _validate_annotation_labels(labels: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    result = []
-    names = set()
-    for label in labels:
-        name = label.get("name")
-        kind = label.get("kind")
-        if not isinstance(name, str) or not name:
-            raise ValueError(f"Annotation label needs a non-empty name: {label}")
-        if name in names:
-            raise ValueError(f"Duplicate annotation label name: {name}")
-        if kind not in ("interval", "point"):
-            raise ValueError(
-                f'Annotation label kind must be "interval" or "point": {label}'
-            )
-        names.add(name)
-        x = {"name": name, "kind": kind}
-        if label.get("color") is not None:
-            x["color"] = label["color"]
-        result.append(x)
-    return result
 
 
 class TGLineSeries:

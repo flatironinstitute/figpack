@@ -3,28 +3,22 @@ import { CustomToolbarAction } from "../../shared/component-time-scroll-view-3/T
 import { TimeAnnotationMark } from "../../shared/component-time-scroll-view-3/TSV2AnnotationsLayer";
 import { newAnnotationId, usePersistedAnnotations } from "./annotationStorage";
 import ToolbarButton from "./ToolbarButton";
-import { AnnotationLabel, TimeAnnotation } from "./types";
+import { TimeAnnotation } from "./types";
 
-// Manual annotation of a TimeseriesGraph. In annotate mode, an interval label
-// is marked by dragging and a point label by clicking; clicking an existing
-// annotation selects it, and Delete removes the selection.
-export const useTimeAnnotations = (
-  viewPath: string,
-  labels: AnnotationLabel[] | undefined,
-) => {
-  const enabled = !!labels && labels.length > 0;
+const UNLABELED_COLOR = "#ff8c00";
+
+// Manual annotation of a TimeseriesGraph. In annotate mode, a click places a
+// time point and a drag marks an interval. A click near a point, near an
+// interval's edge, or on an interval's top bar selects it instead, and Delete
+// removes the selection.
+export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
   const {
     annotations,
     setAnnotations,
     undo: undoAnnotations,
     canUndo,
-  } = usePersistedAnnotations(viewPath, enabled ? labels : undefined);
+  } = usePersistedAnnotations(viewPath, enabled);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
-  const [activeLabelName, setActiveLabelName] = useState<string | undefined>(
-    undefined,
-  );
-  const activeLabel =
-    labels?.find((l) => l.name === activeLabelName) || labels?.[0];
 
   const addAnnotation = useCallback(
     (a: Omit<TimeAnnotation, "id">) => {
@@ -40,16 +34,13 @@ export const useTimeAnnotations = (
 
   const onAnnotateInterval = useCallback(
     (tStart: number, tEnd: number) => {
-      if (activeLabel?.kind !== "interval") return;
-      addAnnotation({ label: activeLabel.name, tStart, tEnd });
+      addAnnotation({ tStart, tEnd });
     },
-    [activeLabel, addAnnotation],
+    [addAnnotation],
   );
 
   const onAnnotateClick = useCallback(
-    (t: number, tolerance: number) => {
-      // a point near the click takes precedence over an interval around it,
-      // so that points inside an interval can be selected
+    (t: number, tolerance: number, onTabStrip: boolean) => {
       let nearestPoint: TimeAnnotation | undefined = undefined;
       for (const a of annotations) {
         if (a.tEnd !== undefined) continue;
@@ -63,23 +54,21 @@ export const useTimeAnnotations = (
         setSelectedId(nearestPoint.id);
         return;
       }
-      if (activeLabel?.kind === "point") {
-        addAnnotation({ label: activeLabel.name, tStart: t });
+      const intervalHits = annotations.filter((a) => {
+        if (a.tEnd === undefined) return false;
+        const nearEdge =
+          Math.abs(a.tStart - t) <= tolerance ||
+          Math.abs(a.tEnd - t) <= tolerance;
+        const onTab = onTabStrip && a.tStart <= t && t <= a.tEnd;
+        return nearEdge || onTab;
+      });
+      if (intervalHits.length > 0) {
+        setSelectedId(intervalHits[intervalHits.length - 1].id);
         return;
       }
-      const intervalHits = annotations.filter(
-        (a) =>
-          a.tEnd !== undefined &&
-          a.tStart - tolerance <= t &&
-          t <= a.tEnd + tolerance,
-      );
-      setSelectedId(
-        intervalHits.length > 0
-          ? intervalHits[intervalHits.length - 1].id
-          : undefined,
-      );
+      addAnnotation({ tStart: t });
     },
-    [annotations, activeLabel, addAnnotation],
+    [annotations, addAnnotation],
   );
 
   const deleteSelected = useCallback(() => {
@@ -95,8 +84,7 @@ export const useTimeAnnotations = (
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (!enabled || !labels) return;
-      const digit = parseInt(e.key);
+      if (!enabled) return;
       if (e.key === "Delete" || e.key === "Backspace") {
         if (!selectedId) return;
         deleteSelected();
@@ -104,72 +92,28 @@ export const useTimeAnnotations = (
         undo();
       } else if (e.key === "Escape") {
         setSelectedId(undefined);
-      } else if (digit >= 1 && digit <= labels.length) {
-        // number keys choose the label
-        setActiveLabelName(labels[digit - 1].name);
       } else {
         return;
       }
       e.preventDefault();
     },
-    [enabled, labels, selectedId, deleteSelected, undo],
+    [enabled, selectedId, deleteSelected, undo],
   );
 
-  const marks: TimeAnnotationMark[] = useMemo(() => {
-    const colors = new Map((labels || []).map((l) => [l.name, l.color]));
-    return annotations.map((a) => ({
-      id: a.id,
-      tStart: a.tStart,
-      tEnd: a.tEnd,
-      color: colors.get(a.label) || "#888888",
-    }));
-  }, [annotations, labels]);
+  const marks: TimeAnnotationMark[] = useMemo(
+    () =>
+      annotations.map((a) => ({
+        id: a.id,
+        tStart: a.tStart,
+        tEnd: a.tEnd,
+        color: UNLABELED_COLOR,
+      })),
+    [annotations],
+  );
 
   const toolbarActions: CustomToolbarAction[] = useMemo(() => {
-    if (!enabled || !labels || !activeLabel) return [];
-    const actions: CustomToolbarAction[] = [
-      {
-        id: "annotation-label",
-        label: "Annotation label",
-        inline: false,
-        component: (
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "12px",
-              color: "#495057",
-            }}
-            title={`Label for new annotations in annotate mode${
-              labels.length > 1 ? ` (keys 1-${labels.length})` : ""
-            }`}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                width: 10,
-                height: 10,
-                borderRadius: 2,
-                backgroundColor: activeLabel.color,
-              }}
-            />
-            <select
-              value={activeLabel.name}
-              onChange={(e) => setActiveLabelName(e.target.value)}
-              style={{ fontSize: "12px" }}
-            >
-              {labels.map((l, i) => (
-                <option key={l.name} value={l.name}>
-                  {labels.length > 1 ? `${i + 1}. ` : ""}
-                  {l.name} ({l.kind})
-                </option>
-              ))}
-            </select>
-          </label>
-        ),
-      },
-    ];
+    if (!enabled) return [];
+    const actions: CustomToolbarAction[] = [];
     if (selectedId) {
       actions.push({
         id: "delete-annotation",
@@ -214,35 +158,23 @@ export const useTimeAnnotations = (
           </ToolbarButton>
         ),
       },
+      {
+        id: "annotation-hint",
+        label: "Annotation hint",
+        inline: false,
+        component: (
+          <span style={{ fontSize: "12px", color: "#6c757d" }}>
+            In ✏️ Annotate mode: click to place a point, drag to mark an
+            interval. Select a point by clicking it, an interval by its top bar
+            or edge.
+          </span>
+        ),
+      },
     );
-    actions.push({
-      id: "annotation-hint",
-      label: "Annotation hint",
-      inline: false,
-      component: (
-        <span style={{ fontSize: "12px", color: "#6c757d" }}>
-          In ✏️ Annotate mode:{" "}
-          {activeLabel.kind === "interval"
-            ? "drag to mark an interval"
-            : "click to place a point"}
-          ; click an annotation to select it
-        </span>
-      ),
-    });
     return actions;
-  }, [
-    enabled,
-    labels,
-    activeLabel,
-    selectedId,
-    deleteSelected,
-    undo,
-    canUndo,
-    annotations,
-  ]);
+  }, [enabled, selectedId, deleteSelected, undo, canUndo, annotations]);
 
   return {
-    enabled,
     marks,
     selectedId,
     onAnnotateInterval,
@@ -255,11 +187,12 @@ export const useTimeAnnotations = (
 const csvField = (s: string) =>
   /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 
-// One row per annotation; end_time is empty for a time point
+// One row per annotation; label is empty when unlabeled, end_time is empty
+// for a time point
 const downloadAnnotationsCsv = (annotations: TimeAnnotation[]) => {
   const lines = ["label,start_time,end_time"];
   for (const a of annotations) {
-    lines.push(`${csvField(a.label)},${a.tStart},${a.tEnd ?? ""}`);
+    lines.push(`${csvField(a.label ?? "")},${a.tStart},${a.tEnd ?? ""}`);
   }
   const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv" });
   const url = URL.createObjectURL(blob);

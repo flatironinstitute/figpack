@@ -58,7 +58,7 @@ type UseTimeScrollMouseWithModesParams = {
   interactionMode: InteractionMode;
   onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
   onAnnotateInterval?: (tStart: number, tEnd: number) => void;
-  onAnnotateClick?: (t: number) => void;
+  onAnnotateClick?: (t: number, y: number) => void;
 };
 
 const useTimeScrollMouseWithModes = (
@@ -186,7 +186,7 @@ const useTimeScrollMouseWithModes = (
           } else if (!mouseData.current.moved) {
             const t0 = pixelToTime(x);
             setCurrentTime(t0);
-            if (onAnnotateClick) onAnnotateClick(t0);
+            if (onAnnotateClick) onAnnotateClick(t0, y);
           }
 
           setSelectionRect(null);
