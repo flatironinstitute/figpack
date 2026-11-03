@@ -58,7 +58,8 @@ type UseTimeScrollMouseWithModesParams = {
   interactionMode: InteractionMode;
   onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
   onAnnotateInterval?: (tStart: number, tEnd: number) => void;
-  onAnnotateClick?: (t: number, y: number) => void;
+  onAnnotateClick?: (t: number) => void;
+  onAnnotateDoubleClick?: (t: number) => void;
 };
 
 const useTimeScrollMouseWithModes = (
@@ -77,6 +78,7 @@ const useTimeScrollMouseWithModes = (
     onZoomY,
     onAnnotateInterval,
     onAnnotateClick,
+    onAnnotateDoubleClick,
   } = params;
 
   const { panTimeseriesSelectionVisibleStartTimeSec, setVisibleTimeRange } =
@@ -186,7 +188,7 @@ const useTimeScrollMouseWithModes = (
           } else if (!mouseData.current.moved) {
             const t0 = pixelToTime(x);
             setCurrentTime(t0);
-            if (onAnnotateClick) onAnnotateClick(t0, y);
+            if (onAnnotateClick) onAnnotateClick(t0);
           }
 
           setSelectionRect(null);
@@ -335,6 +337,18 @@ const useTimeScrollMouseWithModes = (
     [onMouseOut],
   );
 
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (interactionMode !== "annotate" || !onAnnotateDoubleClick) return;
+      const { x } = getTransformAwareMousePosition(
+        e,
+        e.currentTarget as HTMLElement,
+      );
+      onAnnotateDoubleClick(pixelToTime(x));
+    },
+    [interactionMode, onAnnotateDoubleClick, pixelToTime],
+  );
+
   return {
     isViewClicked,
     hoverTime,
@@ -343,6 +357,7 @@ const useTimeScrollMouseWithModes = (
     handleMouseUp,
     handleMouseMove,
     handleMouseOut,
+    handleDoubleClick,
   };
 };
 

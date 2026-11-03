@@ -7,10 +7,9 @@ import { TimeAnnotation } from "./types";
 
 const UNLABELED_COLOR = "#ff8c00";
 
-// Manual annotation of a TimeseriesGraph. In annotate mode, a click places a
-// time point and a drag marks an interval. A click near a point, near an
-// interval's edge, or on an interval's top bar selects it instead, and Delete
-// removes the selection.
+// Manual annotation of a TimeseriesGraph. In annotate mode, a double-click
+// places a time point and a drag marks an interval. A click selects the point
+// near it or the interval around it, and Delete removes the selection.
 export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
   const {
     annotations,
@@ -39,36 +38,54 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
     [addAnnotation],
   );
 
-  const onAnnotateClick = useCallback(
-    (t: number, tolerance: number, onTabStrip: boolean) => {
-      let nearestPoint: TimeAnnotation | undefined = undefined;
+  const findNearestPoint = useCallback(
+    (t: number, tolerance: number) => {
+      let nearest: TimeAnnotation | undefined = undefined;
       for (const a of annotations) {
         if (a.tEnd !== undefined) continue;
         const d = Math.abs(a.tStart - t);
         if (d > tolerance) continue;
-        if (!nearestPoint || d < Math.abs(nearestPoint.tStart - t)) {
-          nearestPoint = a;
-        }
+        if (!nearest || d < Math.abs(nearest.tStart - t)) nearest = a;
       }
-      if (nearestPoint) {
-        setSelectedId(nearestPoint.id);
+      return nearest;
+    },
+    [annotations],
+  );
+
+  const onAnnotateClick = useCallback(
+    (t: number, tolerance: number) => {
+      // a point near the click takes precedence over an interval around it
+      const point = findNearestPoint(t, tolerance);
+      if (point) {
+        setSelectedId(point.id);
         return;
       }
-      const intervalHits = annotations.filter((a) => {
-        if (a.tEnd === undefined) return false;
-        const nearEdge =
-          Math.abs(a.tStart - t) <= tolerance ||
-          Math.abs(a.tEnd - t) <= tolerance;
-        const onTab = onTabStrip && a.tStart <= t && t <= a.tEnd;
-        return nearEdge || onTab;
-      });
-      if (intervalHits.length > 0) {
-        setSelectedId(intervalHits[intervalHits.length - 1].id);
+      const intervalHits = annotations.filter(
+        (a) =>
+          a.tEnd !== undefined &&
+          a.tStart - tolerance <= t &&
+          t <= a.tEnd + tolerance,
+      );
+      setSelectedId(
+        intervalHits.length > 0
+          ? intervalHits[intervalHits.length - 1].id
+          : undefined,
+      );
+    },
+    [annotations, findNearestPoint],
+  );
+
+  const onAnnotateDoubleClick = useCallback(
+    (t: number, tolerance: number) => {
+      // no second point on top of an existing one
+      const point = findNearestPoint(t, tolerance);
+      if (point) {
+        setSelectedId(point.id);
         return;
       }
       addAnnotation({ tStart: t });
     },
-    [annotations, addAnnotation],
+    [findNearestPoint, addAnnotation],
   );
 
   const deleteSelected = useCallback(() => {
@@ -164,9 +181,8 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
         inline: false,
         component: (
           <span style={{ fontSize: "12px", color: "#6c757d" }}>
-            In ✏️ Annotate mode: click to place a point, drag to mark an
-            interval. Select a point by clicking it, an interval by its top bar
-            or edge.
+            In ✏️ Annotate mode: double-click to place a point, drag to mark an
+            interval, click an annotation to select it.
           </span>
         ),
       },
@@ -179,6 +195,7 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
     selectedId,
     onAnnotateInterval,
     onAnnotateClick,
+    onAnnotateDoubleClick,
     onKeyDown,
     toolbarActions,
   };

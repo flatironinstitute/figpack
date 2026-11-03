@@ -245,6 +245,9 @@ export const FPTimeseriesGraphChild: React.FC<{
       onAnnotateClick={
         client?.allowAnnotation ? annotation.onAnnotateClick : undefined
       }
+      onAnnotateDoubleClick={
+        client?.allowAnnotation ? annotation.onAnnotateDoubleClick : undefined
+      }
     />
   );
 };

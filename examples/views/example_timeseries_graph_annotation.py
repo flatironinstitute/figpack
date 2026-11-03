@@ -13,8 +13,8 @@ Synthetic 4-channel LFP with two seizures and scattered spikes. The lower panel 
 To annotate the LFP panel:
 
 - Click ✏️ Annotate in its toolbar
-- Click to place a time point (e.g. a spike); drag to mark an interval (e.g. a seizure)
-- Select a point by clicking it, and an interval by clicking its top bar or an edge; Delete removes the selection, Ctrl+Z undoes
+- Double-click to place a time point (e.g. a spike); drag to mark an interval (e.g. a seizure)
+- Click an annotation to select it; Delete removes the selection, Ctrl+Z undoes
 - Export CSV downloads `label,start_time,end_time` (end_time is empty for time points)
 
 Annotations are saved in your browser, so they persist across reloads of this figure.

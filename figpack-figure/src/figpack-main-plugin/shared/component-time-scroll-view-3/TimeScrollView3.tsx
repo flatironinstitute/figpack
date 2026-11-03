@@ -19,7 +19,6 @@ import TimeScrollToolbar, {
 } from "./TimeScrollToolbar";
 import { computeTimeTicks, useTimeTicks } from "./timeTicks";
 import TSV2AnnotationsLayer, {
-  ANNOTATION_TAB_HEIGHT,
   TimeAnnotationMark,
 } from "./TSV2AnnotationsLayer";
 import TSV2AxesLayer from "./TSV2AxesLayer";
@@ -75,9 +74,9 @@ type Props = {
   annotationMarks?: TimeAnnotationMark[];
   selectedAnnotationId?: string;
   onAnnotateInterval?: (tStart: number, tEnd: number) => void;
-  // tolerance is a few pixels expressed in seconds, for hitting an annotation;
-  // onTabStrip is true for a click in the strip where interval tabs are drawn
-  onAnnotateClick?: (t: number, tolerance: number, onTabStrip: boolean) => void;
+  // tolerance is a few pixels expressed in seconds, for hitting an annotation
+  onAnnotateClick?: (t: number, tolerance: number) => void;
+  onAnnotateDoubleClick?: (t: number, tolerance: number) => void;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -105,6 +104,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   selectedAnnotationId,
   onAnnotateInterval,
   onAnnotateClick,
+  onAnnotateDoubleClick,
 }) => {
   const {
     visibleStartTimeSec,
@@ -268,16 +268,15 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     };
   }, [onZoomY, pixelToY]);
 
+  const annotateTolerance = Math.abs(pixelToTime(4) - pixelToTime(0));
   const handleAnnotateClick = useMemo(() => {
     if (!onAnnotateClick) return undefined;
-    return (t: number, y: number) => {
-      onAnnotateClick(
-        t,
-        Math.abs(pixelToTime(4) - pixelToTime(0)),
-        y >= margins.top && y <= margins.top + ANNOTATION_TAB_HEIGHT,
-      );
-    };
-  }, [onAnnotateClick, pixelToTime, margins]);
+    return (t: number) => onAnnotateClick(t, annotateTolerance);
+  }, [onAnnotateClick, annotateTolerance]);
+  const handleAnnotateDoubleClick = useMemo(() => {
+    if (!onAnnotateDoubleClick) return undefined;
+    return (t: number) => onAnnotateDoubleClick(t, annotateTolerance);
+  }, [onAnnotateDoubleClick, annotateTolerance]);
 
   const {
     isViewClicked,
@@ -287,6 +286,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     handleMouseUp: handleMouseUp2,
     handleMouseMove: handleMouseMove2,
     handleMouseOut: handleMouseOut2,
+    handleDoubleClick: handleDoubleClick2,
   } = useTimeScrollMouseWithModes({
     pixelToTime,
     visibleStartTimeSec,
@@ -300,6 +300,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     onZoomY: onZoomYPixel,
     onAnnotateInterval,
     onAnnotateClick: handleAnnotateClick,
+    onAnnotateDoubleClick: handleAnnotateDoubleClick,
   });
 
   useEffect(() => {
@@ -502,6 +503,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         onMouseUp={handleMouseUp2}
         onMouseMove={handleMouseMove2}
         onMouseOut={handleMouseOut2}
+        onDoubleClick={handleDoubleClick2}
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
@@ -534,6 +536,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     handleMouseUp2,
     handleMouseMove2,
     handleMouseOut2,
+    handleDoubleClick2,
     requireClickToZoom,
     isViewClicked,
   ]);
