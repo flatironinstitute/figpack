@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.4.2] - 2026-11-03
+
+- TimeseriesGraph: `allow_annotation=True` adds an "Annotate" mode to the viewer for marking times of interest. Double-click places a point, drag marks an interval, and click selects an annotation (Delete removes it, Ctrl+Z undoes). Labels are typed in the viewer for the selected annotation, or applied with number keys once they exist. Export CSV writes `label,start_time,end_time` (end_time is empty for points); Import CSV replaces all annotations with those in a CSV file; Clear all asks for confirmation. Annotations are saved in the browser's localStorage, per figure and view
+- SVG export: a Spectrogram inside a layout (e.g. Box) now exports its heatmap; previously only the axes were drawn
+- figpack-api-cf: the figure limit now applies per bucket and counts only unexpired figures. New `buckets.max_figures_per_user` column (migration 0013): NULL is the default of 1000, 0 is no limit. figpack-manage: "Max figures per user" field in the Add and Edit Bucket dialogs
+- figpack-api-cf: `POST /figures/delete-bulk` (`{ figureUrls }`, up to 100) deletes several figures; pinned figures and figures the caller does not own (unless admin) are skipped and reported. figpack-manage: Figures page checkboxes and Delete selected, with confirmation
+- figpack-api-cf: `GET /figures/list` accepts `expired=true`, and filtering by the default bucket includes legacy rows with no bucket. figpack-manage: "Show only expired figures" switch and a page size selector (25/50/100) on the Figures page
+- figpack-api-cf: `GET /figures/list` accepts camelCase sort fields (`createdAt`, `ownerEmail`, ...), so sorting by owner on the Figures page works
+
 ## [0.4.1] - 2026-10-24
 
 - figpack-manage remix page: "Apply patch" takes a remix patch file from disk and merges it into the spec the remix renders, with the same rules as `remix=` in Python (implemented in TypeScript; both run the shared cases in tests/remix_patch_cases, and figpack-manage `npm test` runs them with vitest). The spec script is rewritten as formatted JSON, the preview re-renders, and a dialog lists what changed and each skipped part, with Undo. Export patch on a remix of a figure made with a patch now includes that patch, so the export reproduces the remix on a figure made without one
