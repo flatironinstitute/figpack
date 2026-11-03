@@ -7,6 +7,7 @@ import { ProvideTimeseriesSelectionContext } from "../FPMultiChannelTimeseries";
 import { DrawForExportFunction } from "src/figpack-interface";
 import { useTimeseriesGraphClient } from "./useTimeseriesGraphClient";
 import { createDraw } from "./drawFunction";
+import { useTimeAnnotations } from "./useTimeAnnotations";
 
 export const FPTimeseriesGraph: React.FC<{
   zarrGroup: ZarrGroup;
@@ -155,8 +156,14 @@ export const FPTimeseriesGraphChild: React.FC<{
     };
   }, [context, margins, draw, canvasWidth, canvasHeight]);
 
+  const annotation = useTimeAnnotations(
+    zarrGroup.path,
+    client?.allowAnnotation ?? false,
+  );
+
   const customToolbarActions = useMemo(() => {
     return [
+      ...annotation.toolbarActions,
       {
         id: "y-range-mode",
         label: "Y Range Mode",
@@ -192,7 +199,7 @@ export const FPTimeseriesGraphChild: React.FC<{
         ),
       },
     ];
-  }, [yRangeMode]);
+  }, [yRangeMode, annotation.toolbarActions]);
 
   const gridlineOpts = useMemo(
     () => ({
@@ -229,6 +236,18 @@ export const FPTimeseriesGraphChild: React.FC<{
       setDrawForExport={setDrawForExport}
       customToolbarActions={customToolbarActions}
       onZoomY={handleZoomY}
+      onKeyDown={annotation.onKeyDown}
+      selectedAnnotationId={annotation.selectedId}
+      annotationMarks={client?.allowAnnotation ? annotation.marks : undefined}
+      onAnnotateInterval={
+        client?.allowAnnotation ? annotation.onAnnotateInterval : undefined
+      }
+      onAnnotateClick={
+        client?.allowAnnotation ? annotation.onAnnotateClick : undefined
+      }
+      onAnnotateDoubleClick={
+        client?.allowAnnotation ? annotation.onAnnotateDoubleClick : undefined
+      }
     />
   );
 };

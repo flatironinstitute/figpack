@@ -72,3 +72,20 @@ export type LegendOptions = {
   location?: string;
   hideLegend?: boolean;
 };
+
+// A manual annotation: an interval when tEnd is set, otherwise a time point
+export type TimeAnnotation = {
+  id: string;
+  label?: string;
+  tStart: number;
+  tEnd?: number;
+};
+
+export type AnnotationLabelInfo = { name: string; color: string };
+
+// What is stored: the annotations and the labels they use, in the order the
+// labels were created (label N is applied with number key N)
+export type AnnotationSet = {
+  annotations: TimeAnnotation[];
+  labels: AnnotationLabelInfo[];
+};

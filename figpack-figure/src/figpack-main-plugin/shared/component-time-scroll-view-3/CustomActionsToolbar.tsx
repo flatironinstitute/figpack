@@ -29,6 +29,9 @@ const CustomActionsToolbar: FunctionComponent<Props> = ({
         padding: "0 12px",
         fontSize: "13px",
         fontFamily: "system-ui, -apple-system, sans-serif",
+        // one line; what doesn't fit is cut off at the right
+        whiteSpace: "nowrap",
+        overflow: "hidden",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>

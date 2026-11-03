@@ -57,6 +57,9 @@ type UseTimeScrollMouseWithModesParams = {
   onCanvasClick?: (x: number, y: number) => void;
   interactionMode: InteractionMode;
   onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
+  onAnnotateInterval?: (tStart: number, tEnd: number) => void;
+  onAnnotateClick?: (t: number) => void;
+  onAnnotateDoubleClick?: (t: number) => void;
 };
 
 const useTimeScrollMouseWithModes = (
@@ -73,6 +76,9 @@ const useTimeScrollMouseWithModes = (
     onCanvasClick,
     interactionMode,
     onZoomY,
+    onAnnotateInterval,
+    onAnnotateClick,
+    onAnnotateDoubleClick,
   } = params;
 
   const { panTimeseriesSelectionVisibleStartTimeSec, setVisibleTimeRange } =
@@ -110,7 +116,8 @@ const useTimeScrollMouseWithModes = (
 
         if (
           interactionMode === "select-zoom" ||
-          interactionMode === "select-zoom-y"
+          interactionMode === "select-zoom-y" ||
+          interactionMode === "annotate"
         ) {
           mouseData.current.selectionStartX = x;
           mouseData.current.selectionEndX = x;
@@ -162,6 +169,26 @@ const useTimeScrollMouseWithModes = (
             if (onCanvasClick) {
               onCanvasClick(x, y);
             }
+          }
+
+          setSelectionRect(null);
+          mouseData.current.selectionStartX = null;
+          mouseData.current.selectionEndX = null;
+        } else if (
+          interactionMode === "annotate" &&
+          mouseData.current.selectionStartX !== null
+        ) {
+          const startX = Math.min(mouseData.current.selectionStartX, x);
+          const endX = Math.max(mouseData.current.selectionStartX, x);
+
+          if (Math.abs(endX - startX) > 5) {
+            if (onAnnotateInterval) {
+              onAnnotateInterval(pixelToTime(startX), pixelToTime(endX));
+            }
+          } else if (!mouseData.current.moved) {
+            const t0 = pixelToTime(x);
+            setCurrentTime(t0);
+            if (onAnnotateClick) onAnnotateClick(t0);
           }
 
           setSelectionRect(null);
@@ -220,6 +247,8 @@ const useTimeScrollMouseWithModes = (
       setVisibleTimeRange,
       onCanvasClick,
       onZoomY,
+      onAnnotateInterval,
+      onAnnotateClick,
     ],
   );
 
@@ -234,7 +263,8 @@ const useTimeScrollMouseWithModes = (
 
       if (!e.shiftKey && !e.ctrlKey && !e.altKey) {
         if (
-          interactionMode === "select-zoom" &&
+          (interactionMode === "select-zoom" ||
+            interactionMode === "annotate") &&
           mouseData.current.selectionStartX !== null
         ) {
           // Update selection rectangle
@@ -307,6 +337,18 @@ const useTimeScrollMouseWithModes = (
     [onMouseOut],
   );
 
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (interactionMode !== "annotate" || !onAnnotateDoubleClick) return;
+      const { x } = getTransformAwareMousePosition(
+        e,
+        e.currentTarget as HTMLElement,
+      );
+      onAnnotateDoubleClick(pixelToTime(x));
+    },
+    [interactionMode, onAnnotateDoubleClick, pixelToTime],
+  );
+
   return {
     isViewClicked,
     hoverTime,
@@ -315,6 +357,7 @@ const useTimeScrollMouseWithModes = (
     handleMouseUp,
     handleMouseMove,
     handleMouseOut,
+    handleDoubleClick,
   };
 };
 

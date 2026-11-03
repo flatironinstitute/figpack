@@ -18,6 +18,7 @@ export class TimeseriesGraphClient {
     public yRange: { yMin: number; yMax: number } | null = null,
     public hideXGridlines: boolean = false,
     public hideYGridlines: boolean = false,
+    public allowAnnotation: boolean = false,
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
@@ -175,6 +176,7 @@ export class TimeseriesGraphClient {
         : null;
     const hideXGridlines = zarrGroup.attrs["hide_x_gridlines"] || false;
     const hideYGridlines = zarrGroup.attrs["hide_y_gridlines"] || false;
+    const allowAnnotation = zarrGroup.attrs["allow_annotation"] || false;
 
     return new TimeseriesGraphClient(
       series,
@@ -187,6 +189,7 @@ export class TimeseriesGraphClient {
       yRange,
       hideXGridlines,
       hideYGridlines,
+      allowAnnotation,
     );
   }
 }

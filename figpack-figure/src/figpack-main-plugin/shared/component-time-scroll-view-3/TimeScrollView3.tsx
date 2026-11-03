@@ -18,6 +18,9 @@ import TimeScrollToolbar, {
   InteractionMode,
 } from "./TimeScrollToolbar";
 import { computeTimeTicks, useTimeTicks } from "./timeTicks";
+import TSV2AnnotationsLayer, {
+  TimeAnnotationMark,
+} from "./TSV2AnnotationsLayer";
 import TSV2AxesLayer from "./TSV2AxesLayer";
 import TSV2CursorLayer from "./TSV2CursorLayer";
 import TSV2SelectionLayer from "./TSV2SelectionLayer";
@@ -67,6 +70,13 @@ type Props = {
   ) => Promise<any>;
   setDrawForExport?: (draw: DrawForExportFunction) => void;
   onZoomY?: (yRange: { yMin: number; yMax: number } | null) => void;
+  // When onAnnotateInterval is set, the toolbar offers an annotate mode
+  annotationMarks?: TimeAnnotationMark[];
+  selectedAnnotationId?: string;
+  onAnnotateInterval?: (tStart: number, tEnd: number) => void;
+  // tolerance is a few pixels expressed in seconds, for hitting an annotation
+  onAnnotateClick?: (t: number, tolerance: number) => void;
+  onAnnotateDoubleClick?: (t: number, tolerance: number) => void;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -90,6 +100,11 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   drawContentForExport,
   setDrawForExport,
   onZoomY,
+  annotationMarks,
+  selectedAnnotationId,
+  onAnnotateInterval,
+  onAnnotateClick,
+  onAnnotateDoubleClick,
 }) => {
   const {
     visibleStartTimeSec,
@@ -253,6 +268,16 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     };
   }, [onZoomY, pixelToY]);
 
+  const annotateTolerance = Math.abs(pixelToTime(4) - pixelToTime(0));
+  const handleAnnotateClick = useMemo(() => {
+    if (!onAnnotateClick) return undefined;
+    return (t: number) => onAnnotateClick(t, annotateTolerance);
+  }, [onAnnotateClick, annotateTolerance]);
+  const handleAnnotateDoubleClick = useMemo(() => {
+    if (!onAnnotateDoubleClick) return undefined;
+    return (t: number) => onAnnotateDoubleClick(t, annotateTolerance);
+  }, [onAnnotateDoubleClick, annotateTolerance]);
+
   const {
     isViewClicked,
     hoverTime,
@@ -261,6 +286,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     handleMouseUp: handleMouseUp2,
     handleMouseMove: handleMouseMove2,
     handleMouseOut: handleMouseOut2,
+    handleDoubleClick: handleDoubleClick2,
   } = useTimeScrollMouseWithModes({
     pixelToTime,
     visibleStartTimeSec,
@@ -272,6 +298,9 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     onCanvasClick,
     interactionMode,
     onZoomY: onZoomYPixel,
+    onAnnotateInterval,
+    onAnnotateClick: handleAnnotateClick,
+    onAnnotateDoubleClick: handleAnnotateDoubleClick,
   });
 
   useEffect(() => {
@@ -343,6 +372,27 @@ const TimeScrollView3: FunctionComponent<Props> = ({
       />
     );
   }, [canvasWidth, plotHeight, selectionRect, interactionMode]);
+
+  const annotationsLayer = useMemo(() => {
+    if (!annotationMarks || annotationMarks.length === 0) return null;
+    return (
+      <TSV2AnnotationsLayer
+        width={canvasWidth}
+        height={plotHeight}
+        margins={margins}
+        marks={annotationMarks}
+        timeToPixel={timeToPixel}
+        selectedId={selectedAnnotationId}
+      />
+    );
+  }, [
+    annotationMarks,
+    selectedAnnotationId,
+    canvasWidth,
+    plotHeight,
+    margins,
+    timeToPixel,
+  ]);
 
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(
     null,
@@ -453,6 +503,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         onMouseUp={handleMouseUp2}
         onMouseMove={handleMouseMove2}
         onMouseOut={handleMouseOut2}
+        onDoubleClick={handleDoubleClick2}
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
@@ -467,12 +518,14 @@ const TimeScrollView3: FunctionComponent<Props> = ({
           width={canvasWidth}
           height={plotHeight}
         />
+        {annotationsLayer}
         {cursorLayer}
         {selectionLayer}
       </div>
     );
   }, [
     axesLayer,
+    annotationsLayer,
     cursorLayer,
     selectionLayer,
     canvasWidth,
@@ -483,6 +536,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     handleMouseUp2,
     handleMouseMove2,
     handleMouseOut2,
+    handleDoubleClick2,
     requireClickToZoom,
     isViewClicked,
   ]);
@@ -507,6 +561,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         inlineCustomActions={inlineActions}
         onZoomY={onZoomYPixel}
         onResetZoom={handleResetZoom}
+        allowAnnotate={!!onAnnotateInterval}
       />
     );
   }, [
@@ -518,6 +573,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     inlineActions,
     onZoomYPixel,
     handleResetZoom,
+    onAnnotateInterval,
   ]);
 
   const customActionsToolbar = useMemo(() => {
