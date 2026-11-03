@@ -15,7 +15,8 @@ To annotate the LFP panel:
 - Click ✏️ Annotate in its toolbar
 - Double-click to place a time point (e.g. a spike); drag to mark an interval (e.g. a seizure)
 - Click an annotation to select it; Delete removes the selection, Ctrl+Z undoes
-- Export CSV downloads `label,start_time,end_time` (end_time is empty for time points)
+- To label the selection, type a label (e.g. seizure, spike) in the box below the plot and press Enter; once labels exist, the label chips or number keys 1, 2, ... apply them
+- Export CSV downloads `label,start_time,end_time` (label is empty when unlabeled, end_time is empty for time points)
 
 Annotations are saved in your browser, so they persist across reloads of this figure.
 """

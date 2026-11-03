@@ -2,6 +2,10 @@ import React, { useCallback, useMemo, useState } from "react";
 import { CustomToolbarAction } from "../../shared/component-time-scroll-view-3/TimeScrollToolbar";
 import { TimeAnnotationMark } from "../../shared/component-time-scroll-view-3/TSV2AnnotationsLayer";
 import { newAnnotationId, usePersistedAnnotations } from "./annotationStorage";
+import {
+  AnnotationLabelChips,
+  AnnotationLabelInput,
+} from "./AnnotationLabelControls";
 import ToolbarButton from "./ToolbarButton";
 import { TimeAnnotation } from "./types";
 
@@ -9,11 +13,13 @@ const UNLABELED_COLOR = "#ff8c00";
 
 // Manual annotation of a TimeseriesGraph. In annotate mode, a double-click
 // places a time point and a drag marks an interval. A click selects the point
-// near it or the interval around it, and Delete removes the selection.
+// near it or the interval around it; Delete removes the selection, and the
+// label box, a label chip or number key N (label N) sets its label.
 export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
   const {
     annotations,
-    setAnnotations,
+    labels,
+    update,
     undo: undoAnnotations,
     canUndo,
   } = usePersistedAnnotations(viewPath, enabled);
@@ -22,13 +28,16 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
   const addAnnotation = useCallback(
     (a: Omit<TimeAnnotation, "id">) => {
       const id = newAnnotationId();
-      setAnnotations((prev) =>
-        [...prev, { ...a, id }].sort((x, y) => x.tStart - y.tStart),
-      );
+      update((s) => ({
+        ...s,
+        annotations: [...s.annotations, { ...a, id }].sort(
+          (x, y) => x.tStart - y.tStart,
+        ),
+      }));
       // select the new annotation so a mistake can be deleted right away
       setSelectedId(id);
     },
-    [setAnnotations],
+    [update],
   );
 
   const onAnnotateInterval = useCallback(
@@ -90,9 +99,30 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
 
   const deleteSelected = useCallback(() => {
     if (!selectedId) return;
-    setAnnotations((prev) => prev.filter((a) => a.id !== selectedId));
+    update((s) => ({
+      ...s,
+      annotations: s.annotations.filter((a) => a.id !== selectedId),
+    }));
     setSelectedId(undefined);
-  }, [selectedId, setAnnotations]);
+  }, [selectedId, update]);
+
+  const setSelectedLabel = useCallback(
+    (label: string | undefined) => {
+      if (!selectedId) return;
+      update((s) => {
+        const target = s.annotations.find((a) => a.id === selectedId);
+        // no undo step for a change that changes nothing
+        if (!target || target.label === label) return s;
+        return {
+          ...s,
+          annotations: s.annotations.map((a) =>
+            a.id === selectedId ? { ...a, label } : a,
+          ),
+        };
+      });
+    },
+    [selectedId, update],
+  );
 
   const undo = useCallback(() => {
     undoAnnotations();
@@ -102,6 +132,7 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!enabled) return;
+      const digit = parseInt(e.key);
       if (e.key === "Delete" || e.key === "Backspace") {
         if (!selectedId) return;
         deleteSelected();
@@ -109,24 +140,28 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
         undo();
       } else if (e.key === "Escape") {
         setSelectedId(undefined);
+      } else if (selectedId && digit >= 1 && digit <= labels.length) {
+        setSelectedLabel(labels[digit - 1].name);
       } else {
         return;
       }
       e.preventDefault();
     },
-    [enabled, selectedId, deleteSelected, undo],
+    [enabled, selectedId, deleteSelected, undo, labels, setSelectedLabel],
   );
 
-  const marks: TimeAnnotationMark[] = useMemo(
-    () =>
-      annotations.map((a) => ({
-        id: a.id,
-        tStart: a.tStart,
-        tEnd: a.tEnd,
-        color: UNLABELED_COLOR,
-      })),
-    [annotations],
-  );
+  const marks: TimeAnnotationMark[] = useMemo(() => {
+    const colors = new Map(labels.map((l) => [l.name, l.color]));
+    return annotations.map((a) => ({
+      id: a.id,
+      tStart: a.tStart,
+      tEnd: a.tEnd,
+      color: (a.label && colors.get(a.label)) || UNLABELED_COLOR,
+      label: a.label,
+    }));
+  }, [annotations, labels]);
+
+  const selectedAnnotation = annotations.find((a) => a.id === selectedId);
 
   const toolbarActions: CustomToolbarAction[] = useMemo(() => {
     if (!enabled) return [];
@@ -143,6 +178,22 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
           >
             Delete
           </ToolbarButton>
+        ),
+      });
+    }
+    if (selectedAnnotation) {
+      actions.push({
+        id: "annotation-label-input",
+        label: "Label",
+        inline: false,
+        component: (
+          <AnnotationLabelInput
+            key={`${selectedAnnotation.id}:${selectedAnnotation.label ?? ""}`}
+            label={selectedAnnotation.label}
+            suggestions={labels.map((l) => l.name)}
+            datalistId={`annotation-labels-${viewPath}`}
+            onSubmit={setSelectedLabel}
+          />
         ),
       });
     }
@@ -175,20 +226,46 @@ export const useTimeAnnotations = (viewPath: string, enabled: boolean) => {
           </ToolbarButton>
         ),
       },
-      {
+    );
+    if (labels.length > 0) {
+      actions.push({
+        id: "annotation-label-chips",
+        label: "Labels",
+        inline: false,
+        component: (
+          <AnnotationLabelChips
+            labels={labels}
+            onApply={selectedAnnotation ? setSelectedLabel : undefined}
+          />
+        ),
+      });
+    }
+    if (!selectedAnnotation) {
+      actions.push({
         id: "annotation-hint",
         label: "Annotation hint",
         inline: false,
         component: (
           <span style={{ fontSize: "12px", color: "#6c757d" }}>
             In ✏️ Annotate mode: double-click to place a point, drag to mark an
-            interval, click an annotation to select it.
+            interval, click an annotation to select and label it.
           </span>
         ),
-      },
-    );
+      });
+    }
     return actions;
-  }, [enabled, selectedId, deleteSelected, undo, canUndo, annotations]);
+  }, [
+    enabled,
+    selectedId,
+    selectedAnnotation,
+    deleteSelected,
+    undo,
+    canUndo,
+    annotations,
+    labels,
+    viewPath,
+    setSelectedLabel,
+  ]);
 
   return {
     marks,

@@ -1,4 +1,4 @@
-import { FunctionComponent } from "react";
+import React, { FunctionComponent } from "react";
 
 // An annotation as drawn: an interval (band) when tEnd is set, otherwise a
 // single time point (vertical line)
@@ -7,10 +7,22 @@ export type TimeAnnotationMark = {
   tStart: number;
   tEnd?: number;
   color: string;
+  label?: string;
 };
 
-// Height of the bar along the top of each interval
+// Height of the bar along the top of each interval, which shows its label
 const ANNOTATION_TAB_HEIGHT = 14;
+
+const labelTextStyle: React.CSSProperties = {
+  fontSize: "10px",
+  fontWeight: 600,
+  lineHeight: `${ANNOTATION_TAB_HEIGHT}px`,
+  color: "white",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  padding: "0 3px",
+};
 
 type Props = {
   width: number;
@@ -51,18 +63,33 @@ const TSV2AnnotationsLayer: FunctionComponent<Props> = ({
           if (x < xMin || x > xMax) return null;
           const lineWidth = selected ? 4 : 2;
           return (
-            <div
-              key={mark.id}
-              style={{
-                position: "absolute",
-                left: x - lineWidth / 2,
-                top: margins.top,
-                width: lineWidth,
-                height: plotHeight,
-                backgroundColor: mark.color,
-                opacity: selected ? 1 : 0.7,
-              }}
-            />
+            <React.Fragment key={mark.id}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: x - lineWidth / 2,
+                  top: margins.top,
+                  width: lineWidth,
+                  height: plotHeight,
+                  backgroundColor: mark.color,
+                  opacity: selected ? 1 : 0.7,
+                }}
+              />
+              {selected && mark.label && (
+                <div
+                  style={{
+                    ...labelTextStyle,
+                    position: "absolute",
+                    left: x + lineWidth / 2,
+                    top: margins.top,
+                    maxWidth: 150,
+                    backgroundColor: mark.color,
+                  }}
+                >
+                  {mark.label}
+                </div>
+              )}
+            </React.Fragment>
           );
         }
         const x1 = Math.max(xMin, timeToPixel(mark.tStart));
@@ -88,12 +115,15 @@ const TSV2AnnotationsLayer: FunctionComponent<Props> = ({
           >
             <div
               style={{
+                ...labelTextStyle,
                 height: ANNOTATION_TAB_HEIGHT,
                 backgroundColor: `color-mix(in srgb, ${mark.color} ${
                   selected ? 90 : 55
                 }%, transparent)`,
               }}
-            />
+            >
+              {mark.label}
+            </div>
           </div>
         );
       })}

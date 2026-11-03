@@ -80,3 +80,12 @@ export type TimeAnnotation = {
   tStart: number;
   tEnd?: number;
 };
+
+export type AnnotationLabelInfo = { name: string; color: string };
+
+// What is stored: the annotations and the labels they use, in the order the
+// labels were created (label N is applied with number key N)
+export type AnnotationSet = {
+  annotations: TimeAnnotation[];
+  labels: AnnotationLabelInfo[];
+};
