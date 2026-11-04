@@ -8,7 +8,7 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 ## Overview
 
-[Figpack Overview Presentation](https://magland.github.io/figpack-overview-presentation/)
+[Figpack Overview Presentation](https://magland.github.io/figpack-2026-11-05/)
 
 [Figpack for the Curious](https://jeremy.magland.org/posts/2026-10-02-figpack-for-the-curious/) (blog post)
 
