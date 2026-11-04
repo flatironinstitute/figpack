@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+- Style keys for appearance: font sizes, font family, text, background, gridline, title bar and border colors, and colormaps. Every view has `set_style(**keys)` (unknown keys raise a ValueError), and a style cascades: each view's effective style is the style of the view containing it with its own keys merged over it, so a style on the root view styles the whole figure. Styles appear as `props.style` in the figure spec, and the spec reference gets a Style section listing the keys used by the figure's views, so remixes can change appearance. Used by TimeseriesGraph, MultiChannelTimeseries, Spectrogram, Box, VerticalLayout, TabLayout, Splitter, CaptionedView and Markdown; keys are listed in docs/styling_figures.md
+- TimeseriesGraph: `style=` argument; the axes margins grow to fit larger fonts; the legend widens to fit long series names and can be placed at `"southwest"` and `"southeast"`
+- MultiChannelTimeseries and Spectrogram: `y_label` argument (defaults "Value" and "Frequency (Hz)"); Spectrogram and Markdown get figure spec schemas
+- Time series views no longer reserve an empty toolbar row when all custom toolbar actions are inline, or when the toolbar is hidden
+- figpack-manage remix page: the assistant is told to use `props.style` for appearance changes
+
 ## [0.4.2] - 2026-11-03
 
 - TimeseriesGraph: `allow_annotation=True` adds an "Annotate" mode to the viewer for marking times of interest. Double-click places a point, drag marks an interval, and click selects an annotation (Delete removes it, Ctrl+Z undoes). Labels are typed in the viewer for the selected annotation, or applied with number keys once they exist. Export CSV writes `label,start_time,end_time` (end_time is empty for points); Import CSV replaces all annotations with those in a CSV file; Clear all asks for confirmation. Annotations are saved in the browser's localStorage, per figure and view

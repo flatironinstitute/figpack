@@ -147,6 +147,7 @@ misc_tutorial
 nwb_tutorial
 show_function
 exporting_figures
+styling_figures
 remix_patches
 slides_tutorial
 zenodo_archival
