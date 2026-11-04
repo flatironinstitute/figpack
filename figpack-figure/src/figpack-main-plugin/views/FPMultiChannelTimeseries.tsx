@@ -1,4 +1,5 @@
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
+import { viewStyleFromAttr } from "../shared/viewStyle";
 import {
   TimeseriesSelectionAction,
   TimeseriesSelectionContext,
@@ -86,6 +87,11 @@ const FPMultiChannelTimeseriesChild: React.FC<{
   );
 
   const client = useMultiChannelTimeseriesClient(zarrGroup);
+  const yLabel: string = zarrGroup.attrs["y_label"] ?? "Value";
+  const style = useMemo(
+    () => viewStyleFromAttr(zarrGroup.attrs["style"]),
+    [zarrGroup],
+  );
   const { baseSpacingUnit } = useBaseSpacingUnit(client);
 
   // Calculate actual vertical spacing from multiplier and base unit
@@ -286,9 +292,9 @@ const FPMultiChannelTimeseriesChild: React.FC<{
       showTicks: true,
       yMin: yRange ? yRange.yMin : 0,
       yMax: yRange ? yRange.yMax : 10,
-      yLabel: "Value",
+      yLabel,
     };
-  }, [yRange]);
+  }, [yRange, yLabel]);
 
   return (
     <TimeScrollView3
@@ -303,6 +309,7 @@ const FPMultiChannelTimeseriesChild: React.FC<{
         setMargins(margins);
       }}
       yAxisInfo={yAxisInfo}
+      style={style}
       customToolbarActions={customToolbarActions}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}

@@ -123,7 +123,14 @@ def test_set_style_writes_style_attrs():
 
 def test_builtin_view_schemas_are_registered():
     schemas = get_spec_schemas()
-    for vt in ["Box", "Splitter", "TabLayout", "TimeseriesGraph"]:
+    for vt in [
+        "Box",
+        "Splitter",
+        "TabLayout",
+        "TimeseriesGraph",
+        "MultiChannelTimeseries",
+        "Spectrogram",
+    ]:
         assert vt in schemas
 
 

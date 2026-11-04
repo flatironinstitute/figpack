@@ -1,6 +1,7 @@
 import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
+import { viewStyleFromAttr } from "../shared/viewStyle";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import {
   calculateVisibleMaxValue,
@@ -85,6 +86,11 @@ const FPSpectrogramChild: React.FC<{
   } | null>(null);
 
   const client = useSpectrogramClient(zarrGroup);
+  const yLabel: string = zarrGroup.attrs["y_label"] ?? "Frequency (Hz)";
+  const style = useMemo(
+    () => viewStyleFromAttr(zarrGroup.attrs["style"]),
+    [zarrGroup],
+  );
 
   // Load visible data using the client API
   const [visibleData, setVisibleData] = useState<{
@@ -222,9 +228,9 @@ const FPSpectrogramChild: React.FC<{
       showTicks: true,
       yMin: effectiveYRange ? effectiveYRange.yMin : 0,
       yMax: effectiveYRange ? effectiveYRange.yMax : 100,
-      yLabel: "Frequency (Hz)",
+      yLabel,
     };
-  }, [effectiveYRange]);
+  }, [effectiveYRange, yLabel]);
 
   const handleZoomY = useCallback(
     (yRange: { yMin: number; yMax: number } | null) => {
@@ -246,6 +252,7 @@ const FPSpectrogramChild: React.FC<{
         setMargins(margins);
       }}
       yAxisInfo={yAxisInfo}
+      style={style}
       customToolbarActions={customToolbarActions}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}

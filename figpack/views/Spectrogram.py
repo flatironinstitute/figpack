@@ -8,6 +8,7 @@ from typing import Optional
 import numpy as np
 import zarr
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 
@@ -16,6 +17,18 @@ class Spectrogram(FigpackView):
     """
     A spectrogram visualization component for time-frequency data
     """
+
+    spec_schema = SpecSchema(
+        view_type="Spectrogram",
+        description="Time-frequency power shown as a heatmap, with zooming and panning.",
+        props=[SpecProp("y_label", "string", "Y axis label.")],
+        style_keys=[
+            "label_font_size",
+            "tick_font_size",
+            "font_family",
+            "text_color",
+        ],
+    )
 
     def __init__(
         self,
@@ -26,6 +39,7 @@ class Spectrogram(FigpackView):
         frequency_min_hz: Optional[float] = None,
         frequency_delta_hz: Optional[float] = None,
         frequencies: Optional[np.ndarray] = None,
+        y_label: str = "Frequency (Hz)",
     ):
         """
         Initialize a Spectrogram view
@@ -37,6 +51,7 @@ class Spectrogram(FigpackView):
             frequency_min_hz: Minimum frequency in Hz (for uniform bins)
             frequency_delta_hz: Frequency bin spacing in Hz (for uniform bins)
             frequencies: Array of frequency values (for non-uniform bins)
+            y_label: Label for the y-axis
         """
         assert data.ndim == 2, "Data must be a 2D array (timepoints × frequencies)"
         assert sampling_frequency_hz > 0, "Sampling frequency must be positive"
@@ -59,6 +74,7 @@ class Spectrogram(FigpackView):
         self.start_time_sec = start_time_sec
         self.sampling_frequency_hz = sampling_frequency_hz
         self.data = data.astype(np.float32)  # Ensure float32 for efficiency
+        self.y_label = y_label
 
         # Store frequency information
         if uniform_specified:
@@ -200,6 +216,7 @@ class Spectrogram(FigpackView):
         # Store metadata
         group.attrs["start_time_sec"] = self.start_time_sec
         group.attrs["sampling_frequency_hz"] = self.sampling_frequency_hz
+        group.attrs["y_label"] = self.y_label
         group.attrs["uniform_frequencies"] = self.uniform_frequencies
         group.attrs["n_timepoints"] = self.n_timepoints
         group.attrs["n_frequencies"] = self.n_frequencies
