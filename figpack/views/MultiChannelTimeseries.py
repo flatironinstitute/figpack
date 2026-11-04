@@ -20,7 +20,14 @@ class MultiChannelTimeseries(FigpackView):
     spec_schema = SpecSchema(
         view_type="MultiChannelTimeseries",
         description="Multi-channel signal sampled at a uniform rate, with zooming and panning.",
-        props=[SpecProp("y_label", "string", "Y axis label.")],
+        props=[
+            SpecProp("y_label", "string", "Y axis label."),
+            SpecProp(
+                "hide_nav_toolbar",
+                "boolean",
+                "Hide the navigation toolbar below the plot.",
+            ),
+        ],
         style_keys=[
             "label_font_size",
             "tick_font_size",
@@ -40,6 +47,7 @@ class MultiChannelTimeseries(FigpackView):
         data: np.ndarray,
         channel_ids: Optional[List[Union[str, int]]] = None,
         y_label: str = "Value",
+        hide_nav_toolbar: bool = False,
     ):
         """
         Initialize a MultiChannelTimeseries view
@@ -50,6 +58,7 @@ class MultiChannelTimeseries(FigpackView):
             data: N×M numpy array where N is timepoints and M is channels
             channel_ids: Optional list of channel identifiers
             y_label: Label for the y-axis
+            hide_nav_toolbar: Whether to hide the navigation toolbar
         """
         assert data.ndim == 2, "Data must be a 2D array (timepoints × channels)"
         assert sampling_frequency_hz > 0, "Sampling frequency must be positive"
@@ -58,6 +67,7 @@ class MultiChannelTimeseries(FigpackView):
         self.sampling_frequency_hz = sampling_frequency_hz
         self.data = data.astype(np.float32)  # Ensure float32 for efficiency
         self.y_label = y_label
+        self.hide_nav_toolbar = hide_nav_toolbar
 
         n_timepoints, n_channels = data.shape
 
@@ -207,6 +217,7 @@ class MultiChannelTimeseries(FigpackView):
         group.attrs["sampling_frequency_hz"] = self.sampling_frequency_hz
         group.attrs["channel_ids"] = self.channel_ids
         group.attrs["y_label"] = self.y_label
+        group.attrs["hide_nav_toolbar"] = self.hide_nav_toolbar
 
         n_timepoints, n_channels = self.data.shape
         group.attrs["n_timepoints"] = n_timepoints

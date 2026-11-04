@@ -87,6 +87,7 @@ const FPSpectrogramChild: React.FC<{
 
   const client = useSpectrogramClient(zarrGroup);
   const yLabel: string = zarrGroup.attrs["y_label"] ?? "Frequency (Hz)";
+  const hideNavToolbar: boolean = zarrGroup.attrs["hide_nav_toolbar"] ?? false;
   const style = useMemo(
     () => viewStyleFromAttr(zarrGroup.attrs["style"]),
     [zarrGroup],
@@ -255,6 +256,7 @@ const FPSpectrogramChild: React.FC<{
       }}
       yAxisInfo={yAxisInfo}
       style={style}
+      hideNavToolbar={hideNavToolbar}
       customToolbarActions={customToolbarActions}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}

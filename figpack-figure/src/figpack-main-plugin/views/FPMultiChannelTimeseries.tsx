@@ -88,6 +88,7 @@ const FPMultiChannelTimeseriesChild: React.FC<{
 
   const client = useMultiChannelTimeseriesClient(zarrGroup);
   const yLabel: string = zarrGroup.attrs["y_label"] ?? "Value";
+  const hideNavToolbar: boolean = zarrGroup.attrs["hide_nav_toolbar"] ?? false;
   const style = useMemo(
     () => viewStyleFromAttr(zarrGroup.attrs["style"]),
     [zarrGroup],
@@ -310,6 +311,7 @@ const FPMultiChannelTimeseriesChild: React.FC<{
       }}
       yAxisInfo={yAxisInfo}
       style={style}
+      hideNavToolbar={hideNavToolbar}
       customToolbarActions={customToolbarActions}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}
