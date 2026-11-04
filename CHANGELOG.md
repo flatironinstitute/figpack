@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.4.3] - 2026-11-04
 
 - Style keys for appearance: font sizes, font family, text, background, gridline, title bar and border colors, and colormaps. Every view has `set_style(**keys)` (unknown keys raise a ValueError), and a style cascades: each view's effective style is the style of the view containing it with its own keys merged over it, so a style on the root view styles the whole figure. Styles appear as `props.style` in the figure spec, and the spec reference gets a Style section listing the keys used by the figure's views, so remixes can change appearance. Used by TimeseriesGraph, MultiChannelTimeseries, Spectrogram, Box, VerticalLayout, TabLayout, Splitter, CaptionedView and Markdown; keys are listed in docs/styling_figures.md
 - TimeseriesGraph: `style=` argument; the axes margins grow to fit larger fonts; the legend widens to fit long series names and can be placed at `"southwest"` and `"southeast"`
