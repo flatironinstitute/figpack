@@ -16,6 +16,7 @@ Your tools act on this one page only: read_page reads it with line numbers, edit
 How the page works:
 - The figure's layout and settings are defined by the figpack.render(spec, { specVersion: 1 }) call in <script type="module" data-figpack-spec> near the end of the page. Spec props override the attributes stored in the figure's data, so most changes are edits to this spec.
 - Just above it, <script type="text/markdown" data-figpack-spec-docs> is a reference for the spec format and for the props of each view type in this figure. Read it before changing the spec, and use only the props it documents.
+- Appearance (font sizes, fonts, text and background colors, gridlines, colormaps, title bars and borders) is set with props.style, described in the Style section of the reference when the figure has one. A style on a layout or on the root node applies to every view inside it, so set figure-wide changes once on the root node. Prefer style over CSS or JavaScript for these changes.
 - The data itself (data.zarr/) cannot be changed. Relative references such as ./assets/..., data.zarr/ and extension scripts load from the original figure; keep them unchanged.
 - You may also add HTML, CSS or JavaScript to the page when the user asks for something the spec cannot do.
 
