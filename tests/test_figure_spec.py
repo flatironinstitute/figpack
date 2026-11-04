@@ -4,6 +4,8 @@ Tests for the figure spec written into index.html
 
 import json
 
+import pytest
+
 import zarr
 
 import figpack.views as vv
@@ -99,6 +101,24 @@ def test_style_in_spec_and_docs():
     assert "Style keys: tick_font_size." in docs
     # no style section when no view in the figure uses style keys
     assert "## Style" not in build_figure_spec_docs(_make_group(), SCHEMAS)
+
+
+def test_set_style_writes_style_attrs():
+    graph = vv.TimeseriesGraph(y_label="Signal", style={"label_font_size": 20})
+    box = vv.Box(items=[vv.LayoutItem(graph, title="g")])
+    assert box.set_style(tick_font_size=14) is box
+    box.set_style(label_font_size=16)
+    root = zarr.group()
+    box.write_to_zarr_group(Group(root))
+    assert root.attrs["style"] == {"tick_font_size": 14, "label_font_size": 16}
+    # the graph keeps only its own keys; the frontend merges the cascade
+    assert root["item_0"].attrs["style"] == {"label_font_size": 20}
+    # views without a style write no style attr
+    root2 = zarr.group()
+    vv.Box(items=[]).write_to_zarr_group(Group(root2))
+    assert "style" not in root2.attrs
+    with pytest.raises(ValueError, match="Unknown style keys: font_szie"):
+        box.set_style(font_szie=12)
 
 
 def test_builtin_view_schemas_are_registered():
