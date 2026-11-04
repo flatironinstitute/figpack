@@ -35,7 +35,7 @@ class TimeseriesGraph(FigpackView):
             ),
             SpecProp(
                 "legend_opts",
-                '{location?: "northwest" | "northeast", hideLegend?: boolean}',
+                '{location?: "northwest" | "northeast" | "southwest" | "southeast", hideLegend?: boolean}',
                 "Legend placement; no legend is drawn unless location is set.",
             ),
             SpecProp(

@@ -242,7 +242,7 @@ export const createDraw = ({
     context.restore();
 
     // Paint legend after restoring canvas state (so it's not clipped)
-    paintLegend(context, client, { margins, canvasWidth });
+    paintLegend(context, client, { margins, canvasWidth, canvasHeight });
 
     return {
       yRange: {

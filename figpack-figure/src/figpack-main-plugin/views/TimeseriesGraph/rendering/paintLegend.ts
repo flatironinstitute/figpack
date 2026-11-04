@@ -7,6 +7,7 @@ export const paintLegend = (
   options: {
     margins: { left: number; top: number; right: number; bottom: number };
     canvasWidth: number;
+    canvasHeight: number;
   },
 ) => {
   if (!client) return;
@@ -79,22 +80,21 @@ export const paintLegend = (
   );
   const legendHeight = 20 + legendEntries.length * entryHeight;
 
-  const R =
-    location === "northwest"
-      ? {
-          x: options.margins.left + 20,
-          y: options.margins.top + 20,
-          w: legendWidth,
-          h: legendHeight,
-        }
-      : location === "northeast"
-        ? {
-            x: options.canvasWidth - options.margins.right - legendWidth - 20,
-            y: options.margins.top + 20,
-            w: legendWidth,
-            h: legendHeight,
-          }
-        : undefined;
+  const west = options.margins.left + 20;
+  const east = options.canvasWidth - options.margins.right - legendWidth - 20;
+  const north = options.margins.top + 20;
+  const south =
+    options.canvasHeight - options.margins.bottom - legendHeight - 20;
+  const corners: { [loc: string]: { x: number; y: number } } = {
+    northwest: { x: west, y: north },
+    northeast: { x: east, y: north },
+    southwest: { x: west, y: south },
+    southeast: { x: east, y: south },
+  };
+  const corner = location ? corners[location] : undefined;
+  const R = corner
+    ? { x: corner.x, y: corner.y, w: legendWidth, h: legendHeight }
+    : undefined;
 
   if (!R) return; // unexpected
 
