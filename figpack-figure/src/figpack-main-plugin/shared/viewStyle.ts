@@ -16,6 +16,7 @@ export type ViewStyle = {
   titleColor?: string;
   titleBackgroundColor?: string;
   colormap?: string;
+  borderColor?: string;
 };
 
 export const defaultLabelFontSize = 13;
@@ -43,11 +44,15 @@ export const viewStyleFromAttr = (attr: any): ViewStyle => {
     titleColor: nonEmptyString(attr["title_color"]),
     titleBackgroundColor: nonEmptyString(attr["title_background_color"]),
     colormap: nonEmptyString(attr["colormap"]),
+    borderColor: nonEmptyString(attr["border_color"]),
   };
 };
 
 // A canvas font string; defaultFamily is the view's own family when the
 // style sets none
+export const viewStyleFromGroup = (zarrGroup: { attrs: any }): ViewStyle =>
+  viewStyleFromAttr(zarrGroup.attrs["style"]);
+
 export const canvasFont = (
   size: number,
   style: ViewStyle | undefined,

@@ -146,7 +146,7 @@ export const FPBox: React.FC<{
         if (showTitles && item.title) {
           context.fillStyle = tb.background;
           context.fillRect(0, 0, layout.width, layout.titleHeight);
-          context.strokeStyle = "#ddd";
+          context.strokeStyle = tb.border;
           context.lineWidth = 1;
           context.strokeRect(0, 0, layout.width, layout.titleHeight);
 
@@ -207,7 +207,7 @@ export const FPBox: React.FC<{
             right: 0,
             height: boxTitleHeight,
             backgroundColor: tb.background,
-            borderBottom: "1px solid #ddd",
+            borderBottom: `1px solid ${tb.border}`,
             display: "flex",
             alignItems: "center",
             paddingLeft: 8,
@@ -234,7 +234,7 @@ export const FPBox: React.FC<{
               top: layout.y + boxTitleHeight,
               width: layout.width,
               height: layout.height,
-              border: "1px solid #ddd",
+              border: `1px solid ${tb.border}`,
               boxSizing: "border-box",
             }}
           >
@@ -247,7 +247,7 @@ export const FPBox: React.FC<{
                   right: 0,
                   height: layout.titleHeight,
                   backgroundColor: tb.background,
-                  borderBottom: "1px solid #ddd",
+                  borderBottom: `1px solid ${tb.border}`,
                   display: "flex",
                   alignItems: "center",
                   paddingLeft: 8,

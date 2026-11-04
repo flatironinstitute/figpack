@@ -23,6 +23,7 @@ class CaptionedView(FigpackView):
             SpecProp("font_size", "number", "Caption font size in pixels."),
         ],
         children="views",
+        style_keys=["font_family", "text_color", "background_color", "border_color"],
         children_description="the child view child_view.",
     )
 

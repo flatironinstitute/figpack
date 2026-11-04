@@ -58,12 +58,12 @@ STYLE_KEYS: Dict[str, SpecProp] = {
         SpecProp(
             "text_color",
             "string (CSS color)",
-            "Color of axis labels, major tick labels and legend text.",
+            "Main text color: axis labels, major tick labels, legend text, captions and markdown text.",
         ),
         SpecProp(
             "background_color",
             "string (CSS color)",
-            "Background color of the plot area (and legend).",
+            "Background color of plot areas (and legends), captions, markdown and the active tab.",
         ),
         SpecProp(
             "gridline_color",
@@ -78,20 +78,27 @@ STYLE_KEYS: Dict[str, SpecProp] = {
         SpecProp(
             "title_font_size",
             "number",
-            "Font size in pixels of layout item titles; the layout's own title is 2 px larger. Title bars grow to fit.",
+            "Font size in pixels of layout item titles and tabs (defaults 12 and 14); a layout's own title is 2 px larger. Title bars and tab bars grow to fit.",
         ),
         SpecProp(
-            "title_color", "string (CSS color)", "Text color of layout title bars."
+            "title_color",
+            "string (CSS color)",
+            "Text color of layout title bars and tabs.",
         ),
         SpecProp(
             "title_background_color",
             "string (CSS color)",
-            "Background color of layout title bars.",
+            "Background color of layout title bars and tab bars.",
         ),
         SpecProp(
             "colormap",
             '"viridis" | "plasma" | "inferno" | "magma" | "gray"',
             'Colormap of heatmaps; add "_r" to reverse it (e.g. "gray_r").',
+        ),
+        SpecProp(
+            "border_color",
+            "string (CSS color)",
+            "Color of layout borders, splitter bars and caption borders.",
         ),
     ]
 }

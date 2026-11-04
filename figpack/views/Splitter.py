@@ -41,6 +41,7 @@ class Splitter(FigpackView):
             ),
         ],
         children="views",
+        style_keys=["border_color"],
         children_description="child views item1 and item2.",
     )
 

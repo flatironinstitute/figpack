@@ -5,6 +5,7 @@ Markdown view for figpack - displays markdown content
 from typing import Optional
 import numpy as np
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 
@@ -13,6 +14,13 @@ class Markdown(FigpackView):
     """
     A markdown content visualization component
     """
+
+    spec_schema = SpecSchema(
+        view_type="Markdown",
+        description="Markdown text (the text is stored in data.zarr).",
+        props=[SpecProp("font_size", "number", "Font size in pixels.")],
+        style_keys=["font_family", "text_color", "background_color"],
+    )
 
     def __init__(self, content: str, *, font_size: Optional[int] = None):
         """

@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
 import FPViewWrapper from "../FPViewWrapper";
+import { viewStyleFromGroup } from "../shared/viewStyle";
 
 interface TabLayoutItemData {
   name: string;
   label: string;
 }
-
-const TAB_HEIGHT = 40;
 
 export const FPTabLayout: React.FC<{
   zarrGroup: ZarrGroup;
@@ -24,6 +23,14 @@ export const FPTabLayout: React.FC<{
   renderFPView,
   eachItemGetsTimeseriesSelectionContext,
 }) => {
+  // Tabs follow the title keys of the style; the active tab takes the
+  // background color, so that it joins the content below it
+  const style = useMemo(() => viewStyleFromGroup(zarrGroup), [zarrGroup]);
+  const tabFontSize = style.titleFontSize ?? 14;
+  const tabHeight = Math.max(40, Math.round(tabFontSize * 2.8));
+  const borderColor = style.borderColor ?? "#ddd";
+  const activeTabBackground = style.backgroundColor ?? "#fff";
+
   // initial_tab_index is what older versions of the Python TabLayout wrote
   const initialItemIndex =
     zarrGroup.attrs["initial_item_index"] ??
@@ -42,7 +49,7 @@ export const FPTabLayout: React.FC<{
     Math.min(activeItemIndex, itemsMetadata.length - 1),
   );
 
-  const contentHeight = height - TAB_HEIGHT;
+  const contentHeight = height - tabHeight;
 
   const itemNamesThatHaveBeenVisible = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -75,7 +82,7 @@ export const FPTabLayout: React.FC<{
         width,
         height,
         overflow: "hidden",
-        border: "1px solid #ddd",
+        border: `1px solid ${borderColor}`,
         boxSizing: "border-box",
       }}
     >
@@ -85,9 +92,9 @@ export const FPTabLayout: React.FC<{
           top: 0,
           left: 0,
           right: 0,
-          height: TAB_HEIGHT,
-          backgroundColor: "#f8f9fa",
-          borderBottom: "1px solid #ddd",
+          height: tabHeight,
+          backgroundColor: style.titleBackgroundColor ?? "#f8f9fa",
+          borderBottom: `1px solid ${borderColor}`,
           display: "flex",
           alignItems: "stretch",
         }}
@@ -99,16 +106,23 @@ export const FPTabLayout: React.FC<{
               padding: "8px 16px",
               cursor: "pointer",
               backgroundColor:
-                index === validActiveItemIndex ? "#fff" : "transparent",
-              borderRight: "1px solid #ddd",
+                index === validActiveItemIndex
+                  ? activeTabBackground
+                  : "transparent",
+              borderRight: `1px solid ${borderColor}`,
               borderBottom:
-                index === validActiveItemIndex ? "1px solid #fff" : "none",
+                index === validActiveItemIndex
+                  ? `1px solid ${activeTabBackground}`
+                  : "none",
               marginBottom: index === validActiveItemIndex ? "-1px" : "0",
               display: "flex",
               alignItems: "center",
-              fontSize: "14px",
+              fontSize: tabFontSize,
+              fontFamily: style.fontFamily,
               fontWeight: index === validActiveItemIndex ? "600" : "400",
-              color: index === validActiveItemIndex ? "#333" : "#666",
+              color:
+                style.titleColor ??
+                (index === validActiveItemIndex ? "#333" : "#666"),
               transition: "all 0.2s ease",
               zIndex: index === validActiveItemIndex ? 1 : 0,
             }}
@@ -134,7 +148,7 @@ export const FPTabLayout: React.FC<{
           key={item.name}
           style={{
             position: "absolute",
-            top: TAB_HEIGHT,
+            top: tabHeight,
             left: 0,
             right: 0,
             bottom: 0,

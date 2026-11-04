@@ -40,6 +40,7 @@ class Box(FigpackView):
             "title_color",
             "title_background_color",
             "font_family",
+            "border_color",
         ],
         children_description="child views, named by items[].name.",
     )

@@ -145,7 +145,7 @@ export const FPVerticalLayout: React.FC<{
         if (showTitles && item.title) {
           context.fillStyle = tb.background;
           context.fillRect(0, 0, exportWidth, pos.titleHeight);
-          context.strokeStyle = "#ddd";
+          context.strokeStyle = tb.border;
           context.lineWidth = 1;
           context.strokeRect(0, 0, exportWidth, pos.titleHeight);
 
@@ -194,7 +194,7 @@ export const FPVerticalLayout: React.FC<{
             right: 0,
             height: layoutTitleHeight,
             backgroundColor: tb.background,
-            borderBottom: "1px solid #ddd",
+            borderBottom: `1px solid ${tb.border}`,
             display: "flex",
             alignItems: "center",
             paddingLeft: 8,
@@ -244,7 +244,7 @@ export const FPVerticalLayout: React.FC<{
                   top: pos.y,
                   width: "100%",
                   height: pos.height,
-                  border: "1px solid #ddd",
+                  border: `1px solid ${tb.border}`,
                   boxSizing: "border-box",
                 }}
               >
@@ -257,7 +257,7 @@ export const FPVerticalLayout: React.FC<{
                       right: 0,
                       height: pos.titleHeight,
                       backgroundColor: tb.background,
-                      borderBottom: "1px solid #ddd",
+                      borderBottom: `1px solid ${tb.border}`,
                       display: "flex",
                       alignItems: "center",
                       paddingLeft: 8,
