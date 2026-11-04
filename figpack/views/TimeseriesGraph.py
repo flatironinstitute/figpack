@@ -57,7 +57,13 @@ class TimeseriesGraph(FigpackView):
         ],
         children="groups",
         children_description="series, named as in series_names.",
-        style_keys=["label_font_size", "tick_font_size"],
+        style_keys=[
+            "label_font_size",
+            "tick_font_size",
+            "legend_font_size",
+            "font_family",
+            "text_color",
+        ],
         child_props=[
             SpecProp(
                 "color",

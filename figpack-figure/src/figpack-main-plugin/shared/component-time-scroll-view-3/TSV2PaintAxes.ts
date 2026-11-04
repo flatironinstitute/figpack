@@ -1,7 +1,12 @@
 import { TickSet } from "./YAxisTicks";
 import { TimeTick } from "./timeTicks";
 import { TSV2AxesLayerProps } from "./TSV2AxesLayer";
-import { defaultLabelFontSize, defaultTickFontSize } from "../viewStyle";
+import {
+  canvasFont,
+  defaultLabelFontSize,
+  defaultTickFontSize,
+  ViewStyle,
+} from "../viewStyle";
 
 export const paintAxes = (
   context: CanvasRenderingContext2D,
@@ -9,8 +14,7 @@ export const paintAxes = (
 ) => {
   const { width, height, margins, timeTicks, gridlineOpts, yTickSet, yLabel } =
     props;
-  const tickFontSize = props.style?.tickFontSize ?? defaultTickFontSize;
-  const labelFontSize = props.style?.labelFontSize ?? defaultLabelFontSize;
+  const { style } = props;
   context.clearRect(0, 0, width, height);
 
   const xAxisVerticalPosition = height - margins.bottom;
@@ -23,7 +27,7 @@ export const paintAxes = (
       hideGridlines: gridlineOpts?.hideX,
     },
     props.hideTimeAxisLabels,
-    tickFontSize,
+    style,
   );
   context.strokeStyle = "lightgray";
   drawLine(
@@ -43,7 +47,7 @@ export const paintAxes = (
       width - margins.right,
       margins.top,
       { hideGridlines: gridlineOpts?.hideY },
-      tickFontSize,
+      style,
     );
 
   if (yLabel)
@@ -54,7 +58,7 @@ export const paintAxes = (
       margins.bottom,
       margins.top,
       height,
-      labelFontSize,
+      style,
     );
 };
 
@@ -65,7 +69,7 @@ const paintTimeTicks = (
   plotTopPixelHeight: number,
   o: { hideGridlines?: boolean },
   hideTimeAxisLabels?: boolean,
-  fontSize?: number,
+  style?: ViewStyle,
 ) => {
   const hideTimeAxis = hideTimeAxisLabels || false;
   if (!timeTicks || timeTicks.length === 0) return;
@@ -74,7 +78,7 @@ const paintTimeTicks = (
   const gridlineBottomEdge = xAxisPixelHeight + (hideTimeAxis ? 0 : +5);
   context.textAlign = "center";
   context.textBaseline = "top";
-  context.font = `${fontSize ?? defaultTickFontSize}px sans-serif`;
+  context.font = canvasFont(style?.tickFontSize ?? defaultTickFontSize, style);
   timeTicks.forEach((tick) => {
     context.strokeStyle = tick.major ? "gray" : "lightgray";
     const topPixel = !o.hideGridlines ? plotTopPixelHeight : xAxisPixelHeight;
@@ -86,7 +90,7 @@ const paintTimeTicks = (
       topPixel,
     );
     if (!hideTimeAxis) {
-      context.fillStyle = tick.major ? "black" : "gray";
+      context.fillStyle = tick.major ? (style?.textColor ?? "black") : "gray";
       context.fillText(
         tick.label,
         tick.xPixelPosition,
@@ -104,7 +108,7 @@ const paintYTicks = (
   plotRightPx: number,
   _topMargin: number,
   o: { hideGridlines?: boolean },
-  fontSize?: number,
+  style?: ViewStyle,
 ) => {
   const labelOffsetFromGridline = 2;
   const gridlineLeftEdge = yAxisXCoordinate - 5;
@@ -112,7 +116,7 @@ const paintYTicks = (
   const { ticks } = tickSet;
   context.fillStyle = "black";
   context.textAlign = "right";
-  context.font = `${fontSize ?? defaultTickFontSize}px sans-serif`;
+  context.font = canvasFont(style?.tickFontSize ?? defaultTickFontSize, style);
 
   context.textBaseline = "middle";
   ticks.forEach((tick) => {
@@ -123,7 +127,7 @@ const paintYTicks = (
     const pixelValueWithMargin = tick.pixelValue;
 
     context.strokeStyle = tick.isMajor ? "gray" : "lightgray";
-    context.fillStyle = tick.isMajor ? "black" : "gray";
+    context.fillStyle = tick.isMajor ? (style?.textColor ?? "black") : "gray";
     const rightPixel = !o.hideGridlines ? plotRightPx : yAxisXCoordinate;
     drawLine(
       context,
@@ -143,8 +147,9 @@ const paintYLabel = (
   bottomMargin: number,
   topMargin: number,
   canvasHeight: number,
-  fontSize: number,
+  style?: ViewStyle,
 ) => {
+  const fontSize = style?.labelFontSize ?? defaultLabelFontSize;
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.save();
@@ -153,8 +158,8 @@ const paintYLabel = (
     8.5 + fontSize / 2,
     (canvasHeight - bottomMargin - topMargin) / 2 + topMargin,
   );
-  context.fillStyle = "black";
-  context.font = `${fontSize}px sans-serif`;
+  context.fillStyle = style?.textColor ?? "black";
+  context.font = canvasFont(fontSize, style);
 
   context.rotate(-Math.PI / 2);
   context.fillText(label, 0, 0);

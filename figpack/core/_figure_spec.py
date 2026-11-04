@@ -49,6 +49,17 @@ STYLE_KEYS: Dict[str, SpecProp] = {
     for p in [
         SpecProp("label_font_size", "number", "Axis label font size in pixels."),
         SpecProp("tick_font_size", "number", "Tick label font size in pixels."),
+        SpecProp("legend_font_size", "number", "Legend text font size in pixels."),
+        SpecProp(
+            "font_family",
+            "string",
+            'CSS font family of all text, e.g. "serif" or "Georgia, serif".',
+        ),
+        SpecProp(
+            "text_color",
+            "string (CSS color)",
+            "Color of axis labels, major tick labels and legend text.",
+        ),
     ]
 }
 

@@ -1,4 +1,5 @@
 import { TimeseriesGraphClient } from "../TimeseriesGraphClient";
+import { canvasFont, defaultLegendFontSize } from "../../../shared/viewStyle";
 
 export const paintLegend = (
   context: CanvasRenderingContext2D,
@@ -61,11 +62,21 @@ export const paintLegend = (
   if (legendEntries.length === 0) return;
 
   const { location } = client.legendOpts;
-  const entryHeight = 18;
-  const entryFontSize = 12;
+  const { style } = client;
+  const entryFontSize = style.legendFontSize ?? defaultLegendFontSize;
+  const font = canvasFont(entryFontSize, style, "Arial");
+  const entryHeight = Math.max(18, entryFontSize * 1.5);
   const symbolWidth = 50;
-  const legendWidth = 200;
   const margin = 10;
+  // At least 200 px wide, wider if needed to fit the longest name
+  context.font = font;
+  const maxNameWidth = Math.max(
+    ...legendEntries.map((e) => context.measureText(e.name).width),
+  );
+  const legendWidth = Math.max(
+    200,
+    Math.ceil(margin + symbolWidth + margin + maxNameWidth + margin),
+  );
   const legendHeight = 20 + legendEntries.length * entryHeight;
 
   const R =
@@ -103,19 +114,20 @@ export const paintLegend = (
     };
     const titleRect = {
       x: R.x + margin + symbolWidth + margin,
-      y: y0 - 3, // the -3 is just a tweak
+      y: y0,
       w: legendWidth - margin - margin - symbolWidth - margin,
       h: entryHeight,
     };
 
-    context.fillStyle = "black";
-    context.font = `${entryFontSize}px Arial`;
+    context.fillStyle = style.textColor ?? "black";
+    context.font = font;
     context.textAlign = "left";
     context.textBaseline = "middle";
     context.fillText(
       entry.name,
       titleRect.x,
-      titleRect.y + titleRect.h / 2 + entryFontSize / 2,
+      // 3 px below the symbol's center at the default size
+      y0 + entryHeight / 2 + entryFontSize / 4,
     );
 
     if (entry.seriesType === "line") {
