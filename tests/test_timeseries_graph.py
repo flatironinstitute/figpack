@@ -243,6 +243,7 @@ def test_zarr_storage():
         y_label="Value",
         hide_nav_toolbar=True,
         hide_time_axis_labels=True,
+        style={"label_font_size": 16},
     )
 
     # Add different types of series
@@ -271,6 +272,7 @@ def test_zarr_storage():
     assert group.attrs["y_label"] == "Value"
     assert group.attrs["hide_nav_toolbar"] is True
     assert group.attrs["hide_time_axis_labels"] is True
+    assert group.attrs["style"] == {"label_font_size": 16}
     assert set(group.attrs["series_names"]) == {"line", "markers", "intervals"}
 
     # Verify line series

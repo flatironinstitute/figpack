@@ -57,6 +57,7 @@ class TimeseriesGraph(FigpackView):
         ],
         children="groups",
         children_description="series, named as in series_names.",
+        style_keys=["label_font_size", "tick_font_size"],
         child_props=[
             SpecProp(
                 "color",
@@ -100,6 +101,7 @@ class TimeseriesGraph(FigpackView):
         hide_time_axis_labels: bool = False,
         y_label: str = "",
         allow_annotation: bool = False,
+        style: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Initialize a TimeseriesGraph
@@ -113,6 +115,7 @@ class TimeseriesGraph(FigpackView):
             hide_time_axis_labels: Whether to hide time axis labels
             y_label: Label for the y-axis
             allow_annotation: Whether the viewer can mark time points and intervals and export them as CSV
+            style: Appearance settings, e.g. {"label_font_size": 16, "tick_font_size": 12}
         """
         self.legend_opts = legend_opts or {}
         self.y_range = y_range
@@ -122,6 +125,7 @@ class TimeseriesGraph(FigpackView):
         self.hide_time_axis_labels = hide_time_axis_labels
         self.y_label = y_label
         self.allow_annotation = allow_annotation
+        self.style = style or {}
 
         # Internal storage for series data
         self._series = []
@@ -310,6 +314,7 @@ class TimeseriesGraph(FigpackView):
         group.attrs["hide_time_axis_labels"] = self.hide_time_axis_labels
         group.attrs["y_label"] = self.y_label
         group.attrs["allow_annotation"] = self.allow_annotation
+        group.attrs["style"] = self.style
 
         # series names
         group.attrs["series_names"] = [series.name for series in self._series]

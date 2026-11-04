@@ -76,6 +76,31 @@ def test_build_figure_spec_docs():
     assert "without documented props" in docs and "Undocumented" in docs
 
 
+def test_style_in_spec_and_docs():
+    schemas = {
+        **SCHEMAS,
+        "Graph": SpecSchema(
+            view_type="Graph",
+            description="A graph.",
+            style_keys=["tick_font_size"],
+        ),
+    }
+    root = _make_group()
+    root.attrs["style"] = {"tick_font_size": 14}
+    root["item_0"].attrs["style"] = {}
+    spec = build_figure_spec(root, schemas)
+    # any view may carry a style, even one whose schema uses no style keys
+    assert spec["props"]["style"] == {"tick_font_size": 14}
+    assert "item_0" not in spec.get("children", {})
+    docs = build_figure_spec_docs(root, schemas)
+    assert "## Style" in docs
+    assert "- tick_font_size (number): " in docs and "Used by: Graph." in docs
+    assert "label_font_size" not in docs
+    assert "Style keys: tick_font_size." in docs
+    # no style section when no view in the figure uses style keys
+    assert "## Style" not in build_figure_spec_docs(_make_group(), SCHEMAS)
+
+
 def test_builtin_view_schemas_are_registered():
     schemas = get_spec_schemas()
     for vt in ["Box", "Splitter", "TabLayout", "TimeseriesGraph"]:

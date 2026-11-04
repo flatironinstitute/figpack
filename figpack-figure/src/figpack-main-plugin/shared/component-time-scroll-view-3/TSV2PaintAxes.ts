@@ -1,6 +1,7 @@
 import { TickSet } from "./YAxisTicks";
 import { TimeTick } from "./timeTicks";
 import { TSV2AxesLayerProps } from "./TSV2AxesLayer";
+import { defaultLabelFontSize, defaultTickFontSize } from "../viewStyle";
 
 export const paintAxes = (
   context: CanvasRenderingContext2D,
@@ -8,6 +9,8 @@ export const paintAxes = (
 ) => {
   const { width, height, margins, timeTicks, gridlineOpts, yTickSet, yLabel } =
     props;
+  const tickFontSize = props.style?.tickFontSize ?? defaultTickFontSize;
+  const labelFontSize = props.style?.labelFontSize ?? defaultLabelFontSize;
   context.clearRect(0, 0, width, height);
 
   const xAxisVerticalPosition = height - margins.bottom;
@@ -20,6 +23,7 @@ export const paintAxes = (
       hideGridlines: gridlineOpts?.hideX,
     },
     props.hideTimeAxisLabels,
+    tickFontSize,
   );
   context.strokeStyle = "lightgray";
   drawLine(
@@ -39,6 +43,7 @@ export const paintAxes = (
       width - margins.right,
       margins.top,
       { hideGridlines: gridlineOpts?.hideY },
+      tickFontSize,
     );
 
   if (yLabel)
@@ -49,6 +54,7 @@ export const paintAxes = (
       margins.bottom,
       margins.top,
       height,
+      labelFontSize,
     );
 };
 
@@ -59,6 +65,7 @@ const paintTimeTicks = (
   plotTopPixelHeight: number,
   o: { hideGridlines?: boolean },
   hideTimeAxisLabels?: boolean,
+  fontSize?: number,
 ) => {
   const hideTimeAxis = hideTimeAxisLabels || false;
   if (!timeTicks || timeTicks.length === 0) return;
@@ -67,6 +74,7 @@ const paintTimeTicks = (
   const gridlineBottomEdge = xAxisPixelHeight + (hideTimeAxis ? 0 : +5);
   context.textAlign = "center";
   context.textBaseline = "top";
+  context.font = `${fontSize ?? defaultTickFontSize}px sans-serif`;
   timeTicks.forEach((tick) => {
     context.strokeStyle = tick.major ? "gray" : "lightgray";
     const topPixel = !o.hideGridlines ? plotTopPixelHeight : xAxisPixelHeight;
@@ -96,6 +104,7 @@ const paintYTicks = (
   plotRightPx: number,
   _topMargin: number,
   o: { hideGridlines?: boolean },
+  fontSize?: number,
 ) => {
   const labelOffsetFromGridline = 2;
   const gridlineLeftEdge = yAxisXCoordinate - 5;
@@ -103,6 +112,7 @@ const paintYTicks = (
   const { ticks } = tickSet;
   context.fillStyle = "black";
   context.textAlign = "right";
+  context.font = `${fontSize ?? defaultTickFontSize}px sans-serif`;
 
   context.textBaseline = "middle";
   ticks.forEach((tick) => {
@@ -133,16 +143,18 @@ const paintYLabel = (
   bottomMargin: number,
   topMargin: number,
   canvasHeight: number,
+  fontSize: number,
 ) => {
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.save();
+  // centered 15 px from the left edge at the default font size
   context.translate(
-    15,
+    8.5 + fontSize / 2,
     (canvasHeight - bottomMargin - topMargin) / 2 + topMargin,
   );
   context.fillStyle = "black";
-  context.font = "13px sans-serif";
+  context.font = `${fontSize}px sans-serif`;
 
   context.rotate(-Math.PI / 2);
   context.fillText(label, 0, 0);

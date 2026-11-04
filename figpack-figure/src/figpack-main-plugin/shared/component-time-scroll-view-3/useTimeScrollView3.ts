@@ -1,5 +1,10 @@
 import { useMemo } from "react";
 import { CustomToolbarAction } from "./TimeScrollToolbar";
+import {
+  defaultLabelFontSize,
+  defaultTickFontSize,
+  ViewStyle,
+} from "../viewStyle";
 
 export const useTimeScrollView3 = ({
   width,
@@ -8,6 +13,7 @@ export const useTimeScrollView3 = ({
   customToolbarActions,
   hideTimeAxisLabels,
   hideNavToolbar,
+  style,
 }: {
   width: number;
   height: number;
@@ -15,18 +21,29 @@ export const useTimeScrollView3 = ({
   customToolbarActions?: CustomToolbarAction[];
   hideTimeAxisLabels?: boolean;
   hideNavToolbar?: boolean;
+  style?: ViewStyle;
 }) => {
   const hasCustomActions =
     customToolbarActions && customToolbarActions.length > 0;
-  const margins = useMemo(
-    () => ({
-      left: leftMargin || 60,
+  const labelFontSize = style?.labelFontSize ?? defaultLabelFontSize;
+  const tickFontSize = style?.tickFontSize ?? defaultTickFontSize;
+  const margins = useMemo(() => {
+    // Grow the margins with the fonts; tick label widths scale with the
+    // tick font size (about 38 px of tick labels fit at the default)
+    const extraLeft =
+      labelFontSize -
+      defaultLabelFontSize +
+      3.8 * (tickFontSize - defaultTickFontSize);
+    const extraBottom = tickFontSize - defaultTickFontSize;
+    return {
+      left: leftMargin || Math.round(60 + Math.max(0, extraLeft)),
       right: 20,
       top: 10,
-      bottom: hideTimeAxisLabels ? 10 : 30,
-    }),
-    [leftMargin, hideTimeAxisLabels],
-  );
+      bottom: hideTimeAxisLabels
+        ? 10
+        : Math.round(30 + Math.max(0, extraBottom)),
+    };
+  }, [leftMargin, hideTimeAxisLabels, labelFontSize, tickFontSize]);
   // Calculate bottom toolbar height: 40px for main toolbar + 40px for custom actions (if present)
   let bottomToolbarHeight = 0;
   if (!hideNavToolbar) {

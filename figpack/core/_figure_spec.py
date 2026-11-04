@@ -40,6 +40,19 @@ class SpecProp:
     description: str
 
 
+# Style keys shared by all views. A view's `style` attr holds any of them, and
+# it cascades: each view's effective style is its parent view's with its own
+# keys merged over it (figpack-figure/src/inheritedStyle.ts). A view ignores
+# the keys it does not use and lists the ones it uses in SpecSchema.style_keys.
+STYLE_KEYS: Dict[str, SpecProp] = {
+    p.name: p
+    for p in [
+        SpecProp("label_font_size", "number", "Axis label font size in pixels."),
+        SpecProp("tick_font_size", "number", "Tick label font size in pixels."),
+    ]
+}
+
+
 @dataclass
 class SpecSchema:
     """
@@ -50,6 +63,7 @@ class SpecSchema:
         "views": child groups are views (e.g. layouts); each uses its own schema
         "groups": child groups are configurable parts of this view (e.g. the
             series of a TimeseriesGraph), with props given by child_props
+    style_keys: the keys of STYLE_KEYS that the view uses
     """
 
     view_type: str
@@ -58,6 +72,7 @@ class SpecSchema:
     children: Literal["none", "views", "groups"] = "none"
     children_description: str = ""
     child_props: List[SpecProp] = field(default_factory=list)
+    style_keys: List[str] = field(default_factory=list)
 
 
 def get_spec_schemas() -> Dict[str, SpecSchema]:
@@ -113,6 +128,9 @@ def _build_view_node(group, schemas: Dict[str, SpecSchema]) -> Dict[str, Any]:
         return {}
     node: Dict[str, Any] = {}
     props = _select_props(group.attrs, schema.props)
+    # Any view may set a style, since it cascades to the views inside it
+    if group.attrs.get("style"):
+        props["style"] = group.attrs["style"]
     if props:
         node["props"] = props
     children = {}
@@ -175,6 +193,23 @@ def build_figure_spec_docs(
     ]
     view_types = _collect_view_types(zarr_group)
     documented = [vt for vt in view_types if vt in schemas]
+    style_users = {
+        key: [vt for vt in documented if key in schemas[vt].style_keys]
+        for key in STYLE_KEYS
+    }
+    if any(style_users.values()):
+        lines += [
+            "",
+            "## Style",
+            "",
+            "Any view node may set props.style to an object of the style keys below. It applies to that view and to every view inside it: styles merge key by key from the root down, and inner values win. Set it on the root node to style the whole figure. Views ignore keys they do not use.",
+            "Style keys:",
+        ]
+        lines += [
+            f"- {p.name} ({p.type}): {p.description} Used by: {', '.join(style_users[key])}."
+            for key, p in STYLE_KEYS.items()
+            if style_users[key]
+        ]
     for vt in documented:
         schema = schemas[vt]
         lines += ["", f"## {vt}", "", schema.description]
@@ -183,6 +218,8 @@ def build_figure_spec_docs(
             lines += [f"- {p.name} ({p.type}): {p.description}" for p in schema.props]
         else:
             lines.append("No configurable props.")
+        if schema.style_keys:
+            lines.append(f"Style keys: {', '.join(schema.style_keys)}.")
         if schema.children_description:
             lines.append(f"Children: {schema.children_description}")
         if schema.child_props:

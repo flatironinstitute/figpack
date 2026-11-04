@@ -29,6 +29,7 @@ import { useTimeScrollView3 } from "./useTimeScrollView3";
 import useYAxisTicks, { computeYAxisTicks, TickSet } from "./YAxisTicks";
 import { DrawForExportFunction } from "../../figpack-interface";
 import { paintAxes } from "./TSV2PaintAxes";
+import { ViewStyle } from "../viewStyle";
 
 type Props = {
   width: number;
@@ -77,6 +78,7 @@ type Props = {
   // tolerance is a few pixels expressed in seconds, for hitting an annotation
   onAnnotateClick?: (t: number, tolerance: number) => void;
   onAnnotateDoubleClick?: (t: number, tolerance: number) => void;
+  style?: ViewStyle;
 };
 
 const TimeScrollView3: FunctionComponent<Props> = ({
@@ -105,6 +107,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
   onAnnotateInterval,
   onAnnotateClick,
   onAnnotateDoubleClick,
+  style,
 }) => {
   const {
     visibleStartTimeSec,
@@ -126,6 +129,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     leftMargin,
     customToolbarActions,
     hideNavToolbar,
+    style,
   });
 
   const timeToPixel = useMemo(() => {
@@ -210,6 +214,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         yLabel={yAxisInfo?.yLabel}
         gridlineOpts={gridlineOpts}
         hideTimeAxisLabels={hideTimeAxisLabels}
+        style={style}
       />
     );
   }, [
@@ -223,6 +228,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     yAxisInfo?.yLabel,
     yTickSet,
     hideTimeAxisLabels,
+    style,
   ]);
 
   const currentTimePixels = useMemo(
@@ -463,6 +469,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
         width: opts.width,
         height: opts.height,
         hideTimeAxisLabels,
+        style,
       });
 
       // draw content
@@ -487,6 +494,7 @@ const TimeScrollView3: FunctionComponent<Props> = ({
     yAxisInfo,
     hideTimeAxisLabels,
     yToPixel,
+    style,
   ]);
 
   const content = useMemo(() => {
