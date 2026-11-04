@@ -9,6 +9,9 @@ export type ViewStyle = {
   legendFontSize?: number;
   fontFamily?: string;
   textColor?: string;
+  backgroundColor?: string;
+  gridlineColor?: string;
+  minorGridlineColor?: string;
 };
 
 export const defaultLabelFontSize = 13;
@@ -29,6 +32,9 @@ export const viewStyleFromAttr = (attr: any): ViewStyle => {
     legendFontSize: positiveNumber(attr["legend_font_size"]),
     fontFamily: nonEmptyString(attr["font_family"]),
     textColor: nonEmptyString(attr["text_color"]),
+    backgroundColor: nonEmptyString(attr["background_color"]),
+    gridlineColor: nonEmptyString(attr["gridline_color"]),
+    minorGridlineColor: nonEmptyString(attr["minor_gridline_color"]),
   };
 };
 

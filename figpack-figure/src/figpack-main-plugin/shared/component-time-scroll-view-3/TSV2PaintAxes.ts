@@ -16,6 +16,11 @@ export const paintAxes = (
     props;
   const { style } = props;
   context.clearRect(0, 0, width, height);
+  // This is the bottom layer, so its background shows behind the content
+  if (style?.backgroundColor) {
+    context.fillStyle = style.backgroundColor;
+    context.fillRect(0, 0, width, height);
+  }
 
   const xAxisVerticalPosition = height - margins.bottom;
   paintTimeTicks(
@@ -29,7 +34,7 @@ export const paintAxes = (
     props.hideTimeAxisLabels,
     style,
   );
-  context.strokeStyle = "lightgray";
+  context.strokeStyle = style?.minorGridlineColor ?? "lightgray";
   drawLine(
     context,
     margins.left,
@@ -80,7 +85,9 @@ const paintTimeTicks = (
   context.textBaseline = "top";
   context.font = canvasFont(style?.tickFontSize ?? defaultTickFontSize, style);
   timeTicks.forEach((tick) => {
-    context.strokeStyle = tick.major ? "gray" : "lightgray";
+    context.strokeStyle = tick.major
+      ? (style?.gridlineColor ?? "gray")
+      : (style?.minorGridlineColor ?? "lightgray");
     const topPixel = !o.hideGridlines ? plotTopPixelHeight : xAxisPixelHeight;
     drawLine(
       context,
@@ -126,7 +133,9 @@ const paintYTicks = (
     // const pixelValueWithMargin = tick.pixelValue + topMargin
     const pixelValueWithMargin = tick.pixelValue;
 
-    context.strokeStyle = tick.isMajor ? "gray" : "lightgray";
+    context.strokeStyle = tick.isMajor
+      ? (style?.gridlineColor ?? "gray")
+      : (style?.minorGridlineColor ?? "lightgray");
     context.fillStyle = tick.isMajor ? (style?.textColor ?? "black") : "gray";
     const rightPixel = !o.hideGridlines ? plotRightPx : yAxisXCoordinate;
     drawLine(

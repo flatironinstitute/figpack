@@ -26,6 +26,9 @@ class MultiChannelTimeseries(FigpackView):
             "tick_font_size",
             "font_family",
             "text_color",
+            "background_color",
+            "gridline_color",
+            "minor_gridline_color",
         ],
     )
 

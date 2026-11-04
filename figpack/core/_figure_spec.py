@@ -60,6 +60,21 @@ STYLE_KEYS: Dict[str, SpecProp] = {
             "string (CSS color)",
             "Color of axis labels, major tick labels and legend text.",
         ),
+        SpecProp(
+            "background_color",
+            "string (CSS color)",
+            "Background color of the plot area (and legend).",
+        ),
+        SpecProp(
+            "gridline_color",
+            "string (CSS color)",
+            "Color of the major gridlines and ticks.",
+        ),
+        SpecProp(
+            "minor_gridline_color",
+            "string (CSS color)",
+            "Color of the minor gridlines and ticks and of the time axis line.",
+        ),
     ]
 }
 

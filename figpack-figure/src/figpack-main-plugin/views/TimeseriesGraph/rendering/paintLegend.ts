@@ -98,7 +98,7 @@ export const paintLegend = (
 
   if (!R) return; // unexpected
 
-  context.fillStyle = "white";
+  context.fillStyle = style.backgroundColor ?? "white";
   context.strokeStyle = "gray";
   context.lineWidth = 1.5;
   context.fillRect(R.x, R.y, R.w, R.h);
