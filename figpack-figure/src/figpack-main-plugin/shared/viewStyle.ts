@@ -15,6 +15,7 @@ export type ViewStyle = {
   titleFontSize?: number;
   titleColor?: string;
   titleBackgroundColor?: string;
+  colormap?: string;
 };
 
 export const defaultLabelFontSize = 13;
@@ -41,6 +42,7 @@ export const viewStyleFromAttr = (attr: any): ViewStyle => {
     titleFontSize: positiveNumber(attr["title_font_size"]),
     titleColor: nonEmptyString(attr["title_color"]),
     titleBackgroundColor: nonEmptyString(attr["title_background_color"]),
+    colormap: nonEmptyString(attr["colormap"]),
   };
 };
 

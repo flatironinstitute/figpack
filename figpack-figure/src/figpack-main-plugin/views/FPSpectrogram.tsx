@@ -188,6 +188,7 @@ const FPSpectrogramChild: React.FC<{
       yRange: effectiveYRange,
       brightness,
       client,
+      colormap: style.colormap,
     });
   }, [
     visibleStartTimeSec,
@@ -196,6 +197,7 @@ const FPSpectrogramChild: React.FC<{
     effectiveYRange,
     brightness,
     client,
+    style.colormap,
   ]);
 
   useEffect(() => {
@@ -269,6 +271,7 @@ const createDrawFunction =
     yRange,
     brightness,
     client,
+    colormap,
   }: {
     visibleStartTimeSec: number;
     visibleEndTimeSec: number;
@@ -287,6 +290,7 @@ const createDrawFunction =
       uniformFrequencies: boolean;
       frequencyBins: number[];
     };
+    colormap: string | undefined;
   }) =>
   async (
     context: CanvasRenderingContext2D,
@@ -364,6 +368,7 @@ const createDrawFunction =
         plotHeight: canvasHeight - margins.top - margins.bottom,
         plotLeft: margins.left,
         plotTop: margins.top,
+        colormap,
       });
     } else {
       // Use rectangle rendering for non-uniform frequencies
@@ -383,6 +388,7 @@ const createDrawFunction =
         plotHeight: canvasHeight - margins.top - margins.bottom,
         plotLeft: margins.left,
         plotTop: margins.top,
+        colormap,
       });
     }
 

@@ -30,6 +30,7 @@ class Spectrogram(FigpackView):
             "background_color",
             "gridline_color",
             "minor_gridline_color",
+            "colormap",
         ],
     )
 

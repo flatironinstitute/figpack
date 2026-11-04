@@ -88,6 +88,11 @@ STYLE_KEYS: Dict[str, SpecProp] = {
             "string (CSS color)",
             "Background color of layout title bars.",
         ),
+        SpecProp(
+            "colormap",
+            '"viridis" | "plasma" | "inferno" | "magma" | "gray"',
+            'Colormap of heatmaps; add "_r" to reverse it (e.g. "gray_r").',
+        ),
     ]
 }
 
