@@ -35,6 +35,12 @@ class Box(FigpackView):
             ),
         ],
         children="views",
+        style_keys=[
+            "title_font_size",
+            "title_color",
+            "title_background_color",
+            "font_family",
+        ],
         children_description="child views, named by items[].name.",
     )
 

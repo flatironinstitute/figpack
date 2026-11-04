@@ -7,14 +7,14 @@ import {
   ZarrGroup,
 } from "../figpack-interface";
 import FPViewWrapper from "../FPViewWrapper";
+import { viewStyleFromAttr } from "../shared/viewStyle";
+import { titleBarStyle } from "../shared/titleBarStyle";
 
 interface VerticalLayoutItemData {
   name: string;
   height: number;
   title?: string;
 }
-
-const TITLE_BAR_HEIGHT = 30;
 
 export const FPVerticalLayout: React.FC<{
   zarrGroup: ZarrGroup;
@@ -44,7 +44,11 @@ export const FPVerticalLayout: React.FC<{
     new Set(),
   );
 
-  const layoutTitleHeight = layoutTitle ? TITLE_BAR_HEIGHT : 0;
+  const tb = useMemo(
+    () => titleBarStyle(viewStyleFromAttr(zarrGroup.attrs["style"])),
+    [zarrGroup],
+  );
+  const layoutTitleHeight = layoutTitle ? tb.height : 0;
   const scrollViewHeight = height - layoutTitleHeight;
 
   // Calculate item positions and total height
@@ -53,7 +57,7 @@ export const FPVerticalLayout: React.FC<{
     let currentY = 0;
 
     for (const item of itemsMetadata) {
-      const titleHeight = showTitles && item.title ? TITLE_BAR_HEIGHT : 0;
+      const titleHeight = showTitles && item.title ? tb.height : 0;
       const itemHeight = item.height;
       const totalHeight = titleHeight + itemHeight;
 
@@ -67,7 +71,7 @@ export const FPVerticalLayout: React.FC<{
     }
 
     return { positions, totalHeight: currentY };
-  }, [itemsMetadata, showTitles]);
+  }, [itemsMetadata, showTitles, tb.height]);
 
   // Handle scroll events
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -120,10 +124,10 @@ export const FPVerticalLayout: React.FC<{
 
       // Draw layout title if present
       if (layoutTitle) {
-        context.fillStyle = "#f5f5f5";
+        context.fillStyle = tb.background;
         context.fillRect(0, 0, exportWidth, layoutTitleHeight);
-        context.fillStyle = "#000";
-        context.font = "bold 14px sans-serif";
+        context.fillStyle = tb.canvasColor;
+        context.font = `bold ${tb.layoutFontSize}px ${tb.canvasFontFamily}`;
         context.textBaseline = "middle";
         context.fillText(layoutTitle, 8, layoutTitleHeight / 2);
         yOffset += layoutTitleHeight;
@@ -139,14 +143,14 @@ export const FPVerticalLayout: React.FC<{
 
         // Draw item title if present
         if (showTitles && item.title) {
-          context.fillStyle = "#f5f5f5";
+          context.fillStyle = tb.background;
           context.fillRect(0, 0, exportWidth, pos.titleHeight);
           context.strokeStyle = "#ddd";
           context.lineWidth = 1;
           context.strokeRect(0, 0, exportWidth, pos.titleHeight);
 
-          context.fillStyle = "#000";
-          context.font = "bold 12px sans-serif";
+          context.fillStyle = tb.canvasColor;
+          context.font = `bold ${tb.itemFontSize}px ${tb.canvasFontFamily}`;
           context.textBaseline = "middle";
           context.fillText(item.title, 8, pos.titleHeight / 2);
         }
@@ -176,6 +180,7 @@ export const FPVerticalLayout: React.FC<{
     itemsMetadata,
     showTitles,
     itemPositions,
+    tb,
   ]);
 
   return (
@@ -188,13 +193,15 @@ export const FPVerticalLayout: React.FC<{
             left: 0,
             right: 0,
             height: layoutTitleHeight,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: tb.background,
             borderBottom: "1px solid #ddd",
             display: "flex",
             alignItems: "center",
             paddingLeft: 8,
-            fontSize: "14px",
+            fontSize: tb.layoutFontSize,
             fontWeight: "bold",
+            color: tb.color,
+            fontFamily: tb.fontFamily,
             zIndex: 1,
           }}
         >
@@ -249,13 +256,15 @@ export const FPVerticalLayout: React.FC<{
                       left: 0,
                       right: 0,
                       height: pos.titleHeight,
-                      backgroundColor: "#f5f5f5",
+                      backgroundColor: tb.background,
                       borderBottom: "1px solid #ddd",
                       display: "flex",
                       alignItems: "center",
                       paddingLeft: 8,
-                      fontSize: "12px",
+                      fontSize: tb.itemFontSize,
                       fontWeight: "bold",
+                      color: tb.color,
+                      fontFamily: tb.fontFamily,
                     }}
                   >
                     {item.title}

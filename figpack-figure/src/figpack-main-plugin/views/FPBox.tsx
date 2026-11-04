@@ -7,6 +7,8 @@ import {
   ZarrGroup,
 } from "../figpack-interface";
 import FPViewWrapper from "../FPViewWrapper";
+import { viewStyleFromAttr } from "../shared/viewStyle";
+import { titleBarStyle } from "../shared/titleBarStyle";
 
 interface LayoutItemData {
   name: string;
@@ -25,7 +27,6 @@ interface LayoutResult {
   titleHeight: number;
 }
 
-const TITLE_BAR_HEIGHT = 30;
 const MARGIN = 2;
 
 export const FPBox: React.FC<{
@@ -66,7 +67,11 @@ export const FPBox: React.FC<{
     });
   };
 
-  const boxTitleHeight = boxTitle ? TITLE_BAR_HEIGHT : 0;
+  const tb = useMemo(
+    () => titleBarStyle(viewStyleFromAttr(zarrGroup.attrs["style"])),
+    [zarrGroup],
+  );
+  const boxTitleHeight = boxTitle ? tb.height : 0;
   const availableHeight = height - boxTitleHeight;
 
   const layoutResults = useMemo(() => {
@@ -77,6 +82,7 @@ export const FPBox: React.FC<{
       itemsMetadata,
       showTitles,
       collapsedItems,
+      tb.height,
     );
   }, [
     width,
@@ -85,6 +91,7 @@ export const FPBox: React.FC<{
     itemsMetadata,
     showTitles,
     collapsedItems,
+    tb,
   ]);
 
   const itemDrawForExportRefs = React.useRef<
@@ -111,15 +118,16 @@ export const FPBox: React.FC<{
         itemsMetadata,
         showTitles,
         collapsedItems,
+        tb.height,
       );
 
       // Draw box title if present
       let yOffset = 0;
       if (boxTitle) {
-        context.fillStyle = "#f5f5f5";
+        context.fillStyle = tb.background;
         context.fillRect(0, 0, exportWidth, boxTitleHeight);
-        context.fillStyle = "#000";
-        context.font = "bold 14px sans-serif";
+        context.fillStyle = tb.canvasColor;
+        context.font = `bold ${tb.layoutFontSize}px ${tb.canvasFontFamily}`;
         context.textBaseline = "middle";
         context.fillText(boxTitle, 8, boxTitleHeight / 2);
         yOffset += boxTitleHeight;
@@ -136,14 +144,14 @@ export const FPBox: React.FC<{
 
         // Draw item title if present
         if (showTitles && item.title) {
-          context.fillStyle = "#f5f5f5";
+          context.fillStyle = tb.background;
           context.fillRect(0, 0, layout.width, layout.titleHeight);
           context.strokeStyle = "#ddd";
           context.lineWidth = 1;
           context.strokeRect(0, 0, layout.width, layout.titleHeight);
 
-          context.fillStyle = "#000";
-          context.font = "bold 12px sans-serif";
+          context.fillStyle = tb.canvasColor;
+          context.font = `bold ${tb.itemFontSize}px ${tb.canvasFontFamily}`;
           context.textBaseline = "middle";
 
           // Draw collapse indicator if collapsible
@@ -185,6 +193,7 @@ export const FPBox: React.FC<{
     itemsMetadata,
     showTitles,
     collapsedItems,
+    tb,
   ]);
 
   return (
@@ -197,13 +206,15 @@ export const FPBox: React.FC<{
             left: 0,
             right: 0,
             height: boxTitleHeight,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: tb.background,
             borderBottom: "1px solid #ddd",
             display: "flex",
             alignItems: "center",
             paddingLeft: 8,
-            fontSize: "14px",
+            fontSize: tb.layoutFontSize,
             fontWeight: "bold",
+            color: tb.color,
+            fontFamily: tb.fontFamily,
             zIndex: 1,
           }}
         >
@@ -235,13 +246,15 @@ export const FPBox: React.FC<{
                   left: 0,
                   right: 0,
                   height: layout.titleHeight,
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: tb.background,
                   borderBottom: "1px solid #ddd",
                   display: "flex",
                   alignItems: "center",
                   paddingLeft: 8,
-                  fontSize: "12px",
+                  fontSize: tb.itemFontSize,
                   fontWeight: "bold",
+                  color: tb.color,
+                  fontFamily: tb.fontFamily,
                   cursor: item.collapsible ? "pointer" : "default",
                 }}
                 onClick={
@@ -360,6 +373,7 @@ function calculateLayout(
   items: LayoutItemData[],
   showTitles: boolean,
   collapsedItems: Set<string>,
+  titleBarHeight: number,
 ): LayoutResult[] {
   const results: LayoutResult[] = [];
 
@@ -370,10 +384,10 @@ function calculateLayout(
   const titleHeights: number[] = [];
   for (const item of items) {
     if (collapsedItems.has(item.name)) {
-      titleHeights.push(TITLE_BAR_HEIGHT);
+      titleHeights.push(titleBarHeight);
     } else if (showTitles) {
       if (item.title) {
-        titleHeights.push(TITLE_BAR_HEIGHT);
+        titleHeights.push(titleBarHeight);
       } else {
         titleHeights.push(0);
       }

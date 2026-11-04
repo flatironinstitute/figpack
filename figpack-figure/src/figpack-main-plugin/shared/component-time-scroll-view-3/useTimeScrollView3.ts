@@ -23,8 +23,10 @@ export const useTimeScrollView3 = ({
   hideNavToolbar?: boolean;
   style?: ViewStyle;
 }) => {
-  const hasCustomActions =
-    customToolbarActions && customToolbarActions.length > 0;
+  // Inline actions sit in the main toolbar; the others get a row of their
+  // own, shown only along with the main toolbar
+  const hasCustomActionsRow =
+    !hideNavToolbar && !!customToolbarActions?.some((a) => !a.inline);
   const labelFontSize = style?.labelFontSize ?? defaultLabelFontSize;
   const tickFontSize = style?.tickFontSize ?? defaultTickFontSize;
   const margins = useMemo(() => {
@@ -49,7 +51,7 @@ export const useTimeScrollView3 = ({
   if (!hideNavToolbar) {
     bottomToolbarHeight += 40; // Main toolbar height
   }
-  if (hasCustomActions) {
+  if (hasCustomActionsRow) {
     bottomToolbarHeight += 40; // Custom actions height
   }
   const canvasWidth = width;

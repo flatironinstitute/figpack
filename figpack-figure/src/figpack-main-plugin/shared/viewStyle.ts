@@ -12,6 +12,9 @@ export type ViewStyle = {
   backgroundColor?: string;
   gridlineColor?: string;
   minorGridlineColor?: string;
+  titleFontSize?: number;
+  titleColor?: string;
+  titleBackgroundColor?: string;
 };
 
 export const defaultLabelFontSize = 13;
@@ -35,6 +38,9 @@ export const viewStyleFromAttr = (attr: any): ViewStyle => {
     backgroundColor: nonEmptyString(attr["background_color"]),
     gridlineColor: nonEmptyString(attr["gridline_color"]),
     minorGridlineColor: nonEmptyString(attr["minor_gridline_color"]),
+    titleFontSize: positiveNumber(attr["title_font_size"]),
+    titleColor: nonEmptyString(attr["title_color"]),
+    titleBackgroundColor: nonEmptyString(attr["title_background_color"]),
   };
 };
 

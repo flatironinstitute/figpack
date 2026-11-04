@@ -75,6 +75,19 @@ STYLE_KEYS: Dict[str, SpecProp] = {
             "string (CSS color)",
             "Color of the minor gridlines and ticks and of the time axis line.",
         ),
+        SpecProp(
+            "title_font_size",
+            "number",
+            "Font size in pixels of layout item titles; the layout's own title is 2 px larger. Title bars grow to fit.",
+        ),
+        SpecProp(
+            "title_color", "string (CSS color)", "Text color of layout title bars."
+        ),
+        SpecProp(
+            "title_background_color",
+            "string (CSS color)",
+            "Background color of layout title bars.",
+        ),
     ]
 }
 
