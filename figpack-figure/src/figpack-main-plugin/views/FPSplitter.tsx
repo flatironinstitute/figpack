@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useRef } from "react";
 import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
 import FPViewWrapper from "../FPViewWrapper";
+import { viewStyleFromGroup } from "../shared/viewStyle";
 
 const SPLITTER_SIZE = 4; // Width/height of the splitter bar
 const MIN_PANE_SIZE = 50; // Minimum size for each pane
@@ -13,6 +14,7 @@ export const FPSplitter: React.FC<{
   renderFPView: (params: RenderParams) => void;
 }> = ({ zarrGroup, contexts, width, height, renderFPView }) => {
   const direction = zarrGroup.attrs["direction"] || "vertical";
+  const style = useMemo(() => viewStyleFromGroup(zarrGroup), [zarrGroup]);
   const initialSplitPos = zarrGroup.attrs["split_pos"] || 0.5;
   const item1Metadata = useMemo(
     () => zarrGroup.attrs["item1_metadata"] || {},
@@ -139,10 +141,10 @@ export const FPSplitter: React.FC<{
           top: 0,
           width: SPLITTER_SIZE,
           height: height,
-          backgroundColor: "#ddd",
+          backgroundColor: style.borderColor ?? "#ddd",
           cursor: "col-resize",
-          borderLeft: "1px solid #ccc",
-          borderRight: "1px solid #ccc",
+          borderLeft: `1px solid ${style.borderColor ?? "#ccc"}`,
+          borderRight: `1px solid ${style.borderColor ?? "#ccc"}`,
         },
         pane2Style: {
           position: "absolute" as const,
@@ -170,10 +172,10 @@ export const FPSplitter: React.FC<{
           top: pane1Height,
           width: width,
           height: SPLITTER_SIZE,
-          backgroundColor: "#ddd",
+          backgroundColor: style.borderColor ?? "#ddd",
           cursor: "row-resize",
-          borderTop: "1px solid #ccc",
-          borderBottom: "1px solid #ccc",
+          borderTop: `1px solid ${style.borderColor ?? "#ccc"}`,
+          borderBottom: `1px solid ${style.borderColor ?? "#ccc"}`,
         },
         pane2Style: {
           position: "absolute" as const,
@@ -184,7 +186,7 @@ export const FPSplitter: React.FC<{
         },
       };
     }
-  }, [direction, width, height, splitPos]);
+  }, [direction, width, height, splitPos, style.borderColor]);
 
   if (!renderFPView) {
     return (

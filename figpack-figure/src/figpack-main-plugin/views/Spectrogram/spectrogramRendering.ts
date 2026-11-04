@@ -1,54 +1,4 @@
-// Color maps for spectrogram visualization
-const VIRIDIS_COLORS: [number, number, number][] = [
-  [68, 1, 84],
-  [72, 40, 120],
-  [62, 74, 137],
-  [49, 104, 142],
-  [38, 130, 142],
-  [31, 158, 137],
-  [53, 183, 121],
-  [109, 205, 89],
-  [180, 222, 44],
-  [253, 231, 37],
-];
-
-// const PLASMA_COLORS: [number, number, number][] = [
-//   [13, 8, 135],
-//   [75, 3, 161],
-//   [125, 3, 168],
-//   [168, 34, 150],
-//   [203, 70, 121],
-//   [229, 107, 93],
-//   [248, 148, 65],
-//   [253, 195, 40],
-//   [239, 248, 33],
-//   [240, 249, 33],
-// ];
-
-// You can easily switch between color maps by changing this
-const COLOR_MAP = VIRIDIS_COLORS;
-
-function interpolateColor(value: number): [number, number, number] {
-  // Clamp value between 0 and 1
-  value = Math.max(0, Math.min(1, value));
-
-  if (value === 0) return COLOR_MAP[0];
-  if (value === 1) return COLOR_MAP[COLOR_MAP.length - 1];
-
-  // Find the two colors to interpolate between
-  const scaledValue = value * (COLOR_MAP.length - 1);
-  const index = Math.floor(scaledValue);
-  const fraction = scaledValue - index;
-
-  const color1 = COLOR_MAP[index];
-  const color2 = COLOR_MAP[index + 1];
-
-  return [
-    Math.round(color1[0] + (color2[0] - color1[0]) * fraction),
-    Math.round(color1[1] + (color2[1] - color1[1]) * fraction),
-    Math.round(color1[2] + (color2[2] - color1[2]) * fraction),
-  ];
-}
+import { colormapFunction } from "../../shared/colormaps";
 
 export const paintSpectrogramHeatmap = (
   context: CanvasRenderingContext2D,
@@ -68,8 +18,10 @@ export const paintSpectrogramHeatmap = (
     plotHeight: number;
     plotLeft: number;
     plotTop: number;
+    colormap?: string;
   },
 ) => {
+  const interpolateColor = colormapFunction(options.colormap);
   const {
     data,
     length,
@@ -174,8 +126,10 @@ export const paintSpectrogramNonUniform = (
     plotHeight: number;
     plotLeft: number;
     plotTop: number;
+    colormap?: string;
   },
 ) => {
+  const interpolateColor = colormapFunction(options.colormap);
   const {
     data,
     length,

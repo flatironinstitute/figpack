@@ -232,6 +232,7 @@ export const FPTimeseriesGraphChild: React.FC<{
       hideNavToolbar={client?.hideNavToolbar ?? false}
       hideTimeAxisLabels={client?.hideTimeAxisLabels ?? false}
       gridlineOpts={gridlineOpts}
+      style={client?.style}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}
       customToolbarActions={customToolbarActions}

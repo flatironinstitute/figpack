@@ -3,6 +3,7 @@ import { TickSet } from "./YAxisTicks";
 import BaseCanvas from "./BaseCanvas";
 import { TimeTick } from "./timeTicks";
 import { paintAxes } from "./TSV2PaintAxes";
+import { ViewStyle } from "../viewStyle";
 
 export type TSV2AxesLayerProps = {
   timeRange: [number, number];
@@ -14,6 +15,7 @@ export type TSV2AxesLayerProps = {
   width: number;
   height: number;
   hideTimeAxisLabels?: boolean;
+  style?: ViewStyle;
 };
 
 const emptyDrawData = {};

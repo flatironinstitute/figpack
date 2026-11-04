@@ -1,4 +1,5 @@
 import { TimeseriesGraphClient } from "../TimeseriesGraphClient";
+import { canvasFont, defaultLegendFontSize } from "../../../shared/viewStyle";
 
 export const paintLegend = (
   context: CanvasRenderingContext2D,
@@ -6,6 +7,7 @@ export const paintLegend = (
   options: {
     margins: { left: number; top: number; right: number; bottom: number };
     canvasWidth: number;
+    canvasHeight: number;
   },
 ) => {
   if (!client) return;
@@ -61,33 +63,42 @@ export const paintLegend = (
   if (legendEntries.length === 0) return;
 
   const { location } = client.legendOpts;
-  const entryHeight = 18;
-  const entryFontSize = 12;
+  const { style } = client;
+  const entryFontSize = style.legendFontSize ?? defaultLegendFontSize;
+  const font = canvasFont(entryFontSize, style, "Arial");
+  const entryHeight = Math.max(18, entryFontSize * 1.5);
   const symbolWidth = 50;
-  const legendWidth = 200;
   const margin = 10;
+  // At least 200 px wide, wider if needed to fit the longest name
+  context.font = font;
+  const maxNameWidth = Math.max(
+    ...legendEntries.map((e) => context.measureText(e.name).width),
+  );
+  const legendWidth = Math.max(
+    200,
+    Math.ceil(margin + symbolWidth + margin + maxNameWidth + margin),
+  );
   const legendHeight = 20 + legendEntries.length * entryHeight;
 
-  const R =
-    location === "northwest"
-      ? {
-          x: options.margins.left + 20,
-          y: options.margins.top + 20,
-          w: legendWidth,
-          h: legendHeight,
-        }
-      : location === "northeast"
-        ? {
-            x: options.canvasWidth - options.margins.right - legendWidth - 20,
-            y: options.margins.top + 20,
-            w: legendWidth,
-            h: legendHeight,
-          }
-        : undefined;
+  const west = options.margins.left + 20;
+  const east = options.canvasWidth - options.margins.right - legendWidth - 20;
+  const north = options.margins.top + 20;
+  const south =
+    options.canvasHeight - options.margins.bottom - legendHeight - 20;
+  const corners: { [loc: string]: { x: number; y: number } } = {
+    northwest: { x: west, y: north },
+    northeast: { x: east, y: north },
+    southwest: { x: west, y: south },
+    southeast: { x: east, y: south },
+  };
+  const corner = location ? corners[location] : undefined;
+  const R = corner
+    ? { x: corner.x, y: corner.y, w: legendWidth, h: legendHeight }
+    : undefined;
 
   if (!R) return; // unexpected
 
-  context.fillStyle = "white";
+  context.fillStyle = style.backgroundColor ?? "white";
   context.strokeStyle = "gray";
   context.lineWidth = 1.5;
   context.fillRect(R.x, R.y, R.w, R.h);
@@ -103,19 +114,20 @@ export const paintLegend = (
     };
     const titleRect = {
       x: R.x + margin + symbolWidth + margin,
-      y: y0 - 3, // the -3 is just a tweak
+      y: y0,
       w: legendWidth - margin - margin - symbolWidth - margin,
       h: entryHeight,
     };
 
-    context.fillStyle = "black";
-    context.font = `${entryFontSize}px Arial`;
+    context.fillStyle = style.textColor ?? "black";
+    context.font = font;
     context.textAlign = "left";
     context.textBaseline = "middle";
     context.fillText(
       entry.name,
       titleRect.x,
-      titleRect.y + titleRect.h / 2 + entryFontSize / 2,
+      // 3 px below the symbol's center at the default size
+      y0 + entryHeight / 2 + entryFontSize / 4,
     );
 
     if (entry.seriesType === "line") {

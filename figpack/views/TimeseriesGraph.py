@@ -35,7 +35,7 @@ class TimeseriesGraph(FigpackView):
             ),
             SpecProp(
                 "legend_opts",
-                '{location?: "northwest" | "northeast", hideLegend?: boolean}',
+                '{location?: "northwest" | "northeast" | "southwest" | "southeast", hideLegend?: boolean}',
                 "Legend placement; no legend is drawn unless location is set.",
             ),
             SpecProp(
@@ -57,6 +57,16 @@ class TimeseriesGraph(FigpackView):
         ],
         children="groups",
         children_description="series, named as in series_names.",
+        style_keys=[
+            "label_font_size",
+            "tick_font_size",
+            "legend_font_size",
+            "font_family",
+            "text_color",
+            "background_color",
+            "gridline_color",
+            "minor_gridline_color",
+        ],
         child_props=[
             SpecProp(
                 "color",
@@ -100,6 +110,7 @@ class TimeseriesGraph(FigpackView):
         hide_time_axis_labels: bool = False,
         y_label: str = "",
         allow_annotation: bool = False,
+        style: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Initialize a TimeseriesGraph
@@ -113,6 +124,7 @@ class TimeseriesGraph(FigpackView):
             hide_time_axis_labels: Whether to hide time axis labels
             y_label: Label for the y-axis
             allow_annotation: Whether the viewer can mark time points and intervals and export them as CSV
+            style: Style keys, e.g. {"label_font_size": 16, "tick_font_size": 12}; same as calling set_style
         """
         self.legend_opts = legend_opts or {}
         self.y_range = y_range
@@ -122,6 +134,8 @@ class TimeseriesGraph(FigpackView):
         self.hide_time_axis_labels = hide_time_axis_labels
         self.y_label = y_label
         self.allow_annotation = allow_annotation
+        if style:
+            self.set_style(**style)
 
         # Internal storage for series data
         self._series = []

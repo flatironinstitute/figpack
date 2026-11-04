@@ -4,6 +4,8 @@ Tests for the figure spec written into index.html
 
 import json
 
+import pytest
+
 import zarr
 
 import figpack.views as vv
@@ -76,9 +78,59 @@ def test_build_figure_spec_docs():
     assert "without documented props" in docs and "Undocumented" in docs
 
 
+def test_style_in_spec_and_docs():
+    schemas = {
+        **SCHEMAS,
+        "Graph": SpecSchema(
+            view_type="Graph",
+            description="A graph.",
+            style_keys=["tick_font_size"],
+        ),
+    }
+    root = _make_group()
+    root.attrs["style"] = {"tick_font_size": 14}
+    root["item_0"].attrs["style"] = {}
+    spec = build_figure_spec(root, schemas)
+    # any view may carry a style, even one whose schema uses no style keys
+    assert spec["props"]["style"] == {"tick_font_size": 14}
+    assert "item_0" not in spec.get("children", {})
+    docs = build_figure_spec_docs(root, schemas)
+    assert "## Style" in docs
+    assert "- tick_font_size (number): " in docs and "Used by: Graph." in docs
+    assert "label_font_size" not in docs
+    assert "Style keys: tick_font_size." in docs
+    # no style section when no view in the figure uses style keys
+    assert "## Style" not in build_figure_spec_docs(_make_group(), SCHEMAS)
+
+
+def test_set_style_writes_style_attrs():
+    graph = vv.TimeseriesGraph(y_label="Signal", style={"label_font_size": 20})
+    box = vv.Box(items=[vv.LayoutItem(graph, title="g")])
+    assert box.set_style(tick_font_size=14) is box
+    box.set_style(label_font_size=16)
+    root = zarr.group()
+    box.write_to_zarr_group(Group(root))
+    assert root.attrs["style"] == {"tick_font_size": 14, "label_font_size": 16}
+    # the graph keeps only its own keys; the frontend merges the cascade
+    assert root["item_0"].attrs["style"] == {"label_font_size": 20}
+    # views without a style write no style attr
+    root2 = zarr.group()
+    vv.Box(items=[]).write_to_zarr_group(Group(root2))
+    assert "style" not in root2.attrs
+    with pytest.raises(ValueError, match="Unknown style keys: font_szie"):
+        box.set_style(font_szie=12)
+
+
 def test_builtin_view_schemas_are_registered():
     schemas = get_spec_schemas()
-    for vt in ["Box", "Splitter", "TabLayout", "TimeseriesGraph"]:
+    for vt in [
+        "Box",
+        "Splitter",
+        "TabLayout",
+        "TimeseriesGraph",
+        "MultiChannelTimeseries",
+        "Spectrogram",
+    ]:
         assert vt in schemas
 
 

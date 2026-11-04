@@ -183,6 +183,7 @@ def test_zarr_storage(tmp_path):
     assert group.attrs["sampling_frequency_hz"] == 500.0
     assert group.attrs["channel_ids"] == channel_ids
     assert group.attrs["n_timepoints"] == 1000
+    assert group.attrs["y_label"] == "Value"
     assert group.attrs["n_channels"] == 4
 
     # Verify data

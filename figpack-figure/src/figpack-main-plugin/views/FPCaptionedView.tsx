@@ -1,9 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FPViewContexts, RenderParams, ZarrGroup } from "../figpack-interface";
 import FPViewWrapper from "../FPViewWrapper";
+import { viewStyleFromGroup } from "../shared/viewStyle";
 
 const CAPTION_PADDING = 8;
 const CAPTION_MARGIN_TOP = 8;
+const SYSTEM_FONT =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
 /**
  * Gets the cumulative scale factor from all ancestor CSS transforms.
@@ -43,6 +46,7 @@ export const FPCaptionedView: React.FC<{
   const measureRef = useRef<HTMLDivElement>(null);
 
   const fontSize = zarrGroup.attrs["font_size"] || 14;
+  const style = useMemo(() => viewStyleFromGroup(zarrGroup), [zarrGroup]);
 
   // Load caption text and child group
   useEffect(() => {
@@ -185,11 +189,10 @@ export const FPCaptionedView: React.FC<{
             padding: `${CAPTION_PADDING}px`,
             boxSizing: "border-box",
             fontSize: `${fontSize}px`,
-            fontFamily:
-              "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-            color: "#333",
-            backgroundColor: "#f9f9f9",
-            borderTop: "1px solid #ddd",
+            fontFamily: style.fontFamily ?? SYSTEM_FONT,
+            color: style.textColor ?? "#333",
+            backgroundColor: style.backgroundColor ?? "#f9f9f9",
+            borderTop: `1px solid ${style.borderColor ?? "#ddd"}`,
             lineHeight: "1.4",
             wordWrap: "break-word",
             overflowWrap: "break-word",
@@ -210,8 +213,7 @@ export const FPCaptionedView: React.FC<{
           padding: `${CAPTION_PADDING}px`,
           boxSizing: "border-box",
           fontSize: `${fontSize}px`,
-          fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          fontFamily: style.fontFamily ?? SYSTEM_FONT,
           lineHeight: "1.4",
           wordWrap: "break-word",
           overflowWrap: "break-word",

@@ -8,6 +8,7 @@ from typing import Optional
 import numpy as np
 import zarr
 
+from ..core._figure_spec import SpecProp, SpecSchema
 from ..core.figpack_view import FigpackView
 from ..core.zarr import Group
 
@@ -16,6 +17,29 @@ class Spectrogram(FigpackView):
     """
     A spectrogram visualization component for time-frequency data
     """
+
+    spec_schema = SpecSchema(
+        view_type="Spectrogram",
+        description="Time-frequency power shown as a heatmap, with zooming and panning.",
+        props=[
+            SpecProp("y_label", "string", "Y axis label."),
+            SpecProp(
+                "hide_nav_toolbar",
+                "boolean",
+                "Hide the navigation toolbar below the plot.",
+            ),
+        ],
+        style_keys=[
+            "label_font_size",
+            "tick_font_size",
+            "font_family",
+            "text_color",
+            "background_color",
+            "gridline_color",
+            "minor_gridline_color",
+            "colormap",
+        ],
+    )
 
     def __init__(
         self,
@@ -26,6 +50,8 @@ class Spectrogram(FigpackView):
         frequency_min_hz: Optional[float] = None,
         frequency_delta_hz: Optional[float] = None,
         frequencies: Optional[np.ndarray] = None,
+        y_label: str = "Frequency (Hz)",
+        hide_nav_toolbar: bool = False,
     ):
         """
         Initialize a Spectrogram view
@@ -37,6 +63,8 @@ class Spectrogram(FigpackView):
             frequency_min_hz: Minimum frequency in Hz (for uniform bins)
             frequency_delta_hz: Frequency bin spacing in Hz (for uniform bins)
             frequencies: Array of frequency values (for non-uniform bins)
+            y_label: Label for the y-axis
+            hide_nav_toolbar: Whether to hide the navigation toolbar
         """
         assert data.ndim == 2, "Data must be a 2D array (timepoints × frequencies)"
         assert sampling_frequency_hz > 0, "Sampling frequency must be positive"
@@ -59,6 +87,8 @@ class Spectrogram(FigpackView):
         self.start_time_sec = start_time_sec
         self.sampling_frequency_hz = sampling_frequency_hz
         self.data = data.astype(np.float32)  # Ensure float32 for efficiency
+        self.y_label = y_label
+        self.hide_nav_toolbar = hide_nav_toolbar
 
         # Store frequency information
         if uniform_specified:
@@ -200,6 +230,8 @@ class Spectrogram(FigpackView):
         # Store metadata
         group.attrs["start_time_sec"] = self.start_time_sec
         group.attrs["sampling_frequency_hz"] = self.sampling_frequency_hz
+        group.attrs["y_label"] = self.y_label
+        group.attrs["hide_nav_toolbar"] = self.hide_nav_toolbar
         group.attrs["uniform_frequencies"] = self.uniform_frequencies
         group.attrs["n_timepoints"] = self.n_timepoints
         group.attrs["n_frequencies"] = self.n_frequencies

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ZarrGroup } from "../figpack-interface";
 import ReactMarkdown from "react-markdown";
+import { viewStyleFromGroup } from "../shared/viewStyle";
 
 export const FPMarkdown: React.FC<{
   zarrGroup: ZarrGroup;
@@ -12,6 +13,7 @@ export const FPMarkdown: React.FC<{
   const [loading, setLoading] = useState(true);
 
   const fontSize = zarrGroup.attrs["font_size"] || undefined;
+  const style = useMemo(() => viewStyleFromGroup(zarrGroup), [zarrGroup]);
 
   useEffect(() => {
     const loadContent = async () => {
@@ -95,8 +97,10 @@ export const FPMarkdown: React.FC<{
         overflow: "auto",
         padding: "16px",
         boxSizing: "border-box",
-        backgroundColor: "#ffffff",
+        backgroundColor: style.backgroundColor ?? "#ffffff",
+        color: style.textColor,
         fontFamily:
+          style.fontFamily ??
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         fontSize,
       }}

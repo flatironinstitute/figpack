@@ -1,5 +1,6 @@
 import { ZarrGroup } from "../../figpack-interface";
 import { TimeseriesSeries, LegendOptions } from "./types";
+import { ViewStyle, viewStyleFromAttr } from "../../shared/viewStyle";
 
 export class TimeseriesGraphClient {
   constructor(
@@ -19,6 +20,7 @@ export class TimeseriesGraphClient {
     public hideXGridlines: boolean = false,
     public hideYGridlines: boolean = false,
     public allowAnnotation: boolean = false,
+    public style: ViewStyle = {},
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
@@ -177,6 +179,7 @@ export class TimeseriesGraphClient {
     const hideXGridlines = zarrGroup.attrs["hide_x_gridlines"] || false;
     const hideYGridlines = zarrGroup.attrs["hide_y_gridlines"] || false;
     const allowAnnotation = zarrGroup.attrs["allow_annotation"] || false;
+    const style = viewStyleFromAttr(zarrGroup.attrs["style"]);
 
     return new TimeseriesGraphClient(
       series,
@@ -190,6 +193,7 @@ export class TimeseriesGraphClient {
       hideXGridlines,
       hideYGridlines,
       allowAnnotation,
+      style,
     );
   }
 }

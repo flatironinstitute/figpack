@@ -1,6 +1,7 @@
 import { FPViewContexts, ZarrGroup } from "../figpack-interface";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import TimeScrollView3 from "../shared/component-time-scroll-view-3/TimeScrollView3";
+import { viewStyleFromAttr } from "../shared/viewStyle";
 import { useTimeseriesSelection } from "../shared/context-timeseries-selection/TimeseriesSelectionContext";
 import {
   calculateVisibleMaxValue,
@@ -85,6 +86,12 @@ const FPSpectrogramChild: React.FC<{
   } | null>(null);
 
   const client = useSpectrogramClient(zarrGroup);
+  const yLabel: string = zarrGroup.attrs["y_label"] ?? "Frequency (Hz)";
+  const hideNavToolbar: boolean = zarrGroup.attrs["hide_nav_toolbar"] ?? false;
+  const style = useMemo(
+    () => viewStyleFromAttr(zarrGroup.attrs["style"]),
+    [zarrGroup],
+  );
 
   // Load visible data using the client API
   const [visibleData, setVisibleData] = useState<{
@@ -182,6 +189,7 @@ const FPSpectrogramChild: React.FC<{
       yRange: effectiveYRange,
       brightness,
       client,
+      colormap: style.colormap,
     });
   }, [
     visibleStartTimeSec,
@@ -190,6 +198,7 @@ const FPSpectrogramChild: React.FC<{
     effectiveYRange,
     brightness,
     client,
+    style.colormap,
   ]);
 
   useEffect(() => {
@@ -222,9 +231,9 @@ const FPSpectrogramChild: React.FC<{
       showTicks: true,
       yMin: effectiveYRange ? effectiveYRange.yMin : 0,
       yMax: effectiveYRange ? effectiveYRange.yMax : 100,
-      yLabel: "Frequency (Hz)",
+      yLabel,
     };
-  }, [effectiveYRange]);
+  }, [effectiveYRange, yLabel]);
 
   const handleZoomY = useCallback(
     (yRange: { yMin: number; yMax: number } | null) => {
@@ -246,6 +255,8 @@ const FPSpectrogramChild: React.FC<{
         setMargins(margins);
       }}
       yAxisInfo={yAxisInfo}
+      style={style}
+      hideNavToolbar={hideNavToolbar}
       customToolbarActions={customToolbarActions}
       drawContentForExport={draw}
       setDrawForExport={setDrawForExport}
@@ -262,6 +273,7 @@ const createDrawFunction =
     yRange,
     brightness,
     client,
+    colormap,
   }: {
     visibleStartTimeSec: number;
     visibleEndTimeSec: number;
@@ -280,6 +292,7 @@ const createDrawFunction =
       uniformFrequencies: boolean;
       frequencyBins: number[];
     };
+    colormap: string | undefined;
   }) =>
   async (
     context: CanvasRenderingContext2D,
@@ -357,6 +370,7 @@ const createDrawFunction =
         plotHeight: canvasHeight - margins.top - margins.bottom,
         plotLeft: margins.left,
         plotTop: margins.top,
+        colormap,
       });
     } else {
       // Use rectangle rendering for non-uniform frequencies
@@ -376,6 +390,7 @@ const createDrawFunction =
         plotHeight: canvasHeight - margins.top - margins.bottom,
         plotLeft: margins.left,
         plotTop: margins.top,
+        colormap,
       });
     }
 

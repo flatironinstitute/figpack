@@ -2,11 +2,13 @@
 Base view class for figpack visualization components
 """
 
+import functools
 import os
 import random
 import string
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from ._figure_spec import STYLE_KEYS
 from .zarr import Group
 
 if TYPE_CHECKING:
@@ -17,6 +19,44 @@ class FigpackView:
     """
     Base class for all figpack visualization components
     """
+
+    # Set with set_style(); replaced, never mutated, so the class default is safe
+    _style: Dict[str, Any] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        # Every view writes its style attr after its own attrs, without each
+        # write_to_zarr_group having to do it
+        write = cls.__dict__.get("write_to_zarr_group")
+        if write is None:
+            return
+
+        @functools.wraps(write)
+        def write_with_style(self, group: Group) -> None:
+            write(self, group)
+            if self._style:
+                group.attrs["style"] = dict(self._style)
+
+        cls.write_to_zarr_group = write_with_style
+
+    def set_style(self, **style: Any) -> "FigpackView":
+        """
+        Set style keys (e.g. label_font_size=16) for this view and every view
+        inside it. Views inside it inherit the keys unless they set their own.
+        Call it on the root view to style the whole figure. Keys given here are
+        merged over those set before.
+
+        Returns:
+            The view itself, so that calls can be chained
+        """
+        unknown = [k for k in style if k not in STYLE_KEYS]
+        if unknown:
+            raise ValueError(
+                f"Unknown style keys: {', '.join(unknown)}. "
+                f"Known keys: {', '.join(STYLE_KEYS)}"
+            )
+        self._style = {**self._style, **style}
+        return self
 
     def show(
         self,
