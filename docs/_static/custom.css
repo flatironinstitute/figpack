@@ -31,3 +31,19 @@ iframe.lazy-loading {
 iframe.lazy-loaded {
     background: transparent;
 }
+
+/* "Open in new tab" link below each embedded figure */
+.figure-open-link-wrapper {
+    text-align: right;
+    margin: 2px 0 24px 0;
+    font-size: 90%;
+}
+
+.figure-open-link {
+    color: #2980b9;
+    text-decoration: none;
+}
+
+.figure-open-link:hover {
+    text-decoration: underline;
+}
