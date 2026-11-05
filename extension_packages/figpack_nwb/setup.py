@@ -29,7 +29,7 @@ setup(
         "figpack_nwb": ["*.js"],
     },
     include_package_data=True,
-    install_requires=["figpack>=0.4.0"],
+    install_requires=["figpack>=0.4.0", "h5py", "remfile"],
     python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
