@@ -10,127 +10,115 @@ Before starting this tutorial, make sure you have the required packages installe
 pip install figpack figpack_spike_sorting spikeinterface
 ```
 
+Several of the examples below use [SpikeInterface](https://github.com/SpikeInterface/spikeinterface) to simulate a recording with known ground truth units and to compute properties of those units. Others construct spike trains directly with numpy, which makes it easy to see what each view is showing. In both cases the views only require plain arrays, so they can be used with the output of any spike sorting pipeline.
+
 ## Units Table
 
-The Units Table displays basic information about detected neural units:
+The Units Table lists the units, with one column for each property you provide. Here we compute a few quality metrics with SpikeInterface:
 
 ```python
-import spikeinterface.extractors as se
+import numpy as np
+import spikeinterface as si
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic spike data
-recording, sorting = se.toy_example(
-    num_units=6, duration=60, seed=0, num_segments=1
+rng = np.random.default_rng(0)
+recording, sorting = si.generate_ground_truth_recording(
+    durations=[60],
+    num_channels=32,
+    num_units=16,
+    generate_sorting_kwargs={"firing_rates": rng.lognormal(1.5, 0.8, 16), "refractory_period_ms": 2.0},
+    seed=4,
 )
+sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+sorting_analyzer.compute(["random_spikes", "templates", "noise_levels", "unit_locations"])
+sorting_analyzer.compute("quality_metrics", metric_names=["firing_rate", "snr"])
+metrics = sorting_analyzer.get_extension("quality_metrics").get_data()
+depths = sorting_analyzer.get_extension("unit_locations").get_data()[:, 1]
 
-# Create a simple units table
 columns = [
-    ssv.UnitsTableColumn(key="unitId", label="Unit", dtype="int"),
-    ssv.UnitsTableColumn(key="numSpikes", label="Spike Count", dtype="int"),
+    ssv.UnitsTableColumn(key="firing_rate", label="Firing rate (Hz)", dtype="float"),
+    ssv.UnitsTableColumn(key="snr", label="SNR", dtype="float"),
+    ssv.UnitsTableColumn(key="depth", label="Depth (um)", dtype="int"),
 ]
-
 rows = []
-for unit_id in sorting.get_unit_ids():
-    spike_count = len(sorting.get_unit_spike_train(unit_id=unit_id))
-    rows.append(
-        ssv.UnitsTableRow(
-            unit_id=unit_id,
-            values={
-                "unitId": unit_id,
-                "numSpikes": spike_count,
-            },
-        )
-    )
+for i, unit_id in enumerate(sorting.unit_ids):
+    values = {
+        "firing_rate": round(metrics["firing_rate"][unit_id], 1),
+        "snr": round(metrics["snr"][unit_id], 1),
+        "depth": int(depths[i]),
+    }
+    rows.append(ssv.UnitsTableRow(unit_id=unit_id, values=values))
 
 view = ssv.UnitsTable(columns=columns, rows=rows)
 view.show(title="Units Table Example", open_in_browser=True)
 ```
 
+Click a column header to sort by that column.
+
 <iframe data-src="./spike_sorting_tutorial_units_table/index.html?embedded=1" width="100%" height="400" frameborder="0" loading="lazy"></iframe>
 
 ## Unit Metrics Graph
 
-The Unit Metrics Graph provides interactive visualization of unit metrics, allowing you to analyze relationships between different properties of units:
+The Unit Metrics Graph shows the distribution of each unit metric, and the relationships between pairs of metrics. In this example the metrics are drawn at random for 200 units:
 
 ```python
-import spikeinterface.extractors as se
+import numpy as np
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic spike data
-recording, sorting = se.toy_example(
-    num_units=12, duration=300, seed=0, num_segments=1
-)
+rng = np.random.default_rng(0)
+num_units = 200
+firing_rate = rng.lognormal(mean=1.2, sigma=0.9, size=num_units)
+amplitude = rng.gamma(shape=3, scale=40, size=num_units)
+snr = amplitude / rng.normal(12, 2, size=num_units)
 
-# Define metrics to analyze
 metrics = [
-    ssv.UnitMetricsGraphMetric(key="numEvents", label="Num. events", dtype="int"),
-    ssv.UnitMetricsGraphMetric(key="firingRateHz", label="Firing rate (Hz)", dtype="float"),
+    ssv.UnitMetricsGraphMetric(key="firing_rate", label="Firing rate (Hz)", dtype="float"),
+    ssv.UnitMetricsGraphMetric(key="amplitude", label="Amplitude (uV)", dtype="float"),
+    ssv.UnitMetricsGraphMetric(key="snr", label="SNR", dtype="float"),
+]
+units = [
+    ssv.UnitMetricsGraphUnit(
+        unit_id=i + 1,
+        values={"firing_rate": firing_rate[i], "amplitude": amplitude[i], "snr": snr[i]},
+    )
+    for i in range(num_units)
 ]
 
-# Calculate metrics for each unit
-units = []
-for unit_id in sorting.get_unit_ids():
-    spike_train = sorting.get_unit_spike_train(segment_index=0, unit_id=unit_id)
-    units.append(
-        ssv.UnitMetricsGraphUnit(
-            unit_id=unit_id,
-            values={
-                "numEvents": len(spike_train),
-                "firingRateHz": len(spike_train) / (recording.get_num_frames(segment_index=0) / recording.get_sampling_frequency())
-            }
-        )
-    )
-
-# Create and show the view
 view = ssv.UnitMetricsGraph(units=units, metrics=metrics, height=500)
 view.show(title="Unit Metrics Graph Example", open_in_browser=True)
 ```
 
-This creates an interactive view where you can:
+Initially a histogram is shown for each metric. Check two or more metrics on the left to see scatter plots for each pair. You can also:
 
-- View histograms of individual metrics
-- Compare metrics in scatter plots
-- Select which metrics to display
-- Adjust histogram bin sizes
+- Adjust the histogram bin sizes
 - Zoom into regions of interest
-- Select and highlight units
+- Select units to highlight them in the other views of the figure
 
-<iframe data-src="./spike_sorting_tutorial_unit_metrics_graph/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
+<iframe data-src="./spike_sorting_tutorial_unit_metrics_graph/index.html?embedded=1" width="100%" height="550" frameborder="0" loading="lazy"></iframe>
 
 ## Raster Plot
 
-A raster plot shows when each unit fired spikes over time:
+A raster plot shows when each unit fired. In this simulation the population switches between active and quiet periods, loosely resembling the up and down states of slow-wave sleep:
 
 ```python
 import numpy as np
-import spikeinterface.extractors as se
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data
-recording, sorting = se.toy_example(
-    num_units=8, duration=30, seed=0, num_segments=1
-)
+rng = np.random.default_rng(0)
+duration_sec = 30
+dt = 0.001
+t = np.arange(0, duration_sec, dt)
 
-# Create raster plot items
-plot_items = []
-for unit_id in sorting.get_unit_ids():
-    spike_times_sec = (
-        np.array(sorting.get_unit_spike_train(segment_index=0, unit_id=unit_id))
-        / sorting.get_sampling_frequency()
-    )
-    plot_items.append(
-        ssv.RasterPlotItem(
-            unit_id=unit_id,
-            spike_times_sec=spike_times_sec.astype(np.float32)
-        )
-    )
+# The population switches between active "up" states and quiet "down" states
+up_state = np.convolve(rng.standard_normal(t.size), np.ones(700), mode="same") > 0
 
-view = ssv.RasterPlot(
-    start_time_sec=0,
-    end_time_sec=30,
-    plots=plot_items,
-)
+plots = []
+for unit_id in range(1, 21):
+    rate_hz = rng.lognormal(2, 0.6) * up_state + 0.5
+    spike_times_sec = t[rng.random(t.size) < rate_hz * dt]
+    plots.append(ssv.RasterPlotItem(unit_id=unit_id, spike_times_sec=spike_times_sec))
 
+view = ssv.RasterPlot(start_time_sec=0, end_time_sec=duration_sec, plots=plots)
 view.show(title="Raster Plot Example", open_in_browser=True)
 ```
 
@@ -142,46 +130,33 @@ Here's an example using real data from the DANDI Archive:
 
 ## Spike Amplitudes
 
-Visualize spike amplitudes over time to assess unit stability:
+Plotting spike amplitudes over time is a common way to assess the stability of units. In this simulation the probe drifts slowly relative to the tissue. The amplitude of each unit depends on its distance to the nearest electrode, so the drift makes some units larger and others smaller:
 
 ```python
 import numpy as np
-import spikeinterface.extractors as se
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data
-recording, sorting = se.toy_example(
-    num_units=5, duration=60, seed=0, num_segments=1
-)
+rng = np.random.default_rng(3)
+duration_sec = 600
 
-# Create amplitude plots with simulated data
-plot_items = []
-rng = np.random.default_rng(42)
+# Position of the probe relative to the tissue (micrometers, one value per second)
+drift_um = np.cumsum(rng.normal(0, 1, duration_sec))
 
-for unit_id in sorting.get_unit_ids():
-    spike_times_sec = (
-        np.array(sorting.get_unit_spike_train(segment_index=0, unit_id=unit_id))
-        / sorting.get_sampling_frequency()
-    )
-
-    # Simulate realistic amplitude data
-    base_amplitude = rng.uniform(50, 200)
-    amplitudes = base_amplitude + rng.normal(0, 10, len(spike_times_sec))
-
-    plot_items.append(
+plots = []
+for unit_id in range(1, 7):
+    spike_times_sec = np.sort(rng.uniform(0, duration_sec, rng.integers(1500, 6000)))
+    distance_um = rng.uniform(-30, 30) + np.interp(spike_times_sec, np.arange(duration_sec), drift_um)
+    peak_amplitude = rng.uniform(80, 300)
+    amplitudes = peak_amplitude * np.exp(-(distance_um / 50) ** 2) + rng.normal(0, 8, spike_times_sec.size)
+    plots.append(
         ssv.SpikeAmplitudesItem(
             unit_id=unit_id,
-            spike_times_sec=spike_times_sec.astype(np.float32),
-            spike_amplitudes=amplitudes.astype(np.float32),
+            spike_times_sec=spike_times_sec,
+            spike_amplitudes=amplitudes,
         )
     )
 
-view = ssv.SpikeAmplitudes(
-    start_time_sec=0,
-    end_time_sec=60,
-    plots=plot_items,
-)
-
+view = ssv.SpikeAmplitudes(start_time_sec=0, end_time_sec=duration_sec, plots=plots)
 view.show(title="Spike Amplitudes Example", open_in_browser=True)
 ```
 
@@ -206,115 +181,93 @@ view.show(title="NWB Spike Amplitudes Example")
 
 ## Average Waveforms
 
-Average waveforms show the average spike shape for each unit:
+Average waveforms show the average spike shape of each unit on each channel. The view can be created directly from a SpikeInterface sorting analyzer:
 
 ```python
 import spikeinterface as si
-import spikeinterface.extractors as se
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data with ground truth
 recording, sorting = si.generate_ground_truth_recording(
-    durations=[120],
-    num_units=8,
-    seed=0,
-    num_channels=6,
-    noise_kwargs={"noise_levels": 50},
+    durations=[60], num_channels=8, num_units=9, seed=4
 )
-
-# Create sorting analyzer to compute waveforms
 sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
 
-# Create average waveforms view
 view = ssv.AverageWaveforms.from_sorting_analyzer(sorting_analyzer)
 view.show(title="Average Waveforms Example", open_in_browser=True)
 ```
 
-This visualization allows you to:
-
-- View the average spike waveform for each unit
-- See waveforms across all recording channels
-- Assess the spatial extent and amplitude of each unit
-- Identify the primary channel for each unit
-- Compare waveform shapes between units
+This shows the spatial extent and amplitude of each unit across the channels, which helps to identify the primary channel of each unit and to compare waveform shapes between units.
 
 <iframe data-src="./spike_sorting_tutorial_average_waveforms/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Autocorrelograms
 
-Autocorrelograms help assess the quality of unit isolation by showing refractory periods:
+The autocorrelogram of a unit is a histogram of the time differences between its spikes. A dip at zero reflects the refractory period, and the rest of the shape reflects the firing pattern. Here we construct units with three kinds of firing: irregular (Poisson), bursting, and locked to an oscillation:
 
 ```python
-import spikeinterface.extractors as se
-import figpack_spike_sorting.views as ssv
-
-# Generate synthetic data
-recording, sorting = se.toy_example(
-    num_units=6, duration=120, seed=0, num_segments=1
-)
-
-# Use the built-in method for simplicity
-view = ssv.Autocorrelograms.from_sorting(sorting)
-view.show(title="Autocorrelograms Example", open_in_browser=True)
-```
-
-<iframe data-src="./spike_sorting_tutorial_autocorrelograms/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
-
-## Unit Locations
-
-The Unit Locations view shows the spatial arrangement of units and recording channels on the probe.
-
-In this example, we generate synthetic data and simulate unit locations for demonstration:
-
-```python
-from typing import List
 import numpy as np
 import spikeinterface as si
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data with ground truth
+rng = np.random.default_rng(0)
+duration_sec = 600
+sampling_frequency = 30000
+
+def poisson(rate_hz, refractory_sec=0.002):
+    t = np.sort(rng.uniform(0, duration_sec, rng.poisson(rate_hz * duration_sec)))
+    return t[np.insert(np.diff(t) > refractory_sec, 0, True)]
+
+def bursting(burst_rate_hz, isi_sec):
+    onsets = poisson(burst_rate_hz)
+    sizes = rng.integers(2, 6, onsets.size)
+    return np.concatenate([t0 + np.cumsum(rng.uniform(0.7, 1.3, n) * isi_sec) for t0, n in zip(onsets, sizes)])
+
+def rhythmic(freq_hz, p_fire, jitter_sec=0.002):
+    cycles = np.arange(0, duration_sec, 1 / freq_hz)
+    t = cycles[rng.random(cycles.size) < p_fire]
+    return t + rng.normal(0, jitter_sec, t.size)
+
+spike_trains = {
+    1: poisson(5),
+    2: poisson(30, refractory_sec=0.004),
+    3: bursting(2, isi_sec=0.004),
+    4: bursting(1, isi_sec=0.007),
+    5: rhythmic(40, p_fire=0.5),
+    6: rhythmic(25, p_fire=0.3, jitter_sec=0.004),
+}
+sorting = si.NumpySorting.from_unit_dict(
+    {u: np.sort((t * sampling_frequency).astype(int)) for u, t in spike_trains.items()},
+    sampling_frequency=sampling_frequency,
+)
+
+view = ssv.Autocorrelograms.from_sorting(sorting)
+view.show(title="Autocorrelograms Example", open_in_browser=True)
+```
+
+<iframe data-src="./spike_sorting_tutorial_autocorrelograms/index.html?embedded=1" width="100%" height="300" frameborder="0" loading="lazy"></iframe>
+
+## Unit Locations
+
+The Unit Locations view shows the estimated position of each unit relative to the electrodes of the probe. Here the locations are estimated by SpikeInterface from the average waveforms:
+
+```python
+import spikeinterface as si
+import figpack_spike_sorting.views as ssv
+
 recording, sorting = si.generate_ground_truth_recording(
-    durations=[120],
-    num_units=10,
-    seed=0,
-    num_channels=8,
-    noise_kwargs={"noise_levels": 50},
+    durations=[60], num_channels=32, num_units=16, seed=4
 )
+sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+sorting_analyzer.compute(["random_spikes", "templates", "unit_locations"])
+unit_locations = sorting_analyzer.get_extension("unit_locations").get_data()
 
-# Create unit locations view
-channel_locations = recording.get_channel_locations()
-xmin = np.min(channel_locations[:, 0])
-xmax = np.max(channel_locations[:, 0])
-if xmax <= xmin:
-    xmax = xmin + 1
-ymin = np.min(channel_locations[:, 1])
-ymax = np.max(channel_locations[:, 1])
-if ymax <= ymin:
-    ymax = ymin + 1
+units = [
+    ssv.UnitLocationsItem(unit_id=unit_id, x=float(loc[0]), y=float(loc[1]))
+    for unit_id, loc in zip(sorting.unit_ids, unit_locations)
+]
+channel_locations = dict(zip(recording.channel_ids, recording.get_channel_locations()))
 
-unit_ids = sorting.get_unit_ids()
-unit_items: List[ssv.UnitLocationsItem] = []
-for ii, unit_id in enumerate(unit_ids):
-    unit_items.append(
-        ssv.UnitLocationsItem(
-            unit_id=unit_id,
-            x=float(xmin + ((ii + 0.5) / len(unit_ids)) * (xmax - xmin)),
-            y=float(ymin + ((ii + 0.5) / len(unit_ids)) * (ymax - ymin)),  # simulated location
-        )
-    )
-
-channel_locations_dict = {}
-for ii, channel_id in enumerate(recording.channel_ids):
-    channel_locations_dict[str(channel_id)] = recording.get_channel_locations()[
-        ii, :
-    ].astype(np.float32)
-
-view = ssv.UnitLocations(
-    units=unit_items,
-    channel_locations=channel_locations_dict,
-    disable_auto_rotate=True
-)
-
+view = ssv.UnitLocations(units=units, channel_locations=channel_locations)
 view.show(title="Unit Locations Example", open_in_browser=True)
 ```
 
@@ -322,228 +275,160 @@ view.show(title="Unit Locations Example", open_in_browser=True)
 
 ## Cross Correlograms
 
-Cross correlograms reveal temporal relationships between different units, helping identify potential synchrony or interactions:
+Cross correlograms show the timing of the spikes of one unit relative to those of another, which can reveal synchrony or interactions between units. In this simulation unit 1 shares an input with unit 2, excites unit 3, and inhibits unit 4:
 
 ```python
-import spikeinterface.extractors as se
+import numpy as np
+import spikeinterface as si
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data with more units for cross-correlation analysis
-recording, sorting = se.toy_example(
-    num_units=9, duration=300, seed=0, num_segments=1
+rng = np.random.default_rng(0)
+duration_sec = 600
+sampling_frequency = 30000
+
+def poisson(rate_hz):
+    return np.sort(rng.uniform(0, duration_sec, rng.poisson(rate_hz * duration_sec)))
+
+def jitter(t, sd_sec):
+    return t + rng.normal(0, sd_sec, t.size)
+
+# Units 1 and 2 share a common input, so they tend to fire together
+common = poisson(3)
+u1 = np.sort(np.concatenate([poisson(6), jitter(common, 0.004)]))
+u2 = np.concatenate([poisson(6), jitter(common, 0.004)])
+
+# Unit 3 fires about 2 ms after 20% of the spikes of unit 1
+u3 = np.concatenate([poisson(5), jitter(u1[rng.random(u1.size) < 0.2] + 0.002, 0.0005)])
+
+# Unit 4 is silent for about 10 ms after each spike of unit 1
+u4 = poisson(25)
+since_u1 = u4 - u1[np.maximum(np.searchsorted(u1, u4) - 1, 0)]
+u4 = u4[(since_u1 < 0) | (since_u1 > rng.uniform(0.006, 0.014, u4.size))]
+
+sorting = si.NumpySorting.from_unit_dict(
+    {u: np.sort((t * sampling_frequency).astype(int)) for u, t in enumerate([u1, u2, u3, u4], start=1)},
+    sampling_frequency=sampling_frequency,
 )
 
-# Use the built-in method to create cross correlograms
 view = ssv.CrossCorrelograms.from_sorting(sorting)
 view.show(title="Cross Correlograms Example", open_in_browser=True)
 ```
+
+Select units in the list on the left to show the cross correlograms between them. The plot for units 1 and 2 has a broad peak centered at zero, the plot for units 1 and 3 has a narrow peak just after zero, and the plot for units 1 and 4 has a gap just after zero.
 
 <iframe data-src="./spike_sorting_tutorial_cross_correlograms/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
 
 ## Unit Similarity Matrix
 
-The Unit Similarity Matrix displays pairwise similarity scores between units, helping identify potentially redundant units or assess the overall quality of unit separation:
+The Unit Similarity Matrix displays a similarity score for each pair of units, which helps to identify units that may need to be merged. Here we use the similarity of the average waveforms computed by SpikeInterface, and order the units by depth so that units near each other on the probe are adjacent in the matrix:
 
 ```python
-from typing import List
-import spikeinterface.extractors as se
+import numpy as np
+import spikeinterface as si
 import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data
-recording, sorting = se.toy_example(
-    num_units=12, duration=300, seed=0, num_segments=1
+recording, sorting = si.generate_ground_truth_recording(
+    durations=[60], num_channels=32, num_units=16, seed=4
 )
+sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+sorting_analyzer.compute(["random_spikes", "templates", "unit_locations", "template_similarity"])
+similarity = sorting_analyzer.get_extension("template_similarity").get_data()
+depths = sorting_analyzer.get_extension("unit_locations").get_data()[:, 1]
 
-unit_ids = list(sorting.get_unit_ids())
+order = np.argsort(depths)
+unit_ids = list(sorting.unit_ids[order])
+similarity = similarity[order][:, order]
+similarity_scores = [
+    ssv.UnitSimilarityScore(unit_id1=u1, unit_id2=u2, similarity=float(similarity[i, j]))
+    for i, u1 in enumerate(unit_ids)
+    for j, u2 in enumerate(unit_ids)
+]
 
-# Create similarity scores between all pairs of units
-# In practice, these would be computed from actual waveform comparisons
-similarity_scores: List[ssv.UnitSimilarityScore] = []
-for i, u1 in enumerate(unit_ids):
-    for j, u2 in enumerate(unit_ids):
-        # Example: fake similarity score for demonstration
-        # In real use, compute from waveform correlations, template matching, etc.
-        # Using indices to create a numeric similarity metric
-        similarity = 1 - abs(i - j) / (i + j + 1)
-        similarity_scores.append(
-            ssv.UnitSimilarityScore(unit_id1=u1, unit_id2=u2, similarity=similarity)
-        )
-
-# Create the view with optional range parameter for color scaling
-view = ssv.UnitSimilarityMatrix(
-    unit_ids=unit_ids,
-    similarity_scores=similarity_scores,
-    range=(0, 1)  # Optional: specify min/max values for color scale
-)
-
+view = ssv.UnitSimilarityMatrix(unit_ids=unit_ids, similarity_scores=similarity_scores, range=(0, 1))
 view.show(title="Unit Similarity Matrix Example", open_in_browser=True)
 ```
 
-This visualization allows you to:
-
-- View similarity scores in a heatmap format
-- Identify highly similar units that may need merging
-- Select units to highlight their similarity relationships
-- Use the "Select Similar" button to quickly select the most similar units to the current selection
+Click a cell to select the corresponding pair of units. The `range` argument sets the values that map to the ends of the color scale.
 
 <iframe data-src="./spike_sorting_tutorial_unit_similarity_matrix/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Spike Locations
 
-The Spike Locations view displays the spatial distribution of individual spike events in 2D space, useful for visualizing spike localization from multi-electrode arrays:
+The Spike Locations view shows the estimated position of each individual spike. Spikes from a well isolated unit form a compact cluster:
 
 ```python
-from typing import List
-import numpy as np
-import spikeinterface.extractors as se
-from figpack_spike_sorting.views import SpikeLocations, SpikeLocationsItem
+import spikeinterface as si
+import figpack_spike_sorting.views as ssv
 
-# Generate synthetic spike data
-recording, sorting = se.toy_example(
-    num_units=12, num_channels=10, duration=300, seed=0
+recording, sorting = si.generate_ground_truth_recording(
+    durations=[60], num_channels=32, num_units=16, seed=4
 )
+sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+sorting_analyzer.compute(["random_spikes", "templates"])
+sorting_analyzer.compute("spike_locations", method="grid_convolution")
+spike_locations = sorting_analyzer.get_extension("spike_locations").get_data(outputs="by_unit")[0]
 
-# Get channel locations for the probe
-channel_locations = recording.get_channel_locations().astype(np.float32)
-xmin = np.min(channel_locations[:, 0])
-xmax = np.max(channel_locations[:, 0])
-ymin = np.min(channel_locations[:, 1])
-ymax = np.max(channel_locations[:, 1])
-
-# Expand ranges for better visualization
-xspan = xmax - xmin
-yspan = ymax - ymin
-if xmax <= xmin:
-    xmin = xmin - 12
-    xmax = xmax + 12
-if ymax <= ymin:
-    ymin = ymin - 12
-    ymax = ymax + 12
-
-xspan = xmax - xmin
-yspan = ymax - ymin
-xmin = xmin - xspan * 0.2
-xmax = xmax + xspan * 0.2
-ymin = ymin - yspan * 0.2
-ymax = ymax + yspan * 0.2
-
-# Create spike location items for each unit
-rng = np.random.default_rng(2022)
-items: List[SpikeLocationsItem] = []
-for unit_id in sorting.get_unit_ids():
-    spike_times_sec = (
-        np.array(sorting.get_unit_spike_train(segment_index=0, unit_id=unit_id))
-        / sorting.get_sampling_frequency()
-    )
-    
-    # Simulate a center location for this unit
-    center_x = rng.uniform(xmin, xmax)
-    center_y = rng.uniform(ymin, ymax)
-    
-    # Create simulated spike locations around the center
-    items.append(
-        SpikeLocationsItem(
+units = []
+for unit_id in sorting.unit_ids:
+    units.append(
+        ssv.SpikeLocationsItem(
             unit_id=unit_id,
-            spike_times_sec=spike_times_sec.astype(np.float32),
-            x_locations=rng.normal(center_x, 6, spike_times_sec.shape).astype(
-                np.float32
-            ),
-            y_locations=rng.normal(center_y, 6, spike_times_sec.shape).astype(
-                np.float32
-            ),
+            spike_times_sec=sorting.get_unit_spike_train(unit_id) / sorting.sampling_frequency,
+            x_locations=spike_locations[unit_id]["x"],
+            y_locations=spike_locations[unit_id]["y"],
         )
     )
 
-# Prepare channel locations dictionary
-channel_locations_dict = {}
-for ii, channel_id in enumerate(recording.get_channel_ids()):
-    channel_locations_dict[str(channel_id)] = recording.get_channel_locations()[
-        ii, :
-    ].astype(np.float32)
-
-# Create the view
-view = SpikeLocations(
-    units=items,
-    x_range=(float(xmin), float(xmax)),
-    y_range=(float(ymin), float(ymax)),
-    channel_locations=channel_locations_dict,
-    disable_auto_rotate=True,
+channel_locations = recording.get_channel_locations()
+view = ssv.SpikeLocations(
+    units=units,
+    x_range=(channel_locations[:, 0].min() - 40, channel_locations[:, 0].max() + 40),
+    y_range=(channel_locations[:, 1].min() - 20, channel_locations[:, 1].max() + 20),
+    channel_locations=dict(zip(recording.channel_ids, channel_locations)),
 )
-
 view.show(title="Spike Locations Example", open_in_browser=True)
 ```
 
-This visualization allows you to:
-
-- View the 2D spatial distribution of spike events
-- Visualize how spikes cluster in space for each unit
-- See channel locations overlaid on the spike scatter plot
-- Select and highlight specific units
-- Use the "Only show selected" option to focus on particular units
+Select units to highlight them, and use the "only show selected" option to focus on particular units.
 
 <iframe data-src="./spike_sorting_tutorial_spike_locations/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
 ## Simple Combined Layout
 
-Combine multiple views:
+Views in the same figure share the unit selection. In this layout, selecting units in the table highlights them in the raster plot:
 
 ```python
 import numpy as np
-import spikeinterface.extractors as se
-import figpack_spike_sorting.views as ssv
 import figpack.views as vv
+import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data
-recording, sorting = se.toy_example(
-    num_units=6, duration=60, seed=0, num_segments=1
-)
-
-# Create units table
-columns = [
-    ssv.UnitsTableColumn(key="unitId", label="Unit", dtype="int"),
-    ssv.UnitsTableColumn(key="numSpikes", label="Spikes", dtype="int"),
-]
+rng = np.random.default_rng(0)
+duration_sec = 30
+dt = 0.001
+t = np.arange(0, duration_sec, dt)
+up_state = np.convolve(rng.standard_normal(t.size), np.ones(700), mode="same") > 0
 
 rows = []
-for unit_id in sorting.get_unit_ids():
-    spike_count = len(sorting.get_unit_spike_train(unit_id=unit_id))
-    rows.append(
-        ssv.UnitsTableRow(
-            unit_id=unit_id,
-            values={"unitId": unit_id, "numSpikes": spike_count},
-        )
-    )
+raster_items = []
+for unit_id in range(1, 21):
+    rate_hz = rng.lognormal(2, 0.6) * up_state + 0.5
+    spike_times_sec = t[rng.random(t.size) < rate_hz * dt]
+    firing_rate = round(len(spike_times_sec) / duration_sec, 1)
+    rows.append(ssv.UnitsTableRow(unit_id=unit_id, values={"firing_rate": firing_rate}))
+    raster_items.append(ssv.RasterPlotItem(unit_id=unit_id, spike_times_sec=spike_times_sec))
 
-units_table = ssv.UnitsTable(columns=columns, rows=rows)
-
-# Create raster plot
-plot_items = []
-for unit_id in sorting.get_unit_ids():
-    spike_times_sec = (
-        np.array(sorting.get_unit_spike_train(segment_index=0, unit_id=unit_id))
-        / sorting.get_sampling_frequency()
-    )
-    plot_items.append(
-        ssv.RasterPlotItem(
-            unit_id=unit_id,
-            spike_times_sec=spike_times_sec.astype(np.float32)
-        )
-    )
-
-raster_plot = ssv.RasterPlot(
-    start_time_sec=0,
-    end_time_sec=60,
-    plots=plot_items,
+units_table = ssv.UnitsTable(
+    columns=[ssv.UnitsTableColumn(key="firing_rate", label="Rate (Hz)", dtype="float")],
+    rows=rows,
 )
+raster_plot = ssv.RasterPlot(start_time_sec=0, end_time_sec=duration_sec, plots=raster_items)
 
-# Combine in a layout
 view = vv.Splitter(
     direction="horizontal",
     item1=vv.LayoutItem(view=units_table, max_size=300, title="Units"),
     item2=vv.LayoutItem(view=raster_plot, title="Spike Times"),
-    split_pos=0.3,
+    split_pos=0.25,
 )
-
 view.show(title="Spike Sorting Dashboard", open_in_browser=True)
 ```
 
@@ -551,62 +436,41 @@ view.show(title="Spike Sorting Dashboard", open_in_browser=True)
 
 ## Sorting Curation
 
-The Sorting Curation view provides an interactive interface for manually curating spike sorting results. This allows you to label units as "good", "noise", "mua" (multi-unit activity), or other custom labels to assess the quality of the sorting:
+The Sorting Curation view provides an interface for manually curating spike sorting results. You can label units as "good", "mua" (multi-unit activity), "noise", or with custom labels, and mark units to be merged. Click "Curate Figure" at the bottom of the figure to begin, then select units in the table and assign labels:
 
 ```python
-from typing import List
-import spikeinterface.extractors as se
-import figpack_spike_sorting.views as ssv
+import spikeinterface as si
 import figpack.views as vv
+import figpack_spike_sorting.views as ssv
 
-# Generate synthetic data
-recording, sorting = se.toy_example(
-    num_units=18, duration=300, seed=0, num_segments=1
+recording, sorting = si.generate_ground_truth_recording(
+    durations=[120], num_channels=8, num_units=9, seed=4
 )
-
-# Create a units table for the left side
-columns: List[ssv.UnitsTableColumn] = [
-    ssv.UnitsTableColumn(key="unitId", label="Unit", dtype="int"),
-]
-rows: List[ssv.UnitsTableRow] = []
-for unit_id in sorting.get_unit_ids():
-    rows.append(
-        ssv.UnitsTableRow(
-            unit_id=unit_id,
-            values={
-                "unitId": unit_id,
-            },
-        )
-    )
+sorting_analyzer = si.create_sorting_analyzer(sorting=sorting, recording=recording)
+sorting_analyzer.compute(["random_spikes", "templates", "noise_levels"])
+sorting_analyzer.compute("quality_metrics", metric_names=["snr"])
+snr = sorting_analyzer.get_extension("quality_metrics").get_data()["snr"]
 
 units_table = ssv.UnitsTable(
-    columns=columns,
-    rows=rows,
+    columns=[ssv.UnitsTableColumn(key="snr", label="SNR", dtype="float")],
+    rows=[ssv.UnitsTableRow(unit_id=u, values={"snr": round(snr[u], 1)}) for u in sorting.unit_ids],
 )
+curation = ssv.SortingCuration(default_label_options=["good", "mua", "noise"])
+waveforms = ssv.AverageWaveforms.from_sorting_analyzer(sorting_analyzer)
 
-# Create autocorrelograms for the right side
-autocorrelograms = ssv.Autocorrelograms.from_sorting(sorting)
-
-# Create the sorting curation view
-curation_view = ssv.SortingCuration(default_label_options=["mua", "good", "noise"])
-
-# Combine views in a layout
 left_panel = vv.Box(
     direction="vertical",
     items=[
-        vv.LayoutItem(view=units_table, title="Units Table"),
-        vv.LayoutItem(view=curation_view, title="Sorting Curation"),
+        vv.LayoutItem(view=units_table, title="Units"),
+        vv.LayoutItem(view=curation, title="Curation"),
     ],
 )
-
-# Create splitter with units table and curation on left, autocorrelograms on right
 view = vv.Splitter(
     direction="horizontal",
-    item1=vv.LayoutItem(view=left_panel, max_size=800, title="Units"),
-    item2=vv.LayoutItem(view=autocorrelograms, title="Autocorrelograms"),
-    split_pos=0.25,  # 25% for the left panel, 75% for autocorrelograms
+    item1=vv.LayoutItem(view=left_panel, max_size=400),
+    item2=vv.LayoutItem(view=waveforms, title="Average Waveforms"),
+    split_pos=0.3,
 )
-
 view.show(title="Sorting Curation Example", open_in_browser=True)
 ```
 

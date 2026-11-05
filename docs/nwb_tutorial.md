@@ -13,13 +13,12 @@ figpack extensions install --upgrade figpack_nwb
 
 ## Plane Segmentation
 
-The Plane Segmentation view displays calcium imaging data with region of interest (ROI) segmentation from NWB files.
+The Plane Segmentation view displays the regions of interest (ROIs) found in a calcium imaging recording, read from the PlaneSegmentation table of an NWB file. Both dense (`image_mask`) and sparse (`pixel_mask`) masks are supported. Here we load the 475 ROIs of a two-photon session from the Allen Brain Observatory ([DANDI:000728](https://dandiarchive.org/dandiset/000728)), streamed from the DANDI Archive:
 
 ```python
 import figpack_nwb.views as fpn
 
-# Load plane segmentation data from a remote NWB file
-nwb_url = "https://api.dandiarchive.org/api/assets/4660dd15-93b2-4e64-88b1-ba92871989b4/download/"
+nwb_url = "https://api.dandiarchive.org/api/assets/25f50ae3-00ae-40b4-839c-ec331403e5a2/download/"
 path = "/processing/ophys/ImageSegmentation/PlaneSegmentation"
 
 view = fpn.PlaneSegmentation(nwb=nwb_url, path=path, use_local_cache=True)
@@ -30,12 +29,11 @@ view.show(title="Plane Segmentation Example", open_in_browser=True)
 
 ## Pose Estimation
 
-The Pose Estimation view displays pose tracking data from NWB files.
+The Pose Estimation view animates body part positions from a PoseEstimation object (from the ndx-pose extension) in an NWB file. Here we load the tracked face and paw points from one camera of a mouse behavior session:
 
 ```python
 import figpack_nwb.views as fpn
 
-# Load pose estimation data from a remote NWB file
 nwb_url = "https://api.dandiarchive.org/api/assets/37ca1798-b14c-4224-b8f0-037e27725336/download/"
 path = "/processing/behavior/PoseEstimationLeftCamera"
 
