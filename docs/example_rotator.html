@@ -3,191 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutorial Examples Rotator</title>
+    <title>figpack examples</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
+            font-family: Lato, "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+            font-size: 14px;
+            color: #404040;
+            background: #fff;
         }
-        
-        #rotatingIframe {
-            width: 100vw;
-            height: 100vh;
+
+        body {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e1e4e5;
+        }
+
+        #bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            padding: 8px 10px;
+            background: #f3f6f6;
+            border-bottom: 1px solid #e1e4e5;
+        }
+
+        #nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1 1 260px;
+            min-width: 0;
+        }
+
+        .arrow {
+            flex: none;
+            width: 30px;
+            height: 30px;
+            border: 1px solid #c9d0d3;
+            border-radius: 4px;
+            background: #fff;
+            color: #404040;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .arrow:hover {
+            background: #e7f2fa;
+        }
+
+        #picker {
+            flex: 1 1 auto;
+            min-width: 0;
+            max-width: 340px;
+            height: 30px;
+            padding: 0 6px;
+            border: 1px solid #c9d0d3;
+            border-radius: 4px;
+            background: #fff;
+            color: #404040;
+            font: inherit;
+            font-weight: bold;
+        }
+
+        #counter {
+            flex: none;
+            color: #808080;
+            font-size: 12px;
+        }
+
+        #links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        #links a {
+            color: #2980b9;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        #links a:hover {
+            text-decoration: underline;
+        }
+
+        #frame {
+            flex: 1 1 auto;
+            width: 100%;
             border: none;
             display: block;
-        }
-        
-        #controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 5px;
-            z-index: 1000;
-        }
-        
-        .control-btn {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .control-btn:hover {
-            background-color: #0056b3;
-        }
-        
-        .control-btn:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        .hidden {
-            display: none;
+            background: #f5f5f5;
         }
     </style>
 </head>
 <body>
-    <div id="controls">
-        <button id="prevBtn" class="control-btn">Prev</button>
-        <button id="playBtn" class="control-btn hidden">Play</button>
-        <button id="pauseBtn" class="control-btn">Pause</button>
-        <button id="nextBtn" class="control-btn">Next</button>
+    <div id="bar">
+        <div id="nav">
+            <button id="prevBtn" class="arrow" title="Previous example" aria-label="Previous example">&#9664;</button>
+            <select id="picker" aria-label="Choose an example"></select>
+            <button id="nextBtn" class="arrow" title="Next example" aria-label="Next example">&#9654;</button>
+            <span id="counter"></span>
+        </div>
+        <div id="links">
+            <a id="docLink" target="_top" title="The section of the docs with the code for this figure">How it's made &rarr;</a>
+            <a id="fullLink" target="_blank" rel="noopener" title="Open this figure in a new tab">Open full size &#8599;</a>
+        </div>
     </div>
-    
-    <iframe id="rotatingIframe"></iframe>
-    
+    <iframe id="frame" title="figpack example"></iframe>
+
     <script>
-        const iframe = document.getElementById('rotatingIframe');
-        const playBtn = document.getElementById('playBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        
-        let intervalId = null;
-        let isPlaying = true;
-        let currentIndex = 0;
-        let urls = [];
-        let viewCount = 0;
-        
-        // Shuffle array using Fisher-Yates algorithm
-        function shuffleArray(array) {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
+        // The examples, with links to their sections of the docs, are listed
+        // in example_rotator.json (made by devel/generate_example_rotator.py)
+        const frame = document.getElementById('frame');
+        const picker = document.getElementById('picker');
+        const counter = document.getElementById('counter');
+        const docLink = document.getElementById('docLink');
+        const fullLink = document.getElementById('fullLink');
+        let examples = [];
+        let current = -1;
+
+        function show(index) {
+            current = (index + examples.length) % examples.length;
+            const ex = examples[current];
+            frame.src = ex.url;
+            picker.value = String(current);
+            counter.textContent = `${current + 1} / ${examples.length}`;
+            docLink.href = './' + ex.docUrl;
+            fullLink.href = ex.fullUrl;
         }
-        
-        // Load URLs from text file
-        async function loadUrls() {
-            try {
-                const response = await fetch('./example_rotator.txt');
-                const text = await response.text();
-                const originalUrls = text.split('\n')
-                    .map(line => line.trim())
-                    .filter(line => line.length > 0);
-                
-                // Create randomized circular ordering
-                urls = shuffleArray(originalUrls);
-                
-                // Start the rotator once URLs are loaded
-                initializeRotator();
-            } catch (error) {
-                console.error('Failed to load URLs:', error);
-            }
+
+        async function init() {
+            const response = await fetch('./example_rotator.json');
+            examples = await response.json();
+
+            let group = null;
+            let optgroup = null;
+            examples.forEach((ex, i) => {
+                if (ex.group !== group) {
+                    group = ex.group;
+                    optgroup = document.createElement('optgroup');
+                    optgroup.label = group;
+                    picker.appendChild(optgroup);
+                }
+                const option = document.createElement('option');
+                option.value = String(i);
+                option.textContent = ex.label;
+                optgroup.appendChild(option);
+            });
+
+            // Start with a randomly chosen featured example
+            const featured = examples.map((ex, i) => (ex.featured ? i : -1)).filter((i) => i >= 0);
+            const pool = featured.length > 0 ? featured : examples.map((_, i) => i);
+            show(pool[Math.floor(Math.random() * pool.length)]);
         }
-        
-        // Initialize rotator after URLs are loaded
-        function initializeRotator() {
-            // Load first iframe immediately
-            loadCurrentUrl();
-            
-            // Start rotating every 5 seconds
-            intervalId = setInterval(nextUrl, 5000);
-        }
-        
-        // Function to update iframe source
-        function loadCurrentUrl() {
-            iframe.src = urls[currentIndex];
-        }
-        
-        // Function to go to next URL
-        function nextUrl() {
-            currentIndex = (currentIndex + 1) % urls.length;
-            loadCurrentUrl();
-            viewCount++;
-            
-            if (viewCount >= 5 && isPlaying) {
-                pauseRotation();
-                viewCount = 0; // Reset counter for next play session
-            }
-        }
-        
-        // Function to go to previous URL
-        function prevUrl() {
-            currentIndex = (currentIndex - 1 + urls.length) % urls.length;
-            loadCurrentUrl();
-        }
-        
-        // Manual navigation functions that pause if playing
-        function manualNext() {
-            if (isPlaying) {
-                pauseRotation();
-            }
-            nextUrl();
-        }
-        
-        function manualPrev() {
-            if (isPlaying) {
-                pauseRotation();
-            }
-            prevUrl();
-        }
-        
-        // Function to start rotation
-        function startRotation() {
-            if (!isPlaying) {
-                isPlaying = true;
-                viewCount = 0; // Reset view counter when starting
-                nextUrl();
-                intervalId = setInterval(nextUrl, 5000);
-                playBtn.classList.add('hidden');
-                pauseBtn.classList.remove('hidden');
-            }
-        }
-        
-        // Function to pause rotation
-        function pauseRotation() {
-            if (isPlaying) {
-                isPlaying = false;
-                clearInterval(intervalId);
-                intervalId = null;
-                playBtn.classList.remove('hidden');
-                pauseBtn.classList.add('hidden');
-            }
-        }
-        
-        // Event listeners
-        playBtn.addEventListener('click', startRotation);
-        pauseBtn.addEventListener('click', pauseRotation);
-        prevBtn.addEventListener('click', manualPrev);
-        nextBtn.addEventListener('click', manualNext);
-        
-        // Load URLs and start the rotator
-        loadUrls();
+
+        document.getElementById('prevBtn').addEventListener('click', () => show(current - 1));
+        document.getElementById('nextBtn').addEventListener('click', () => show(current + 1));
+        picker.addEventListener('change', () => show(Number(picker.value)));
+
+        init().catch((err) => {
+            console.error('Failed to load the examples:', err);
+            counter.textContent = 'Could not load the examples.';
+        });
     </script>
 </body>
 </html>

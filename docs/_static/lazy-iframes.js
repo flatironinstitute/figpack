@@ -37,12 +37,30 @@
         });
     }, config);
 
+    // Add an "Open in new tab" link below an embedded figure
+    function addOpenLink(iframe) {
+        const src = iframe.dataset.src;
+        if (!src || !src.includes('index.html')) return;
+        const link = document.createElement('a');
+        link.className = 'figure-open-link';
+        link.href = src.replace(/[?&]embedded=1/, '');
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'Open in new tab \u2197';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'figure-open-link-wrapper';
+        wrapper.appendChild(link);
+        iframe.insertAdjacentElement('afterend', wrapper);
+    }
+
     // Function to setup lazy loading
     function setupLazyIframes() {
         // Find all iframes with data-src attribute
         const lazyIframes = document.querySelectorAll('iframe[data-src]');
         
         lazyIframes.forEach(function(iframe) {
+            addOpenLink(iframe);
+
             // Add loading class for styling
             iframe.classList.add('lazy-loading');
             

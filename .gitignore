@@ -35,3 +35,4 @@ figpack/figpack-figure-dist
 
 # Documentation
 docs/_build/
+docs/example_rotator.json

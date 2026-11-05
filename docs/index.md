@@ -4,7 +4,9 @@ A Python package for creating shareable, interactive visualizations in the brows
 
 [Star this project on GitHub](https://github.com/flatironinstitute/figpack)
 
-<iframe src="./example_rotator.html" width="100%" height="400" frameborder="0"></iframe>
+Examples from the tutorials are shown below. Use the arrows or the menu to browse them, "How it's made" to see the code for an example, and "Open full size" to open it in a new tab.
+
+<iframe src="./example_rotator.html" width="100%" height="560" frameborder="0"></iframe>
 
 ## Overview
 
