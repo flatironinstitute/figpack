@@ -83,6 +83,7 @@ docs = [
     "lindi",
     "nibabel",
     "Pillow",
+    "scipy",
 ]
 
 [project.urls]
