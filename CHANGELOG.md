@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+- figpack_experimental 0.1.17: LossyVideo takes optional `start_time_sec` and `sampling_frequency_hz` (frames per second of data time, default `fps`). With a start time, the video is synchronized with the other time-based views in the figure: frame i is shown at `start_time_sec + i / sampling_frequency_hz`, the slider and Play move the shared current time, and playback advances `fps` frames per second of wall-clock time, continuing from wherever another view moves the time. Without a start time the video plays standalone as before
+- figpack_experimental 0.1.17: LinearDecode draws the observed-position overlay on its own (full resolution) time base; it was drawn on the time base of the possibly downsampled decode data, so it was misaligned when zoomed out
+- figpack_nwb 0.1.9: PlaneSegmentation supports sparse `pixel_mask` ROIs (as in Allen Brain Observatory files), in addition to `image_mask`. The masks are stored in the figure as flat x, y and weight arrays with `pixel_mask_index`
+- figpack_nwb 0.1.9: PlaneSegmentation reads the NWB file with h5py (over remfile for URLs), fetching only the datasets it needs, instead of building a lindi index of the whole file first. For a 1 GB Allen file this takes seconds rather than more than ten minutes. `use_local_cache=True` now uses a remfile disk cache
+
 ## [0.4.3] - 2026-11-04
 
 - Style keys for appearance: font sizes, font family, text, background, gridline, title bar and border colors, and colormaps. Every view has `set_style(**keys)` (unknown keys raise a ValueError), and a style cascades: each view's effective style is the style of the view containing it with its own keys merged over it, so a style on the root view styles the whole figure. Styles appear as `props.style` in the figure spec, and the spec reference gets a Style section listing the keys used by the figure's views, so remixes can change appearance. Used by TimeseriesGraph, MultiChannelTimeseries, Spectrogram, Box, VerticalLayout, TabLayout, Splitter, CaptionedView and Markdown; keys are listed in docs/styling_figures.md

@@ -110,7 +110,11 @@ export class LinearDecodeClient {
   async getVisibleObservedPositions(
     visibleStartTimeSec: number,
     visibleEndTimeSec: number,
-  ): Promise<Float32Array | null> {
+  ): Promise<{
+    positions: Float32Array;
+    startTimeSec: number;
+    samplingFrequency: number;
+  } | null> {
     if (!this.observedPositions) {
       return null;
     }
@@ -129,8 +133,13 @@ export class LinearDecodeClient {
       ),
     );
 
-    // Return slice of observed positions
-    return this.observedPositions.slice(startIndex, endIndex + 1);
+    // Return slice of observed positions (full resolution), with the time of
+    // its first sample
+    return {
+      positions: this.observedPositions.slice(startIndex, endIndex + 1),
+      startTimeSec: this.startTimeSec + startIndex / this.samplingFrequencyHz,
+      samplingFrequency: this.samplingFrequencyHz,
+    };
   }
 
   private _selectDownsampleFactor(

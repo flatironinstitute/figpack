@@ -94,8 +94,11 @@ const FPLinearDecodeChild: React.FC<{
   } | null>(null);
 
   // Load visible observed positions
-  const [visibleObservedPositions, setVisibleObservedPositions] =
-    useState<Float32Array | null>(null);
+  const [visibleObservedPositions, setVisibleObservedPositions] = useState<{
+    positions: Float32Array;
+    startTimeSec: number;
+    samplingFrequency: number;
+  } | null>(null);
 
   useEffect(() => {
     if (
@@ -260,7 +263,11 @@ const createDrawFunction =
       length: number;
       nPositions: number;
     };
-    visibleObservedPositions: Float32Array | null;
+    visibleObservedPositions: {
+      positions: Float32Array;
+      startTimeSec: number;
+      samplingFrequency: number;
+    } | null;
     yRange: { yMin: number; yMax: number } | undefined;
     brightness: number | undefined;
   }) =>
@@ -339,11 +346,16 @@ const createDrawFunction =
     });
 
     // Draw observed positions overlay if available
-    if (visibleObservedPositions && visibleObservedPositions.length > 0) {
+    // (these are at full resolution, so use their own time base rather than
+    // that of the possibly downsampled decode data)
+    if (
+      visibleObservedPositions &&
+      visibleObservedPositions.positions.length > 0
+    ) {
       paintObservedPositions(context, {
-        observedPositions: visibleObservedPositions,
-        startTimeSec: visibleData.startTimeSec,
-        samplingFrequency: visibleData.samplingFrequency,
+        observedPositions: visibleObservedPositions.positions,
+        startTimeSec: visibleObservedPositions.startTimeSec,
+        samplingFrequency: visibleObservedPositions.samplingFrequency,
         visibleStartTimeSec,
         visibleEndTimeSec,
         timeToPixel,

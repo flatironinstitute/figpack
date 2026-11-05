@@ -418,6 +418,14 @@ v.show(title="Bouncing Balls Animation", open_in_browser=True)
 
 <iframe data-src="./tutorial_lossy_video_example/index.html?embedded=1" width="100%" height="500" frameborder="0" loading="lazy"></iframe>
 
+To synchronize a video with the other time-based views in a figure (for example a TimeseriesGraph of the same recording), give it a start time, and the frame rate of the data if it differs from the playback rate:
+
+```python
+v = fpj.LossyVideo(data=data, fps=30, start_time_sec=0.0, sampling_frequency_hz=100)
+```
+
+Frame i is then shown at time `start_time_sec + i / sampling_frequency_hz`. Moving the time in another view moves the video, and playing the video moves the time cursor in the other views.
+
 ### fMRI BOLD View
 
 The figpack_experimental extension includes a view for visualizing fMRI BOLD data from NIfTI files.
