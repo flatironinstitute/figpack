@@ -18,6 +18,7 @@ import {
 	handleCreateFigure,
 	handleGetFigure,
 	handleListFigures,
+	handleRecentCreators,
 	handleDeleteFigure,
 	handleFinalizeFigure,
 } from './handlers/figuresHandler';
@@ -217,6 +218,13 @@ export default {
 		if (url.pathname === '/figures/list') {
 			if (request.method.toUpperCase() === 'GET') {
 				return handleListFigures(request, env, rateLimitResult);
+			}
+			return json({ success: false, message: 'Method not allowed' }, 405);
+		}
+
+		if (url.pathname === '/figures/recent-creators') {
+			if (request.method.toUpperCase() === 'GET') {
+				return handleRecentCreators(request, env, rateLimitResult);
 			}
 			return json({ success: false, message: 'Method not allowed' }, 405);
 		}

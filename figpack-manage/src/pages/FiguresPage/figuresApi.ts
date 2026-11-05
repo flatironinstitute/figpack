@@ -37,6 +37,8 @@ export interface FigureListResponse {
 export interface FigureListParams {
   apiKey: string;
   all?: boolean;
+  // Admin only, with all: restrict to figures owned by this email
+  owner?: string;
   page?: number;
   limit?: number;
   status?: "uploading" | "completed" | "failed";
@@ -61,6 +63,7 @@ export const getFigures = async (
   const {
     apiKey,
     all = false,
+    owner,
     page = 1,
     limit = 50,
     status,
@@ -87,6 +90,10 @@ export const getFigures = async (
 
     if (all) {
       queryParams.append("all", "true");
+    }
+
+    if (owner) {
+      queryParams.append("owner", owner);
     }
 
     if (status) {

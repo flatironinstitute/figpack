@@ -65,3 +65,42 @@ describe('GET /figures/list', () => {
 		}
 	});
 });
+
+describe('admin owner filter and recent creators', () => {
+	beforeEach(async () => {
+		await env.figpack_db.prepare("UPDATE users SET is_admin = 1 WHERE email = 'user@example.com'").run();
+	});
+
+	it('filters /figures/list by owner only when listing all as admin', async () => {
+		expect((await listTitles({ all: 'true', owner: 'other@example.com' })).titles).toEqual(['others-expired']);
+		await env.figpack_db.prepare("UPDATE users SET is_admin = 0 WHERE email = 'user@example.com'").run();
+		expect((await listTitles({ all: 'true', owner: 'other@example.com' })).titles).not.toContain('others-expired');
+	});
+
+	it('groups figures created in the last N days by owner', async () => {
+		const day = 24 * 60 * 60 * 1000;
+		await env.figpack_db
+			.prepare('UPDATE figures SET created_at = ?, total_size = 10')
+			.bind(Date.now() - 20 * day)
+			.run();
+		await insertFigure('recent1', { created_at: Date.now() - day, total_size: 5 });
+		await insertFigure('recent2', { created_at: Date.now() - 2 * day, total_size: 7 });
+		await insertFigure('other-recent', { owner_email: 'other@example.com', created_at: Date.now() - 3 * day, is_ephemeral: 1 });
+
+		const fetchCreators = async (days: string) => {
+			const resp = await SELF.fetch(`https://example.com/figures/recent-creators?days=${days}`, { headers: { 'x-api-key': USER_KEY } });
+			return { status: resp.status, data: (await resp.json()) as any };
+		};
+
+		const { status, data } = await fetchCreators('14');
+		expect(status, data.message).toBe(200);
+		expect(data.creators.map((c: any) => [c.email, c.figureCount, c.ephemeralCount, c.totalSize])).toEqual([
+			['user@example.com', 2, 0, 12],
+			['other@example.com', 1, 1, 0],
+		]);
+		expect((await fetchCreators('30')).data.creators.find((c: any) => c.email === 'user@example.com').figureCount).toBe(7);
+
+		await env.figpack_db.prepare("UPDATE users SET is_admin = 0 WHERE email = 'user@example.com'").run();
+		expect((await fetchCreators('14')).status).toBe(403);
+	});
+});

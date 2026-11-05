@@ -33,6 +33,7 @@ import BucketsSummary from "../BucketsPage/BucketsSummary";
 import EditBucketDialog from "../BucketsPage/EditBucketDialog";
 import EditUserDialog from "./EditUserDialog";
 import LlmSpendingPanel from "./LlmSpendingPanel";
+import RecentCreatorsPanel from "./RecentCreatorsPanel";
 import RenewBulkResultsDialog from "./RenewBulkResultsDialog";
 import type { User } from "./UsersSummary";
 import UsersSummary from "./UsersSummary";
@@ -352,6 +353,9 @@ const AdminPage: React.FC = () => {
             usageStatsError={usageStatsError}
           />
         )}
+
+        {/* Users who created figures recently, and their figures */}
+        {apiKey && <RecentCreatorsPanel apiKey={apiKey} />}
 
         {/* Storage Buckets Summary */}
         {adminData && (

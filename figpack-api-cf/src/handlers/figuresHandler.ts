@@ -435,6 +435,7 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
 		const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
 		const status = url.searchParams.get('status');
+		const owner = url.searchParams.get('owner');
 		const search = url.searchParams.get('search');
 		const bucket = url.searchParams.get('bucket');
 		const pinned = url.searchParams.get('pinned') === 'true';
@@ -468,6 +469,12 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		if (!showAll && !showAllInBucket) {
 			conditions.push('owner_email = ?');
 			values.push(authResult.user.email);
+		}
+
+		// Admins listing all figures may filter by owner
+		if (showAll && owner && owner.trim()) {
+			conditions.push('owner_email = ?');
+			values.push(owner.trim());
 		}
 
 		// Add status filter
@@ -549,6 +556,54 @@ export async function handleListFigures(request: Request, env: Env, rateLimitRes
 		);
 	} catch (error) {
 		console.error('Figure list API error:', error);
+		return json({ success: false, message: 'Internal server error' }, 500);
+	}
+}
+
+// Admin only: users who created figures in the last N days (default 14), with counts
+export async function handleRecentCreators(request: Request, env: Env, rateLimitResult: RateLimitResult): Promise<Response> {
+	try {
+		const apiKey = request.headers.get('x-api-key');
+		if (!apiKey) {
+			return json({ success: false, message: 'API key is required' }, 400);
+		}
+		const authResult = await authenticateUser(apiKey, env);
+		if (!authResult.isValid || !authResult.user) {
+			return json({ success: false, message: 'Invalid API key' }, 401);
+		}
+		if (!authResult.isAdmin) {
+			return json({ success: false, message: 'Admin access required' }, 403);
+		}
+
+		const url = new URL(request.url);
+		const days = Math.min(3650, Math.max(1, parseInt(url.searchParams.get('days') || '14', 10) || 14));
+		const since = Date.now() - days * 24 * 60 * 60 * 1000;
+
+		const result = await env.figpack_db
+			.prepare(
+				`SELECT owner_email, COUNT(*) as figure_count, SUM(COALESCE(total_size, 0)) as total_size,
+					SUM(is_ephemeral) as ephemeral_count, MAX(created_at) as last_created_at
+				FROM figures WHERE created_at >= ?
+				GROUP BY owner_email ORDER BY last_created_at DESC`,
+			)
+			.bind(since)
+			.all();
+
+		const creators = result.results.map((row: any) => ({
+			email: row.owner_email,
+			figureCount: Number(row.figure_count),
+			ephemeralCount: Number(row.ephemeral_count || 0),
+			totalSize: Number(row.total_size || 0),
+			lastCreatedAt: Number(row.last_created_at),
+		}));
+
+		return json({ success: true, days, since, creators }, 200, {
+			'X-RateLimit-Limit': '60',
+			'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+			'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+		});
+	} catch (error) {
+		console.error('Recent creators API error:', error);
 		return json({ success: false, message: 'Internal server error' }, 500);
 	}
 }
@@ -792,15 +847,11 @@ export async function handleFinalizeFigure(request: Request, env: Env, rateLimit
 			}
 		}
 
-		return json(
-			responseBody,
-			200,
-			{
-				'X-RateLimit-Limit': '30',
-				'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-				'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
-			},
-		);
+		return json(responseBody, 200, {
+			'X-RateLimit-Limit': '30',
+			'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+			'X-RateLimit-Reset': Math.ceil(rateLimitResult.resetTime / 1000).toString(),
+		});
 	} catch (error) {
 		console.error('Finalize figure API error:', error);
 		return json({ success: false, message: 'Internal server error' }, 500);

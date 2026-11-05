@@ -379,3 +379,41 @@ export const getLlmUsage = async (apiKey: string): Promise<LlmUsageResult> => {
     return { success: false, message: `Error getting LLM usage: ${err}` };
   }
 };
+
+export interface RecentCreator {
+  email: string;
+  figureCount: number;
+  ephemeralCount: number;
+  totalSize: number;
+  lastCreatedAt: number;
+}
+
+export interface RecentCreatorsResult {
+  success: boolean;
+  message?: string;
+  days?: number;
+  creators?: RecentCreator[];
+}
+
+// Users who created figures in the last `days` days (GET /figures/recent-creators, admin only)
+export const getRecentCreators = async (
+  apiKey: string,
+  days: number,
+): Promise<RecentCreatorsResult> => {
+  if (!apiKey) {
+    return { success: false, message: "No API key available" };
+  }
+
+  try {
+    const response = await fetch(
+      `${FIGPACK_API_BASE_URL}/figures/recent-creators?days=${days}`,
+      {
+        method: "GET",
+        headers: { "x-api-key": apiKey },
+      },
+    );
+    return await response.json();
+  } catch (err) {
+    return { success: false, message: `Error getting recent creators: ${err}` };
+  }
+};
