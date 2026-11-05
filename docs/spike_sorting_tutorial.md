@@ -7,7 +7,7 @@ This tutorial will guide you through creating spike sorting visualizations using
 Before starting this tutorial, make sure you have the required packages installed:
 
 ```bash
-pip install figpack figpack_spike_sorting spikeinterface
+pip install figpack figpack_spike_sorting spikeinterface scipy scikit-learn
 ```
 
 Several of the examples below use [SpikeInterface](https://github.com/SpikeInterface/spikeinterface) to simulate a recording with known ground truth units and to compute properties of those units. Others construct spike trains directly with numpy, which makes it easy to see what each view is showing. In both cases the views only require plain arrays, so they can be used with the output of any spike sorting pipeline.
