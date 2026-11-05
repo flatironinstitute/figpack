@@ -9,6 +9,8 @@ export class LossyVideoClient {
     public height: number,
     public width: number,
     public videoDataset: any,
+    // Set when the video is synchronized with the figure's shared time
+    public timeBase?: { startTimeSec: number; samplingFrequencyHz: number },
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
@@ -30,6 +32,16 @@ export class LossyVideoClient {
 
     const [numFrames, height, width] = shape;
 
+    const startTimeSec = zarrGroup.attrs["start_time_sec"];
+    const timeBase =
+      typeof startTimeSec === "number"
+        ? {
+            startTimeSec,
+            samplingFrequencyHz:
+              zarrGroup.attrs["sampling_frequency_hz"] || fps,
+          }
+        : undefined;
+
     return new LossyVideoClient(
       zarrGroup,
       fps,
@@ -37,7 +49,34 @@ export class LossyVideoClient {
       height,
       width,
       videoDataset,
+      timeBase,
     );
+  }
+
+  // Data time of a frame, for a synchronized video
+  getFrameDataTime(frameIndex: number): number {
+    if (!this.timeBase) return this.getFrameTimeSeconds(frameIndex);
+    return (
+      this.timeBase.startTimeSec + frameIndex / this.timeBase.samplingFrequencyHz
+    );
+  }
+
+  // Frame shown at a given data time: the last frame at or before it
+  getFrameIndexForDataTime(t: number): number {
+    if (!this.timeBase) return 0;
+    const i = Math.floor(
+      (t - this.timeBase.startTimeSec) * this.timeBase.samplingFrequencyHz +
+        1e-6,
+    );
+    return Math.max(0, Math.min(this.numFrames - 1, i));
+  }
+
+  getDataStartTime(): number {
+    return this.getFrameDataTime(0);
+  }
+
+  getDataEndTime(): number {
+    return this.getFrameDataTime(this.numFrames - 1);
   }
 
   async getFrame(frameIndex: number): Promise<Uint8Array | null> {

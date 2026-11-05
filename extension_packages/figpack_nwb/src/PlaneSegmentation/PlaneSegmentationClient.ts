@@ -25,19 +25,67 @@ export class PlaneSegmentationClient {
     }
 
     const imageMaskDataset = await zarrGroup.getDataset("image_mask");
-    if (!imageMaskDataset) {
-      throw new Error("No image_mask dataset found");
+    if (imageMaskDataset) {
+      const imageMaskRois = await loadImageMaskRois(ids, imageMaskDataset);
+      return new PlaneSegmentationClient(
+        zarrGroup,
+        ids,
+        imageMaskDataset,
+        imageMaskRois,
+      );
     }
 
-    const imageMaskRois = await loadImageMaskRois(ids, imageMaskDataset);
-    return new PlaneSegmentationClient(
-      zarrGroup,
-      ids,
-      imageMaskDataset,
-      imageMaskRois,
-    );
+    const pixelMaskIndexDataset = await zarrGroup.getDataset("pixel_mask_index");
+    if (pixelMaskIndexDataset) {
+      const pixelMaskRois = await loadPixelMaskRois(ids, zarrGroup);
+      return new PlaneSegmentationClient(
+        zarrGroup,
+        ids,
+        undefined,
+        pixelMaskRois,
+      );
+    }
+
+    throw new Error("No image_mask or pixel_mask dataset found");
   }
 }
+
+// Sparse masks: flat x, y, weight arrays, with pixel_mask_index[i] marking
+// the end of ROI i (NWB ragged-array convention).
+const loadPixelMaskRois = async (
+  ids: number[],
+  zarrGroup: ZarrGroup,
+): Promise<ImageMaskRoi[]> => {
+  const [index, xs, ys, weights] = await Promise.all([
+    zarrGroup.getDatasetData("pixel_mask_index", {}),
+    zarrGroup.getDatasetData("pixel_mask_x", {}),
+    zarrGroup.getDatasetData("pixel_mask_y", {}),
+    zarrGroup.getDatasetData("pixel_mask_weight", {}),
+  ]);
+  if (!index || !xs || !ys || !weights) {
+    throw new Error("Incomplete pixel_mask data");
+  }
+  if (index.length !== ids.length) {
+    throw new Error("pixel_mask_index length does not match ids length");
+  }
+  const rois: ImageMaskRoi[] = [];
+  let start = 0;
+  for (let i = 0; i < ids.length; i++) {
+    const end = Number(index[i]);
+    const roi: ImageMaskRoi = { id: ids[i], x: [], y: [], val: [] };
+    for (let j = start; j < end; j++) {
+      const val = Number(weights[j]);
+      if (val !== 0) {
+        roi.x.push(Number(xs[j]));
+        roi.y.push(Number(ys[j]));
+        roi.val.push(val);
+      }
+    }
+    rois.push(roi);
+    start = end;
+  }
+  return rois;
+};
 
 const loadImageMaskRois = async (
   ids: number[],
