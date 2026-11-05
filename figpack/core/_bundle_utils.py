@@ -80,7 +80,9 @@ def prepare_figure_bundle(
         view.write_to_zarr_group(zarr_group)
 
         # Add title and description and script as attributes on the top-level zarr group
-        zarr_group.attrs["title"] = title
+        # The figure title is stored separately from the root view's own "title"
+        # attribute (e.g. the title of a Box), so that it does not replace it
+        zarr_group.attrs["figure_title"] = title
         if description:
             zarr_group.attrs["description"] = description
         if script:

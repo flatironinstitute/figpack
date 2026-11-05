@@ -25,7 +25,10 @@ SCHEMAS = {
     "Box": SpecSchema(
         view_type="Box",
         description="Box layout.",
-        props=[SpecProp("direction", "string", "Direction.")],
+        props=[
+            SpecProp("direction", "string", "Direction."),
+            SpecProp("title", "string", "Box title."),
+        ],
         children="views",
     ),
     "Graph": SpecSchema(
@@ -41,7 +44,8 @@ SCHEMAS = {
 def _make_group():
     root = zarr.group()
     root.attrs["view_type"] = "Box"
-    root.attrs["title"] = "My figure"
+    root.attrs["figure_title"] = "My figure"
+    root.attrs["title"] = "Signals"
     root.attrs["direction"] = "vertical"
     root.attrs["internal"] = 42
     graph = root.create_group("item_0")
@@ -60,7 +64,11 @@ def _make_group():
 def test_build_figure_spec():
     spec = build_figure_spec(_make_group(), SCHEMAS)
     assert spec == {
-        "props": {"title": "My figure", "direction": "vertical"},
+        "props": {
+            "figure_title": "My figure",
+            "direction": "vertical",
+            "title": "Signals",
+        },
         "children": {
             "item_0": {
                 "props": {"y_label": "Voltage"},

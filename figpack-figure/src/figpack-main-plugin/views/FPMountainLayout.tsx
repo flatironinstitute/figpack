@@ -58,12 +58,20 @@ export const FPMountainLayout: React.FC<{
   }, [itemsMetadata]);
 
   // Workspace state management
-  const [workspaceState, setWorkspaceState] = useState<WorkspaceState>({
-    northTabs: [],
-    southTabs: [],
-    activeNorthTab: -1,
-    activeSouthTab: -1,
-    focusedWorkspace: "north",
+  // Start with the first view open in the north workspace and the second in
+  // the south workspace, so that the layout is not empty when it first loads
+  const [workspaceState, setWorkspaceState] = useState<WorkspaceState>(() => {
+    const tab = (item: MountainLayoutItemData | undefined): OpenTab[] =>
+      item ? [{ itemName: item.name, label: item.label, isActive: true }] : [];
+    const northTabs = tab(regularItems[0]);
+    const southTabs = tab(regularItems[1]);
+    return {
+      northTabs,
+      southTabs,
+      activeNorthTab: northTabs.length - 1,
+      activeSouthTab: southTabs.length - 1,
+      focusedWorkspace: "north",
+    };
   });
 
   // Calculate control panel height

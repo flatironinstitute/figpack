@@ -29,7 +29,7 @@ export const unitMetricSelectionReducer = (
       ...state,
       allUnitMetrics: [
         ...new Set([...(state.allUnitMetrics || []), ...action.unitMetrics]),
-      ].sort(),
+      ],
     };
   } else return state;
 };

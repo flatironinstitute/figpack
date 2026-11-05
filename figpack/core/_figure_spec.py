@@ -28,7 +28,7 @@ SPEC_SIZE_WARNING_CHARS = 20000
 _SPEC_LINE_WIDTH = 120
 
 # Props of the root node that belong to the figure rather than its root view
-_FIGURE_PROPS = {"title"}
+_FIGURE_PROPS = {"figure_title"}
 
 
 @dataclass
@@ -240,7 +240,7 @@ def build_figure_spec_docs(
         '- data: path of a group in data.zarr for this node (e.g. "/item_0"), or null for a node defined only by the spec (then view_type is required). If omitted, the node uses its counterpart in the original figure: the root group, or the parent\'s subgroup with the same name.',
         "- view_type: the view type of the node.",
         "Only the props documented here are listed in the spec. Other attributes in data.zarr describe the stored data and should not be changed.",
-        "Root node: props.title (string) is the figure title.",
+        "Root node: props.figure_title (string) is the figure title.",
     ]
     view_types = _collect_view_types(zarr_group)
     documented = [vt for vt in view_types if vt in schemas]

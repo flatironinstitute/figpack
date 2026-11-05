@@ -26,7 +26,7 @@ const renderError = (container, width, height, message) => {
                     </div>
                 </div>
             `;
-}
+};
 
 const loadGraphData = async (zarrGroup) => {
   try {
@@ -57,7 +57,7 @@ const createForceGraph = async (
   graphData,
   config,
   width,
-  height
+  height,
 ) => {
   // Create the force graph instance
   const graph = window
@@ -115,10 +115,10 @@ const createForceGraph = async (
         });
 
         graph.nodeColor((n) =>
-          connectedNodes.has(n) ? n.color || "#1f77b4" : "#ccc"
+          connectedNodes.has(n) ? n.color || "#1f77b4" : "#ccc",
         );
         graph.linkColor((l) =>
-          connectedLinks.has(l) ? l.color || "#999" : "#ccc"
+          connectedLinks.has(l) ? l.color || "#999" : "#ccc",
         );
       } else if (!node) {
         // Reset colors when not hovering
@@ -141,6 +141,35 @@ const createForceGraph = async (
     graph.warmupTicks(config.warmupTicks);
   }
 
+  // Keep the whole graph in view while the layout settles, until the user
+  // zooms, pans or drags a node.
+  let userInteracted = false;
+  const markInteracted = () => {
+    userInteracted = true;
+  };
+  // Capture phase, since d3-zoom stops the propagation of these events
+  container.addEventListener("wheel", markInteracted, {
+    capture: true,
+    passive: true,
+  });
+  container.addEventListener("pointerdown", markInteracted, { capture: true });
+  container.addEventListener("mousedown", markInteracted, { capture: true });
+  container.addEventListener("touchstart", markInteracted, {
+    capture: true,
+    passive: true,
+  });
+  const fitPaddingPx = 20;
+  graph.fitToView = (durationMs) => {
+    if (!userInteracted) graph.zoomToFit(durationMs, fitPaddingPx);
+  };
+  let tickCount = 0;
+  graph.onEngineTick(() => {
+    tickCount++;
+    if (tickCount === 1 || tickCount % 40 === 0)
+      graph.fitToView(tickCount === 1 ? 0 : 300);
+  });
+  graph.onEngineStop(() => graph.fitToView(400));
+
   return graph;
 };
 
@@ -159,13 +188,14 @@ const renderForceGraphView = async (params) => {
       graphData,
       config,
       width,
-      height
+      height,
     );
 
     // Handle resize events
     onResize((newWidth, newHeight) => {
       if (graph) {
         graph.width(newWidth).height(newHeight);
+        graph.fitToView(0);
       }
     });
 

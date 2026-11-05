@@ -24,9 +24,9 @@ const BottomToolbar: FunctionComponent<Props> = ({
         <IconButton
           style={iconButtonStyle}
           onClick={onSelectSimilarUnits}
-          title="Select similar units"
+          title="Select the units most similar to the selected unit"
         >
-          all
+          <span style={{ fontSize: 12 }}>select similar</span>
         </IconButton>
       )}
       {hoveredInfo ? (

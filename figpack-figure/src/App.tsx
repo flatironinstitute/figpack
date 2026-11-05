@@ -11,6 +11,7 @@ import { usePageVisibility } from "./hooks/usePageVisibility";
 import "./localStyles.css";
 // import { plugins } from "./main";
 import { DrawForExportFunction, FPViewContexts } from "./figpack-interface";
+import { canSaveFigureAnnotations } from "./UploadFilesPanel/canSaveFigureAnnotations";
 import UploadFilesPanel, {
   PutFigureFilesInterface,
 } from "./UploadFilesPanel/UploadFilesPanel";
@@ -87,7 +88,8 @@ function AppContent() {
   // Set document title from zarr data
   useEffect(() => {
     if (rootGroup && rootGroup.attrs) {
-      const title = rootGroup.attrs.title;
+      // Figures made before figpack 0.4.4 store the figure title as "title"
+      const title = rootGroup.attrs.figure_title ?? rootGroup.attrs.title;
       if (title) {
         document.title = title;
       } else {
@@ -149,12 +151,16 @@ function AppContent() {
   }, [figureAnnotationsIsDirty]);
 
   const isLocalFigure = figureUrl.startsWith("http://localhost:");
+  const canSaveAnnotations = canSaveFigureAnnotations(
+    figureUrl,
+    figureInfoResult,
+  );
   const uploadFilesPanelHeight = useMemo(() => {
     if (figureAnnotations?.editingAnnotations) {
-      return isLocalFigure ? 30 : 100;
+      return isLocalFigure || !canSaveAnnotations ? 30 : 100;
     }
     return 0;
-  }, [figureAnnotations, isLocalFigure]);
+  }, [figureAnnotations, isLocalFigure, canSaveAnnotations]);
   const statusBarHeight = useMemo(() => {
     return isFullscreen ? 0 : 30;
   }, [isFullscreen]);
@@ -236,7 +242,9 @@ function AppContent() {
         onRefreshZarrData={refreshZarrData}
         figureAnnotationsIsDirty={figureAnnotationsIsDirty}
         revertFigureAnnotations={revertFigureAnnotations}
-        saveFigureAnnotations={saveFigureAnnotations}
+        saveFigureAnnotations={
+          canSaveAnnotations ? saveFigureAnnotations : undefined
+        }
         figureAnnotations={figureAnnotations}
         figureAnnotationsDispatch={figureAnnotationsDispatch}
         drawForExport={drawForExport}
@@ -254,7 +262,9 @@ function AppContent() {
       onRefreshZarrData={refreshZarrData}
       figureAnnotationsIsDirty={figureAnnotationsIsDirty}
       revertFigureAnnotations={revertFigureAnnotations}
-      saveFigureAnnotations={saveFigureAnnotations}
+      saveFigureAnnotations={
+        canSaveAnnotations ? saveFigureAnnotations : undefined
+      }
       figureAnnotations={figureAnnotations}
       figureAnnotationsDispatch={figureAnnotationsDispatch}
       drawForExport={drawForExport}

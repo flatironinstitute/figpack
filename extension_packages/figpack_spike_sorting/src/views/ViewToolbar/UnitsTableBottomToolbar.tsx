@@ -1,5 +1,6 @@
 import { Switch } from "@mui/material";
 import { FunctionComponent } from "react";
+import { FaPalette } from "react-icons/fa";
 
 export type UnitsTableBottomToolbarOptions = {
   onlyShowSelected: boolean;
@@ -22,7 +23,7 @@ const UnitsTableBottomToolbar: FunctionComponent<Props> = ({
   onRedistributeUnitColors,
 }) => {
   return (
-    <div>
+    <div style={{ whiteSpace: "nowrap" }}>
       <Switch
         checked={options.onlyShowSelected}
         onClick={() => {
@@ -39,9 +40,19 @@ const UnitsTableBottomToolbar: FunctionComponent<Props> = ({
       {onRedistributeUnitColors && (
         <button
           onClick={onRedistributeUnitColors}
-          title="Redistribute unit colors"
+          title="Reassign unit colors"
+          aria-label="Reassign unit colors"
+          style={{
+            position: "relative",
+            top: 3,
+            border: "none",
+            background: "none",
+            padding: "0 4px",
+            color: "#555",
+            cursor: "pointer",
+          }}
         >
-          rc
+          <FaPalette />
         </button>
       )}
     </div>

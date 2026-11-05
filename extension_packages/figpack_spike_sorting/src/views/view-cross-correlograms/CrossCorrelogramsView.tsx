@@ -23,6 +23,7 @@ type Props = {
 };
 
 const MAX_UNITS_SELECTED = 20;
+const NUM_UNITS_SHOWN_BY_DEFAULT = 4;
 
 const CrossCorrelogramsView: FunctionComponent<Props> = ({
   data,
@@ -34,10 +35,17 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
   // Use the global unit selection context
   const { selectedUnitIds } = useSelectedUnitIds();
 
-  // Convert selectedUnitIds Set to Array and sort
+  // The units whose cross-correlograms are shown: the selected units, or the
+  // first few units when nothing is selected
   const selectedUnitIdsArray = useMemo(() => {
-    return sortIds([...selectedUnitIds]);
-  }, [selectedUnitIds]);
+    if (selectedUnitIds.size > 0) return sortIds([...selectedUnitIds]);
+    const allUnitIds = new Set<number | string>();
+    data.crossCorrelograms.forEach((cc) => {
+      allUnitIds.add(cc.unitId1);
+      allUnitIds.add(cc.unitId2);
+    });
+    return sortIds([...allUnitIds]).slice(0, NUM_UNITS_SHOWN_BY_DEFAULT);
+  }, [selectedUnitIds, data.crossCorrelograms]);
 
   const hideUnitSelector = data.hideUnitSelector;
 
@@ -141,7 +149,7 @@ const CrossCorrelogramsView: FunctionComponent<Props> = ({
             {MAX_UNITS_SELECTED}).
           </div>
         ) : selectedUnitIdsArray.length === 0 ? (
-          <div>Select one or more units to view cross-correlograms.</div>
+          <div>No cross-correlograms to show.</div>
         ) : (
           <PlotGrid
             plots={plots}

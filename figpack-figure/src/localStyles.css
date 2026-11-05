@@ -72,3 +72,27 @@
     overflow: hidden;
     white-space: nowrap;
 }
+
+/* Markdown view: GitHub-flavored tables, block quotes and math */
+.figpack-markdown table {
+    border-collapse: collapse;
+    margin: 0.8em 0;
+}
+.figpack-markdown th,
+.figpack-markdown td {
+    border: 1px solid #d0d7de;
+    padding: 4px 12px;
+}
+.figpack-markdown th {
+    background-color: rgba(127, 127, 127, 0.08);
+}
+.figpack-markdown blockquote {
+    margin: 0.8em 0;
+    padding: 0 1em;
+    border-left: 4px solid #d0d7de;
+    opacity: 0.85;
+}
+.figpack-markdown math[display="block"] {
+    margin: 0.8em 0;
+    font-size: 1.15em;
+}

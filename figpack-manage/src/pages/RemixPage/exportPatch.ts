@@ -50,7 +50,12 @@ export const prepareExport = async (
   const patch = makeRemixPatch(original, remixedSpec, indexUrl);
   const record = getRemixRecord(indexHtml);
   if (record) patch.patch = composePatches(record.patch, patch.patch);
-  const title = remixedSpec.props?.title ?? original.props?.title;
+  // Figures made before figpack 0.4.4 store the figure title as "title"
+  const title =
+    remixedSpec.props?.figure_title ??
+    original.props?.figure_title ??
+    remixedSpec.props?.title ??
+    original.props?.title;
   return {
     patch,
     fileName: patchFileName(typeof title === "string" ? title : undefined),
