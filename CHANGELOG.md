@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.4.5] - 2026-11-05
+
+- DataFrame view: columns are sized to their content (they had a fixed width of 8 px per character, between 80 and 200 px), numeric columns are right-aligned with tabular digits, and the text uses a sans-serif font. A shadow at the left or right edge shows when the table can be scrolled horizontally, since overlay scrollbars are hidden until scrolling. The sort indicator is a small arrow rather than an emoji
+- Docs front page: the examples are no longer rotated every few seconds. One example is shown at a time (a featured example chosen at random to start), with previous and next buttons, a menu of all examples grouped by tutorial, a "How it's made" link to the section of the docs with its code, and an "Open full size" link that opens the figure in a new tab. The list is made from the built docs by devel/generate_example_rotator.py, as example_rotator.json. Each figure embedded in the tutorials also has an "Open in new tab" link below it
+
 ## [0.4.4] - 2026-11-05
 
 - Markdown view: renders GitHub-flavored markdown (tables, strikethrough, task lists) and LaTeX math between `$...$` (inline) or `$$...$$` (display), as in the About dialog. Math is rendered as MathML, which current browsers display natively, so no fonts are added to figures. A literal dollar sign needs to be written as `\$`. Raw HTML is still not rendered. Code blocks with a language get syntax highlighting
