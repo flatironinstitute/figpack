@@ -14,53 +14,52 @@ interface MeshConfig {
   enableControls?: boolean;
 }
 
-// Colormap functions
+// Colormaps. Each function returns sRGB components in [0, 1]; srgbColor
+// converts them to the linear working color space used for vertex colors,
+// so that the rendered colors match the colormap.
+
+// Stops sampled at 17 evenly spaced points from matplotlib's tables
+const viridisStops: [number, number, number][] = [
+  [0.267, 0.0049, 0.3294], [0.2823, 0.095, 0.4173], [0.2788, 0.1755, 0.4834],
+  [0.259, 0.2515, 0.5247], [0.2297, 0.3224, 0.5457], [0.1994, 0.3876, 0.5546],
+  [0.1727, 0.4488, 0.5579], [0.149, 0.5081, 0.5573], [0.1276, 0.5669, 0.5506],
+  [0.1206, 0.6258, 0.5335], [0.1579, 0.6838, 0.5017], [0.2461, 0.7389, 0.452],
+  [0.3692, 0.7889, 0.3829], [0.516, 0.8312, 0.2943], [0.6785, 0.8637, 0.1895],
+  [0.8456, 0.8873, 0.0997], [0.9932, 0.9062, 0.1439],
+];
+const plasmaStops: [number, number, number][] = [
+  [0.0504, 0.0298, 0.528], [0.1934, 0.0184, 0.5903], [0.2999, 0.0096, 0.6316],
+  [0.3994, 0.0009, 0.6561], [0.4949, 0.012, 0.6579], [0.5844, 0.0686, 0.6328],
+  [0.6651, 0.1386, 0.5856], [0.736, 0.2094, 0.5279], [0.7982, 0.2802, 0.4695],
+  [0.8533, 0.3516, 0.4137], [0.9018, 0.4251, 0.3597], [0.9426, 0.5026, 0.3058],
+  [0.9734, 0.5858, 0.2515], [0.9914, 0.6754, 0.1985], [0.993, 0.7717, 0.1548],
+  [0.9744, 0.8746, 0.1441], [0.94, 0.9752, 0.1313],
+];
+
+const interpolateStops = (
+  stops: [number, number, number][],
+  t: number,
+): [number, number, number] => {
+  const x = Math.max(0, Math.min(1, t)) * (stops.length - 1);
+  const i = Math.min(Math.floor(x), stops.length - 2);
+  const f = x - i;
+  const a = stops[i];
+  const b = stops[i + 1];
+  return [
+    a[0] + f * (b[0] - a[0]),
+    a[1] + f * (b[1] - a[1]),
+    a[2] + f * (b[2] - a[2]),
+  ];
+};
+
+const srgbColor = ([r, g, b]: [number, number, number]) =>
+  new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
+
 const colormaps: Record<string, (t: number) => THREE.Color> = {
-  viridis: (t: number) => {
-    // Viridis colormap approximation
-    const r = Math.max(0, Math.min(1, 0.267 + t * (0.004 - 0.267)));
-    const g = Math.max(0, Math.min(1, 0.005 + t * (0.993 - 0.005)));
-    const b = Math.max(0, Math.min(1, 0.329 + t * (0.559 - 0.329)));
-    
-    // More accurate viridis using polynomial approximation
-    const c0 = [0.267004, 0.004874, 0.329415];
-    const c1 = [0.127568, 1.564526, -0.896615];
-    const c2 = [-0.024924, 0.235793, 3.407040];
-    const c3 = [0.433155, -1.707920, -1.616270];
-    
-    const col = [
-      c0[0] + t * (c1[0] + t * (c2[0] + t * c3[0])),
-      c0[1] + t * (c1[1] + t * (c2[1] + t * c3[1])),
-      c0[2] + t * (c1[2] + t * (c2[2] + t * c3[2])),
-    ];
-    
-    return new THREE.Color(
-      Math.max(0, Math.min(1, col[0])),
-      Math.max(0, Math.min(1, col[1])),
-      Math.max(0, Math.min(1, col[2]))
-    );
-  },
-  
-  plasma: (t: number) => {
-    // Plasma colormap approximation
-    const c0 = [0.050383, 0.029803, 0.527975];
-    const c1 = [2.176514, 1.125030, -0.651204];
-    const c2 = [-3.086763, -1.447163, 3.817500];
-    const c3 = [1.062325, 2.893970, -5.164414];
-    
-    const col = [
-      c0[0] + t * (c1[0] + t * (c2[0] + t * c3[0])),
-      c0[1] + t * (c1[1] + t * (c2[1] + t * c3[1])),
-      c0[2] + t * (c1[2] + t * (c2[2] + t * c3[2])),
-    ];
-    
-    return new THREE.Color(
-      Math.max(0, Math.min(1, col[0])),
-      Math.max(0, Math.min(1, col[1])),
-      Math.max(0, Math.min(1, col[2]))
-    );
-  },
-  
+  viridis: (t: number) => srgbColor(interpolateStops(viridisStops, t)),
+
+  plasma: (t: number) => srgbColor(interpolateStops(plasmaStops, t)),
+
   jet: (t: number) => {
     // Classic jet colormap
     let r, g, b;
@@ -81,19 +80,17 @@ const colormaps: Record<string, (t: number) => THREE.Color> = {
       g = 1 - (t - 0.625) / 0.25;
       b = 0;
     } else {
-      r = 1 - 0.5 * (t - 0.875) / 0.125;
+      r = 1 - (0.5 * (t - 0.875)) / 0.125;
       g = 0;
       b = 0;
     }
-    return new THREE.Color(r, g, b);
+    return srgbColor([r, g, b]);
   },
-  
+
   rainbow: (t: number) => {
-    // Rainbow colormap (HSV with varying hue)
-    const hue = (1 - t) * 0.7; // 0.7 = 252 degrees (blue to red)
-    const color = new THREE.Color();
-    color.setHSL(hue, 1, 0.5);
-    return color;
+    // Rainbow colormap (HSL with varying hue, blue to red)
+    const hue = (1 - t) * 0.7; // 0.7 = 252 degrees
+    return new THREE.Color().setHSL(hue, 1, 0.5, THREE.SRGBColorSpace);
   },
 };
 
@@ -138,11 +135,14 @@ class MeshScene {
     this.camera.position.set(x, y, z);
     this.camera.lookAt(0, 0, 0);
 
-    // Add lighting - use high ambient light to see vertex colors clearly
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    // Lighting: mostly ambient, so that the vertex colors are close to the
+    // colormap, plus a weaker directional light for shading. Three.js uses
+    // physical light units, in which an intensity of PI reproduces the
+    // material color on a surface facing the light.
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75 * Math.PI);
     this.scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.35 * Math.PI);
     directionalLight.position.set(10, 10, 5);
     this.scene.add(directionalLight);
 

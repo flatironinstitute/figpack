@@ -33,7 +33,7 @@ const UnitMetricsGraphView: FunctionComponent<Props> = ({
       initialPosition={200}
       adjustable={true}
     >
-      <UnitMetricSelectionWidget width={0} height={0} />
+      <UnitMetricSelectionWidget metrics={metrics} width={0} height={0} />
       <UnitMetricsGraphViewChild data={data} width={0} height={0} />
     </Splitter>
   );

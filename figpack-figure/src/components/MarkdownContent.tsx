@@ -18,7 +18,9 @@ const MarkdownContent: FunctionComponent<MarkdownContentProps> = ({
   doRehypeRaw = true,
 }) => {
   const rehypePlugins = useMemo(() => {
-    const plugins: any[] = [rehypeKatex];
+    // MathML output is rendered natively by the browser, so the KaTeX
+    // stylesheet and fonts do not need to be bundled with every figure
+    const plugins: any[] = [[rehypeKatex, { output: "mathml" }]];
     if (doRehypeRaw) {
       plugins.push(rehypeRaw);
     }

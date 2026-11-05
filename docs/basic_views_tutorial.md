@@ -12,29 +12,35 @@ pip install figpack
 
 ## Markdown View
 
-The Markdown view displays formatted text:
+The Markdown view displays formatted text, including tables (GitHub-flavored markdown) and LaTeX math between `$...$` or `$$...$$`. Use `\$` for a literal dollar sign.
 
 ```python
 import figpack.views as vv
 
-view = vv.Markdown("""
+view = vv.Markdown(r"""
 ## Recording notes
 
-Session of **14 March**, mouse *M7*, linear track.
+Session of **14 March**, mouse *M7*, linear track. Place fields were estimated as the firing rate $\lambda(x)$ at each position $x$, smoothed with a Gaussian kernel:
 
-1. Probe lowered to 2.1 mm, then left to settle for 20 minutes
-2. Ten minutes of rest in the home cage
-3. Forty laps on the track, with reward at both ends
+$$
+\lambda(x) = \frac{\sum_i K(x - x_i)}{\Delta t \sum_j K(x - x_j)}
+$$
 
-> Lap 23 was interrupted when the animal turned around midway; exclude it from place field estimates.
+where $x_i$ is the position at each spike and $x_j$ the position in each time bin of width $\Delta t$.
 
-Sorting output is in `sorting/kilosort4/`. See the [figpack documentation](https://flatironinstitute.github.io/figpack/) for how these figures were made.
+| Epoch | Duration | Laps |
+|-------|----------|------|
+| Rest (home cage) | 10 min | |
+| Track | 32 min | 40 |
+| Rest (home cage) | 10 min | |
+
+> Lap 23 was interrupted when the animal turned around midway; it is excluded from the place field estimates.
 """)
 
 view.show(title="Markdown Example", open_in_browser=True)
 ```
 
-<iframe data-src="./tutorial_markdown_example/index.html?embedded=1" width="100%" height="380" frameborder="0" loading="lazy"></iframe>
+<iframe data-src="./tutorial_markdown_example/index.html?embedded=1" width="100%" height="560" frameborder="0" loading="lazy"></iframe>
 
 ## Image View
 

@@ -3,6 +3,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import { FigureInfoResult } from "src/hooks/useFigureInfo";
 import { ParentToIframeMessage } from "./uploadTypes";
 import { FigureAnnotationsState } from "src/figpack-interface";
+import { manageDev } from "./canSaveFigureAnnotations";
 
 type Props = {
   width: number;
@@ -18,9 +19,6 @@ export type PutFigureFilesInterface = {
     files: { url: string; headers: any; body: string | ArrayBuffer }[],
   ) => Promise<void>;
 };
-
-const queryParams = new URLSearchParams(window.location.search);
-const manageDev = queryParams.get("manage_dev") === "1";
 
 const UploadFilesPanel: FunctionComponent<Props> = ({
   width,
@@ -100,7 +98,25 @@ const UploadFilesPanel: FunctionComponent<Props> = ({
         ></iframe>
       );
     } else {
-      return <div>Cannot curate: figpackManageUrl is not set</div>;
+      return (
+        <div
+          style={{
+            width: width,
+            height: height,
+            boxSizing: "border-box",
+            padding: "0 12px",
+            backgroundColor: "#fff8e1",
+            borderBottom: "1px solid #ccc",
+            display: "flex",
+            alignItems: "center",
+            fontSize: 13,
+            color: "#5d4037",
+          }}
+        >
+          This figure is not hosted on a figpack server, so curation changes are
+          kept only until the page is closed.
+        </div>
+      );
     }
   } else {
     return <></>;

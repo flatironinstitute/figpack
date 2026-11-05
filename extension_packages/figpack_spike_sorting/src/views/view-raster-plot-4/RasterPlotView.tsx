@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { colorForUnitId } from "../core-utils";
+import { getUnitColor } from "../view-units-table/unitColors";
 import { idToNum, useSelectedUnitIds } from "../context-unit-selection";
 import { useOnlyShowSelected } from "../shared-components/useOnlyShowSelected";
 import { RasterPlotDataClient } from "./RasterPlotDataClient";
@@ -267,7 +267,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
         const y =
           margins.top + (unitIdsToLabel.length - 1 - index) * unitHeight;
         const centerY = y + unitHeight / 2; // Center vertically in the bin
-        const color = colorForUnitId(idToNum(unitId));
+        const color = getUnitColor(idToNum(unitId));
         context.fillStyle = color;
         context.font = "12px Arial";
         context.textAlign = "right";
@@ -358,7 +358,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
       const unitId = unitIds[rangeData.unitIndices[i]];
       const y =
         margins.top + (numPlaces - 1 - unitPlace) * unitHeight + unitHeight / 2; // Centered in bin
-      const color = colorForUnitId(idToNum(unitId));
+      const color = getUnitColor(idToNum(unitId));
 
       // Set line style based on hover/selection state
       const isHovered = hoveredUnitId === unitId;
@@ -386,7 +386,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
         const y =
           margins.top + (unitIdsToLabel.length - 1 - index) * unitHeight;
         const centerY = y + unitHeight / 2; // Center vertically in the bin
-        const color = colorForUnitId(idToNum(unitId));
+        const color = getUnitColor(idToNum(unitId));
         context.fillStyle = color;
         context.font = "12px Arial";
         context.textAlign = "right";
@@ -519,7 +519,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
             exportMargins.top +
             (numPlaces - 1 - unitPlace) * unitHeight +
             unitHeight / 2;
-          const color = colorForUnitId(idToNum(unitId));
+          const color = getUnitColor(idToNum(unitId));
           const isSelected = selectedUnitIds.has(unitId);
 
           ctx.strokeStyle = color;
@@ -549,7 +549,7 @@ const RasterPlotView: FunctionComponent<Props> = ({
             exportMargins.top +
             (unitIdsToLabel.length - 1 - index) * unitHeight;
           const centerY = y + unitHeight / 2;
-          const color = colorForUnitId(idToNum(unitId));
+          const color = getUnitColor(idToNum(unitId));
           ctx.fillStyle = color;
           ctx.font = "12px Arial";
           ctx.textAlign = "right";

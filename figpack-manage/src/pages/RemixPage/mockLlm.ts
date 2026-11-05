@@ -82,11 +82,12 @@ export const mockChatCompletion = async (
       const titleLine = lastTool.content
         .split("\n")
         .map((l) => l.replace(/^\s*\d+\t/, ""))
-        .find((l) => /"title": "/.test(l));
+        .find((l) => /"(figure_)?title": "/.test(l));
       if (!titleLine) return reply("I could not find a title in the spec.");
       const newLine = titleLine.replace(
-        /"title": "[^"]*"/,
-        `"title": ${JSON.stringify(userText.slice(0, 60))}`,
+        /"(figure_)?title": "[^"]*"/,
+        (_m, prefix) =>
+          `"${prefix ?? ""}title": ${JSON.stringify(userText.slice(0, 60))}`,
       );
       return reply(null, [
         toolCall("edit_page", { old_string: titleLine, new_string: newLine }),

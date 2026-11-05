@@ -3,11 +3,13 @@ import { useUnitMetricSelection } from "../context-unit-metrics-selection";
 import { FunctionComponent, useCallback, useMemo } from "react";
 
 type Props = {
+  metrics?: { key: string; label: string }[];
   width: number;
   height: number;
 };
 
 const UnitMetricSelectionWidget: FunctionComponent<Props> = ({
+  metrics,
   width,
   height,
 }) => {
@@ -22,16 +24,18 @@ const UnitMetricSelectionWidget: FunctionComponent<Props> = ({
     ],
     [],
   );
-  const rows = useMemo(
-    () =>
-      (allUnitMetrics || []).map((m) => ({
-        key: m,
-        columnValues: {
-          metric: m,
-        },
-      })),
-    [allUnitMetrics],
-  );
+  const rows = useMemo(() => {
+    const labels: { [key: string]: string } = {};
+    (metrics || []).forEach((m) => {
+      labels[m.key] = m.label;
+    });
+    return (allUnitMetrics || []).map((m) => ({
+      key: m,
+      columnValues: {
+        metric: labels[m] || m,
+      },
+    }));
+  }, [allUnitMetrics, metrics]);
   const handleSelectedRowKeysChanged = useCallback(
     (keys: string[]) => {
       unitMetricSelectionDispatch({

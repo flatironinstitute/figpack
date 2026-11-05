@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   TimeseriesSelectionAction,
   TimeseriesSelectionContext,
@@ -162,6 +168,16 @@ const FPMultiChannelIntervalsChild: React.FC<{
     },
     [metadata],
   );
+
+  // Show the first interval on load, unless a time is already set
+  const initialIntervalShown = useRef(false);
+  useEffect(() => {
+    if (!metadata || initialIntervalShown.current) return;
+    initialIntervalShown.current = true;
+    if (currentTime === undefined && metadata.nIntervals > 0) {
+      setCurrentTime(metadata.intervalStartTimesSec[0]);
+    }
+  }, [metadata, currentTime, setCurrentTime]);
 
   // Update current interval when currentTime changes
   useEffect(() => {

@@ -99,9 +99,16 @@ const MatrixWidget: FunctionComponent<Props> = ({
   //     return indsForIds
   // }, [unitIds])
 
-  const size = Math.min(width, height);
-  const offsetX = (width - size) / 2;
-  const offsetY = (height - size) / 2;
+  // Leave room for the unit labels along the top and left, and a small
+  // margin so that the matrix does not touch the edges of the view
+  const labelSpace = 30;
+  const margin = 8;
+  const size = Math.max(
+    0,
+    Math.min(width - labelSpace - 2 * margin, height - labelSpace - 2 * margin),
+  );
+  const offsetX = labelSpace + (width - labelSpace - size) / 2;
+  const offsetY = labelSpace + (height - labelSpace - size) / 2;
   const { affineTransform, handleWheel } = useWheelZoom(width, height, {
     shift: true,
     alt: false,
@@ -132,6 +139,34 @@ const MatrixWidget: FunctionComponent<Props> = ({
       const pt1 = indToPixel({ i1: 0, i2: 0 });
       const pt2 = indToPixel({ i1: unitIds1.length, i2: unitIds2.length });
       ctxt.fillRect(pt1.x, pt1.y, pt2.x - pt1.x, pt2.y - pt1.y);
+      // Unit labels along the top (unitIds1) and the left (unitIds2), shown
+      // when the cells are large enough for them to be legible
+      const cellSize =
+        indToPixel({ i1: 1, i2: 0 }).x - indToPixel({ i1: 0, i2: 0 }).x;
+      if (cellSize >= 14) {
+        ctxt.fillStyle = "#333";
+        ctxt.font = `${Math.min(12, Math.floor(cellSize * 0.6))}px sans-serif`;
+        ctxt.textAlign = "center";
+        ctxt.textBaseline = "bottom";
+        unitIds1.forEach((u1, i1) => {
+          const p = indToPixel({ i1: i1 + 0.5, i2: 0 });
+          if (p.x >= offsetX - 1 && p.x <= width) {
+            ctxt.fillText(`${u1}`, p.x, offsetY - 4);
+          }
+        });
+        ctxt.textAlign = "right";
+        ctxt.textBaseline = "middle";
+        unitIds2.forEach((u2, i2) => {
+          const p = indToPixel({ i1: 0, i2: i2 + 0.5 });
+          if (p.y >= offsetY - 1 && p.y <= height) {
+            ctxt.fillText(`${u2}`, offsetX - 6, p.y);
+          }
+        });
+      }
+      ctxt.save();
+      ctxt.beginPath();
+      ctxt.rect(offsetX - margin, offsetY - margin, width, height);
+      ctxt.clip();
       unitIds1.forEach((u1, i1) => {
         unitIds2.forEach((u2, i2) => {
           const { x: x1, y: y1 } = indToPixel({ i1, i2 });
@@ -148,6 +183,7 @@ const MatrixWidget: FunctionComponent<Props> = ({
           }
         });
       });
+      ctxt.restore();
     },
     [
       indToPixel,
@@ -158,6 +194,8 @@ const MatrixWidget: FunctionComponent<Props> = ({
       width,
       height,
       range,
+      offsetX,
+      offsetY,
     ],
   );
   const handleMouseDown = useCallback(

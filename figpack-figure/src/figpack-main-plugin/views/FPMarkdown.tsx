@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ZarrGroup } from "../figpack-interface";
-import ReactMarkdown from "react-markdown";
+import MarkdownContent from "../../components/MarkdownContent";
 import { viewStyleFromGroup } from "../shared/viewStyle";
 
 export const FPMarkdown: React.FC<{
@@ -91,6 +91,7 @@ export const FPMarkdown: React.FC<{
 
   return (
     <div
+      className="figpack-markdown"
       style={{
         width,
         height,
@@ -105,7 +106,7 @@ export const FPMarkdown: React.FC<{
         fontSize,
       }}
     >
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <MarkdownContent content={content} doRehypeRaw={false} />
     </div>
   );
 };

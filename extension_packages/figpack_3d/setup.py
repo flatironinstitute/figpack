@@ -17,7 +17,7 @@ def read_readme():
 
 setup(
     name="figpack_3d",
-    version="0.1.4",
+    version="0.1.5",
     description="3D visualization extension for figpack using Three.js",
     long_description=read_readme(),
     long_description_content_type="text/markdown",

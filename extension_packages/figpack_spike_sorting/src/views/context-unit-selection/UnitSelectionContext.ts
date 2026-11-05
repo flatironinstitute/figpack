@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import { sortIds } from "./sortIds";
+import { redistributeUnitColors } from "../view-units-table/unitColors";
 import {
   getCheckboxClickHandlerGenerator,
   getPlotClickHandlerGenerator,
@@ -173,13 +174,13 @@ export const unitSelectionReducer = (
       return {
         ...a.sourceState,
       };
-    // case "REDISTRIBUTE_UNIT_COLORS":
-    //   redistributeUnitColors();
-    //   return {
-    //     ...s,
-    //     orderedUnitIds: [...s.orderedUnitIds], // trigger re-render
-    //     selectedUnitIds: new Set([...s.selectedUnitIds]),
-    //   };
+    case "REDISTRIBUTE_UNIT_COLORS":
+      redistributeUnitColors();
+      return {
+        ...s,
+        orderedUnitIds: [...s.orderedUnitIds], // trigger re-render
+        selectedUnitIds: new Set([...s.selectedUnitIds]),
+      };
     default: {
       throw Error(`Invalid mode for unit selection reducer: ${type}`);
     }
