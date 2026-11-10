@@ -12,6 +12,18 @@ import { AboutDialog } from "./AboutDialog";
 import FigureAnnotationsStatusComponent from "./FigureAnnotationsStatusComponent";
 import ShareDialog from "./ShareDialog";
 import SvgExportDialog from "./SvgExportDialog";
+import { useDataIsLoading } from "../remote-zarr/dataLoadingTracker";
+
+const DataLoadingIndicator: React.FC = () => {
+  const loading = useDataIsLoading();
+  if (!loading) return null;
+  return (
+    <span className="data-loading-indicator" title="Loading figure data">
+      <span className="data-loading-spinner" />
+      Loading data...
+    </span>
+  );
+};
 
 const AboutButton: React.FC<{
   title?: string;
@@ -221,6 +233,7 @@ export const StatusBar: React.FC<{
     return (
       <div className="status-bar warning">
         <span>Upload status: {figureInfo.status}</span>
+        <DataLoadingIndicator />
         {aboutButton}
         {manageButton}
         {shareButton}
@@ -235,6 +248,7 @@ export const StatusBar: React.FC<{
         <span>
           This figure has expired, but it may be possible to recover it.
         </span>
+        <DataLoadingIndicator />
         {aboutButton}
         {manageButton}
         {shareButton}
@@ -251,6 +265,7 @@ export const StatusBar: React.FC<{
     return (
       <div className="status-bar">
         <span>Expires in: {figureInfoResult.timeUntilExpiration}</span>
+        <DataLoadingIndicator />
         {aboutButton}
         {manageButton}
         {shareButton}
@@ -263,6 +278,7 @@ export const StatusBar: React.FC<{
   return (
     <div className="status-bar">
       <span>Figure ready</span>
+      <DataLoadingIndicator />
       {aboutButton}
       {manageButton}
       {shareButton}

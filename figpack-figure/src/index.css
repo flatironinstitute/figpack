@@ -82,6 +82,29 @@ button:focus-visible {
   border-top: 1px solid #f5c6cb;
 }
 
+.data-loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  color: #1565c0;
+}
+
+.data-loading-spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #90caf9;
+  border-top-color: #1565c0;
+  border-radius: 50%;
+  animation: data-loading-spin 0.8s linear infinite;
+}
+
+@keyframes data-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .manage-button {
   background-color: #e0e0e0;
   color: #333;
