@@ -24,101 +24,14 @@ export class TimeseriesGraphClient {
   ) {}
 
   static async create(zarrGroup: ZarrGroup) {
-    const seriesNames = zarrGroup.attrs["series_names"] || [];
-    const series: TimeseriesSeries[] = [];
+    const seriesNames: string[] = zarrGroup.attrs["series_names"] || [];
 
-    for (const name of seriesNames) {
-      const seriesGroup = await zarrGroup.getGroup(name);
-      if (!seriesGroup) {
-        console.warn(`Series group not found: ${name}`);
-        continue;
-      }
-      const attrs = seriesGroup.attrs || {};
-
-      if (attrs["series_type"] === "line") {
-        const t = await seriesGroup.getDatasetData("t", {});
-        if (!t) {
-          console.warn(`Dataset t not found for series: ${name}`);
-          continue;
-        }
-        const y = await seriesGroup.getDatasetData("y", {});
-        if (!y) {
-          console.warn(`Dataset y not found for series: ${name}`);
-          continue;
-        }
-        series.push({
-          seriesType: "line",
-          color: attrs["color"] || "blue",
-          width: attrs["width"] || 1,
-          t,
-          y,
-          dash: attrs["dash"] || undefined,
-          yMin: attrs["y_min"],
-          yMax: attrs["y_max"],
-        });
-      } else if (attrs["series_type"] === "marker") {
-        const t = await seriesGroup.getDatasetData("t", {});
-        if (!t) {
-          console.warn(`Dataset t not found for series: ${name}`);
-          continue;
-        }
-        const y = await seriesGroup.getDatasetData("y", {});
-        if (!y) {
-          console.warn(`Dataset y not found for series: ${name}`);
-          continue;
-        }
-        series.push({
-          seriesType: "marker",
-          color: attrs["color"] || "blue",
-          radius: attrs["radius"] || 3,
-          shape: attrs["shape"] || "circle",
-          t,
-          y,
-          yMin: attrs["y_min"],
-          yMax: attrs["y_max"],
-        });
-      } else if (attrs["series_type"] === "interval") {
-        const t_start = await seriesGroup.getDatasetData("t_start", {});
-        if (!t_start) {
-          console.warn(`Dataset t_start not found for series: ${name}`);
-          continue;
-        }
-        const t_end = await seriesGroup.getDatasetData("t_end", {});
-        if (!t_end) {
-          console.warn(`Dataset t_end not found for series: ${name}`);
-          continue;
-        }
-        series.push({
-          seriesType: "interval",
-          color: attrs["color"] || "lightblue",
-          alpha: attrs["alpha"] || 0.5,
-          t_start,
-          t_end,
-          borderColor: attrs["border_color"] || false,
-        });
-      } else if (attrs["series_type"] === "uniform") {
-        series.push({
-          seriesType: "uniform",
-          startTimeSec: attrs["start_time_sec"] || 0,
-          samplingFrequencyHz: attrs["sampling_frequency_hz"] || 1,
-          channelNames: attrs["channel_names"] || [],
-          colors: attrs["colors"] || [],
-          width: attrs["width"] || 1,
-          nTimepoints: attrs["n_timepoints"] || 0,
-          nChannels: attrs["n_channels"] || 0,
-          downsampleFactors: attrs["downsample_factors"] || [],
-          zarrGroup: seriesGroup,
-          channelSpacing: attrs["channel_spacing"],
-          yMin: attrs["y_min"],
-          yMax: attrs["y_max"],
-        });
-      } else {
-        console.warn(
-          `Unknown series type for ${name}: ${attrs["series_type"]}`,
-        );
-        continue;
-      }
-    }
+    // Load the series concurrently (a figure can have hundreds of them, each
+    // needing its own reads), keeping them in the order of seriesNames.
+    const loaded = await mapWithConcurrency(seriesNames, 16, (name) =>
+      loadSeries(zarrGroup, name),
+    );
+    const series = loaded.filter((s): s is TimeseriesSeries => s !== undefined);
 
     let tMin: number | undefined = undefined;
     let tMax: number | undefined = undefined;
@@ -197,3 +110,117 @@ export class TimeseriesGraphClient {
     );
   }
 }
+
+const loadSeries = async (
+  zarrGroup: ZarrGroup,
+  name: string,
+): Promise<TimeseriesSeries | undefined> => {
+  const seriesGroup = await zarrGroup.getGroup(name);
+  if (!seriesGroup) {
+    console.warn(`Series group not found: ${name}`);
+    return undefined;
+  }
+  const attrs = seriesGroup.attrs || {};
+
+  if (attrs["series_type"] === "line") {
+    const t = await seriesGroup.getDatasetData("t", {});
+    if (!t) {
+      console.warn(`Dataset t not found for series: ${name}`);
+      return undefined;
+    }
+    const y = await seriesGroup.getDatasetData("y", {});
+    if (!y) {
+      console.warn(`Dataset y not found for series: ${name}`);
+      return undefined;
+    }
+    return {
+      seriesType: "line",
+      color: attrs["color"] || "blue",
+      width: attrs["width"] || 1,
+      t,
+      y,
+      dash: attrs["dash"] || undefined,
+      yMin: attrs["y_min"],
+      yMax: attrs["y_max"],
+    };
+  } else if (attrs["series_type"] === "marker") {
+    const t = await seriesGroup.getDatasetData("t", {});
+    if (!t) {
+      console.warn(`Dataset t not found for series: ${name}`);
+      return undefined;
+    }
+    const y = await seriesGroup.getDatasetData("y", {});
+    if (!y) {
+      console.warn(`Dataset y not found for series: ${name}`);
+      return undefined;
+    }
+    return {
+      seriesType: "marker",
+      color: attrs["color"] || "blue",
+      radius: attrs["radius"] || 3,
+      shape: attrs["shape"] || "circle",
+      t,
+      y,
+      yMin: attrs["y_min"],
+      yMax: attrs["y_max"],
+    };
+  } else if (attrs["series_type"] === "interval") {
+    const t_start = await seriesGroup.getDatasetData("t_start", {});
+    if (!t_start) {
+      console.warn(`Dataset t_start not found for series: ${name}`);
+      return undefined;
+    }
+    const t_end = await seriesGroup.getDatasetData("t_end", {});
+    if (!t_end) {
+      console.warn(`Dataset t_end not found for series: ${name}`);
+      return undefined;
+    }
+    return {
+      seriesType: "interval",
+      color: attrs["color"] || "lightblue",
+      alpha: attrs["alpha"] || 0.5,
+      t_start,
+      t_end,
+      borderColor: attrs["border_color"] || false,
+    };
+  } else if (attrs["series_type"] === "uniform") {
+    return {
+      seriesType: "uniform",
+      startTimeSec: attrs["start_time_sec"] || 0,
+      samplingFrequencyHz: attrs["sampling_frequency_hz"] || 1,
+      channelNames: attrs["channel_names"] || [],
+      colors: attrs["colors"] || [],
+      width: attrs["width"] || 1,
+      nTimepoints: attrs["n_timepoints"] || 0,
+      nChannels: attrs["n_channels"] || 0,
+      downsampleFactors: attrs["downsample_factors"] || [],
+      zarrGroup: seriesGroup,
+      channelSpacing: attrs["channel_spacing"],
+      yMin: attrs["y_min"],
+      yMax: attrs["y_max"],
+    };
+  } else {
+    console.warn(`Unknown series type for ${name}: ${attrs["series_type"]}`);
+    return undefined;
+  }
+};
+
+// Like Promise.all(items.map(fn)), but with at most `limit` calls in flight.
+const mapWithConcurrency = async <T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> => {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await fn(items[i]);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker),
+  );
+  return results;
+};

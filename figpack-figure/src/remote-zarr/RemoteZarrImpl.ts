@@ -17,6 +17,7 @@ const globalZarrStats = {
 
 import zarrDatasetDataLoader from "./zarrDatasetDataLoader";
 import zarrDecodeChunkArray from "./zarrDecodeChunkArray";
+import { beginDataLoad, endDataLoad } from "./dataLoadingTracker";
 
 type ZMetaDataZAttrs = { [key: string]: any };
 
@@ -122,6 +123,7 @@ export class ZarrFileSystemClient {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     this.#inProgressReads[kk] = true;
+    let tracked = false;
     try {
       if (path.startsWith("/")) path = path.slice(1);
       if (this.#fileContentCache[kk]) {
@@ -130,6 +132,8 @@ export class ZarrFileSystemClient {
         }
         return undefined;
       }
+      beginDataLoad();
+      tracked = true;
       let url = this.url + "/" + path;
       if (cacheBust) {
         url += `?cb=${Date.now()}`;
@@ -197,6 +201,7 @@ export class ZarrFileSystemClient {
       this.#fileContentCache[kk] = { content: undefined, found: false }; // important to do this so we don't keep trying to read the same file
       throw e;
     } finally {
+      if (tracked) endDataLoad();
       this.#inProgressReads[kk] = false;
     }
   }
@@ -521,6 +526,11 @@ const fetchByteRange = async (url: string, startByte: number, size: number) => {
     headers: {
       Range: `bytes=${startByte}-${startByte + size - 1}`,
     },
+    // Chrome's HTTP cache serializes concurrent requests to the same URL, so
+    // parallel range reads into one consolidated file would run one at a
+    // time (about 10x slower in a test with 16 concurrent reads). We keep our
+    // own in-memory cache of what has been read.
+    cache: "no-store",
   });
   if (!r.ok)
     throw Error(

@@ -1,5 +1,11 @@
 # Change Log
 
+## [Unreleased]
+
+- The status bar shows "Loading data..." with a spinner while figure data is being downloaded, in any view. It appears after 300 ms of loading, and gaps under 500 ms between reads count as still loading, so it neither flashes during quick reads while panning nor flickers during a series of small reads
+- TimeseriesGraph loads its series concurrently (up to 16 at a time); they were loaded one after another, two reads per series
+- Byte-range reads (used for figures whose chunks are stored in a consolidated file) bypass the browser's HTTP cache. Chrome's cache serializes concurrent requests to the same URL, so parallel reads into one file ran one at a time. A TimeseriesGraph figure with 100 line series (7.9 MB) now loads its data in about 1.6 s instead of 8 to 16 s. The viewer's in-memory cache still avoids repeated reads within a page view, but reloading the page downloads the data again
+
 ## [0.4.5] - 2026-11-05
 
 - DataFrame view: columns are sized to their content (they had a fixed width of 8 px per character, between 80 and 200 px), numeric columns are right-aligned with tabular digits, and the text uses a sans-serif font. A shadow at the left or right edge shows when the table can be scrolled horizontally, since overlay scrollbars are hidden until scrolling. The sort indicator is a small arrow rather than an emoji
