@@ -509,6 +509,61 @@ Channel 0 is drawn at the bottom. To show or hide channels, click "Show channel 
 
 The spacing between traces is set with the − and + buttons, in multiples of half the median 10th to 90th percentile range of the channels. Hidden channels are not saved with the figure, so they reset when the page is reloaded.
 
+### LinkedTrajectories View
+
+Some results are best seen as many trajectories in a plane: the population activity of each experimental condition projected onto two dimensions, or a dynamical system started from many initial states. With dozens of overlapping curves it is hard to follow any one of them, and often the same items also have a second representation (the movement made in each condition, say) that one would like to compare curve by curve. The LinkedTrajectories view draws the same set of items as 2D trajectories in one or more panels that share a time axis. A time slider, with playback, moves a marker along every trajectory and draws a tail behind it, and hovering over a curve highlights that item in every panel.
+
+Here 24 damped pendulums are released from rest at angles between -170 and +170 degrees. The left panel follows each one in phase space, and the right panel shows the position of its bob:
+
+```python
+import numpy as np
+from figpack_experimental.views import LinkedTrajectories, TrajectoryPanel
+
+# damped pendulums, integrated with small steps and sampled every 50 ms
+theta = np.radians(np.linspace(-170, 170, 24))
+omega = np.zeros_like(theta)
+dt, samples = 0.001, []
+for step in range(10001):
+    if step % 50 == 0:
+        samples.append(np.stack([theta, omega], axis=-1))
+    omega = omega + dt * (-9.81 * np.sin(theta) - 0.15 * omega)
+    theta = theta + dt * omega
+phase = np.stack(samples, axis=1)  # shape (items, times, 2)
+times = np.arange(phase.shape[1]) * 0.05
+bob = np.stack([np.sin(phase[..., 0]), -np.cos(phase[..., 0])], axis=-1)
+angles = np.degrees(phase[:, 0, 0])
+
+view = LinkedTrajectories(
+    times=times,
+    panels=[
+        TrajectoryPanel(
+            data=phase,
+            title="Phase space",
+            x_label="angle (rad)",
+            y_label="angular velocity (rad/s)",
+            equal_aspect=False,
+        ),
+        TrajectoryPanel(data=bob, title="Bob position", x_label="x (m)", y_label="y (m)"),
+    ],
+    item_labels=[f"released at {a:+.0f} deg" for a in angles],
+    item_colors=[f"hsl({h:.0f}, 70%, 45%)" for h in np.linspace(0, 300, len(angles))],
+    time_label="s",
+    tail_length=1.0,
+    initial_time=2.0,
+)
+view.show(title="Linked Trajectories Example", open_in_browser=True)
+```
+
+<iframe data-src="./tutorial_linked_trajectories_example/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+
+Each panel holds an array of shape (items, times, 2); NaN marks a missing sample. Every panel uses the same time axis, so data sampled at different rates need to be resampled to it. In the viewer:
+
+- **The time slider** sets the time, and play runs through the whole axis in about five seconds at 1x. `highlight_interval` shades part of the axis, for example the window an analysis was fitted on.
+- **Hovering** over a curve highlights that item in every panel and shows its label. Click to select it, and shift-click to add more; the selection is listed below the slider.
+- **Tail** sets how much of each trajectory is drawn behind the marker ("from start" draws all of it up to the current time), and **full paths** draws every trajectory faintly in full.
+
+`equal_aspect` (default true) gives both axes of a panel the same scale, so that circles look like circles. With more than two or three panels, `num_columns` arranges them in a grid. A figure made with this view, comparing the rotations of neural population activity during reaching with control populations, is in [this report](https://github.com/magland/encore-reports/tree/main/papers/churchland-2012).
+
 ## MountainLayout
 
 The MountainLayout provides a workspace-style interface. The left panel has a button for each view, and below them any control views; the right panel has two tabbed workspaces (north and south) in which the views are opened.

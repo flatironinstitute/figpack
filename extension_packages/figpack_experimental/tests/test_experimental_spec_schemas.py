@@ -22,6 +22,8 @@ def _write(view):
 def test_schemas_are_registered():
     schemas = get_spec_schemas()
     for name in fpj.__all__:
+        if name == "TrajectoryPanel":  # a panel of LinkedTrajectories, not a view
+            continue
         cls = getattr(fpj, name)
         assert schemas[f"experimental.{name}"] is cls.spec_schema
 
@@ -48,7 +50,12 @@ def test_sphere_embedding_props_are_written():
 
 def test_data_views_have_no_props():
     for name in fpj.__all__:
-        if name not in ("SphereEmbedding", "StackedTraces"):
+        if name not in (
+            "SphereEmbedding",
+            "StackedTraces",
+            "LinkedTrajectories",
+            "TrajectoryPanel",
+        ):
             assert getattr(fpj, name).spec_schema.props == []
     view = fpj.ClusterLens(np.random.randn(10, 3), np.arange(10) % 2)
     assert build_figure_spec(_write(view)) == {}
@@ -68,6 +75,50 @@ def test_stacked_traces_props_are_written():
     assert root.attrs["view_type"] == "experimental.StackedTraces"
     assert root.attrs["channel_colors"] == ["red", "green", "blue"]
     assert list(root.attrs["channel_ids"]) == ["a", "b", "c"]
+
+
+def test_linked_trajectories_props_are_written():
+    rng = np.random.default_rng(0)
+    panels = [
+        fpj.TrajectoryPanel(
+            data=rng.standard_normal((5, 20, 2)), title="a", x_label="x"
+        ),
+        fpj.TrajectoryPanel(data=rng.standard_normal((5, 20, 2)), equal_aspect=False),
+    ]
+    view = fpj.LinkedTrajectories(
+        times=np.arange(20) * 10.0,
+        panels=panels,
+        item_labels=list("abcde"),
+        item_colors=["red"] * 5,
+        time_label="ms",
+        tail_length=50,
+        highlight_interval=(20, 80),
+        num_columns=1,
+    )
+    root = _write(view)
+    assert build_figure_spec(root)["props"] == {
+        "time_label": "ms",
+        "tail_length": 50.0,
+        "num_columns": 1,
+        "show_ghost": True,
+    }
+    assert root.attrs["view_type"] == "experimental.LinkedTrajectories"
+    assert root.attrs["highlight_interval"] == [20.0, 80.0]
+    assert [p["dataset"] for p in root.attrs["panels"]] == ["panel_0", "panel_1"]
+    assert root["panel_1"].shape == (5, 20, 2)
+
+
+def test_linked_trajectories_rejects_mismatched_panels():
+    import pytest
+
+    with pytest.raises(ValueError):
+        fpj.LinkedTrajectories(
+            times=np.arange(20),
+            panels=[
+                fpj.TrajectoryPanel(data=np.zeros((5, 20, 2))),
+                fpj.TrajectoryPanel(data=np.zeros((4, 20, 2))),
+            ],
+        )
 
 
 def test_editable_notes_stores_initial_text():
