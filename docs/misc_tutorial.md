@@ -448,6 +448,67 @@ Interactive features:
 
 The controls reflow onto multiple rows at narrow widths, so the view remains usable on small screens.
 
+### StackedTraces View
+
+When many channels are plotted at once, each trace gets only a small part of the height, and the channels of interest are often scattered through the stack. The StackedTraces view shows a multi-channel signal sampled at a uniform rate, stacked vertically, with a channel list for showing and hiding channels in the viewer. Unlike a TimeseriesGraph with offsets added to each series, the view computes the offsets itself, so the shown channels are restacked to fill the height. As in MultiChannelTimeseries, the data are stored at several downsampling levels, so long recordings can be browsed.
+
+Here 64 bipolar LFP channels from four shanks contain discharges that appear only on channels 6 to 9 of each shank. A second panel marks the discharges and shares the time axis:
+
+```python
+import numpy as np
+import figpack.views as fv
+from figpack_experimental.views import StackedTraces
+
+rng = np.random.default_rng(0)
+fs = 500.0
+n = int(60 * fs)  # 60 seconds
+names = [f"S{shank} ch{pair:02d}" for shank in range(1, 5) for pair in range(16)]
+
+# smoothed noise on every channel
+noise = rng.standard_normal((n, len(names)))
+kernel = np.hanning(15) / np.hanning(15).sum()
+data = np.apply_along_axis(lambda x: np.convolve(x, kernel, mode="same"), 0, noise)
+data = 50 * data / data.std()
+
+# discharges on channels 6 to 9 of each shank
+event_times = np.sort(rng.uniform(1, 59, 20))
+tt = np.arange(-0.15, 0.15, 1 / fs)
+wave = -1000 * np.exp(-((tt / 0.01) ** 2)) + 300 * np.exp(-(((tt - 0.05) / 0.04) ** 2))
+involved = [j for j, name in enumerate(names) if 6 <= int(name[-2:]) <= 9]
+for te in event_times:
+    i0 = int((te + tt[0]) * fs)
+    data[i0 : i0 + len(wave), involved] += wave[:, None] * rng.uniform(0.5, 1.2, len(involved))
+
+lfp = StackedTraces(
+    start_time_sec=0.0,
+    sampling_frequency_hz=fs,
+    data=data.astype(np.float32),  # shape (timepoints, channels), without offsets
+    channel_ids=names,
+    channel_colors=["blue" if 6 <= int(name[-2:]) <= 9 else "purple" for name in names],
+)
+
+events = fv.TimeseriesGraph()
+events.add_interval_series(
+    name="discharges", t_start=event_times - 0.1, t_end=event_times + 0.1, color="green"
+)
+
+view = fv.Box(
+    direction="vertical",
+    items=[fv.LayoutItem(lfp, stretch=5), fv.LayoutItem(events, stretch=1)],
+)
+view.show(title="Stacked Traces Example", open_in_browser=True)
+```
+
+<iframe data-src="./tutorial_stacked_traces_example/index.html?embedded=1" width="100%" height="600" frameborder="0" loading="lazy"></iframe>
+
+Channel 0 is drawn at the bottom. To show or hide channels, click "Show channel list" in the toolbar below the traces:
+
+- **Checkboxes** turn individual channels on and off. Shift-click a checkbox to apply the same change to every channel between it and the previously clicked one.
+- **The text box** highlights the channels whose names match. Terms separated by spaces must all appear in the name, and commas separate alternatives, so `S1 ch0, S3` highlights channels 0 to 9 of shank 1 and all of shank 3. "View only these" then shows only the highlighted channels, while "Show these" and "Hide these" add or remove them. With the box empty, the buttons show or hide all channels.
+- **Hovering** over a trace or a row of the list draws that trace in black and shows its name.
+
+The spacing between traces is set with the − and + buttons, in multiples of half the median 10th to 90th percentile range of the channels. Hidden channels are not saved with the figure, so they reset when the page is reloaded.
+
 ## MountainLayout
 
 The MountainLayout provides a workspace-style interface. The left panel has a button for each view, and below them any control views; the right panel has two tabbed workspaces (north and south) in which the views are opened.

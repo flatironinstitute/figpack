@@ -10,6 +10,7 @@ from .LinearDecode import LinearDecode
 from .MEAMovie import MEAMovie
 from .ClusterLens import ClusterLens
 from .SphereEmbedding import SphereEmbedding
+from .StackedTraces import StackedTraces
 
 __all__ = [
     "EditableNotes",
@@ -20,4 +21,5 @@ __all__ = [
     "MEAMovie",
     "ClusterLens",
     "SphereEmbedding",
+    "StackedTraces",
 ]
