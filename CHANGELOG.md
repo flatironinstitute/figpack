@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- figpack_experimental 0.1.20: LinkedTrajectories view, the same set of items drawn as 2D trajectories in one or more panels (`TrajectoryPanel`) that share a time axis. A time slider with playback moves a marker along every trajectory and draws a tail behind it (its length is set in the viewer, and the full paths can be drawn faintly behind). Hovering over a curve highlights that item in every panel and shows its label; click selects it and shift-click adds more. Optional `item_colors`, `highlight_interval` (a band on the time slider, such as the window an analysis was fitted on), `equal_aspect` per panel and `num_columns` for a grid of panels. Documented in the misc tutorial
 - figpack_experimental 0.1.19: StackedTraces view, a multi-channel signal sampled at a uniform rate and stacked vertically, with a channel list for showing and hiding channels in the viewer. The view computes the vertical offsets, so the shown channels are restacked to fill the height. Checkboxes turn channels on and off (shift-click for a range), and a text box highlights the channels whose names match, which can then be viewed alone, shown or hidden. Hovering over a trace or a row draws the trace in black. Data are stored with the MultiChannelTimeseries downsampling levels; optional `channel_colors`. Documented in the misc tutorial
 
 ## [0.4.5] - 2026-11-05
