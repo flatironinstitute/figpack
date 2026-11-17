@@ -15,15 +15,14 @@ from .experimental_extension import experimental_extension
 class StackedTraces(figpack.ExtensionView):
     """
     Multi-channel traces stacked vertically. The viewer handles the vertical
-    offsets, so channels can be hidden (right-click a trace) and the remaining
-    ones are restacked to fill the height.
+    offsets, so channels can be hidden (from the channel list opened in the
+    toolbar) and the remaining ones are restacked to fill the height.
     """
 
     spec_schema = SpecSchema(
         view_type="experimental.StackedTraces",
         description="Multi-channel signal stacked vertically; channels can be hidden and shown in the viewer.",
         props=[
-            SpecProp("y_label", "string", "Y axis label."),
             SpecProp(
                 "hide_nav_toolbar",
                 "boolean",
@@ -40,7 +39,6 @@ class StackedTraces(figpack.ExtensionView):
         data: np.ndarray,
         channel_ids: Optional[List[Union[str, int]]] = None,
         channel_colors: Optional[List[str]] = None,
-        y_label: str = "",
         hide_nav_toolbar: bool = False,
     ):
         """
@@ -52,8 +50,8 @@ class StackedTraces(figpack.ExtensionView):
                 at the bottom.
             channel_ids: Optional channel names (shown on hover and as labels)
             channel_colors: Optional CSS color per channel
-            y_label: Label for the y-axis
-            hide_nav_toolbar: Whether to hide the navigation toolbar
+            hide_nav_toolbar: Whether to hide the navigation toolbar. This
+                also hides the button that opens the channel list.
         """
         super().__init__(
             extension=experimental_extension,
@@ -65,7 +63,7 @@ class StackedTraces(figpack.ExtensionView):
             sampling_frequency_hz=sampling_frequency_hz,
             data=data,
             channel_ids=channel_ids,
-            y_label=y_label,
+            y_label="",
             hide_nav_toolbar=hide_nav_toolbar,
         )
         n_channels = data.shape[1]

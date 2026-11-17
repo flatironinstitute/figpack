@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- figpack_experimental 0.1.19: StackedTraces view, a multi-channel signal sampled at a uniform rate and stacked vertically, with a channel list for showing and hiding channels in the viewer. The view computes the vertical offsets, so the shown channels are restacked to fill the height. Checkboxes turn channels on and off (shift-click for a range), and a text box highlights the channels whose names match, which can then be viewed alone, shown or hidden. Hovering over a trace or a row draws the trace in black. Data are stored with the MultiChannelTimeseries downsampling levels; optional `channel_colors`. Documented in the misc tutorial
+
 ## [0.4.5] - 2026-11-05
 
 - DataFrame view: columns are sized to their content (they had a fixed width of 8 px per character, between 80 and 200 px), numeric columns are right-aligned with tabular digits, and the text uses a sans-serif font. A shadow at the left or right edge shows when the table can be scrolled horizontally, since overlay scrollbars are hidden until scrolling. The sort indicator is a small arrow rather than an emoji

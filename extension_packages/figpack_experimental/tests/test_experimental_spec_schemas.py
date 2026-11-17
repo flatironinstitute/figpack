@@ -48,10 +48,26 @@ def test_sphere_embedding_props_are_written():
 
 def test_data_views_have_no_props():
     for name in fpj.__all__:
-        if name != "SphereEmbedding":
+        if name not in ("SphereEmbedding", "StackedTraces"):
             assert getattr(fpj, name).spec_schema.props == []
     view = fpj.ClusterLens(np.random.randn(10, 3), np.arange(10) % 2)
     assert build_figure_spec(_write(view)) == {}
+
+
+def test_stacked_traces_props_are_written():
+    view = fpj.StackedTraces(
+        start_time_sec=0.0,
+        sampling_frequency_hz=100.0,
+        data=np.random.randn(500, 3),
+        channel_ids=["a", "b", "c"],
+        channel_colors=["red", "green", "blue"],
+        hide_nav_toolbar=True,
+    )
+    root = _write(view)
+    assert build_figure_spec(root)["props"] == {"hide_nav_toolbar": True}
+    assert root.attrs["view_type"] == "experimental.StackedTraces"
+    assert root.attrs["channel_colors"] == ["red", "green", "blue"]
+    assert list(root.attrs["channel_ids"]) == ["a", "b", "c"]
 
 
 def test_editable_notes_stores_initial_text():
