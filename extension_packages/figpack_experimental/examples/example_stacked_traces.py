@@ -2,7 +2,8 @@
 StackedTraces example: synthetic LFP from 2 probes x 4 shanks x 16 bipolar pairs,
 with a spike raster below sharing the time axis.
 
-Right-click a trace to hide it or show only it; "Show all" restores the hidden ones.
+Use the channel list on the left to show/hide channels: click a row (shift-click
+for a range), or type a filter (e.g. "P3 S1, P4 S2") and press Show/Hide/Only.
 """
 
 import sys

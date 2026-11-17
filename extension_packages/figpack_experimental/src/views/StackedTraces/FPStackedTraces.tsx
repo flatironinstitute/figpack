@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   TimeseriesSelectionAction,
   TimeseriesSelectionContext,
@@ -18,6 +24,7 @@ import {
   paintDownsampledChannelLine,
   paintOriginalChannelLine,
 } from "./timeseriesRendering";
+import ChannelPanel from "./ChannelPanel";
 
 type VisibleData = {
   data: Float32Array[];
@@ -99,9 +106,7 @@ const FPStackedTracesChild: React.FC<{
   const [verticalSpacing, setVerticalSpacing] = useState<number>(3);
   const spacing = verticalSpacing * baseSpacingUnit;
 
-  const [context, setContext] = useState<CanvasRenderingContext2D | null>(
-    null,
-  );
+  const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [canvasWidth, setCanvasWidth] = useState<number>(width);
   const [canvasHeight, setCanvasHeight] = useState<number>(height);
   const [margins, setMargins] = useState<Margins | null>(null);
@@ -206,7 +211,8 @@ const FPStackedTracesChild: React.FC<{
   const channelAtPixel = useCallback(
     (y: number): number | undefined => {
       if (!yRange || !margins || shownChannels.length === 0) return undefined;
-      if (y < margins.top || y > canvasHeight - margins.bottom) return undefined;
+      if (y < margins.top || y > canvasHeight - margins.bottom)
+        return undefined;
       if (shownChannels.length === 1) return shownChannels[0];
       if (spacing <= 0) return undefined;
       const plotHeight = canvasHeight - margins.top - margins.bottom;
@@ -342,59 +348,34 @@ const FPStackedTracesChild: React.FC<{
     valueToPixel,
   ]);
 
-  // Mouse handling: hover highlight and right-click menu
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const [menu, setMenu] = useState<
-    { x: number; y: number; channel: number | undefined } | undefined
-  >(undefined);
+  // Channel panel on the left; the plot takes the remaining width
+  const [panelOpen, setPanelOpen] = useState(false);
+  const panelWidth = panelOpen ? Math.min(220, Math.round(width * 0.3)) : 0;
+  const plotWidth = width - panelWidth;
 
-  const canvasPos = (e: React.MouseEvent) => {
-    const rect = wrapperRef.current?.getBoundingClientRect();
-    if (!rect) return undefined;
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
+  // Mouse handling: hover highlight
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    const p = canvasPos(e);
-    if (!p || !margins) return;
-    if (p.x < margins.left || p.x > canvasWidth - margins.right) {
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    if (!rect || !margins) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (x < margins.left || x > canvasWidth - margins.right) {
       setHoveredChannel(undefined);
       return;
     }
-    setHoveredChannel(channelAtPixel(p.y));
+    setHoveredChannel(channelAtPixel(y));
   };
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    const p = canvasPos(e);
-    if (!p || !margins) return;
-    if (p.y > canvasHeight) return; // toolbars: keep the browser menu
-    e.preventDefault();
-    setMenu({ x: p.x, y: p.y, channel: channelAtPixel(p.y) });
-  };
-
-  const hideChannel = (ch: number) => {
-    setHidden((prev) => {
-      const next = new Set(prev);
-      next.add(ch);
-      return next;
-    });
-  };
-  const showOnlyChannel = (ch: number) => {
-    setHidden(new Set(channelIds.map((_, i) => i).filter((i) => i !== ch)));
-  };
-  const showAll = () => setHidden(new Set());
-
-  useEffect(() => {
-    if (!menu) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenu(undefined);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [menu]);
 
   const customToolbarActions = useMemo(
     () => [
+      {
+        id: "toggle-channel-panel",
+        label: `${panelOpen ? "Hide" : "Show"} channel list (${shownChannels.length}/${channelIds.length})`,
+        onClick: () => setPanelOpen((p) => !p),
+        tooltip: "Toggle the channel list",
+      },
       {
         id: "decrease-spacing",
         label: "−",
@@ -413,20 +394,8 @@ const FPStackedTracesChild: React.FC<{
         onClick: () => setVerticalSpacing((prev) => Math.min(20, prev + 1)),
         tooltip: "Increase vertical spacing",
       },
-      {
-        id: "show-all",
-        label:
-          hidden.size > 0
-            ? `Show all (${hidden.size} hidden)`
-            : `${channelIds.length} channels`,
-        onClick: showAll,
-        tooltip:
-          hidden.size > 0
-            ? "Show all hidden channels"
-            : "Right-click a trace to hide it",
-      },
     ],
-    [verticalSpacing, hidden, channelIds],
+    [verticalSpacing, panelOpen, shownChannels.length, channelIds.length],
   );
 
   const yAxisInfo = useMemo(
@@ -439,12 +408,7 @@ const FPStackedTracesChild: React.FC<{
   );
 
   const onCanvasElement = useCallback(
-    (
-      canvas: HTMLCanvasElement,
-      cw: number,
-      ch: number,
-      m: Margins,
-    ) => {
+    (canvas: HTMLCanvasElement, cw: number, ch: number, m: Margins) => {
       if (!canvas) return;
       setContext(canvas.getContext("2d"));
       setCanvasWidth(cw);
@@ -459,131 +423,58 @@ const FPStackedTracesChild: React.FC<{
   }
 
   return (
-    <div
-      ref={wrapperRef}
-      style={{ position: "relative", width, height }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => setHoveredChannel(undefined)}
-      onContextMenu={handleContextMenu}
-      onMouseDownCapture={(e) => {
-        // Keep right-clicks from moving the time cursor
-        if (e.button === 2) e.stopPropagation();
-      }}
-    >
-      <TimeScrollView3
-        width={width}
-        height={height}
-        onCanvasElement={onCanvasElement}
-        yAxisInfo={yAxisInfo}
-        leftMargin={leftMargin}
-        hideNavToolbar={hideNavToolbar}
-        customToolbarActions={customToolbarActions}
-      />
-      {hoveredChannel !== undefined && !menu && (
-        <div
-          style={{
-            position: "absolute",
-            right: 24,
-            top: 4,
-            padding: "1px 6px",
-            background: "rgba(255,255,255,0.85)",
-            border: "1px solid #ccc",
-            borderRadius: 3,
-            font: labelFont,
-            pointerEvents: "none",
-          }}
-        >
-          {channelIds[hoveredChannel]}
-        </div>
+    <div style={{ position: "relative", width, height }}>
+      {panelOpen && (
+        <ChannelPanel
+          width={panelWidth}
+          height={height}
+          channelIds={channelIds}
+          channelColors={channelColors}
+          hidden={hidden}
+          setHidden={setHidden}
+          hoveredChannel={hoveredChannel}
+          setHoveredChannel={setHoveredChannel}
+        />
       )}
-      {menu && (
-        <>
-          <div
-            style={{ position: "absolute", inset: 0, zIndex: 10 }}
-            onMouseDown={() => setMenu(undefined)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenu(undefined);
-            }}
-          />
+      <div
+        ref={wrapperRef}
+        style={{
+          position: "absolute",
+          left: panelWidth,
+          top: 0,
+          width: plotWidth,
+          height,
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setHoveredChannel(undefined)}
+      >
+        <TimeScrollView3
+          width={plotWidth}
+          height={height}
+          onCanvasElement={onCanvasElement}
+          yAxisInfo={yAxisInfo}
+          leftMargin={leftMargin}
+          hideNavToolbar={hideNavToolbar}
+          customToolbarActions={customToolbarActions}
+        />
+        {hoveredChannel !== undefined && (
           <div
             style={{
               position: "absolute",
-              left: Math.min(menu.x, width - 200),
-              top: Math.min(menu.y, height - 100),
-              zIndex: 11,
-              background: "white",
-              border: "1px solid #bbb",
-              borderRadius: 4,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-              font: "12px system-ui, -apple-system, sans-serif",
-              minWidth: 160,
-              padding: "4px 0",
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+              right: 24,
+              top: 4,
+              padding: "1px 6px",
+              background: "rgba(255,255,255,0.85)",
+              border: "1px solid #ccc",
+              borderRadius: 3,
+              font: labelFont,
+              pointerEvents: "none",
             }}
           >
-            {menu.channel !== undefined && (
-              <>
-                <MenuItem
-                  label={`Hide ${channelIds[menu.channel]}`}
-                  onClick={() => {
-                    hideChannel(menu.channel!);
-                    setMenu(undefined);
-                  }}
-                />
-                <MenuItem
-                  label={`Show only ${channelIds[menu.channel]}`}
-                  onClick={() => {
-                    showOnlyChannel(menu.channel!);
-                    setMenu(undefined);
-                  }}
-                />
-              </>
-            )}
-            <MenuItem
-              label={
-                hidden.size > 0 ? `Show all (${hidden.size} hidden)` : "Show all"
-              }
-              disabled={hidden.size === 0}
-              onClick={() => {
-                showAll();
-                setMenu(undefined);
-              }}
-            />
+            {channelIds[hoveredChannel]}
           </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-const MenuItem: React.FC<{
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}> = ({ label, onClick, disabled }) => {
-  const [hover, setHover] = useState(false);
-  return (
-    <div
-      style={{
-        padding: "4px 12px",
-        cursor: disabled ? "default" : "pointer",
-        color: disabled ? "#aaa" : "#222",
-        background: hover && !disabled ? "#e8eef7" : "transparent",
-        whiteSpace: "nowrap",
-      }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onMouseDown={(e) => e.stopPropagation()}
-      onClick={() => {
-        if (!disabled) onClick();
-      }}
-    >
-      {label}
+        )}
+      </div>
     </div>
   );
 };
