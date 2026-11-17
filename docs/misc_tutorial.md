@@ -564,6 +564,52 @@ Each panel holds an array of shape (items, times, 2); NaN marks a missing sample
 
 `equal_aspect` (default true) gives both axes of a panel the same scale, so that circles look like circles. With more than two or three panels, `num_columns` arranges them in a grid. A figure made with this view, comparing the rotations of neural population activity during reaching with control populations, is in [this report](https://github.com/magland/encore-reports/tree/main/papers/churchland-2012).
 
+### LinkedCurves View
+
+When many subjects (animals, participants, units) are each summarized by several curves, such as a learning curve and a final psychometric or tuning curve, the curves of one subject are spread over separate plots and are hard to match up. The LinkedCurves view draws items as curves in several panels, each panel with its own axes, and links them by item: hovering over a curve highlights that item in every panel. Unlike LinkedTrajectories, the panels do not share a time axis, and an item can have several curves in a panel (for example a fit and the data it was fitted to). Items can be grouped, and a legend above the panels shows, hides and highlights each group.
+
+Here 30 simulated observers in three groups learn a detection task. The left panel shows each observer's percent correct per session, and the right panel its final psychometric curve, fitted curve and data, against signed contrast on a symlog axis:
+
+```python
+import numpy as np
+from figpack_experimental.views import LinkedCurves
+
+rng = np.random.default_rng(1)
+groups = ["Group A", "Group B", "Group C"]
+contrasts = np.array([-100, -25, -12.5, -6.25, 0, 6.25, 12.5, 25, 100])
+u = np.linspace(-1, 1, 101)
+xs = np.sign(u) * 100 ** np.abs(u)  # a grid that is dense near zero
+
+labels = [f"observer {i + 1}" for i in range(30)]
+view = LinkedCurves(item_labels=labels, item_groups=[groups[i % 3] for i in range(30)], num_columns=2)
+p_learn = view.add_panel(title="Learning", x_label="session", y_label="% correct",
+                         y_range=(40, 100))
+p_psych = view.add_panel(title="Final psychometric curve", x_label="signed contrast (%)",
+                         y_label="% rightward choices", y_range=(-2, 102), x_scale="symlog",
+                         symlog_constant=5, x_ticks=[-100, -25, -6.25, 0, 6.25, 25, 100])
+for i in range(30):
+    rate = rng.uniform(0.05, 0.3) * (1.5 if i % 3 == 0 else 1.0)
+    sessions = np.arange(1, 41)
+    perf = 50 + 45 * (1 - np.exp(-rate * sessions)) + rng.normal(0, 4, len(sessions))
+    bias, threshold, lapse = rng.normal(0, 5), rng.uniform(8, 20), rng.uniform(0.02, 0.12)
+    curve = lambda c: 100 * (lapse + (1 - 2 * lapse) * (np.tanh((c - bias) / threshold) + 1) / 2)
+    view.add_curve(p_learn, item=i, x=sessions, y=np.clip(perf, 0, 100))
+    view.add_curve(p_psych, item=i, x=xs, y=curve(xs), series="fit")
+    view.add_curve(p_psych, item=i, x=contrasts, y=curve(contrasts) + rng.normal(0, 4, 9),
+                   style="markers", marker_size=2.5, series="data")
+
+view.show(title="Linked Curves Example", open_in_browser=True)
+```
+
+<iframe data-src="./tutorial_linked_curves_example/index.html?embedded=1" width="100%" height="550" frameborder="0" loading="lazy"></iframe>
+
+`add_panel` returns the panel's index and sets its title, axis labels and optional axis ranges and x ticks. `x_scale="symlog"` maps x to sign(x) log10(1 + |x| / `symlog_constant`), which spreads out values near zero. `add_curve` adds one curve of one item to a panel, with `style` "line", "markers" or "line+markers", an optional dashed line, and an optional `series` name; a panel whose curves have named series shows a small legend, placed with `legend_position`. In the viewer:
+
+- **Hovering** over a curve highlights that item in every panel and shows its label. Click to select it, and shift-click to add more; the selection is listed below the panels.
+- **The group legend** hides a group when clicked and shows only that group when shift-clicked. Hovering over a group highlights all of its items.
+
+Groups are colored from a categorical palette in the order they first appear, or with `group_colors`; `item_colors` overrides both. With many items, the curves that are not highlighted are drawn fainter. A figure made with this view, showing the learning and psychometric curves of 136 mice in seven laboratories, is in [this report](https://github.com/magland/encore-reports/tree/main/papers/ibl-2021).
+
 ## MountainLayout
 
 The MountainLayout provides a workspace-style interface. The left panel has a button for each view, and below them any control views; the right panel has two tabbed workspaces (north and south) in which the views are opened.

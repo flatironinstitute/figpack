@@ -55,6 +55,7 @@ def test_data_views_have_no_props():
             "StackedTraces",
             "LinkedTrajectories",
             "TrajectoryPanel",
+            "LinkedCurves",
         ):
             assert getattr(fpj, name).spec_schema.props == []
     view = fpj.ClusterLens(np.random.randn(10, 3), np.arange(10) % 2)
@@ -119,6 +120,46 @@ def test_linked_trajectories_rejects_mismatched_panels():
                 fpj.TrajectoryPanel(data=np.zeros((4, 20, 2))),
             ],
         )
+
+
+def test_linked_curves_props_and_data_are_written():
+    view = fpj.LinkedCurves(
+        item_labels=["a", "b", "c"], item_groups=["g1", "g2", "g1"], num_columns=1
+    )
+    p0 = view.add_panel(title="first", x_label="x", y_label="y")
+    p1 = view.add_panel(x_scale="symlog", symlog_constant=5, x_ticks=[-10, 0, 10])
+    view.add_curve(p0, item=0, x=np.arange(4), y=np.arange(4), series="fit")
+    view.add_curve(p0, item=2, x=[0, 1], y=[1, 0], style="markers", series="data")
+    view.add_curve(p1, item=1, x=[-10, 0, 10], y=[0, 1, 2], dashed=True)
+    root = _write(view)
+    assert build_figure_spec(root)["props"] == {"num_columns": 1}
+    assert root.attrs["view_type"] == "experimental.LinkedCurves"
+    assert root.attrs["groups"] == ["g1", "g2"]
+    assert root.attrs["item_colors"][0] == root.attrs["item_colors"][2]
+    assert root.attrs["item_colors"][0] != root.attrs["item_colors"][1]
+    panels = root.attrs["panels"]
+    assert panels[0]["series_names"] == ["fit", "data"]
+    assert panels[1]["x_scale"] == "symlog"
+    assert root["panel_0_xy"].shape == (6, 2)
+    assert list(root["panel_0_offsets"][:]) == [0, 4, 6]
+    # item, style, dashed, series index
+    assert root["panel_0_info"][1].tolist() == [2, 1, 0, 1]
+    assert root["panel_1_info"][0].tolist() == [1, 0, 1, 0]
+
+
+def test_linked_curves_rejects_bad_input():
+    import pytest
+
+    view = fpj.LinkedCurves(item_labels=["a"])
+    p = view.add_panel()
+    with pytest.raises(ValueError):
+        view.add_curve(p, item=1, x=[0], y=[0])
+    with pytest.raises(ValueError):
+        view.add_curve(p, item=0, x=[0, 1], y=[0])
+    with pytest.raises(ValueError):
+        view.add_curve(p, item=0, x=[0], y=[0], style="bars")
+    with pytest.raises(ValueError):
+        view.add_panel(x_scale="log")
 
 
 def test_editable_notes_stores_initial_text():
