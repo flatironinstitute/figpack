@@ -10,6 +10,7 @@ import FPMEAMovie from "./views/MEAMovie/FPMEAMovie";
 import FPClusterLens from "./views/ClusterLens/FPClusterLens";
 import FPSphereEmbedding from "./views/SphereEmbedding/FPSphereEmbedding";
 import FPStackedTraces from "./views/StackedTraces/FPStackedTraces";
+import FPLinkedTrajectories from "./views/LinkedTrajectories/FPLinkedTrajectories";
 import {
   FPViewComponent,
   FPViewContext,
@@ -130,6 +131,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "experimental.StackedTraces",
     render: makeRenderFunction(FPStackedTraces),
+  });
+  registerFPViewComponent({
+    name: "experimental.LinkedTrajectories",
+    render: makeRenderFunction(FPLinkedTrajectories),
   });
 
   // Register custom Zarr decoder for 'mp4' codec

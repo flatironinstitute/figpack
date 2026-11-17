@@ -11,6 +11,7 @@ from .MEAMovie import MEAMovie
 from .ClusterLens import ClusterLens
 from .SphereEmbedding import SphereEmbedding
 from .StackedTraces import StackedTraces
+from .LinkedTrajectories import LinkedTrajectories, TrajectoryPanel
 
 __all__ = [
     "EditableNotes",
@@ -22,4 +23,6 @@ __all__ = [
     "ClusterLens",
     "SphereEmbedding",
     "StackedTraces",
+    "LinkedTrajectories",
+    "TrajectoryPanel",
 ]
