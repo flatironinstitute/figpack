@@ -12,6 +12,7 @@ from .ClusterLens import ClusterLens
 from .SphereEmbedding import SphereEmbedding
 from .StackedTraces import StackedTraces
 from .LinkedTrajectories import LinkedTrajectories, TrajectoryPanel
+from .LinkedCurves import LinkedCurves
 
 __all__ = [
     "EditableNotes",
@@ -25,4 +26,5 @@ __all__ = [
     "StackedTraces",
     "LinkedTrajectories",
     "TrajectoryPanel",
+    "LinkedCurves",
 ]
