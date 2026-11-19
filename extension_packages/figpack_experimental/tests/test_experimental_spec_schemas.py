@@ -56,6 +56,7 @@ def test_data_views_have_no_props():
             "LinkedTrajectories",
             "TrajectoryPanel",
             "LinkedCurves",
+            "RingRaster",
         ):
             assert getattr(fpj, name).spec_schema.props == []
     view = fpj.ClusterLens(np.random.randn(10, 3), np.arange(10) % 2)
@@ -167,3 +168,41 @@ def test_editable_notes_stores_initial_text():
     assert bytes(root["text"][:]).decode("utf-8") == "Hello, notes"
     assert "text" not in _write(fpj.EditableNotes())
     assert build_figure_spec(root) == {}
+
+
+def test_ring_raster_props_and_data_are_written():
+    view = fpj.RingRaster(
+        unit_ids=["a", "b", "c"],
+        angles_deg=[0, 120, 240],
+        spike_times_sec=[np.array([0.5, 12.0]), np.array([0.1]), np.array([25.0, 3.0])],
+        start_time_sec=0.0,
+        end_time_sec=30.0,
+        flash_sec=0.2,
+        zero_angle="north",
+    )
+    view.add_needle(name="hd", t=np.arange(0, 30, 0.5), angle_deg=np.zeros(60))
+    root = _write(view)
+    assert build_figure_spec(root)["props"] == {
+        "flash_sec": 0.2,
+        "playback_speed": 1.0,
+        "zero_angle": "north",
+    }
+    assert root.attrs["view_type"] == "experimental.RingRaster"
+    # spikes are merged and sorted by time, with the unit of each
+    assert list(root["spike_times"][:]) == [0.1, 0.5, 3.0, 12.0, 25.0]
+    assert list(root["spike_units"][:]) == [1, 0, 2, 0, 2]
+    # first spike of each 10 s block, and the total at the end
+    assert list(root["spike_block_index"][:]) == [0, 3, 4, 5]
+    needle = root.attrs["needles"][0]
+    assert needle["name"] == "hd" and needle["max_gap_sec"] == 1.0
+    assert list(root["needle_0_block_index"][:]) == [0, 20, 40, 60]
+
+
+def test_ring_raster_rejects_bad_input():
+    import pytest
+
+    with pytest.raises(ValueError):
+        fpj.RingRaster(unit_ids=["a"], angles_deg=[0, 1], spike_times_sec=[[]])
+    view = fpj.RingRaster(unit_ids=["a"], angles_deg=[0], spike_times_sec=[[1.0, 2.0]])
+    with pytest.raises(ValueError):
+        view.add_needle(name="x", t=[2.0, 1.0], angle_deg=[0, 0])

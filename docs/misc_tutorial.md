@@ -610,6 +610,52 @@ view.show(title="Linked Curves Example", open_in_browser=True)
 
 Groups are colored from a categorical palette in the order they first appear, or with `group_colors`; `item_colors` overrides both. With many items, the curves that are not highlighted are drawn fainter. A figure made with this view, showing the learning and psychometric curves of 136 mice in seven laboratories, is in [this report](https://github.com/magland/encore-reports/tree/main/papers/ibl-2021).
 
+### RingRaster View
+
+Some neurons are tuned to an angle: head-direction cells fire when the head points in one direction, and cells of the visual cortex prefer one orientation. A raster sorted by preferred angle shows their activity as stripes, but it is easier to see the population at one moment when the cells are placed on a circle at their preferred angles. The RingRaster view draws each unit as a dot on a ring that flashes when the unit spikes, at the current time of the figure's shared time axis. Clicking a time in a timeline view moves the ring there, and the ring's playback controls move the time in every view. Needles can show angle series at the same moment, such as a tracked or a decoded direction.
+
+Here 16 simulated head-direction cells follow a direction that wanders slowly for the first minute and, as in sleep, twice as fast and without a tracked head for the second:
+
+```python
+import numpy as np
+import figpack.views as vv
+from figpack_experimental.views import RingRaster
+
+rng = np.random.default_rng(0)
+dt, T = 0.01, 120.0
+t = np.arange(0, T, dt)
+speed = np.where(t < 60, 1.0, 2.0)  # s.d. of the random walk, radians per root second
+theta = np.cumsum(rng.normal(0, 1, len(t)) * speed * np.sqrt(dt)) % (2 * np.pi)
+
+prefs = np.arange(16) * 360 / 16
+spikes = []
+for p in np.radians(prefs):
+    rate = 1 + 40 * np.exp(3 * (np.cos(theta - p) - 1))  # Hz
+    spikes.append(t[rng.random(len(t)) < rate * dt] + rng.uniform(0, dt))
+
+ring = RingRaster(unit_ids=[f"cell {i}" for i in range(16)], angles_deg=prefs,
+                  spike_times_sec=spikes, start_time_sec=0, end_time_sec=T)
+awake = t < 60
+ring.add_needle(name="head direction", t=t[awake], angle_deg=np.degrees(theta[awake]))
+
+graph = vv.TimeseriesGraph(y_label="direction (deg)", y_range=[0, 360])
+graph.add_marker_series(name="direction", t=t[::5], y=np.degrees(theta[::5]), radius=1.5)
+view = vv.Box(direction="horizontal", items=[
+    vv.LayoutItem(ring, max_size=420, title="Cells at their preferred directions"),
+    vv.LayoutItem(graph, title="Direction (click to set the time)"),
+])
+view.show(title="Ring Raster Example", open_in_browser=True)
+```
+
+<iframe data-src="./tutorial_ring_raster_example/index.html?embedded=1" width="100%" height="450" frameborder="0" loading="lazy"></iframe>
+
+Units whose angles are close are moved to inner rings so that their dots do not overlap; hovering over a dot shows its label and angle. A spike's flash decays with time constant `flash_sec` (default 0.1 s), and `zero_angle` puts 0 degrees at the east (default) or the north, with angles increasing counterclockwise. `add_needle` adds an angle series with its own color; the needle is hidden when no sample lies within `max_gap_sec` of the current time, and its legend entry is grayed. In the viewer:
+
+- **Play** advances the shared time at the chosen speed (0.1x to 10x), and **-1 s** and **+1 s** step it. If the timeline shows far more than about 30 s of playback, Play first zooms it around the current time, so that the other views move visibly.
+- **Clicking a time** in a timeline view (a raster, a time series graph) shows the ring at that moment.
+
+Spikes and needle samples are stored sorted by time with an index of time blocks (`block_sec`, default 10 s), and the viewer loads only the blocks near the current time, so a recording of many hours opens without loading all of its spikes. A figure made with this view, showing head-direction cells of the mouse thalamus and post-subiculum through waking and sleep, is in [this report](https://github.com/magland/encore-reports/tree/main/papers/peyrache-2015).
+
 ## MountainLayout
 
 The MountainLayout provides a workspace-style interface. The left panel has a button for each view, and below them any control views; the right panel has two tabbed workspaces (north and south) in which the views are opened.

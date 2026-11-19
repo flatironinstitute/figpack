@@ -13,6 +13,7 @@ from .SphereEmbedding import SphereEmbedding
 from .StackedTraces import StackedTraces
 from .LinkedTrajectories import LinkedTrajectories, TrajectoryPanel
 from .LinkedCurves import LinkedCurves
+from .RingRaster import RingRaster
 
 __all__ = [
     "EditableNotes",
@@ -27,4 +28,5 @@ __all__ = [
     "LinkedTrajectories",
     "TrajectoryPanel",
     "LinkedCurves",
+    "RingRaster",
 ]
