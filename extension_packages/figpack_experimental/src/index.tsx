@@ -12,6 +12,7 @@ import FPSphereEmbedding from "./views/SphereEmbedding/FPSphereEmbedding";
 import FPStackedTraces from "./views/StackedTraces/FPStackedTraces";
 import FPLinkedTrajectories from "./views/LinkedTrajectories/FPLinkedTrajectories";
 import FPLinkedCurves from "./views/LinkedCurves/FPLinkedCurves";
+import FPRingRaster from "./views/RingRaster/FPRingRaster";
 import {
   FPViewComponent,
   FPViewContext,
@@ -140,6 +141,10 @@ const registerExtension = () => {
   registerFPViewComponent({
     name: "experimental.LinkedCurves",
     render: makeRenderFunction(FPLinkedCurves),
+  });
+  registerFPViewComponent({
+    name: "experimental.RingRaster",
+    render: makeRenderFunction(FPRingRaster),
   });
 
   // Register custom Zarr decoder for 'mp4' codec
