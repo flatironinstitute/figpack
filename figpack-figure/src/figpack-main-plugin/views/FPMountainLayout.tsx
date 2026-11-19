@@ -423,6 +423,11 @@ const TabWorkspace: React.FC<{
       <div style={{ width, height: contentHeight }}>
         {hasActiveTabs ? (
           <MountainLayoutItemContent
+            // Remount when the active tab changes: FPViewWrapper does not
+            // re-render on a new zarrGroup (it only forwards it to the existing
+            // view via onDataChange), so reusing it would hand one view type's
+            // data to another view.
+            key={tabs[activeTabIndex].itemName}
             zarrGroup={zarrGroup}
             itemName={tabs[activeTabIndex].itemName}
             width={width}
